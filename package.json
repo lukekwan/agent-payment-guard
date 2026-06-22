@@ -1,0 +1,26 @@
+{
+  "name": "base-agent-preflight",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "overrides": {
+    "ws": "8.21.0"
+  },
+  "scripts": {
+    "check": "node --check src/index.js && node --test",
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@x402/core": "^2.16.0",
+    "@x402/evm": "^2.16.0",
+    "@x402/extensions": "^2.16.0",
+    "@x402/hono": "^2.16.0",
+    "hono": "^4.12.26",
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

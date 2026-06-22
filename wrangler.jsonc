@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "base-agent-preflight",
+  "main": "src/index.js",
+  "compatibility_date": "2026-06-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": {
+    "enabled": true
+  },
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
+  "d1_databases": [
+    {
+      "binding": "GUARD_DB",
+      "database_name": "agent-payment-guard-db",
+      "database_id": "a18ba053-aabf-4825-80ad-eb687875b58a",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
