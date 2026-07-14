@@ -1,0 +1,59 @@
+{
+  "schema_version": "agent_buyer_product_categories.v1",
+  "categories": {
+    "wallet_risk": {
+      "description": "Wallet, address, and counterparty risk data.",
+      "default_data_sensitivity": "medium",
+      "typical_buyers": ["research_agent", "finance_agent"],
+      "approval_notes": "Writers and non-risk roles should not silently buy wallet risk data."
+    },
+    "token_risk": {
+      "description": "Token safety, honeypot, tax, proxy, blacklist, and liquidity risk data.",
+      "default_data_sensitivity": "medium",
+      "typical_buyers": ["research_agent"],
+      "approval_notes": "Useful for security research; unrelated business roles should require approval."
+    },
+    "market_intelligence": {
+      "description": "Market, alpha, trading, or competitive intelligence.",
+      "default_data_sensitivity": "medium",
+      "typical_buyers": ["research_agent"],
+      "approval_notes": "Accounting roles should be denied by default."
+    },
+    "invoice_verification": {
+      "description": "Invoice, receipt, vendor, and payable verification data.",
+      "default_data_sensitivity": "medium",
+      "typical_buyers": ["accounting_agent", "finance_agent"],
+      "approval_notes": "Appropriate for finance and accounting; unrelated roles should require approval."
+    },
+    "payment_execution": {
+      "description": "Payment execution, settlement, transfer, or signing support.",
+      "default_data_sensitivity": "high",
+      "typical_buyers": ["finance_agent"],
+      "approval_notes": "Always approval-gated even when the buyer role matches."
+    },
+    "api_security": {
+      "description": "API, OpenAPI, MCP, package, domain, and endpoint security checks.",
+      "default_data_sensitivity": "low",
+      "typical_buyers": ["operator_agent", "research_agent"],
+      "approval_notes": "A natural fit for operator and research agents."
+    },
+    "content_research": {
+      "description": "Public research material used for drafts, documentation, or summaries.",
+      "default_data_sensitivity": "low",
+      "typical_buyers": ["writer_agent"],
+      "approval_notes": "Should stay limited to public or approved content sources."
+    },
+    "production_deploy": {
+      "description": "Deployment, release, production config, or infrastructure mutation tooling.",
+      "default_data_sensitivity": "high",
+      "typical_buyers": ["operator_agent"],
+      "approval_notes": "Approval-gated because it changes production state."
+    },
+    "customer_pii": {
+      "description": "Customer personally identifiable information or sensitive user records.",
+      "default_data_sensitivity": "restricted",
+      "typical_buyers": [],
+      "approval_notes": "Denied by default in the starter policy."
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@signgate/agent-memory-kit",
+  "version": "0.1.0",
+  "description": "Deterministic memory promotion and context packing kit for AI agents.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./policy/default": "./policy/default-memory-policy.json"
+  },
+  "files": [
+    "README.md",
+    "policy/",
+    "src/",
+    "test/"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

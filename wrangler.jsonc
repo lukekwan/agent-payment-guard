@@ -12,6 +12,12 @@
   "triggers": {
     "crons": ["*/5 * * * *"]
   },
+  "kv_namespaces": [
+    {
+      "binding": "ADDRESS_RISK_KV",
+      "id": "245e358686bf428ab90c89b7f7d1ebc2"
+    }
+  ],
   "d1_databases": [
     {
       "binding": "GUARD_DB",

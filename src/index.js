@@ -45,6 +45,581 @@ const STABLECOINS = [
   },
 ];
 const KALSHI = "https://external-api.kalshi.com/trade-api/v2";
+const BCS_API_BASE = "https://api.blockchainsecurity.asia";
+const CATALOG_GROUPS = [
+  {
+    id: "kyt-wallet-risk",
+    name: "KYT wallet and contract risk",
+    buyer_goal:
+      "Decide whether an AI agent, wallet, VASP, or backend should interact with a Base address, token, contract, or counterparty.",
+  },
+  {
+    id: "x402-payment-safety",
+    name: "x402 payment safety",
+    buyer_goal:
+      "Let an autonomous buyer verify x402 merchants, payment requirements, proof of payment, and seller reputation before or after spending.",
+  },
+  {
+    id: "agent-chain-data",
+    name: "Agent chain-data and RPC routing",
+    buyer_goal:
+      "Help autonomous agents decide whether to pay for RPC or indexed chain-data access before signing or routing requests.",
+  },
+  {
+    id: "trading-bot-alpha-risk",
+    name: "Trading bot alpha and risk",
+    buyer_goal:
+      "Give bots low-cost pre-trade filters for Base wallets, tokens, pools, liquidity, and copytrade decisions.",
+  },
+  {
+    id: "agent-api-supply-chain",
+    name: "Agent and API supply-chain preflight",
+    buyer_goal:
+      "Check tools, packages, domains, OpenAPI specs, feeds, and agent cards before an AI runtime depends on them.",
+  },
+  {
+    id: "blockchainsecurity-data",
+    name: "Wallet risk and BlockchainSecurity intelligence",
+    buyer_goal:
+      "Screen wallets, download source-attributed public risk data, or buy deeper BlockchainSecurity scoring and tracing through x402.",
+  },
+  {
+    id: "market-context",
+    name: "Market context",
+    buyer_goal:
+      "Fetch compact public market context when an agent needs a paid signal inside a workflow.",
+  },
+];
+
+const CATALOG_METADATA = {
+  "base-address-preflight": {
+    group: "kyt-wallet-risk",
+    when_to_buy:
+      "Before paying, onboarding, allowlisting, or routing a Base address into an automated workflow.",
+    returns:
+      "Risk score, risk level, identity type, scam/reputation flags, verification status, recent transfer summary, and decision hint.",
+    price_reason:
+      "Higher-priced KYT-style check because it combines address profile, counters, transfer signals, and action guidance.",
+  },
+  "base-token-preflight": {
+    group: "kyt-wallet-risk",
+    when_to_buy:
+      "Before a bot buys a Base token or an agent approves/interacts with a token contract.",
+    returns:
+      "Token identity, public reputation, holder and transfer context, DEX liquidity/activity, risk flags, and decision hint.",
+    price_reason:
+      "Higher-priced token preflight because it joins contract and market-risk context.",
+  },
+  "x402-merchant-trust": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "Before trusting a paid API merchant or comparing sellers on x402 marketplaces.",
+    returns:
+      "USDC receipt history, payer concentration, public activity, merchant trust score, and review guidance.",
+    price_reason:
+      "Premium merchant intelligence call because it summarizes payment history and concentration, not just one transaction.",
+  },
+  "base-payment-proof": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "After an agent claims it paid, or before delivery when a seller needs to verify the exact Base USDC transaction.",
+    returns:
+      "Canonical USDC payment match, recipient/amount verification, finality, transaction evidence, and failure reasons.",
+    price_reason:
+      "Mid-priced verification because it prevents delivery disputes and payment spoofing.",
+  },
+  "base-wallet-activity-delta": {
+    group: "kyt-wallet-risk",
+    when_to_buy:
+      "When an agent needs recent wallet movement since a known timestamp for monitoring or KYT refresh.",
+    returns:
+      "Recent ERC-20 activity, direction, token metadata, timestamps, and risk-oriented deltas.",
+    price_reason:
+      "Mid-priced monitoring call for incremental activity rather than a static lookup.",
+  },
+  "base-approval-risk": {
+    group: "kyt-wallet-risk",
+    when_to_buy:
+      "Before signing or keeping an ERC-20 approval, especially for autonomous trading or spending agents.",
+    returns:
+      "Live allowance, unlimited/large approval flags, owner/spender/token context, and decision hint.",
+    price_reason: "Low-cost focused check for a single approval risk question.",
+  },
+  "base-contract-verification": {
+    group: "kyt-wallet-risk",
+    when_to_buy:
+      "Before an agent calls a Base contract, routes funds to it, or treats it as a trusted integration.",
+    returns:
+      "Source verification, compiler metadata, proxy type, implementation resolution, and risk notes.",
+    price_reason: "Low-cost contract hygiene check using public explorer metadata.",
+  },
+  "base-usdc-receipt": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "When a seller or agent only needs to extract USDC transfer evidence from one Base transaction.",
+    returns: "Canonical USDC transfers, sender/recipient/amount, block status, and transaction finality.",
+    price_reason: "Very low-cost receipt extractor for high-frequency post-payment checks.",
+  },
+  "base-wallet-counterparty": {
+    group: "kyt-wallet-risk",
+    when_to_buy:
+      "When a risk agent needs to know who a wallet has recently interacted with before a higher-cost enrichment.",
+    returns: "Ranked counterparties, interaction counts, transfer context, and concentration signals.",
+    price_reason: "Low-cost counterparty summary that can trigger deeper review only when needed.",
+  },
+  "base-event-log-monitor": {
+    group: "kyt-wallet-risk",
+    when_to_buy:
+      "When an agent monitors a contract or address for new events after a known Base block.",
+    returns: "Recent decoded logs, topics, block numbers, transaction hashes, and monitoring metadata.",
+    price_reason: "Very low-cost event feed slice for repeated polling.",
+  },
+  "base-gas-fee-quote": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "Before an agent signs or prices a Base transaction and needs current gas cost context.",
+    returns: "Live gas fee data and estimated transaction cost for a caller-supplied gas limit.",
+    price_reason: "Very low-cost utility call designed for frequent autonomous transaction checks.",
+  },
+  "base-nonce-readiness": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "Before an agent submits a Base transaction and needs to avoid nonce collision or pending-transaction confusion.",
+    returns: "Confirmed nonce, pending nonce, readiness state, and transaction submission guidance.",
+    price_reason: "Very low-cost transaction hygiene call.",
+  },
+  "base-stablecoin-balance": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "Before an agent decides whether a wallet has enough stablecoin liquidity for a task.",
+    returns: "USDC, USDT, DAI balances, token metadata, and public USD reference context.",
+    price_reason: "Very low-cost balance check for high-frequency payment readiness.",
+  },
+  "base-dex-market-monitor": {
+    group: "trading-bot-alpha-risk",
+    when_to_buy:
+      "Before a bot trades a Base token or when an agent needs live DEX liquidity and activity context.",
+    returns: "DEX pair, price, liquidity, volume, buys/sells, and market-risk signals.",
+    price_reason: "Low-cost market snapshot for repeated token monitoring.",
+  },
+  "prediction-market-snapshot": {
+    group: "market-context",
+    when_to_buy:
+      "When an agent needs compact public Kalshi market context inside a decision workflow.",
+    returns: "Quote, volume, open interest, orderbook snapshot, and market metadata.",
+    price_reason: "Low-cost external market signal rather than a full trading analytics product.",
+  },
+  "x402-endpoint-preflight": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "Before paying an unknown x402 endpoint, especially when the buyer is an autonomous agent.",
+    returns: "Decoded payment requirements, payTo, network, amount, metadata validity, and malformed/unsafe flags.",
+    price_reason: "Low-cost marketplace hygiene check that can prevent paying broken or suspicious resources.",
+  },
+  "npm-package-preflight": {
+    group: "agent-api-supply-chain",
+    when_to_buy:
+      "Before a coding agent installs or recommends an npm package.",
+    returns: "Package metadata, maintenance signals, license, dependencies, deprecation, and OSV vulnerability summary.",
+    price_reason: "Low-cost software supply-chain preflight using public registries and vulnerability data.",
+  },
+  "github-repository-health": {
+    group: "agent-api-supply-chain",
+    when_to_buy:
+      "Before an agent depends on a GitHub repository, library, template, or integration.",
+    returns: "Maintenance, release, archive, license, issue, popularity, and repository health signals.",
+    price_reason: "Low-cost repository diligence for code agents.",
+  },
+  "url-change-fingerprint": {
+    group: "agent-api-supply-chain",
+    when_to_buy:
+      "When an agent monitors a URL for content or redirect changes without downloading a full archive.",
+    returns: "Redirects, metadata, cache validators, SHA-256 content fingerprint, and fetch evidence.",
+    price_reason: "Very low-cost high-frequency web monitoring primitive.",
+  },
+  "feed-snapshot": {
+    group: "agent-api-supply-chain",
+    when_to_buy:
+      "When an agent needs the latest normalized entries from an RSS or Atom feed.",
+    returns: "Recent items, stable fingerprints, titles, links, dates, and feed metadata.",
+    price_reason: "Very low-cost polling primitive for alerting and research agents.",
+  },
+  "evm-transaction-intent": {
+    group: "kyt-wallet-risk",
+    when_to_buy:
+      "Before an agent signs EVM calldata, approves a spender, or submits an unknown transaction.",
+    returns: "Decoded selector, token transfer/approval intent, unlimited-spend flags, unknown selector warnings, and decision hint.",
+    price_reason: "Low-cost pre-signing safety check for autonomous wallets.",
+  },
+  "a2a-agent-card-preflight": {
+    group: "agent-api-supply-chain",
+    when_to_buy:
+      "Before one agent delegates work to another public A2A agent.",
+    returns: "Agent Card discovery, skill/provider/authentication details, endpoint consistency, and unsafe URL flags.",
+    price_reason: "Low-cost trust preflight for inter-agent delegation.",
+  },
+  "openapi-spec-preflight": {
+    group: "agent-api-supply-chain",
+    when_to_buy:
+      "Before an AI runtime imports, calls, or pays for a public API described by OpenAPI.",
+    returns: "OpenAPI validity, server URLs, authentication declarations, operation coverage, content fingerprint, and warnings.",
+    price_reason: "Low-cost API diligence check for tool discovery.",
+  },
+  "domain-trust-preflight": {
+    group: "agent-api-supply-chain",
+    when_to_buy:
+      "Before an agent trusts a domain, follows a hosted API, or sends users to a web destination.",
+    returns: "DNS, DNSSEC, mail, CNAME, RDAP registration age/expiration, and trust signals.",
+    price_reason: "Low-cost domain trust check for web and API workflows.",
+  },
+  "pypi-package-preflight": {
+    group: "agent-api-supply-chain",
+    when_to_buy:
+      "Before a coding agent installs or recommends a PyPI package.",
+    returns: "PyPI metadata, release age, yanked status, Python requirements, dependencies, license, and OSV vulnerabilities.",
+    price_reason: "Low-cost Python supply-chain preflight using public registries and vulnerability data.",
+  },
+  "agent-payment-guard": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "Before an autonomous agent spends through x402 and needs a policy decision, budget enforcement, and audit trail.",
+    returns:
+      "ALLOW/REVIEW/BLOCK decision, risk score, policy/budget state, reasons, evidence, signed decision token, and reservation metadata.",
+    price_reason:
+      "Mid-priced core product because it combines payment policy, risk, replay protection, simulation, and auditable evidence.",
+  },
+  "agent-payment-risk-gateway": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "Before an AI agent asks a policy-controlled signer to execute a stablecoin payment.",
+    returns:
+      "Verifiable intent normalization, dynamic limit decision, recipient risk outcome, signer directive, and reason codes.",
+    price_reason:
+      "Low-cost pre-signing firewall check designed for repeated autonomous stablecoin payment attempts.",
+  },
+  "base-alpha-risk-context": {
+    group: "trading-bot-alpha-risk",
+    when_to_buy:
+      "As a cheap first-pass screen before copying, buying, or interacting with a Base wallet or token.",
+    returns: "Risk score, alpha score, trade bias, wallet/token context, machine tags, and next action.",
+    price_reason: "Very low-cost bot filter intended for repeated pre-trade calls.",
+  },
+  "base-token-alpha-snapshot": {
+    group: "trading-bot-alpha-risk",
+    when_to_buy:
+      "Before a bot decides whether a Base token has enough liquidity/activity to continue analysis.",
+    returns: "Liquidity, volume, buy/sell imbalance, risk flags, and trade bias.",
+    price_reason: "Very low-cost token alpha snapshot for high-frequency filtering.",
+  },
+  "base-wallet-copytrade-risk": {
+    group: "trading-bot-alpha-risk",
+    when_to_buy:
+      "Before a copytrading bot follows a Base wallet or assigns it to a watchlist.",
+    returns: "Public risk, activity, counterparty quality, and follow/monitor/avoid recommendation.",
+    price_reason: "Very low-cost wallet suitability filter.",
+  },
+  "base-new-pool-risk": {
+    group: "trading-bot-alpha-risk",
+    when_to_buy:
+      "Before buying a newly launched Base pool or letting a bot chase launch-stage liquidity.",
+    returns: "Pair age, liquidity, activity imbalance, contract flags, launch-stage risk score, and next action.",
+    price_reason: "Very low-cost new-pool risk screen for fast bot decisions.",
+  },
+  "x402-server-trust": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "When an AI buyer is comparing x402 API servers or deciding whether marketplace activity looks credible.",
+    returns: "Server trust score, buyer concentration risk, micro-payment/ranking risk, freshness, chain coverage, seller enrichment, and decision hint.",
+    price_reason: "Mid-priced marketplace trust product that scores the seller/server, not just one endpoint.",
+  },
+  "x402-origin-due-diligence": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "Before an autonomous buyer spends on an x402scan origin or a newly discovered x402 server.",
+    returns:
+      "Origin/resource count, seller/payment consistency, metadata quality, due-diligence risk score, and recommended next checks.",
+    price_reason:
+      "Mid-priced meta-check that combines origin, resource, schema, and payment-safety evidence for agent buyers.",
+  },
+  "x402-resource-compare": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "When an agent has multiple x402 resources or servers that could satisfy the same task and needs a ranked choice.",
+    returns:
+      "Ranked resource candidates, decoded price/payment metadata, risk flags, budget fit, and selection rationale.",
+    price_reason:
+      "Mid-priced comparison call because it probes multiple resources and produces an agent-ready recommendation.",
+  },
+  "agent-spend-route-plan": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "When an agent has a task and budget but needs to decide which Agent Payment Guard resources to buy and in what order.",
+    returns:
+      "Ordered spend route, estimated cost, stop conditions, escalation triggers, and alternative products.",
+    price_reason:
+      "Low-cost router intended to increase successful multi-step autonomous buying from the existing catalog.",
+  },
+  "agent-buyer-identity-preflight": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "Before an AI agent buys an x402 API or data product and the buyer must verify role, purpose, price, and data-category fit.",
+    returns:
+      "ALLOW/APPROVAL_REQUIRED/DENY decision, role-product fit, reason codes, spend assessment, and audit guidance.",
+    price_reason:
+      "Low-cost governance check that prevents the wrong kind of agent from buying the wrong x402 service.",
+  },
+  "agent-buyer-policy-kit": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "When a team wants to buy a customizable Agent Buyer Identity policy kit and run the evaluator in its own agent runtime.",
+    returns:
+      "Developer kit delivery manifest, starter policy pack, role-product matrix, JavaScript and Python usage, release terms, and integration checklist.",
+    price_reason:
+      "One-time developer-kit price for reusable Agent IAM policy templates and evaluator integration, not a single API lookup.",
+  },
+  "base-token-exit-risk": {
+    group: "trading-bot-alpha-risk",
+    when_to_buy:
+      "Before a trading bot enters or keeps a Base token position and needs to know whether exit liquidity or sellability looks fragile.",
+    returns:
+      "Exit-risk score, liquidity depth, volume/liquidity ratio, sell pressure, pair-age context, flags, and bot action guidance.",
+    price_reason:
+      "Very low-cost pre-trade and position-management filter for repeated bot workflows.",
+  },
+  "bcs-address-labels": {
+    group: "blockchainsecurity-data",
+    when_to_buy:
+      "When an agent needs an address label or entity hint from BlockchainSecurity/MistTrack-backed data.",
+    returns: "Upstream BlockchainSecurity label response, request id, credit headers, provenance, and upstream envelope.",
+    price_reason: "Higher-priced wrapper because the upstream label lookup consumes paid BlockchainSecurity credits.",
+  },
+  "bcs-assets": {
+    group: "blockchainsecurity-data",
+    when_to_buy:
+      "When an agent needs asset specs for one BlockchainSecurity-supported chain.",
+    returns: "Chain asset list/specs from BlockchainSecurity with provenance.",
+    price_reason: "Very low-cost registry lookup with minimal upstream risk.",
+  },
+  "bcs-chains": {
+    group: "blockchainsecurity-data",
+    when_to_buy:
+      "When an agent needs the list of BlockchainSecurity-supported chains and native/token entries.",
+    returns: "Supported chains and chain-level token entries.",
+    price_reason: "Very low-cost discovery lookup.",
+  },
+  "bcs-token-registry": {
+    group: "blockchainsecurity-data",
+    when_to_buy:
+      "When an agent needs the full BlockchainSecurity token registry for symbol/chain normalization.",
+    returns: "Full token registry with symbols, chains, addresses, decimals, and provenance.",
+    price_reason: "Low-cost broad registry lookup.",
+  },
+  "bcs-asset-resolve": {
+    group: "blockchainsecurity-data",
+    when_to_buy:
+      "When an agent needs to resolve symbols or contracts into canonical BlockchainSecurity asset specs.",
+    returns: "Resolved assets, contract/symbol matches, decimals, stablecoin mode, and upstream provenance.",
+    price_reason: "Low-cost resolver that prevents wrong-token mistakes before downstream calls.",
+  },
+  "bcs-address-risk-score": {
+    group: "blockchainsecurity-data",
+    when_to_buy:
+      "Before onboarding, paying, accepting deposits from, or routing funds to an Ethereum or Tron address.",
+    returns:
+      "BlockchainSecurity behavior-based risk score, risk level, triggered suspicious behavior patterns, evidence, request id, and credit headers.",
+    price_reason:
+      "Premium KYT call because it runs behavior detection over an address, not just a static label lookup.",
+  },
+  "bcs-address-classify": {
+    group: "blockchainsecurity-data",
+    when_to_buy:
+      "When an agent needs likely entity type classification for one or many addresses before enrichment or compliance review.",
+    returns:
+      "ML-predicted address type, confidence score, upstream response envelope, request id, and provenance.",
+    price_reason:
+      "Mid-priced batch classifier because it can classify up to 100 addresses and helps route downstream KYT checks.",
+  },
+  "bcs-wallet-overview": {
+    group: "blockchainsecurity-data",
+    when_to_buy:
+      "When an agent needs a compact activity and balance profile for an address before deciding whether deeper investigation is worth buying.",
+    returns:
+      "Balances, receipt/payment counts, first and last activity timing, selected asset scope, request id, and provenance.",
+    price_reason:
+      "Mid-priced wallet profile that is broader than labels but cheaper than full tracing.",
+  },
+  "bcs-fund-trace": {
+    group: "blockchainsecurity-data",
+    when_to_buy:
+      "When an investigator or KYT workflow needs multi-hop inbound or outbound fund-flow paths from a starting address.",
+    returns:
+      "Expanded multi-hop fund-flow paths, related transactions, configured trace direction/depth/filter metadata, request id, and provenance.",
+    price_reason:
+      "High-priced investigation call because graph expansion is heavier and more valuable than single-address enrichment.",
+  },
+  "bcs-cross-chain-track": {
+    group: "blockchainsecurity-data",
+    when_to_buy:
+      "When an agent needs to connect a bridge transaction from source chain to destination chain and identify both sides.",
+    returns:
+      "Cross-chain transaction match, source and destination chain details, bridge label context, addresses, tx hashes, request id, and provenance.",
+    price_reason:
+      "Premium bridge-following call because it solves a specific investigation step that static labels cannot.",
+  },
+  "public-wallet-risk-lookup": {
+    group: "blockchainsecurity-data",
+    when_to_buy:
+      "When an agent, KYT workflow, VASP, or payment backend needs to screen one wallet before onboarding, payout, or interaction.",
+    returns:
+      "Hit/no-hit, risk score, risk level, labels, sanctions/scam/ransomware/stablecoin blacklist categories, confidence, source keys, and evidence URLs.",
+    price_reason:
+      "Premium single-address intelligence because it merges curated public enforcement, scam, ransomware, and issuer blacklist sources with provenance.",
+  },
+  "public-wallet-risk-sample": {
+    group: "blockchainsecurity-data",
+    when_to_buy:
+      "When a buyer or agent wants to inspect the dataset schema, provenance fields, evidence URLs, and label format before buying the full snapshot.",
+    returns:
+      "A small paid JSON sample from the hosted wallet-risk dataset plus manifest counts, schema hints, and next recommended paid resources.",
+    price_reason:
+      "Low-friction trial endpoint priced to help agents validate the data format before buying higher-priced lookup, delta, or snapshot resources.",
+  },
+  "public-wallet-risk-snapshot": {
+    group: "blockchainsecurity-data",
+    when_to_buy:
+      "When a customer wants the complete current wallet-risk intelligence file for local KYT/AML screening or internal enrichment.",
+    returns:
+      "Full JSONL snapshot of active wallet-risk labels with source attribution, confidence, evidence URLs, manifest hashes, and schema metadata.",
+    price_reason:
+      "High-value dataset download: the buyer receives a system-importable risk intelligence snapshot, not a one-off lookup.",
+  },
+  "public-wallet-risk-delta": {
+    group: "blockchainsecurity-data",
+    when_to_buy:
+      "When a customer already has a snapshot and wants the latest batch delta without redownloading the whole dataset.",
+    returns:
+      "JSONL batch delta with new/changed labels, on-chain blacklist events, batch metadata, source attribution, and evidence.",
+    price_reason:
+      "Priced as incremental intelligence that saves customers from re-running all public sources and parsers.",
+  },
+  "agent-rpc-preflight": {
+    group: "agent-chain-data",
+    when_to_buy:
+      "Before an autonomous agent pays for an RPC or x402 chain-data endpoint and needs method, budget, and payment-context checks.",
+    returns:
+      "Endpoint origin, requested method, chain context, price and budget assessment, flags, and an allow/review/block decision hint.",
+    price_reason:
+      "Low-cost preflight that protects high-frequency agent RPC purchases before a wallet signs.",
+  },
+  "rpc-capability-probe": {
+    group: "agent-chain-data",
+    when_to_buy:
+      "When a research agent needs to know whether an RPC route likely fits logs, storage, historical reads, trace, or fork workflows.",
+    returns:
+      "Capability requirements, missing/unknown support, recommended probes, research fitness, and limitations.",
+    price_reason:
+      "Low-cost compatibility probe for repeated chain-data vendor and endpoint comparisons.",
+  },
+  "agent-chain-data-route-plan": {
+    group: "agent-chain-data",
+    when_to_buy:
+      "When an agent has a chain-data task and budget but needs to choose between RPC, indexed data, cached data, or human review.",
+    returns:
+      "Ordered route steps, estimated cost, stop conditions, required checks, and escalation guidance.",
+    price_reason:
+      "Low-cost planning call that routes agent spend before expensive data access begins.",
+  },
+  "indexed-chain-query-preflight": {
+    group: "agent-chain-data",
+    when_to_buy:
+      "Before an agent pays for indexed blockchain SQL or analytics-style data and needs schema, row, cost, and query-safety checks.",
+    returns:
+      "Query type, estimated rows, risk flags, cost fit, schema-discovery recommendation, and next safe query shape.",
+    price_reason:
+      "Low-cost query preflight that can prevent expensive or overly broad indexed-data requests.",
+  },
+  "x402-rpc-payment-guard": {
+    group: "agent-chain-data",
+    when_to_buy:
+      "Immediately before an agent signs payment for RPC or indexed chain-data access.",
+    returns:
+      "ALLOW/REVIEW/BLOCK decision, recipient and budget checks, replay context, signer directive, and limitations.",
+    price_reason:
+      "Low-cost payment guard specialized for chain-data purchases and high-frequency RPC usage.",
+  },
+  "address-risk": {
+    group: "kyt-wallet-risk",
+    when_to_buy:
+      "Before an agent pays, allowlists, messages, or routes value to an address.",
+    returns:
+      "ALLOW/REVIEW/BLOCK decision, risk score, labels, exposure hints, evidence summary, and signed-receipt placeholder.",
+    price_reason:
+      "Low-cost agent-native address screening built for high-frequency pre-payment checks.",
+  },
+  "token-risk": {
+    group: "kyt-wallet-risk",
+    when_to_buy:
+      "Before an agent buys, approves, routes through, or recommends a token contract.",
+    returns:
+      "Token risk decision, honeypot/tax/proxy/authority/liquidity/concentration flags, and recommended next action.",
+    price_reason:
+      "Low-cost token safety preflight that can stop unsafe approvals or trades before signing.",
+  },
+  "transaction-decode-risk": {
+    group: "kyt-wallet-risk",
+    when_to_buy:
+      "Before an autonomous wallet signs unknown calldata or a transaction request.",
+    returns:
+      "Decoded intent, spender/recipient hints, approval/transfer risk, flags, and signing decision.",
+    price_reason:
+      "Low-cost pre-signing transaction review for repeated agent wallet actions.",
+  },
+  "wallet-dossier": {
+    group: "kyt-wallet-risk",
+    when_to_buy:
+      "When an agent needs one compact wallet intelligence packet before deeper KYT or payment decisions.",
+    returns:
+      "Wallet summary, labels, risk, counterparties, exposure, recent behavior, and next recommended paid checks.",
+    price_reason:
+      "Mid-priced dossier because it packages multiple wallet-risk signals into one agent-ready result.",
+  },
+  "safe-transaction-review": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "Before an agent executes a payment, approval, swap, bridge, or contract call through a signer.",
+    returns:
+      "Policy decision, transaction risk, counterparty risk, value-at-risk context, and escalation guidance.",
+    price_reason:
+      "Mid-priced safety review because it combines payment, policy, address, and calldata risk.",
+  },
+  "swap-preflight": {
+    group: "trading-bot-alpha-risk",
+    when_to_buy:
+      "Before a bot or agent signs a swap or quotes a route for a token trade.",
+    returns:
+      "Swap decision, token risk, slippage and liquidity checks, route red flags, and stop conditions.",
+    price_reason:
+      "Low-cost swap guardrail intended to run before high-frequency autonomous DEX actions.",
+  },
+  "stablecoin-health": {
+    group: "kyt-wallet-risk",
+    when_to_buy:
+      "Before an agent holds, accepts, pays, or routes through a stablecoin or issuer-controlled token.",
+    returns:
+      "Stablecoin health decision, blacklist/freeze/issuer authority flags, liquidity hints, and monitoring guidance.",
+    price_reason:
+      "Low-cost stablecoin risk packet for payment agents and treasury policies.",
+  },
+  "policy-decide": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "When an AI runtime needs a single normalized policy decision before paying, signing, or invoking a paid tool.",
+    returns:
+      "ALLOW/REVIEW/BLOCK decision, reason codes, evidence summary, policy version, and signed-decision placeholder.",
+    price_reason:
+      "Low-cost generic policy decision endpoint designed to become the shared agent control schema.",
+  },
+};
 const PRODUCTS = [
   {
     id: "base-address-preflight",
@@ -662,8 +1237,1269 @@ const PRODUCTS = [
       required: ["url", "session_id", "request_id"],
     },
   },
+  {
+    id: "base-alpha-risk-context",
+    path: "/v1/x402/base/alpha-risk",
+    price: "$0.003",
+    description:
+      "High-frequency Base wallet or token risk and alpha context for trading bots before copying, buying, or interacting.",
+    input: {
+      subject: USDC,
+      kind: "auto",
+    },
+    inputSchema: {
+      properties: {
+        subject: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Base wallet, contract, or ERC-20 token address to score.",
+        },
+        kind: {
+          type: "string",
+          enum: ["auto", "wallet", "token"],
+          description:
+            "Optional interpretation hint. Defaults to auto detection.",
+        },
+      },
+      required: ["subject"],
+    },
+  },
+  {
+    id: "base-token-alpha-snapshot",
+    path: "/v1/x402/base/token-alpha-snapshot",
+    price: "$0.003",
+    description:
+      "Fast Base token alpha snapshot for trading bots: liquidity, volume, buy/sell imbalance, risk flags, and bot-ready trade bias.",
+    input: { token: USDC },
+    inputSchema: {
+      properties: {
+        token: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Base ERC-20 token address to score.",
+        },
+      },
+      required: ["token"],
+    },
+  },
+  {
+    id: "base-wallet-copytrade-risk",
+    path: "/v1/x402/base/wallet-copytrade-risk",
+    price: "$0.003",
+    description:
+      "Copytrade risk snapshot for a Base wallet: public risk, activity, counterparty quality, and whether a bot should follow, monitor, or avoid.",
+    input: { address: PAY_TO },
+    inputSchema: {
+      properties: {
+        address: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Base wallet to evaluate before copytrading.",
+        },
+      },
+      required: ["address"],
+    },
+  },
+  {
+    id: "base-new-pool-risk",
+    path: "/v1/x402/base/new-pool-risk",
+    price: "$0.003",
+    description:
+      "New Base pool risk snapshot for bots: pair age, liquidity, activity imbalance, contract flags, and launch-stage risk score.",
+    input: { token: USDC },
+    inputSchema: {
+      properties: {
+        token: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Base token address whose deepest pool should be checked.",
+        },
+      },
+      required: ["token"],
+    },
+  },
+  {
+    id: "x402-server-trust",
+    path: "/v1/x402/x402/server-trust",
+    price: "$0.01",
+    description:
+      "Score an x402 API server using public payment volume, transaction count, buyer concentration, seller address, freshness, and chain coverage.",
+    input: {
+      server_url: SERVICE_ORIGIN,
+      seller: PAY_TO,
+      volume_usdc: "109300",
+      txns: "9500000",
+      buyers: "626",
+      latest_seen_hours: "2",
+      chains: "base",
+    },
+    inputSchema: {
+      properties: {
+        server_url: {
+          type: "string",
+          pattern: "^https?://",
+          maxLength: 2048,
+          description: "Public x402 server origin or endpoint URL.",
+        },
+        seller: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Optional Base seller or payment recipient address.",
+        },
+        volume_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Observed public x402 volume in USDC.",
+        },
+        txns: {
+          type: "string",
+          pattern: "^[0-9]+$",
+          description: "Observed public x402 transaction count.",
+        },
+        buyers: {
+          type: "string",
+          pattern: "^[0-9]+$",
+          description: "Observed public unique buyer count.",
+        },
+        latest_seen_hours: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,2})?$",
+          description: "Hours since the latest observed payment.",
+        },
+        chains: {
+          type: "string",
+          pattern: "^[A-Za-z0-9, _-]{1,120}$",
+          description: "Comma-separated chain names reported by the marketplace.",
+        },
+      },
+      required: ["server_url"],
+    },
+  },
+  {
+    id: "x402-origin-due-diligence",
+    path: "/v1/x402/x402/origin-due-diligence",
+    price: "$0.01",
+    description:
+      "Run x402 origin due diligence for an AI buyer: resources, payment consistency, metadata quality, seller risk, and next checks.",
+    input: {
+      server_url:
+        "https://www.x402scan.com/server/b0ce6f4e-73e9-431d-b23c-814ac89cc77b",
+      seller: PAY_TO,
+      resources: "42",
+      txns: "42",
+      buyers: "3",
+    },
+    inputSchema: {
+      properties: {
+        server_url: {
+          type: "string",
+          pattern: "^https?://",
+          maxLength: 2048,
+          description: "x402scan server URL, x402 server origin, or x402 endpoint URL.",
+        },
+        seller: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Optional expected seller/payment recipient address.",
+        },
+        resources: {
+          type: "string",
+          pattern: "^[0-9]+$",
+          description: "Optional observed resource count from a marketplace page.",
+        },
+        txns: {
+          type: "string",
+          pattern: "^[0-9]+$",
+          description: "Optional observed public x402 transaction count.",
+        },
+        buyers: {
+          type: "string",
+          pattern: "^[0-9]+$",
+          description: "Optional observed unique buyer count.",
+        },
+      },
+      required: ["server_url"],
+    },
+  },
+  {
+    id: "x402-resource-compare",
+    path: "/v1/x402/x402/resource-compare",
+    price: "$0.01",
+    description:
+      "Compare two to five x402 resources or servers by price, payment metadata, schema quality, seller consistency, and budget fit.",
+    input: {
+      resources: `${SERVICE_ORIGIN}/v1/x402/base/alpha-risk,${SERVICE_ORIGIN}/v1/x402/base/token-alpha-snapshot`,
+      budget_usdc: "0.02",
+    },
+    inputSchema: {
+      properties: {
+        resources: {
+          type: "string",
+          pattern: "^https?://",
+          maxLength: 4096,
+          description: "Comma-separated list of two to five public x402 resource or server URLs.",
+        },
+        budget_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Optional maximum acceptable spend for one chosen resource.",
+        },
+      },
+      required: ["resources"],
+    },
+  },
+  {
+    id: "agent-spend-route-plan",
+    path: "/v1/x402/agent/spend-route-plan",
+    price: "$0.005",
+    description:
+      "Plan which Agent Payment Guard x402 resources an autonomous agent should buy for a task, budget, and risk tolerance.",
+    input: {
+      task: "screen a Base token before buying",
+      budget_usdc: "0.02",
+      risk_tolerance: "medium",
+    },
+    inputSchema: {
+      properties: {
+        task: {
+          type: "string",
+          minLength: 3,
+          maxLength: 500,
+          description: "Natural-language task the agent wants to complete.",
+        },
+        budget_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Maximum planned spend for the route.",
+        },
+        risk_tolerance: {
+          type: "string",
+          enum: ["low", "medium", "high"],
+          description: "How much uncertainty the buyer can tolerate.",
+        },
+      },
+      required: ["task"],
+    },
+  },
+  {
+    id: "agent-buyer-identity-preflight",
+    path: "/v1/x402/agent/buyer-identity-preflight",
+    price: "$0.005",
+    description:
+      "Check whether an AI agent's role, purpose, authority, and spend limit fit the x402 service or data product it wants to buy.",
+    input: {
+      agent_role: "research_agent",
+      product_category: "wallet_risk",
+      purpose: "security_research",
+      price_usdc: "0.005",
+      data_sensitivity: "medium",
+    },
+    inputSchema: {
+      properties: {
+        agent_role: {
+          type: "string",
+          enum: [
+            "research_agent",
+            "writer_agent",
+            "accounting_agent",
+            "finance_agent",
+            "operator_agent",
+          ],
+          description: "Declared or credential-mapped buyer agent role.",
+        },
+        product_category: {
+          type: "string",
+          pattern: "^[a-z0-9_-]{2,80}$",
+          description:
+            "Normalized category of the x402 service, such as wallet_risk, invoice_verification, or market_intelligence.",
+        },
+        purpose: {
+          type: "string",
+          pattern: "^[a-z0-9_-]{2,80}$",
+          description: "Normalized intended use for the purchase.",
+        },
+        price_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Quoted x402 price for this purchase.",
+        },
+        data_sensitivity: {
+          type: "string",
+          enum: ["low", "medium", "high", "restricted"],
+          description: "Sensitivity level of the service or returned data.",
+        },
+        agent_status: {
+          type: "string",
+          enum: ["active", "paused", "disabled"],
+          description: "Lifecycle state of the buyer agent.",
+        },
+        approval_ref: {
+          type: "string",
+          maxLength: 160,
+          description: "Optional human approval reference for elevated purchases.",
+        },
+      },
+      required: ["agent_role", "product_category"],
+    },
+  },
+  {
+    id: "agent-buyer-policy-kit",
+    path: "/v1/x402/agent/buyer-policy-kit",
+    price: "$49.00",
+    description:
+      "Buy the SignGate Agent Buyer Policy Kit: starter roles, product taxonomy, role-product matrix, JS/Python evaluator guidance, and self-host integration terms.",
+    input: {
+      format: "manifest",
+      buyer_type: "developer",
+    },
+    inputSchema: {
+      properties: {
+        format: {
+          type: "string",
+          enum: ["manifest", "policy", "quickstart"],
+          description: "Delivery format. manifest returns the full kit manifest.",
+        },
+        buyer_type: {
+          type: "string",
+          enum: ["developer", "startup", "enterprise"],
+          description: "Buyer segment for install and integration guidance.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    id: "base-token-exit-risk",
+    path: "/v1/x402/base/token-exit-risk",
+    price: "$0.003",
+    description:
+      "Estimate Base token exit risk for bots using liquidity depth, volume/liquidity pressure, sell imbalance, pair age, and token flags.",
+    input: { token: USDC },
+    inputSchema: {
+      properties: {
+        token: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Base ERC-20 token address to evaluate for exit risk.",
+        },
+      },
+      required: ["token"],
+    },
+  },
+  {
+    id: "bcs-address-labels",
+    path: "/v1/x402/bcs/labels",
+    price: "$0.02",
+    description:
+      "Proxy BlockchainSecurity address labels for AI agents using a paid x402 call and a server-side API key.",
+    input: {
+      chain: "ethereum",
+      address: "0x28c6c06298d514db089934071355e5743bf21d60",
+      sources: "all",
+    },
+    inputSchema: {
+      properties: {
+        chain: {
+          type: "string",
+          pattern: "^[a-z0-9_-]{2,32}$",
+          description: "BlockchainSecurity chain slug, such as ethereum, bsc, or tron.",
+        },
+        address: {
+          type: "string",
+          pattern: "^[A-Za-z0-9:_-]{3,128}$",
+          description: "Address to label on the selected chain.",
+        },
+        sources: {
+          type: "string",
+          pattern: "^[A-Za-z0-9,_-]{1,80}$",
+          description: "Optional BlockchainSecurity sources selector, such as misttrack or all.",
+        },
+        refresh: {
+          type: "string",
+          pattern: "^(?:true|false)$",
+          description: "Optional true to bypass upstream cache when supported.",
+        },
+      },
+      required: ["chain", "address"],
+    },
+  },
+  {
+    id: "bcs-assets",
+    path: "/v1/x402/bcs/assets",
+    price: "$0.003",
+    description:
+      "Return BlockchainSecurity asset specs for a chain through an x402-paid AI-friendly wrapper.",
+    input: { chain: "ethereum" },
+    inputSchema: {
+      properties: {
+        chain: {
+          type: "string",
+          pattern: "^[a-z0-9_-]{2,32}$",
+          description: "BlockchainSecurity chain slug.",
+        },
+      },
+      required: ["chain"],
+    },
+  },
+  {
+    id: "bcs-chains",
+    path: "/v1/x402/bcs/chains",
+    price: "$0.003",
+    description:
+      "Return BlockchainSecurity supported chains and native/token entries for AI agents.",
+    input: {},
+    inputSchema: {
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    id: "bcs-token-registry",
+    path: "/v1/x402/bcs/registry",
+    price: "$0.005",
+    description:
+      "Return the BlockchainSecurity token registry through an x402 paid resource.",
+    input: {},
+    inputSchema: {
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    id: "bcs-asset-resolve",
+    path: "/v1/x402/bcs/resolve",
+    price: "$0.005",
+    description:
+      "Resolve BlockchainSecurity asset symbols or contracts into asset specs through an x402 paid wrapper.",
+    input: { blockchain: "ethereum", symbols: "usdt,weth" },
+    inputSchema: {
+      properties: {
+        blockchain: {
+          type: "string",
+          pattern: "^[a-z0-9_-]{2,32}$",
+          description: "BlockchainSecurity blockchain slug.",
+        },
+        symbols: {
+          type: "string",
+          pattern: "^[A-Za-z0-9,._-]{1,240}$",
+          description: "Comma-separated symbols to resolve.",
+        },
+        contracts: {
+          type: "string",
+          pattern: "^[A-Za-z0-9,:._-]{1,1000}$",
+          description: "Optional comma-separated contract addresses to resolve.",
+        },
+      },
+      required: ["blockchain"],
+    },
+  },
+  {
+    id: "bcs-address-risk-score",
+    path: "/v1/x402/bcs/address-risk",
+    price: "$0.15",
+    description:
+      "Run BlockchainSecurity behavior-based address risk scoring for Ethereum or Tron through an x402 paid wrapper.",
+    input: {
+      blockchain: "tron",
+      address: "TMuA6YqfCeX8EhbfYEg5y7S4DqzSJireY9",
+      symbols: "usdt,usdc",
+    },
+    inputSchema: {
+      properties: {
+        blockchain: {
+          type: "string",
+          pattern: "^(?:ethereum|tron)$",
+          description: "BlockchainSecurity chain slug. Address risk currently supports ethereum or tron.",
+        },
+        address: {
+          type: "string",
+          pattern: "^[A-Za-z0-9:_-]{3,128}$",
+          description: "Address to risk-score.",
+        },
+        symbols: {
+          type: "string",
+          pattern: "^[A-Za-z0-9,._-]{1,240}$",
+          description: "Optional comma-separated asset symbols to include.",
+        },
+        contracts: {
+          type: "string",
+          pattern: "^[A-Za-z0-9,:._-]{1,1000}$",
+          description: "Optional comma-separated token contracts to include.",
+        },
+      },
+      required: ["blockchain", "address"],
+    },
+  },
+  {
+    id: "bcs-address-classify",
+    path: "/v1/x402/bcs/address-classify",
+    price: "$0.10",
+    description:
+      "Classify one or more blockchain addresses by likely entity type using BlockchainSecurity ML classification.",
+    input: {
+      blockchain: "tron",
+      addresses: "TMuA6YqfCeX8EhbfYEg5y7S4DqzSJireY9",
+    },
+    inputSchema: {
+      properties: {
+        blockchain: {
+          type: "string",
+          pattern: "^(?:ethereum|tron|bitcoin)$",
+          description: "BlockchainSecurity chain slug. Defaults upstream to tron when omitted.",
+        },
+        addresses: {
+          type: "string",
+          pattern: "^[A-Za-z0-9,:._-]{3,4000}$",
+          description: "Comma-separated addresses to classify, up to 100.",
+        },
+      },
+      required: ["addresses"],
+    },
+  },
+  {
+    id: "bcs-wallet-overview",
+    path: "/v1/x402/bcs/wallet-overview",
+    price: "$0.08",
+    description:
+      "Fetch a BlockchainSecurity wallet activity and balance overview through an x402 paid wrapper.",
+    input: {
+      blockchain: "tron",
+      address: "TMuA6YqfCeX8EhbfYEg5y7S4DqzSJireY9",
+      symbols: "usdt,usdc",
+    },
+    inputSchema: {
+      properties: {
+        blockchain: {
+          type: "string",
+          pattern: "^[a-z0-9_-]{2,32}$",
+          description: "BlockchainSecurity chain slug.",
+        },
+        address: {
+          type: "string",
+          pattern: "^[A-Za-z0-9:_-]{3,128}$",
+          description: "Address to summarize.",
+        },
+        symbols: {
+          type: "string",
+          pattern: "^[A-Za-z0-9,._-]{1,240}$",
+          description: "Optional comma-separated asset symbols to include.",
+        },
+        contracts: {
+          type: "string",
+          pattern: "^[A-Za-z0-9,:._-]{1,1000}$",
+          description: "Optional comma-separated token contracts to include.",
+        },
+        output_asset: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._-]{1,40}$",
+          description: "Optional output asset for valuation where supported.",
+        },
+      },
+      required: ["blockchain", "address"],
+    },
+  },
+  {
+    id: "bcs-fund-trace",
+    path: "/v1/x402/bcs/trace",
+    price: "$0.49",
+    description:
+      "Run BlockchainSecurity multi-hop fund-flow tracing from a starting address through an x402 paid wrapper.",
+    input: {
+      blockchain: "tron",
+      address: "TMuA6YqfCeX8EhbfYEg5y7S4DqzSJireY9",
+      direction: "out",
+      depth: "2",
+      limit: "50",
+    },
+    inputSchema: {
+      properties: {
+        blockchain: {
+          type: "string",
+          pattern: "^(?:ethereum|tron|bitcoin)$",
+          description: "BlockchainSecurity chain slug.",
+        },
+        address: {
+          type: "string",
+          pattern: "^[A-Za-z0-9:_-]{3,128}$",
+          description: "Starting address for tracing.",
+        },
+        direction: {
+          type: "string",
+          enum: ["in", "out", "both"],
+          description: "Trace direction hint mapped into track_setting.",
+        },
+        depth: {
+          type: "string",
+          pattern: "^[1-5]$",
+          description: "Trace depth hint mapped into track_setting.",
+        },
+        limit: {
+          type: "string",
+          pattern: "^[1-9][0-9]{0,2}$",
+          description: "Maximum path or transaction items requested.",
+        },
+        symbols: {
+          type: "string",
+          pattern: "^[A-Za-z0-9,._-]{1,240}$",
+          description: "Optional comma-separated asset symbols to filter.",
+        },
+        min_value: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]+)?$",
+          description: "Optional minimum value filter.",
+        },
+      },
+      required: ["blockchain", "address"],
+    },
+  },
+  {
+    id: "bcs-cross-chain-track",
+    path: "/v1/x402/bcs/cross-chain",
+    price: "$0.29",
+    description:
+      "Track a bridge transaction across chains using BlockchainSecurity cross-chain intelligence.",
+    input: {
+      txhash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+      label: "across",
+    },
+    inputSchema: {
+      properties: {
+        txhash: {
+          type: "string",
+          pattern: "^[A-Za-z0-9:_-]{16,160}$",
+          description: "Source transaction hash.",
+        },
+        label: {
+          type: "string",
+          pattern: "^[A-Za-z0-9_-]{2,40}$",
+          description: "Bridge protocol label, such as across, axelar, celer, or wormhole.",
+        },
+      },
+      required: ["txhash", "label"],
+    },
+  },
+  {
+    id: "agent-payment-risk-gateway",
+    path: "/v1/x402/agent/payment-risk-gateway",
+    price: "$0.005",
+    description:
+      "x402-discoverable AI agent stablecoin payment firewall: verify intent, enforce dynamic limits, score recipient risk, and return a signer directive before payment execution.",
+    input: {
+      request_id: "demo-request-1",
+      agent_id: "demo-agent",
+      purpose: "api_purchase",
+      pay_to: PAY_TO,
+      amount_usdc: "0.025",
+      invoice_id: "demo-invoice",
+      nonce: "demo-nonce-123",
+      max_single_usdc: "0.10",
+      human_review_above_usdc: "0.09",
+      risk_score: "5",
+    },
+    inputSchema: {
+      properties: {
+        request_id: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,128}$",
+          description: "Caller-defined idempotency key for the intent.",
+        },
+        agent_id: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,96}$",
+          description: "AI agent or runtime requesting payment authorization.",
+        },
+        purpose: {
+          type: "string",
+          maxLength: 80,
+          description: "Short audit purpose for the payment.",
+        },
+        pay_to: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Recipient address.",
+        },
+        amount_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Stablecoin amount in USDC.",
+        },
+        invoice_id: {
+          type: "string",
+          maxLength: 160,
+          description: "Commercial context binding the payment to an invoice or order.",
+        },
+        invoice_hash: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{64}$",
+          description: "Optional invoice or order hash.",
+        },
+        nonce: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{8,128}$",
+          description: "Replay-prevention nonce.",
+        },
+        max_single_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Maximum allowed amount for one payment.",
+        },
+        human_review_above_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Amount at or above which the decision becomes review.",
+        },
+        allow_pay_to: {
+          type: "string",
+          maxLength: 2048,
+          description: "Optional comma-separated recipient allowlist.",
+        },
+        block_pay_to: {
+          type: "string",
+          maxLength: 2048,
+          description: "Optional comma-separated recipient blocklist.",
+        },
+        risk_score: {
+          type: "string",
+          pattern: "^[0-9]{1,3}$",
+          description: "Caller-supplied recipient risk score from 0 to 100.",
+        },
+        risk_labels: {
+          type: "string",
+          maxLength: 512,
+          description: "Optional comma-separated risk labels.",
+        },
+      },
+      required: [
+        "request_id",
+        "agent_id",
+        "purpose",
+        "pay_to",
+        "amount_usdc",
+        "nonce",
+      ],
+    },
+  },
+  {
+    id: "agent-rpc-preflight",
+    path: "/v1/x402/agent/rpc-preflight",
+    price: "$0.005",
+    description:
+      "Preflight an agent RPC or x402 chain-data request before payment: endpoint origin, method risk, chain fit, price, and budget checks.",
+    input: {
+      endpoint_url: "https://x402.example.com/rpc/base",
+      chain: "base",
+      method: "eth_blockNumber",
+      max_price_usdc: "0.001",
+      session_budget_usdc: "1.00",
+    },
+    inputSchema: {
+      properties: {
+        endpoint_url: {
+          type: "string",
+          pattern: "^https?://",
+          maxLength: 2048,
+          description: "RPC, x402, REST, or indexed chain-data endpoint URL.",
+        },
+        chain: {
+          type: "string",
+          pattern: "^[A-Za-z0-9:_ -]{2,80}$",
+          description: "Requested chain or CAIP-2 network label.",
+        },
+        method: {
+          type: "string",
+          pattern: "^[A-Za-z0-9_.:-]{2,80}$",
+          description: "RPC method, REST operation, or query action.",
+        },
+        max_price_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Maximum acceptable price for this request.",
+        },
+        session_budget_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Remaining session budget available to the agent.",
+        },
+      },
+      required: ["endpoint_url", "chain", "method"],
+    },
+  },
+  {
+    id: "rpc-capability-probe",
+    path: "/v1/x402/chain/rpc-capability-probe",
+    price: "$0.005",
+    description:
+      "Score whether an RPC route likely fits agent chain-data work: logs, storage, historical reads, trace, WebSocket, and local-fork research.",
+    input: {
+      chain: "ethereum",
+      methods: "eth_blockNumber,eth_getLogs,eth_getStorageAt",
+      historical_block: "17000000",
+      requires_trace: "false",
+      requires_websocket: "false",
+    },
+    inputSchema: {
+      properties: {
+        chain: {
+          type: "string",
+          pattern: "^[A-Za-z0-9:_ -]{2,80}$",
+          description: "Requested chain or CAIP-2 network label.",
+        },
+        methods: {
+          type: "string",
+          pattern: "^[A-Za-z0-9_.,:-]{2,400}$",
+          description: "Comma-separated RPC methods the workflow needs.",
+        },
+        historical_block: {
+          type: "string",
+          pattern: "^[0-9]{1,12}$",
+          description: "Optional historical block number needed by the workflow.",
+        },
+        requires_trace: {
+          type: "string",
+          pattern: "^(?:true|false)$",
+          description: "Whether debug/trace methods are required.",
+        },
+        requires_websocket: {
+          type: "string",
+          pattern: "^(?:true|false)$",
+          description: "Whether subscription/WebSocket support is required.",
+        },
+      },
+      required: ["chain", "methods"],
+    },
+  },
+  {
+    id: "agent-chain-data-route-plan",
+    path: "/v1/x402/agent/chain-data-route-plan",
+    price: "$0.005",
+    description:
+      "Plan a budget-aware route for agent chain-data tasks across RPC reads, indexed data, cached intelligence, and payment review.",
+    input: {
+      task: "investigate recent Base token transfers before payment",
+      chain: "base",
+      data_need: "logs",
+      budget_usdc: "0.02",
+      risk_tolerance: "medium",
+    },
+    inputSchema: {
+      properties: {
+        task: {
+          type: "string",
+          minLength: 3,
+          maxLength: 500,
+          description: "Natural-language chain-data task.",
+        },
+        chain: {
+          type: "string",
+          pattern: "^[A-Za-z0-9:_ -]{2,80}$",
+          description: "Requested chain or CAIP-2 network label.",
+        },
+        data_need: {
+          type: "string",
+          enum: ["rpc", "logs", "storage", "trace", "indexed", "sql", "fork", "mixed"],
+          description: "Primary data access shape.",
+        },
+        budget_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Maximum planned spend for this route.",
+        },
+        risk_tolerance: {
+          type: "string",
+          enum: ["low", "medium", "high"],
+          description: "How much uncertainty the buyer can tolerate.",
+        },
+      },
+      required: ["task", "chain"],
+    },
+  },
+  {
+    id: "indexed-chain-query-preflight",
+    path: "/v1/x402/chain/indexed-query-preflight",
+    price: "$0.005",
+    description:
+      "Preflight an indexed chain-data query before payment: schema discovery, query type, estimated rows, cost fit, and safety flags.",
+    input: {
+      chain: "base",
+      query_type: "event_logs",
+      estimated_rows: "5000",
+      max_price_usdc: "0.02",
+    },
+    inputSchema: {
+      properties: {
+        chain: {
+          type: "string",
+          pattern: "^[A-Za-z0-9:_ -]{2,80}$",
+          description: "Requested chain or CAIP-2 network label.",
+        },
+        query_type: {
+          type: "string",
+          enum: ["schema", "event_logs", "transfers", "balances", "transactions", "sql", "protocol_timeline"],
+          description: "Indexed data query family.",
+        },
+        estimated_rows: {
+          type: "string",
+          pattern: "^[0-9]{1,10}$",
+          description: "Caller-estimated row count or result size.",
+        },
+        max_price_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Maximum acceptable query price.",
+        },
+      },
+      required: ["chain", "query_type"],
+    },
+  },
+  {
+    id: "x402-rpc-payment-guard",
+    path: "/v1/x402/agent/rpc-payment-guard",
+    price: "$0.005",
+    description:
+      "Guard an agent payment for RPC or indexed chain-data access with endpoint, recipient, amount, budget, and signer-directive checks.",
+    input: {
+      request_id: "rpc-request-1",
+      endpoint_url: "https://x402.example.com/rpc/base",
+      chain: "base",
+      method: "eth_getLogs",
+      pay_to: PAY_TO,
+      amount_usdc: "0.001",
+      max_single_usdc: "0.01",
+      session_budget_usdc: "1.00",
+    },
+    inputSchema: {
+      properties: {
+        request_id: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,128}$",
+          description: "Caller-defined idempotency key for this RPC purchase.",
+        },
+        endpoint_url: {
+          type: "string",
+          pattern: "^https?://",
+          maxLength: 2048,
+          description: "RPC, x402, REST, or indexed chain-data endpoint URL.",
+        },
+        chain: {
+          type: "string",
+          pattern: "^[A-Za-z0-9:_ -]{2,80}$",
+          description: "Requested chain or CAIP-2 network label.",
+        },
+        method: {
+          type: "string",
+          pattern: "^[A-Za-z0-9_.:-]{2,80}$",
+          description: "RPC method, REST operation, or query action.",
+        },
+        pay_to: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Payment recipient address.",
+        },
+        amount_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Requested stablecoin payment amount.",
+        },
+        max_single_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Maximum allowed amount for one RPC/data purchase.",
+        },
+        session_budget_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Remaining budget for this agent session.",
+        },
+      },
+      required: ["request_id", "endpoint_url", "chain", "method", "amount_usdc"],
+    },
+  },
+  {
+    id: "address-risk",
+    path: "/v1/x402/agent-risk/address-risk",
+    price: "$0.01",
+    description:
+      "Return an agent-ready risk decision before paying, allowlisting, or interacting with an address.",
+    input: { chain: "base", address: PAY_TO, action: "payment" },
+    inputSchema: {
+      properties: {
+        chain: {
+          type: "string",
+          pattern: "^[A-Za-z0-9:_ -]{2,80}$",
+          description: "Chain or network label for the address.",
+        },
+        address: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Wallet or contract address to screen.",
+        },
+        action: {
+          type: "string",
+          pattern: "^[A-Za-z0-9_.:-]{2,80}$",
+          description: "Planned agent action, such as payment, approval, onboarding, or call.",
+        },
+      },
+      required: ["chain", "address"],
+    },
+  },
+  {
+    id: "token-risk",
+    path: "/v1/x402/agent-risk/token-risk",
+    price: "$0.01",
+    description:
+      "Return token safety flags for honeypot, tax, proxy, authority, liquidity, concentration, and approval risk.",
+    input: { chain: "base", token: USDC, action: "swap" },
+    inputSchema: {
+      properties: {
+        chain: {
+          type: "string",
+          pattern: "^[A-Za-z0-9:_ -]{2,80}$",
+          description: "Chain or network label for the token.",
+        },
+        token: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Token contract to screen.",
+        },
+        action: {
+          type: "string",
+          pattern: "^[A-Za-z0-9_.:-]{2,80}$",
+          description: "Planned agent action, such as swap, approve, bridge, or hold.",
+        },
+      },
+      required: ["chain", "token"],
+    },
+  },
+  {
+    id: "transaction-decode-risk",
+    path: "/v1/x402/agent-risk/transaction-decode-risk",
+    price: "$0.01",
+    description:
+      "Decode an EVM transaction shape and return pre-signing risk flags for transfers, approvals, and unknown calldata.",
+    input: { chain: "base", to: PAY_TO, value_usdc: "0.01", calldata: "0x" },
+    inputSchema: {
+      properties: {
+        chain: {
+          type: "string",
+          pattern: "^[A-Za-z0-9:_ -]{2,80}$",
+          description: "Chain or network label for the transaction.",
+        },
+        to: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Transaction recipient or contract.",
+        },
+        value_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Approximate value at risk in USDC.",
+        },
+        calldata: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]*$",
+          maxLength: 4096,
+          description: "EVM calldata or 0x for a simple transfer.",
+        },
+      },
+      required: ["chain", "to"],
+    },
+  },
+  {
+    id: "wallet-dossier",
+    path: "/v1/x402/agent-risk/wallet-dossier",
+    price: "$0.03",
+    description:
+      "Return a compact wallet dossier with risk, exposure, counterparty, behavior, and next-check guidance.",
+    input: { chain: "base", address: PAY_TO },
+    inputSchema: {
+      properties: {
+        chain: {
+          type: "string",
+          pattern: "^[A-Za-z0-9:_ -]{2,80}$",
+          description: "Chain or network label for the wallet dossier.",
+        },
+        address: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Wallet or contract address to summarize.",
+        },
+      },
+      required: ["chain", "address"],
+    },
+  },
+  {
+    id: "safe-transaction-review",
+    path: "/v1/x402/agent-risk/safe-transaction-review",
+    price: "$0.02",
+    description:
+      "Review a planned payment, approval, swap, bridge, or contract call before an agent signs.",
+    input: {
+      chain: "base",
+      from: PAY_TO,
+      to: PAY_TO,
+      action: "payment",
+      amount_usdc: "0.01",
+    },
+    inputSchema: {
+      properties: {
+        chain: { type: "string", pattern: "^[A-Za-z0-9:_ -]{2,80}$" },
+        from: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        to: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        action: { type: "string", pattern: "^[A-Za-z0-9_.:-]{2,80}$" },
+        amount_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+        },
+      },
+      required: ["chain", "from", "to", "action"],
+    },
+  },
+  {
+    id: "swap-preflight",
+    path: "/v1/x402/agent-risk/swap-preflight",
+    price: "$0.01",
+    description:
+      "Preflight a token swap route for token safety, liquidity, slippage, route, and policy risk.",
+    input: {
+      chain: "base",
+      token_in: USDC,
+      token_out: "0x4200000000000000000000000000000000000006",
+      amount_usdc: "10",
+      max_slippage_bps: "100",
+    },
+    inputSchema: {
+      properties: {
+        chain: { type: "string", pattern: "^[A-Za-z0-9:_ -]{2,80}$" },
+        token_in: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        token_out: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        amount_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+        },
+        max_slippage_bps: { type: "string", pattern: "^[0-9]{1,5}$" },
+      },
+      required: ["chain", "token_in", "token_out"],
+    },
+  },
+  {
+    id: "stablecoin-health",
+    path: "/v1/x402/agent-risk/stablecoin-health",
+    price: "$0.01",
+    description:
+      "Check stablecoin payment suitability, issuer controls, blacklist/freeze risk, and treasury policy fit.",
+    input: { chain: "base", token: USDC, use_case: "agent_payment" },
+    inputSchema: {
+      properties: {
+        chain: { type: "string", pattern: "^[A-Za-z0-9:_ -]{2,80}$" },
+        token: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        use_case: { type: "string", pattern: "^[A-Za-z0-9_.:-]{2,80}$" },
+      },
+      required: ["chain", "token"],
+    },
+  },
+  {
+    id: "policy-decide",
+    path: "/v1/x402/agent-risk/policy-decide",
+    price: "$0.01",
+    description:
+      "Return a normalized ALLOW/REVIEW/BLOCK policy decision for an agent payment, signing, or tool-call request.",
+    input: {
+      request_id: "policy-request-1",
+      action: "x402_payment",
+      amount_usdc: "0.01",
+      risk_score: "20",
+    },
+    inputSchema: {
+      properties: {
+        request_id: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,128}$",
+        },
+        action: { type: "string", pattern: "^[A-Za-z0-9_.:-]{2,80}$" },
+        amount_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+        },
+        risk_score: { type: "string", pattern: "^[0-9]{1,3}$" },
+      },
+      required: ["request_id", "action"],
+    },
+  },
+  {
+    id: "public-wallet-risk-lookup",
+    path: "/v1/x402/address-risk/lookup",
+    price: "$0.10",
+    description:
+      "Look up one wallet against a curated public-source sanctions, scam, ransomware, and stablecoin blacklist intelligence feed.",
+    input: { chain: "ETH", address: PAY_TO },
+    inputSchema: {
+      properties: {
+        chain: {
+          type: "string",
+          enum: ["ETH"],
+          description: "Chain namespace for the address. Current hosted feed supports ETH/EVM labels.",
+        },
+        address: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Wallet or contract address to screen.",
+        },
+      },
+      required: ["chain", "address"],
+    },
+  },
+  {
+    id: "public-wallet-risk-snapshot",
+    path: "/v1/x402/address-risk/snapshot",
+    price: "$499.00",
+    description:
+      "Download the full source-attributed public wallet risk intelligence snapshot as JSONL.",
+    input: {},
+    inputSchema: {
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    id: "public-wallet-risk-sample",
+    path: "/v1/x402/address-risk/sample",
+    price: "$0.005",
+    description:
+      "Return a small paid sample of the public wallet risk intelligence schema, provenance, and label format before buying lookup or dataset downloads.",
+    input: { limit: "5" },
+    inputSchema: {
+      properties: {
+        limit: {
+          type: "string",
+          pattern: "^[1-9]$|^10$",
+          description: "Number of sample JSONL records to return, from 1 to 10. Defaults to 5.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    id: "public-wallet-risk-delta",
+    path: "/v1/x402/address-risk/delta",
+    price: "$99.00",
+    description:
+      "Download the latest or requested wallet risk intelligence batch delta as JSONL.",
+    input: { batch_key: "2026-W27" },
+    inputSchema: {
+      properties: {
+        batch_key: {
+          type: "string",
+          pattern: "^20[0-9]{2}-W[0-9]{2}$",
+          description: "Batch key to download. Defaults to the latest available batch.",
+        },
+      },
+      required: [],
+    },
+  },
 ];
 const PAID_PATHS = new Set(PRODUCTS.map(product => product.path));
+const PRODUCTS_BY_ID = Object.fromEntries(PRODUCTS.map(product => [product.id, product]));
+const PRODUCTS_BY_PATH = Object.fromEntries(PRODUCTS.map(product => [product.path, product]));
 const PAYMENT_GUARD_POLICY_PATH = "/v1/x402/payment-guard/policies";
 const PAYMENT_GUARD_POLICY_MANAGE_PATH =
   "/v1/payment-guard/policies/manage";
@@ -672,7 +2508,174 @@ const PAYMENT_GUARD_STATUS_PATH = "/v1/payment-guard/status";
 const PAYMENT_GUARD_APPROVAL_PATH = "/v1/payment-guard/approvals";
 const PAYMENT_GUARD_DELIVERY_PATH = "/v1/payment-guard/delivery";
 const PAYMENT_GUARD_WEBHOOK_PATH = "/v1/payment-guard/webhooks";
+const PAYMENT_GUARD_OUTPUT = {
+  example: {
+    product: "agent-payment-guard",
+    decision: "ALLOW",
+    risk_score: 4,
+    payment: {
+      network: BASE_MAINNET,
+      amount_usdc: "0.01",
+      pay_to: PAY_TO,
+    },
+    policy: {
+      budget_enforced: true,
+      replay_protection: true,
+      human_approval: true,
+      mandate_enforced: true,
+    },
+    evidence: {
+      merchant_risk: "low",
+      domain_risk: "low",
+      transaction_simulation: "success",
+    },
+    reasons: [],
+  },
+  schema: {
+    properties: {
+      product: { type: "string" },
+      decision: { type: "string", enum: ["ALLOW", "REVIEW", "BLOCK"] },
+      risk_score: { type: "number" },
+      payment: { type: "object" },
+      policy: { type: "object" },
+      budget: { type: "object" },
+      reasons: { type: "array" },
+      evidence: { type: "object" },
+      decision_token: { type: "string" },
+    },
+    required: ["product", "decision", "risk_score", "payment", "reasons"],
+  },
+};
+const PAYMENT_GUARD_EVALUATE_BODY_EXAMPLE = {
+  url: "https://x402.twit.sh/tweets/by/id?id=1110302988",
+  session_id: "demo-session",
+  request_id: "demo-request-1",
+  max_single_usdc: "0.10",
+  session_budget_usdc: "1.00",
+  daily_budget_usdc: "5.00",
+};
+const PAYMENT_GUARD_EVALUATE_BODY_SCHEMA = {
+  type: "object",
+  properties: {
+    url: { type: "string", format: "uri" },
+    session_id: { type: "string" },
+    request_id: { type: "string" },
+    profile_id: { type: "string" },
+    agent_token: { type: "string" },
+    max_single_usdc: { type: "string" },
+    session_budget_usdc: { type: "string" },
+    daily_budget_usdc: { type: "string" },
+    reservation_ttl_seconds: {
+      type: "integer",
+      minimum: 30,
+      maximum: 3600,
+    },
+    retention_days: {
+      type: "integer",
+      minimum: 1,
+      maximum: 365,
+    },
+    human_review_above_usdc: { type: "string" },
+    fail_closed: { type: "boolean", default: true },
+    allowed_domains: {
+      oneOf: [
+        { type: "string" },
+        { type: "array", items: { type: "string" } },
+      ],
+    },
+    allowed_tools: {
+      oneOf: [
+        { type: "string" },
+        { type: "array", items: { type: "string" } },
+      ],
+    },
+    allowed_purposes: {
+      oneOf: [
+        { type: "string" },
+        { type: "array", items: { type: "string" } },
+      ],
+    },
+    active_from_hour_utc: {
+      type: "integer",
+      minimum: 0,
+      maximum: 23,
+    },
+    active_until_hour_utc: {
+      type: "integer",
+      minimum: 1,
+      maximum: 24,
+    },
+    tool_id: { type: "string" },
+    purpose: { type: "string" },
+    allow_pay_to: { type: "string" },
+    block_pay_to: { type: "string" },
+    to: { type: "string" },
+    data: { type: "string" },
+    value: { type: "string" },
+  },
+  required: ["url", "session_id", "request_id"],
+};
+const PAYMENT_GUARD_POLICY_BODY_EXAMPLE = {
+  name: "demo-agent-policy",
+  max_single_usdc: "0.10",
+  session_budget_usdc: "1.00",
+  daily_budget_usdc: "5.00",
+  fail_closed: true,
+};
+const PAYMENT_GUARD_POLICY_BODY_SCHEMA = {
+  type: "object",
+  properties: {
+    name: { type: "string" },
+    max_single_usdc: { type: "string" },
+    session_budget_usdc: { type: "string" },
+    daily_budget_usdc: { type: "string" },
+    reservation_ttl_seconds: {
+      type: "integer",
+      minimum: 30,
+      maximum: 3600,
+    },
+    human_review_above_usdc: { type: "string" },
+    fail_closed: { type: "boolean" },
+    retention_days: {
+      type: "integer",
+      minimum: 1,
+      maximum: 365,
+    },
+    allowed_domains: {
+      oneOf: [
+        { type: "string" },
+        { type: "array", items: { type: "string" } },
+      ],
+    },
+    allowed_tools: {
+      oneOf: [
+        { type: "string" },
+        { type: "array", items: { type: "string" } },
+      ],
+    },
+    allowed_purposes: {
+      oneOf: [
+        { type: "string" },
+        { type: "array", items: { type: "string" } },
+      ],
+    },
+    active_from_hour_utc: {
+      type: "integer",
+      minimum: 0,
+      maximum: 23,
+    },
+    active_until_hour_utc: {
+      type: "integer",
+      minimum: 1,
+      maximum: 24,
+    },
+    webhook_url: { type: "string", format: "uri" },
+  },
+};
 const PAYMENT_GUARD_MCP_PATH = "/mcp";
+const INTENT_VERIFY_PATH = "/v1/intents/verify";
+const PAYMENT_PREFLIGHT_PATH = "/v1/payments/preflight";
+const PAYMENT_AUTHORIZE_PATH = "/v1/payments/authorize";
 const PAYMENT_GUARD_PATHS = new Set([
   PAYMENT_GUARD_POLICY_PATH,
   PAYMENT_GUARD_POLICY_MANAGE_PATH,
@@ -682,10 +2685,29 @@ const PAYMENT_GUARD_PATHS = new Set([
   PAYMENT_GUARD_DELIVERY_PATH,
   PAYMENT_GUARD_WEBHOOK_PATH,
   PAYMENT_GUARD_MCP_PATH,
+  INTENT_VERIFY_PATH,
+  PAYMENT_PREFLIGHT_PATH,
+  PAYMENT_AUTHORIZE_PATH,
 ]);
+const MARKETPLACE_HIDDEN_OPENAPI_PATHS = [
+  PAYMENT_GUARD_POLICY_MANAGE_PATH,
+  PAYMENT_GUARD_LIFECYCLE_PATH,
+  PAYMENT_GUARD_STATUS_PATH,
+  PAYMENT_GUARD_APPROVAL_PATH,
+  PAYMENT_GUARD_DELIVERY_PATH,
+  PAYMENT_GUARD_WEBHOOK_PATH,
+  PAYMENT_GUARD_MCP_PATH,
+  INTENT_VERIFY_PATH,
+  PAYMENT_PREFLIGHT_PATH,
+  PAYMENT_AUTHORIZE_PATH,
+];
 const ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/;
 const TX_PATTERN = /^0x[a-fA-F0-9]{64}$/;
 const UPSTREAM_TIMEOUT_MS = 10_000;
+const ADDRESS_RISK_MANIFEST_KEY = "address-risk:manifest";
+const ADDRESS_RISK_SNAPSHOT_KEY = "address-risk:snapshot";
+const ADDRESS_RISK_DELTA_PREFIX = "address-risk:delta:";
+const ADDRESS_RISK_DEFAULT_BATCH = "2026-W27";
 
 class ResilientFacilitatorClient {
   constructor(client) {
@@ -722,6 +2744,165 @@ function json(payload, status = 200, headers = {}) {
       "cache-control": status === 200 ? "public, max-age=60" : "no-store",
       "access-control-allow-origin": "*",
       ...headers,
+    },
+  });
+}
+
+async function addressRiskManifest(env) {
+  const manifest = await env.ADDRESS_RISK_KV?.get(ADDRESS_RISK_MANIFEST_KEY, {
+    type: "json",
+  });
+  if (!manifest) throw new Error("address_risk_manifest_unavailable");
+  return manifest;
+}
+
+async function addressRiskLookup(env, chain, address) {
+  const normalizedChain = (chain || "ETH").toUpperCase();
+  const normalizedAddress = (address || "").toLowerCase();
+  if (normalizedChain !== "ETH" || !ADDRESS_PATTERN.test(normalizedAddress)) {
+    return { error: "invalid_address_risk_lookup_input" };
+  }
+  const manifest = await addressRiskManifest(env);
+  const key = `label:${normalizedChain}:${normalizedAddress}`;
+  const hit = await env.ADDRESS_RISK_KV?.get(key, { type: "json" });
+  return {
+    product: "public-wallet-risk-lookup",
+    schema_version: "1.0",
+    chain: normalizedChain,
+    address: normalizedAddress,
+    hit: Boolean(hit?.hit),
+    risk_score: hit?.risk_score ?? 0,
+    risk_level: hit?.risk_level ?? "none",
+    labels: hit?.labels ?? [],
+    provenance: {
+      ...(hit?.provenance ?? { source_count: 0, source_keys: [] }),
+      manifest_sha256: manifest.files?.snapshot?.sha256 ?? null,
+      batch_key: manifest.batch_key ?? ADDRESS_RISK_DEFAULT_BATCH,
+    },
+    dataset: {
+      active_labels: manifest.active_labels,
+      source_count: manifest.source_count,
+      risk_type_counts: manifest.risk_type_counts,
+    },
+    limitations: manifest.limitations ?? [],
+  };
+}
+
+async function addressRiskSample(env, origin, limit = 5) {
+  const manifest = await addressRiskManifest(env);
+  const cappedLimit = Math.max(1, Math.min(10, Number(limit) || 5));
+  const value = await env.ADDRESS_RISK_KV?.get(ADDRESS_RISK_SNAPSHOT_KEY, {
+    type: "arrayBuffer",
+  });
+  if (!value) throw new Error("address_risk_snapshot_unavailable");
+  const text = bytesToText(new Uint8Array(value));
+  const records = [];
+  for (const line of text.split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    try {
+      const record = JSON.parse(line);
+      if (record?.type === "metadata") continue;
+      records.push(record);
+      if (records.length >= cappedLimit) break;
+    } catch {
+      continue;
+    }
+  }
+  return {
+    product: "public-wallet-risk-sample",
+    schema_version: "1.0",
+    generated_at: new Date().toISOString(),
+    sample_size: records.length,
+    records,
+    dataset: {
+      active_labels: manifest.active_labels,
+      source_count: manifest.source_count,
+      risk_type_counts: manifest.risk_type_counts,
+      batch_key: manifest.batch_key ?? ADDRESS_RISK_DEFAULT_BATCH,
+      snapshot_sha256: manifest.files?.snapshot?.sha256 ?? null,
+      delta_sha256: manifest.files?.delta?.sha256 ?? null,
+    },
+    paid_next_steps: {
+      lookup: `${origin}${PRODUCTS_BY_ID["public-wallet-risk-lookup"].path}?chain=ETH&address=0x...&campaign=sample`,
+      snapshot: `${origin}${PRODUCTS_BY_ID["public-wallet-risk-snapshot"].path}?campaign=sample`,
+      delta: `${origin}${PRODUCTS_BY_ID["public-wallet-risk-delta"].path}?batch_key=${encodeURIComponent(manifest.batch_key ?? ADDRESS_RISK_DEFAULT_BATCH)}&campaign=sample`,
+    },
+    limitations: manifest.limitations ?? [],
+  };
+}
+
+async function publicWalletRiskManifest(env, origin) {
+  const manifest = await addressRiskManifest(env);
+  return {
+    schema_version: "1.0",
+    name: "Public Wallet Risk Intelligence",
+    description:
+      "Source-attributed wallet risk lookup, paid sample, full JSONL snapshot, and batch delta for KYT and AML screening.",
+    origin,
+    product_page: `${origin}/wallet-risk`,
+    openapi_url: `${origin}/openapi.json`,
+    ai_buyer_catalog_url: `${origin}/catalog.json`,
+    current_batch: manifest.batch_key ?? ADDRESS_RISK_DEFAULT_BATCH,
+    dataset: {
+      active_labels: manifest.active_labels,
+      source_count: manifest.source_count,
+      risk_type_counts: manifest.risk_type_counts,
+      files: manifest.files ?? {},
+      limitations: manifest.limitations ?? [],
+    },
+    paid_resources: {
+      lookup: {
+        method: "GET",
+        path: PRODUCTS_BY_ID["public-wallet-risk-lookup"].path,
+        price_usdc: PRODUCTS_BY_ID["public-wallet-risk-lookup"].price,
+        example: `${origin}${PRODUCTS_BY_ID["public-wallet-risk-lookup"].path}?chain=ETH&address=0x...&campaign=manifest`,
+      },
+      sample: {
+        method: "GET",
+        path: PRODUCTS_BY_ID["public-wallet-risk-sample"].path,
+        price_usdc: PRODUCTS_BY_ID["public-wallet-risk-sample"].price,
+        example: `${origin}${PRODUCTS_BY_ID["public-wallet-risk-sample"].path}?limit=5&campaign=manifest`,
+      },
+      snapshot: {
+        method: "GET",
+        path: PRODUCTS_BY_ID["public-wallet-risk-snapshot"].path,
+        price_usdc: PRODUCTS_BY_ID["public-wallet-risk-snapshot"].price,
+        example: `${origin}${PRODUCTS_BY_ID["public-wallet-risk-snapshot"].path}?campaign=manifest`,
+      },
+      delta: {
+        method: "GET",
+        path: PRODUCTS_BY_ID["public-wallet-risk-delta"].path,
+        price_usdc: PRODUCTS_BY_ID["public-wallet-risk-delta"].price,
+        example: `${origin}${PRODUCTS_BY_ID["public-wallet-risk-delta"].path}?batch_key=${encodeURIComponent(manifest.batch_key ?? ADDRESS_RISK_DEFAULT_BATCH)}&campaign=manifest`,
+      },
+    },
+    response_schema_hint: {
+      lookup:
+        "JSON object with hit, risk_score, risk_level, labels[], provenance, dataset counts, and limitations.",
+      sample:
+        "JSON object with sample records from the snapshot, dataset counts, paid_next_steps, and limitations.",
+      snapshot:
+        "application/x-ndjson full active-label snapshot with source attribution and evidence fields.",
+      delta:
+        "application/x-ndjson batch delta with label changes and on-chain blacklist event metadata.",
+    },
+    recommended_campaigns: [
+      "x402scan-profile",
+      "twitter-thread",
+      "agentcash-community",
+    ],
+  };
+}
+
+async function addressRiskFileResponse(env, key, filename) {
+  const value = await env.ADDRESS_RISK_KV?.get(key, { type: "arrayBuffer" });
+  if (!value) return json({ error: "address_risk_file_not_found", key }, 404);
+  return new Response(value, {
+    headers: {
+      "content-type": "application/x-ndjson; charset=utf-8",
+      "content-disposition": `attachment; filename="${filename}"`,
+      "cache-control": "public, max-age=300",
+      "access-control-allow-origin": "*",
     },
   });
 }
@@ -1292,6 +3473,1887 @@ export async function merchantTrust(address, fetchImpl = fetch) {
     ),
   ]);
   return buildMerchantTrust({ address, profile, counters, transfers });
+}
+
+function parseNonNegativeNumber(value, fallback = null) {
+  if (value === null || value === undefined || value === "") return fallback;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function parseNonNegativeInteger(value, fallback = null) {
+  if (value === null || value === undefined || value === "") return fallback;
+  if (!/^[0-9]+$/.test(String(value))) return fallback;
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function parseChainList(value) {
+  return String(value ?? "")
+    .split(",")
+    .map(chain => chain.trim().toLowerCase())
+    .filter(Boolean)
+    .slice(0, 12);
+}
+
+export function buildX402ServerTrust({
+  serverUrl,
+  seller = null,
+  volumeUsdc = null,
+  txns = null,
+  buyers = null,
+  latestSeenHours = null,
+  chains = [],
+  merchant = null,
+  fetchedAt = new Date().toISOString(),
+}) {
+  const parsedUrl = new URL(serverUrl);
+  const normalizedChains = Array.isArray(chains)
+    ? chains.map(chain => String(chain).trim().toLowerCase()).filter(Boolean)
+    : parseChainList(chains);
+  const observedVolume = parseNonNegativeNumber(volumeUsdc);
+  const observedTxns = parseNonNegativeInteger(txns);
+  const observedBuyers = parseNonNegativeInteger(buyers);
+  const observedLatestHours = parseNonNegativeNumber(latestSeenHours);
+  const flags = [];
+  let riskScore = 0;
+  let trustScore = 50;
+
+  if (merchant?.assessment?.risk_level === "high") {
+    flags.push({
+      code: "SELLER_ADDRESS_HIGH_RISK",
+      severity: "critical",
+      detail: "The seller payment address has high-risk public address signals.",
+    });
+    riskScore += 70;
+    trustScore -= 45;
+  } else if (merchant?.assessment?.risk_level === "medium") {
+    flags.push({
+      code: "SELLER_ADDRESS_REVIEW",
+      severity: "medium",
+      detail: "The seller payment address has review-worthy public address signals.",
+    });
+    riskScore += 20;
+    trustScore -= 15;
+  }
+
+  if (observedTxns === null || observedBuyers === null || observedVolume === null) {
+    flags.push({
+      code: "INCOMPLETE_MARKETPLACE_STATS",
+      severity: "medium",
+      detail:
+        "Volume, transaction count, or buyer count was not supplied, so marketplace adoption cannot be fully scored.",
+    });
+    riskScore += 15;
+    trustScore -= 10;
+  }
+
+  if (observedTxns !== null && observedTxns === 0) {
+    flags.push({
+      code: "NO_OBSERVED_PAYMENTS",
+      severity: "medium",
+      detail: "No public x402 payments were supplied for this server.",
+    });
+    riskScore += 25;
+    trustScore -= 20;
+  }
+
+  if (observedBuyers !== null && observedTxns !== null && observedTxns >= 20) {
+    const txnsPerBuyer = observedBuyers > 0 ? observedTxns / observedBuyers : Infinity;
+    if (observedBuyers <= 2) {
+      flags.push({
+        code: "VERY_LOW_BUYER_DIVERSITY",
+        severity: "high",
+        detail: "Observed transaction history is concentrated in two or fewer buyers.",
+      });
+      riskScore += 35;
+      trustScore -= 30;
+    } else if (txnsPerBuyer >= 1000) {
+      flags.push({
+        code: "HIGH_TXN_PER_BUYER_RATIO",
+        severity: "medium",
+        detail: `Observed transactions per buyer is ${txnsPerBuyer.toFixed(2)}, which can indicate automation or concentrated demand.`,
+      });
+      riskScore += 15;
+      trustScore -= 10;
+    }
+  }
+
+  const averagePaymentUsdc =
+    observedVolume !== null && observedTxns && observedTxns > 0
+      ? observedVolume / observedTxns
+      : null;
+  if (averagePaymentUsdc !== null && averagePaymentUsdc < 0.0001) {
+    flags.push({
+      code: "MICRO_PAYMENT_VOLUME_DENSITY",
+      severity: "medium",
+      detail: `Average observed payment is ${averagePaymentUsdc.toFixed(8)} USDC, suggesting bot-scale microtransactions or possible volume shaping.`,
+    });
+    riskScore += 10;
+    trustScore -= 5;
+  }
+
+  if (observedLatestHours !== null) {
+    if (observedLatestHours > 24 * 14) {
+      flags.push({
+        code: "STALE_PAYMENT_ACTIVITY",
+        severity: "medium",
+        detail: "The latest supplied x402 payment is older than 14 days.",
+      });
+      riskScore += 15;
+      trustScore -= 15;
+    } else if (observedLatestHours <= 24) {
+      trustScore += 10;
+    }
+  }
+
+  if (observedBuyers !== null) {
+    if (observedBuyers >= 100) trustScore += 20;
+    else if (observedBuyers >= 10) trustScore += 10;
+  }
+  if (observedTxns !== null) {
+    if (observedTxns >= 100_000) trustScore += 15;
+    else if (observedTxns >= 1_000) trustScore += 8;
+  }
+  if (observedVolume !== null) {
+    if (observedVolume >= 1_000) trustScore += 10;
+    else if (observedVolume >= 10) trustScore += 5;
+  }
+  if (normalizedChains.length >= 2) trustScore += 5;
+
+  riskScore = Math.max(0, Math.min(100, Math.round(riskScore)));
+  trustScore = Math.max(0, Math.min(100, Math.round(trustScore)));
+  const riskLevel =
+    riskScore >= 70 ? "high" : riskScore >= 25 ? "medium" : "low";
+  const decision =
+    riskLevel === "high"
+      ? "review_or_block"
+      : trustScore >= 75
+        ? "allow"
+        : "review";
+
+  return {
+    product: "x402-server-trust",
+    schema_version: "1.0",
+    network: BASE_MAINNET,
+    server: {
+      requested_url: serverUrl,
+      origin: parsedUrl.origin,
+      host: parsedUrl.hostname,
+      seller,
+      chains: normalizedChains,
+    },
+    fetched_at: fetchedAt,
+    assessment: {
+      risk_level: riskLevel,
+      risk_score: riskScore,
+      trust_score: trustScore,
+      decision_hint: decision,
+      flags,
+    },
+    marketplace_activity: {
+      volume_usdc: observedVolume,
+      txns: observedTxns,
+      buyers: observedBuyers,
+      average_payment_usdc: averagePaymentUsdc,
+      txns_per_buyer:
+        observedTxns !== null && observedBuyers
+          ? observedTxns / observedBuyers
+          : null,
+      latest_seen_hours: observedLatestHours,
+    },
+    seller_address_summary: merchant
+      ? {
+          risk_level: merchant.assessment.risk_level,
+          risk_score: merchant.assessment.risk_score,
+          sampled_usdc_receipts:
+            merchant.receipt_sample?.sampled_usdc_receipts ?? null,
+          unique_payers: merchant.receipt_sample?.unique_payers ?? null,
+          top_payer_share_percent:
+            merchant.receipt_sample?.top_payer_share_percent ?? null,
+        }
+      : null,
+    provenance: {
+      scoring_model: "local heuristic v1",
+      suggested_sources: [
+        "x402scan marketplace statistics",
+        "Base Blockscout seller address data",
+        "Public x402 payment records",
+      ],
+    },
+    limitations: [
+      "Marketplace statistics are caller-supplied unless a seller address is provided for live Base enrichment.",
+      "High transaction count does not prove successful API delivery or independent customers.",
+      "This score is designed for preflight review, not as a legal compliance determination.",
+    ],
+  };
+}
+
+export async function x402ServerTrust(input, fetchImpl = fetch) {
+  const seller = input.seller || null;
+  const merchant =
+    seller && ADDRESS_PATTERN.test(seller)
+      ? await merchantTrust(seller, fetchImpl)
+      : null;
+  return buildX402ServerTrust({ ...input, seller, merchant });
+}
+
+function productPriceNumber(product) {
+  return parseNonNegativeNumber(String(product?.price ?? "").replace(/^\$/, ""));
+}
+
+function extractX402scanOrigin(html) {
+  const direct =
+    html.match(/"origin":"(https?:\/\/[^"]+)"/) ??
+    html.match(/\\"origin\\":\\"(https?:\\\/\\\/[^"\\]+)/);
+  return direct?.[1]?.replaceAll("\\/", "/") ?? null;
+}
+
+function extractX402scanResourceCount(html) {
+  const count =
+    html.match(/"_count":\{"resources":(\d+)\}/) ??
+    html.match(/\\"_count\\":\{\\"resources\\":(\d+)\}/);
+  return count ? Number(count[1]) : null;
+}
+
+function extractX402scanResourceUrls(html) {
+  return Array.from(
+    new Set(
+      Array.from(
+        html.matchAll(/https:\/\/base-agent-preflight\.bytoken2023\.workers\.dev\/v1\/x402\/[^"\\<\s]+/g),
+      ).map(match => match[0].replaceAll("\\/", "/")),
+    ),
+  ).slice(0, 80);
+}
+
+function extractPayToAddresses(html) {
+  return Array.from(
+    new Set(
+      Array.from(html.matchAll(/payTo\\?":\\?"(0x[a-fA-F0-9]{40})/g)).map(
+        match => match[1],
+      ),
+    ),
+  );
+}
+
+export function buildX402OriginDueDiligence({
+  serverUrl,
+  origin = null,
+  title = null,
+  seller = null,
+  resources = null,
+  resourceUrls = [],
+  payToAddresses = [],
+  txns = null,
+  buyers = null,
+  openapi = null,
+  serverTrust = null,
+  fetchedAt = new Date().toISOString(),
+}) {
+  const parsed = new URL(serverUrl);
+  const observedResources = parseNonNegativeInteger(resources);
+  const observedTxns = parseNonNegativeInteger(txns);
+  const observedBuyers = parseNonNegativeInteger(buyers);
+  const uniquePayTo = Array.from(
+    new Set(
+      [seller, ...payToAddresses]
+        .filter(Boolean)
+        .map(address => String(address).toLowerCase()),
+    ),
+  );
+  const flags = [];
+  let riskScore = 0;
+  let confidenceScore = 45;
+
+  if (!origin && parsed.hostname !== "www.x402scan.com") {
+    origin = parsed.origin;
+  }
+  if (!origin) {
+    flags.push({
+      code: "ORIGIN_NOT_RESOLVED",
+      severity: "medium",
+      detail: "The x402scan/server page did not expose a resolved service origin.",
+    });
+    riskScore += 20;
+  } else {
+    confidenceScore += 10;
+  }
+
+  if (observedResources === null && resourceUrls.length === 0) {
+    flags.push({
+      code: "NO_RESOURCE_INVENTORY",
+      severity: "medium",
+      detail: "No resource count or resource URLs were available for this origin.",
+    });
+    riskScore += 20;
+  } else {
+    confidenceScore += Math.min(20, Math.max(observedResources ?? 0, resourceUrls.length) / 2);
+  }
+
+  if (uniquePayTo.length === 0) {
+    flags.push({
+      code: "NO_PAYMENT_RECIPIENT_EVIDENCE",
+      severity: "medium",
+      detail: "No payment recipient address was observed or supplied.",
+    });
+    riskScore += 20;
+  } else if (uniquePayTo.length > 1) {
+    flags.push({
+      code: "MULTIPLE_PAYMENT_RECIPIENTS",
+      severity: "medium",
+      detail: "Multiple payment recipients were observed; verify this is intentional.",
+    });
+    riskScore += 15;
+  } else {
+    confidenceScore += 10;
+  }
+
+  if (openapi) {
+    if (openapi.assessment?.risk_level === "high") {
+      flags.push({
+        code: "OPENAPI_HIGH_RISK",
+        severity: "high",
+        detail: "OpenAPI preflight returned high structural risk.",
+      });
+      riskScore += 35;
+    } else if (openapi.assessment?.risk_level === "medium") {
+      flags.push({
+        code: "OPENAPI_REVIEW",
+        severity: "medium",
+        detail: "OpenAPI preflight returned review-worthy warnings.",
+      });
+      riskScore += 15;
+    }
+    confidenceScore += 10;
+  }
+
+  if (serverTrust?.assessment?.risk_level === "high") {
+    flags.push({
+      code: "SERVER_TRUST_HIGH_RISK",
+      severity: "high",
+      detail: "Marketplace activity and seller evidence scored high risk.",
+    });
+    riskScore += 35;
+  } else if (serverTrust?.assessment?.risk_level === "medium") {
+    flags.push({
+      code: "SERVER_TRUST_REVIEW",
+      severity: "medium",
+      detail: "Marketplace activity and seller evidence require review.",
+    });
+    riskScore += 15;
+  }
+
+  if (observedTxns !== null && observedBuyers !== null && observedTxns >= 20 && observedBuyers <= 2) {
+    flags.push({
+      code: "CONCENTRATED_BUYER_ACTIVITY",
+      severity: "medium",
+      detail: "Observed activity is concentrated in very few buyers.",
+    });
+    riskScore += 15;
+  }
+
+  riskScore = Math.max(0, Math.min(100, Math.round(riskScore)));
+  confidenceScore = Math.max(0, Math.min(100, Math.round(confidenceScore)));
+  const riskLevel =
+    riskScore >= 70 ? "high" : riskScore >= 25 ? "medium" : "low";
+
+  return {
+    product: "x402-origin-due-diligence",
+    schema_version: "1.0",
+    server_url: serverUrl,
+    origin,
+    title,
+    fetched_at: fetchedAt,
+    assessment: {
+      risk_level: riskLevel,
+      risk_score: riskScore,
+      confidence_score: confidenceScore,
+      decision_hint:
+        riskLevel === "high"
+          ? "Do not let an autonomous buyer spend before human review and endpoint-level checks."
+          : riskLevel === "medium"
+            ? "Allow only low-value probes after endpoint preflight and Payment Guard review."
+            : "Origin-level evidence is usable for low-value autonomous spend with normal guardrails.",
+      flags,
+    },
+    inventory: {
+      observed_resource_count: observedResources ?? resourceUrls.length,
+      sampled_resources: resourceUrls.slice(0, 12),
+      pay_to_addresses: uniquePayTo,
+    },
+    marketplace_activity: {
+      txns: observedTxns,
+      buyers: observedBuyers,
+      txns_per_buyer:
+        observedTxns !== null && observedBuyers
+          ? observedTxns / Math.max(observedBuyers, 1)
+          : null,
+    },
+    supporting_checks: {
+      openapi_risk_level: openapi?.assessment?.risk_level ?? null,
+      openapi_operation_count: openapi?.specification?.operation_count ?? null,
+      server_trust_risk_level: serverTrust?.assessment?.risk_level ?? null,
+      server_trust_score: serverTrust?.assessment?.trust_score ?? null,
+    },
+    recommended_next_checks: [
+      "Run x402-resource-compare for the specific resources that can satisfy the task.",
+      "Run x402-endpoint-preflight before paying any endpoint.",
+      "Use agent-payment-guard with task budget and recipient allowlist before spending.",
+    ],
+    limitations: [
+      "x402scan pages can lag current origin metadata.",
+      "Public purchase activity can come from ecosystem testing bots, not confirmed human demand.",
+      "This does not prove paid delivery quality.",
+    ],
+  };
+}
+
+export async function x402OriginDueDiligence(input, fetchImpl = fetch) {
+  const parsed = validatePublicUrl(input.serverUrl);
+  const suppliedSeller = input.seller || null;
+  let html = "";
+  let origin = parsed.origin;
+  let title = null;
+  let resourceUrls = [];
+  let payToAddresses = suppliedSeller ? [suppliedSeller] : [];
+  let resources = input.resources ?? null;
+
+  try {
+    const { response } = await fetchPublicResource(parsed.toString(), {
+      fetchImpl,
+      headers: { accept: "text/html,application/json,*/*;q=0.5" },
+    });
+    const { bytes } = await readResponseBytes(response, MAX_DOCUMENT_BYTES);
+    html = bytesToText(bytes);
+    origin = extractX402scanOrigin(html) ?? origin;
+    title = html.match(/<title>([^<]+)<\/title>/i)?.[1] ?? null;
+    resources = resources ?? extractX402scanResourceCount(html);
+    resourceUrls = extractX402scanResourceUrls(html);
+    payToAddresses = [...payToAddresses, ...extractPayToAddresses(html)];
+  } catch {
+    // Best-effort metadata enrichment; builder will report missing evidence.
+  }
+
+  const openapiUrl = origin ? new URL("/openapi.json", origin).toString() : null;
+  let openapi = null;
+  if (openapiUrl && origin === SERVICE_ORIGIN) {
+    const document = openApi(SERVICE_ORIGIN);
+    openapi = await buildOpenApiSpecPreflight({
+      requestedUrl: openapiUrl,
+      finalUrl: openapiUrl,
+      document,
+      raw: JSON.stringify(document),
+    });
+  } else if (openapiUrl) {
+    try {
+      openapi = await openApiSpecPreflight(openapiUrl, fetchImpl);
+    } catch {
+      openapi = null;
+    }
+  }
+
+  const serverTrust = buildX402ServerTrust({
+    serverUrl: origin ?? parsed.origin,
+    seller: suppliedSeller || payToAddresses[0] || null,
+    txns: input.txns,
+    buyers: input.buyers,
+    chains: "base",
+  });
+
+  return buildX402OriginDueDiligence({
+    serverUrl: input.serverUrl,
+    origin,
+    title,
+    seller: suppliedSeller,
+    resources,
+    resourceUrls,
+    payToAddresses,
+    txns: input.txns,
+    buyers: input.buyers,
+    openapi,
+    serverTrust,
+  });
+}
+
+function parseResourceList(value) {
+  return String(value ?? "")
+    .split(",")
+    .map(item => item.trim())
+    .filter(Boolean)
+    .slice(0, 5);
+}
+
+export function buildX402ResourceCompare({
+  resources,
+  budgetUsdc = null,
+  fetchedAt = new Date().toISOString(),
+}) {
+  const budget = parseNonNegativeNumber(budgetUsdc);
+  const candidates = resources.map((resource, index) => {
+    const amountUsdc =
+      resource.amount_usdc ??
+      (resource.amount_atomic && resource.asset?.toLowerCase?.() === USDC.toLowerCase()
+        ? formatUnits(BigInt(resource.amount_atomic), 6)
+        : null);
+    const price = parseNonNegativeNumber(amountUsdc);
+    const flags = [...(resource.flags ?? [])];
+    let score = 60;
+    if (resource.risk_level === "high") score -= 50;
+    else if (resource.risk_level === "medium") score -= 20;
+    if (price === null) {
+      flags.push({
+        code: "PRICE_UNKNOWN",
+        severity: "medium",
+        detail: "No canonical Base USDC price was decoded.",
+      });
+      score -= 20;
+    } else {
+      score += Math.max(0, 20 - price * 500);
+      if (budget !== null && price > budget) {
+        flags.push({
+          code: "OVER_BUDGET",
+          severity: "medium",
+          detail: `Resource price ${price} USDC exceeds budget ${budget} USDC.`,
+        });
+        score -= 35;
+      }
+    }
+    if (resource.pay_to) score += 5;
+    if (resource.description) score += 5;
+    score = Math.max(0, Math.min(100, Math.round(score)));
+    return {
+      rank: index + 1,
+      url: resource.url,
+      description: resource.description ?? null,
+      pay_to: resource.pay_to ?? null,
+      amount_usdc: price,
+      risk_level: resource.risk_level ?? "unknown",
+      score,
+      flags,
+    };
+  });
+  candidates.sort((a, b) => b.score - a.score);
+  candidates.forEach((candidate, index) => {
+    candidate.rank = index + 1;
+  });
+  return {
+    product: "x402-resource-compare",
+    schema_version: "1.0",
+    fetched_at: fetchedAt,
+    budget_usdc: budget,
+    recommendation: candidates[0] ?? null,
+    candidates,
+    decision_hint:
+      candidates[0]?.score >= 75
+        ? "Use the top-ranked resource for low-value autonomous spend with Payment Guard."
+        : candidates[0]?.score >= 45
+          ? "Use the top-ranked resource only after endpoint preflight and budget guardrails."
+          : "Do not pay automatically; no candidate has enough clean metadata.",
+    limitations: [
+      "Comparison is based on unpaid x402 metadata and caller-supplied URLs.",
+      "A lower price does not prove better delivery quality.",
+    ],
+  };
+}
+
+export async function x402ResourceCompare(input, fetchImpl = fetch) {
+  const urls = parseResourceList(input.resources);
+  if (urls.length < 2 || urls.length > 5) {
+    throw new Error("resource_compare_requires_two_to_five_urls");
+  }
+  const resources = await Promise.all(
+    urls.map(async url => {
+      const checked = await x402EndpointPreflight(url, fetchImpl);
+      const firstAccept = checked.x402.accepts[0] ?? {};
+      return {
+        url: checked.url,
+        description: checked.x402.resource?.description ?? checked.x402.resource?.url ?? null,
+        pay_to: firstAccept.pay_to ?? null,
+        amount_atomic: firstAccept.amount_atomic ?? null,
+        amount_usdc: firstAccept.amount_usdc ?? null,
+        asset: firstAccept.asset ?? null,
+        risk_level: checked.assessment.risk_level,
+        flags: checked.assessment.flags,
+      };
+    }),
+  );
+  return buildX402ResourceCompare({
+    resources,
+    budgetUsdc: input.budgetUsdc,
+  });
+}
+
+function routeStep(productId, reason) {
+  const product = PRODUCTS_BY_ID[productId];
+  return {
+    product: product.id,
+    path: product.path,
+    price_usdc: product.price,
+    reason,
+    stop_if: productId === "agent-payment-guard"
+      ? "Stop if decision is REVIEW or BLOCK."
+      : "Stop or escalate if risk_level is high or flags include critical/high severity.",
+  };
+}
+
+export function buildAgentSpendRoutePlan({
+  task,
+  budgetUsdc = "0.02",
+  riskTolerance = "medium",
+  fetchedAt = new Date().toISOString(),
+}) {
+  const lowerTask = String(task).toLowerCase();
+  const budget = parseNonNegativeNumber(budgetUsdc, 0.02);
+  let route;
+  if (/token|pool|trade|buy|sell|exit|liquidity|copytrade/.test(lowerTask)) {
+    route = [
+      routeStep("base-alpha-risk-context", "Cheap first-pass risk/alpha screen."),
+      routeStep("base-token-exit-risk", "Check whether the bot can exit safely before entry or while holding."),
+      routeStep("base-token-alpha-snapshot", "Confirm liquidity, volume, and buy/sell imbalance when the first screen passes."),
+      routeStep("agent-payment-guard", "Enforce spend budget and recipient policy before paying external services."),
+    ];
+  } else if (/rpc|chain.?data|indexed|sql|archive|trace|fork|blockchain data/.test(lowerTask)) {
+    route = [
+      routeStep("agent-rpc-preflight", "Screen endpoint, method, price, and budget before chain-data access."),
+      routeStep("rpc-capability-probe", "Check archive, trace, logs, WebSocket, and local-fork requirements."),
+      routeStep("indexed-chain-query-preflight", "Preflight indexed-data query shape when SQL or analytics data is involved."),
+      routeStep("x402-rpc-payment-guard", "Guard the final RPC or indexed-data payment before wallet signing."),
+    ];
+  } else if (/x402|api|server|merchant|pay|payment/.test(lowerTask)) {
+    route = [
+      routeStep("x402-origin-due-diligence", "Screen the server/origin before choosing a paid resource."),
+      routeStep("x402-resource-compare", "Rank candidate resources against the task and budget."),
+      routeStep("x402-endpoint-preflight", "Decode the final resource payment requirement."),
+      routeStep("agent-payment-guard", "Enforce budget, allowlist, replay protection, and audit state before spending."),
+    ];
+  } else if (/package|npm|pypi|github|repo|openapi|agent|domain|tool/.test(lowerTask)) {
+    route = [
+      routeStep("domain-trust-preflight", "Check the domain before trusting hosted metadata."),
+      routeStep("openapi-spec-preflight", "Validate API/tool schema before import or payment."),
+      routeStep("github-repository-health", "Review repository maintenance when code dependency is involved."),
+      routeStep("agent-payment-guard", "Guard the final paid call or integration spend."),
+    ];
+  } else {
+    route = [
+      routeStep("agent-payment-guard", "Default budget and policy guard for autonomous spend."),
+      routeStep("x402-endpoint-preflight", "Decode the endpoint before payment."),
+      routeStep("x402-origin-due-diligence", "Escalate to origin review when endpoint metadata is unclear."),
+    ];
+  }
+
+  const affordable = [];
+  let total = 0;
+  for (const step of route) {
+    const price = parseNonNegativeNumber(step.price_usdc.replace(/^\$/, ""), 0);
+    if (total + price <= budget || affordable.length === 0) {
+      affordable.push(step);
+      total += price;
+    }
+  }
+  return {
+    product: "agent-spend-route-plan",
+    schema_version: "1.0",
+    task,
+    risk_tolerance: riskTolerance,
+    budget_usdc: budget,
+    fetched_at: fetchedAt,
+    recommended_route: affordable,
+    full_route: route,
+    estimated_cost_usdc: Number(total.toFixed(6)),
+    stop_conditions: [
+      "Any high-risk or critical flag appears.",
+      "Decoded payTo is not on the buyer's allowlist.",
+      "Cumulative route cost exceeds budget.",
+      riskTolerance === "low"
+        ? "Any medium-risk finding appears."
+        : "Multiple medium-risk findings appear across route steps.",
+    ],
+    escalation:
+      affordable.length < route.length
+        ? "Budget is too small for the full route; run the affordable prefix and escalate before paying more."
+        : "Route fits budget; use Payment Guard before any external paid call.",
+    limitations: [
+      "This is a routing plan over this service catalog, not a guarantee of task success.",
+      "Actual downstream x402 prices can differ from local catalog examples.",
+    ],
+  };
+}
+
+const AGENT_BUYER_ROLE_POLICIES = {
+  research_agent: {
+    label: "Research Agent",
+    allowed_categories: [
+      "wallet_risk",
+      "token_risk",
+      "market_intelligence",
+      "chain_data",
+      "api_security",
+      "protocol_research",
+    ],
+    approval_categories: ["invoice_verification", "payment_execution", "production_deploy"],
+    denied_categories: ["payroll", "customer_pii"],
+    default_limit_usdc: 1,
+  },
+  writer_agent: {
+    label: "Writer Agent",
+    allowed_categories: ["content_research", "public_docs", "market_summary"],
+    approval_categories: ["wallet_risk", "token_risk", "market_intelligence"],
+    denied_categories: ["payment_execution", "production_deploy", "invoice_verification", "customer_pii"],
+    default_limit_usdc: 0.1,
+  },
+  accounting_agent: {
+    label: "Accounting Agent",
+    allowed_categories: ["invoice_verification", "receipt_reconciliation", "vendor_due_diligence"],
+    approval_categories: ["wallet_risk", "payment_execution"],
+    denied_categories: ["market_intelligence", "token_risk", "trading_alpha", "production_deploy"],
+    default_limit_usdc: 0.5,
+  },
+  finance_agent: {
+    label: "Finance Agent",
+    allowed_categories: ["invoice_verification", "receipt_reconciliation", "treasury_risk", "vendor_due_diligence"],
+    approval_categories: ["payment_execution", "wallet_risk", "market_intelligence"],
+    denied_categories: ["production_deploy", "code_execution"],
+    default_limit_usdc: 1,
+  },
+  operator_agent: {
+    label: "Operator Agent",
+    allowed_categories: ["service_monitoring", "api_security", "domain_trust", "openapi_preflight", "github_health"],
+    approval_categories: ["production_deploy", "payment_execution", "wallet_risk"],
+    denied_categories: ["payroll", "customer_pii"],
+    default_limit_usdc: 0.25,
+  },
+};
+
+function normalizePolicyToken(value) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function agentBuyerDecisionInput({
+  agentRole,
+  productCategory,
+  purpose = "",
+  priceUsdc = "0",
+  dataSensitivity = "medium",
+  agentStatus = "active",
+  approvalRef = "",
+  fetchedAt = new Date().toISOString(),
+}) {
+  return {
+    agent_role: normalizePolicyToken(agentRole),
+    product_category: normalizePolicyToken(productCategory),
+    purpose: normalizePolicyToken(purpose),
+    price_usdc: parseNonNegativeNumber(priceUsdc, 0),
+    data_sensitivity: normalizePolicyToken(dataSensitivity || "medium"),
+    agent_status: normalizePolicyToken(agentStatus || "active"),
+    approval_ref: String(approvalRef ?? "").trim(),
+    fetched_at: fetchedAt,
+  };
+}
+
+export function buildAgentBuyerIdentityPreflight(input) {
+  const normalized = agentBuyerDecisionInput(input);
+  const rolePolicy = AGENT_BUYER_ROLE_POLICIES[normalized.agent_role];
+  const reasonCodes = [];
+  const flags = [];
+  let decision = "APPROVAL_REQUIRED";
+  let riskScore = 40;
+
+  if (!rolePolicy) {
+    return {
+      product: "agent-buyer-identity-preflight",
+      schema_version: "1.0",
+      decision: "DENY",
+      reason_codes: ["UNKNOWN_AGENT_ROLE"],
+      risk_score: 100,
+      role_product_fit: "unknown_role",
+      input: normalized,
+      recognized_agent_roles: Object.keys(AGENT_BUYER_ROLE_POLICIES),
+      recommendation:
+        "Deny the purchase until the buyer agent has a registered role and policy.",
+      limitations: [
+        "This is a policy preflight, not a wallet, signer, or settlement service.",
+      ],
+    };
+  }
+
+  if (normalized.agent_status === "disabled" || normalized.agent_status === "paused") {
+    return {
+      product: "agent-buyer-identity-preflight",
+      schema_version: "1.0",
+      decision: "DENY",
+      reason_codes: [`AGENT_${normalized.agent_status.toUpperCase()}`],
+      risk_score: 100,
+      role_product_fit: "blocked_lifecycle",
+      input: normalized,
+      agent_policy: rolePolicy,
+      recommendation: "Do not buy. Reactivate the agent only through owner review.",
+      limitations: [
+        "This is a policy preflight, not a wallet, signer, or settlement service.",
+      ],
+    };
+  }
+
+  reasonCodes.push("AGENT_ROLE_RECOGNIZED", "AGENT_ACTIVE");
+
+  if (rolePolicy.denied_categories.includes(normalized.product_category)) {
+    decision = "DENY";
+    riskScore = 90;
+    reasonCodes.push("ROLE_PRODUCT_CATEGORY_DENIED");
+    flags.push({
+      code: "ROLE_PRODUCT_MISMATCH",
+      severity: "high",
+      detail: `${rolePolicy.label} should not buy ${normalized.product_category}.`,
+    });
+  } else if (rolePolicy.allowed_categories.includes(normalized.product_category)) {
+    decision = "ALLOW";
+    riskScore = 10;
+    reasonCodes.push("ROLE_ALLOWED_FOR_PRODUCT_CATEGORY");
+  } else if (rolePolicy.approval_categories.includes(normalized.product_category)) {
+    decision = "APPROVAL_REQUIRED";
+    riskScore = 55;
+    reasonCodes.push("ROLE_REQUIRES_APPROVAL_FOR_PRODUCT_CATEGORY");
+  } else {
+    decision = "APPROVAL_REQUIRED";
+    riskScore = 60;
+    reasonCodes.push("PRODUCT_CATEGORY_NOT_IN_ROLE_POLICY");
+  }
+
+  if (normalized.data_sensitivity === "high" || normalized.data_sensitivity === "restricted") {
+    reasonCodes.push("SENSITIVE_DATA_CATEGORY");
+    riskScore = Math.max(riskScore, normalized.data_sensitivity === "restricted" ? 85 : 65);
+    if (decision === "ALLOW") decision = "APPROVAL_REQUIRED";
+    flags.push({
+      code: "SENSITIVE_DATA_PURCHASE",
+      severity: normalized.data_sensitivity === "restricted" ? "high" : "medium",
+      detail: `Data sensitivity is ${normalized.data_sensitivity}; require owner review unless explicitly pre-approved.`,
+    });
+  }
+
+  if (normalized.price_usdc > rolePolicy.default_limit_usdc) {
+    reasonCodes.push("PRICE_EXCEEDS_ROLE_LIMIT");
+    riskScore = Math.max(riskScore, 70);
+    if (decision === "ALLOW") decision = "APPROVAL_REQUIRED";
+    flags.push({
+      code: "ROLE_SPEND_LIMIT_EXCEEDED",
+      severity: "medium",
+      detail: `Price ${normalized.price_usdc} USDC exceeds ${rolePolicy.label} default limit ${rolePolicy.default_limit_usdc} USDC.`,
+    });
+  } else {
+    reasonCodes.push("PRICE_WITHIN_ROLE_LIMIT");
+  }
+
+  if (decision === "APPROVAL_REQUIRED" && normalized.approval_ref) {
+    reasonCodes.push("APPROVAL_REFERENCE_PRESENT");
+  }
+
+  const roleProductFit =
+    decision === "ALLOW"
+      ? "fit"
+      : decision === "DENY"
+        ? "mismatch"
+        : "needs_owner_review";
+
+  return {
+    product: "agent-buyer-identity-preflight",
+    schema_version: "1.0",
+    fetched_at: normalized.fetched_at,
+    decision,
+    reason_codes: reasonCodes,
+    risk_score: Math.max(0, Math.min(100, riskScore)),
+    role_product_fit: roleProductFit,
+    input: normalized,
+    agent_policy: rolePolicy,
+    flags,
+    recommended_next_action:
+      decision === "ALLOW"
+        ? "Proceed to x402 payment only if the payment guard also allows the spend."
+        : decision === "DENY"
+          ? "Do not buy this x402 service with this agent role."
+          : "Request owner approval or route the purchase to a better-matched agent role.",
+    audit_required: true,
+    limitations: [
+      "This preflight uses declared or credential-mapped agent role, not proof of human identity.",
+      "This endpoint does not custody funds, sign transactions, or settle x402 payments.",
+      "Production deployments should bind agent_role to authenticated credentials, not trust query parameters.",
+    ],
+  };
+}
+
+export function buildAgentBuyerPolicyKitDelivery({
+  format = "manifest",
+  buyerType = "developer",
+  fetchedAt = new Date().toISOString(),
+} = {}) {
+  const normalizedFormat = normalizePolicyToken(format || "manifest");
+  const normalizedBuyerType = normalizePolicyToken(buyerType || "developer");
+  const roles = Object.fromEntries(
+    Object.entries(AGENT_BUYER_ROLE_POLICIES).map(([role, policy]) => [
+      role,
+      {
+        label: policy.label,
+        default_limit_usdc: policy.default_limit_usdc,
+        allowed_categories: policy.allowed_categories,
+        approval_required_categories: policy.approval_categories,
+        denied_categories: policy.denied_categories,
+      },
+    ]),
+  );
+  const roleProductMatrix = [
+    ["research_agent", "wallet_risk", "ALLOW"],
+    ["writer_agent", "wallet_risk", "APPROVAL_REQUIRED"],
+    ["accounting_agent", "market_intelligence", "DENY"],
+    ["accounting_agent", "invoice_verification", "ALLOW"],
+    ["finance_agent", "payment_execution", "APPROVAL_REQUIRED"],
+    ["operator_agent", "api_security", "ALLOW"],
+  ].map(([agent_role, product_category, decision]) => ({
+    agent_role,
+    product_category,
+    decision,
+  }));
+  return {
+    product: "agent-buyer-policy-kit",
+    schema_version: "1.0",
+    fetched_at: fetchedAt,
+    delivery_format: ["manifest", "policy", "quickstart"].includes(normalizedFormat)
+      ? normalizedFormat
+      : "manifest",
+    buyer_type: ["developer", "startup", "enterprise"].includes(normalizedBuyerType)
+      ? normalizedBuyerType
+      : "developer",
+    price_usdc: "49.00",
+    positioning:
+      "Buy-and-customize Agent IAM policy kit for x402 buyers and agent runtimes.",
+    package: {
+      npm_name: "@signgate/agent-buyer-policy-kit",
+      python_name: "signgate-agent-buyer-policy-kit",
+      version: "0.1.0",
+      local_path: "packages/agent-buyer-policy-kit",
+      github_snapshot_commit: "b3855b11761a961f5c634dfeb4e338590a1906a3",
+    },
+    included_files: [
+      "README.md",
+      "PRICING.md",
+      "RELEASE_CHECKLIST.md",
+      "policy/default-agent-buyer-policy.json",
+      "policy/product-categories.json",
+      "policy/role-product-matrix.md",
+      "src/index.js",
+      "test/evaluator.test.js",
+      "python/signgate_agent_buyer_policy_kit/evaluator.py",
+      "python/tests/test_evaluator.py",
+    ],
+    starter_policy: {
+      policy_version: "signgate-agent-buyer-policy-2026-07-14",
+      decisions: ["ALLOW", "DENY", "APPROVAL_REQUIRED"],
+      roles,
+      role_product_matrix: roleProductMatrix,
+      global_rules: {
+        unknown_role: "DENY",
+        inactive_agent: "DENY",
+        restricted_data: "DENY",
+        high_sensitivity_data: "APPROVAL_REQUIRED",
+        price_over_role_limit: "APPROVAL_REQUIRED",
+        payment_execution: "APPROVAL_REQUIRED",
+      },
+    },
+    javascript_quickstart: {
+      install: "npm install @signgate/agent-buyer-policy-kit",
+      example:
+        'import { evaluateAgentBuyerPreflight } from "@signgate/agent-buyer-policy-kit";\n\nconst result = evaluateAgentBuyerPreflight({\n  agent_role: "research_agent",\n  product_category: "wallet_risk",\n  purpose: "security_research",\n  price_usdc: "0.005"\n});\n\nconsole.log(result.decision);',
+      test: "npm test",
+    },
+    python_quickstart: {
+      install: "pip install signgate-agent-buyer-policy-kit",
+      example:
+        'from signgate_agent_buyer_policy_kit import evaluate_agent_buyer_preflight\n\nresult = evaluate_agent_buyer_preflight({\n    "agent_role": "research_agent",\n    "product_category": "wallet_risk",\n    "purpose": "security_research",\n    "price_usdc": "0.005",\n})\n\nprint(result["decision"])',
+      test: "python3 -m unittest discover -s tests",
+    },
+    integration_targets: [
+      "x402 buyers",
+      "MCP clients",
+      "agent runtimes",
+      "wallet automation",
+      "API marketplaces",
+      "enterprise AI governance pilots",
+    ],
+    release_terms: {
+      license_status: "commercial_draft",
+      public_npm_publish: "not_yet_published",
+      public_pypi_publish: "not_yet_published",
+      support: "starter kit; no custody, signing, token approval, or money movement",
+      customization:
+        "Customers should edit policy JSON, role/category matrix, thresholds, approval rules, and audit bindings.",
+    },
+    limitations: [
+      "This paid delivery returns the policy kit manifest and starter policy content; public package registries are not live yet.",
+      "Production use should bind agent_role to authenticated credentials instead of trusting plain query parameters.",
+      "The kit does not custody funds, sign transactions, approve tokens, or guarantee seller delivery.",
+    ],
+  };
+}
+
+function parseBooleanString(value, fallback = false) {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return fallback;
+}
+
+function parseMethodList(value) {
+  return String(value ?? "")
+    .split(",")
+    .map(method => method.trim())
+    .filter(Boolean)
+    .slice(0, 20);
+}
+
+function rpcMethodRisk(method) {
+  const normalized = String(method ?? "").toLowerCase();
+  if (/debug_|trace_|admin_|personal_|txpool_|miner_/.test(normalized)) {
+    return {
+      level: "high",
+      score: 45,
+      flag: {
+        code: "SENSITIVE_RPC_METHOD",
+        severity: "high",
+        detail: "The requested method is trace, node-admin, mempool, or signer-adjacent and should not be paid automatically.",
+      },
+    };
+  }
+  if (/sendrawtransaction|eth_sendtransaction|eth_sign|sign/.test(normalized)) {
+    return {
+      level: "high",
+      score: 55,
+      flag: {
+        code: "WRITE_OR_SIGNING_METHOD",
+        severity: "high",
+        detail: "The requested method can broadcast or sign and is outside read-only chain-data preflight.",
+      },
+    };
+  }
+  if (/getstorageat|getproof|getlogs|getblock|gettransaction|getreceipt|call|blocknumber|chainid/.test(normalized)) {
+    return { level: "low", score: 0, flag: null };
+  }
+  return {
+    level: "medium",
+    score: 12,
+    flag: {
+      code: "UNCLASSIFIED_RPC_METHOD",
+      severity: "medium",
+      detail: "The method is not in the known read-only allowlist; review before autonomous spend.",
+    },
+  };
+}
+
+function chainDataDecision(riskScore) {
+  if (riskScore >= 70) return "BLOCK";
+  if (riskScore >= 25) return "REVIEW";
+  return "ALLOW";
+}
+
+function chainDataRiskLevel(riskScore) {
+  if (riskScore >= 70) return "high";
+  if (riskScore >= 25) return "medium";
+  return "low";
+}
+
+export function buildAgentRpcPreflight({
+  endpointUrl,
+  chain,
+  method,
+  maxPriceUsdc = null,
+  sessionBudgetUsdc = null,
+  fetchedAt = new Date().toISOString(),
+}) {
+  const parsed = validatePublicUrl(endpointUrl);
+  const price = parseNonNegativeNumber(maxPriceUsdc);
+  const budget = parseNonNegativeNumber(sessionBudgetUsdc);
+  const methodRisk = rpcMethodRisk(method);
+  const flags = [];
+  let riskScore = methodRisk.score;
+  if (methodRisk.flag) flags.push(methodRisk.flag);
+  if (parsed.protocol !== "https:") {
+    flags.push({
+      code: "NON_HTTPS_ENDPOINT",
+      severity: "high",
+      detail: "Paid agent data access should use HTTPS endpoints.",
+    });
+    riskScore += 35;
+  }
+  if (price !== null && budget !== null && price > budget) {
+    flags.push({
+      code: "PRICE_EXCEEDS_SESSION_BUDGET",
+      severity: "high",
+      detail: "The requested price exceeds the remaining session budget.",
+    });
+    riskScore += 40;
+  }
+  if (price !== null && price > 0.05) {
+    flags.push({
+      code: "HIGH_PRICE_FOR_RPC_READ",
+      severity: "medium",
+      detail: "The requested price is high for a single read-oriented chain-data call.",
+    });
+    riskScore += 15;
+  }
+  riskScore = Math.max(0, Math.min(100, Math.round(riskScore)));
+  return {
+    product: "agent-rpc-preflight",
+    schema_version: "1.0",
+    fetched_at: fetchedAt,
+    endpoint: {
+      requested_url: endpointUrl,
+      origin: parsed.origin,
+      host: parsed.hostname,
+      chain,
+      method,
+    },
+    payment_context: {
+      max_price_usdc: price,
+      session_budget_usdc: budget,
+      budget_fit: price === null || budget === null ? "unknown" : price <= budget,
+    },
+    assessment: {
+      decision: chainDataDecision(riskScore),
+      risk_level: chainDataRiskLevel(riskScore),
+      risk_score: riskScore,
+      flags,
+      next_action:
+        riskScore >= 70
+          ? "Do not let the agent pay automatically."
+          : riskScore >= 25
+            ? "Require Payment Guard review or a stricter policy before signing."
+            : "Allow low-value read-only use with normal budget guardrails.",
+    },
+    recommended_next_checks: [
+      "Run rpc-capability-probe when the workflow needs historical state, trace, WebSocket, or local-fork compatibility.",
+      "Run x402-rpc-payment-guard immediately before wallet signing.",
+    ],
+    limitations: [
+      "This endpoint does not call the upstream data provider.",
+      "Capability support must be verified by a live probe before production reliance.",
+    ],
+  };
+}
+
+export function buildRpcCapabilityProbe({
+  chain,
+  methods,
+  historicalBlock = null,
+  requiresTrace = false,
+  requiresWebsocket = false,
+  fetchedAt = new Date().toISOString(),
+}) {
+  const methodList = parseMethodList(methods);
+  const historical = parseNonNegativeInteger(historicalBlock);
+  const flags = [];
+  let fitScore = 70;
+  const sensitiveMethods = methodList
+    .map(method => ({ method, risk: rpcMethodRisk(method) }))
+    .filter(item => item.risk.flag);
+  for (const item of sensitiveMethods) {
+    flags.push({ ...item.risk.flag, method: item.method });
+    fitScore -= item.risk.level === "high" ? 25 : 10;
+  }
+  if (historical !== null) {
+    flags.push({
+      code: "ARCHIVE_STATE_REQUIRED",
+      severity: "medium",
+      detail: "Historical block reads require archive or equivalent state support.",
+    });
+    fitScore -= 10;
+  }
+  if (requiresTrace) {
+    flags.push({
+      code: "TRACE_REQUIRED",
+      severity: "medium",
+      detail: "Trace workflows require explicit debug or trace support and can fail on standard RPC routes.",
+    });
+    fitScore -= 15;
+  }
+  if (requiresWebsocket) {
+    flags.push({
+      code: "SUBSCRIPTION_ROUTE_REQUIRED",
+      severity: "medium",
+      detail: "WebSocket/subscription workflows need a compatible transport, not only HTTP JSON-RPC.",
+    });
+    fitScore -= 10;
+  }
+  fitScore = Math.max(0, Math.min(100, Math.round(fitScore)));
+  const researchFit =
+    fitScore >= 70 ? "good" : fitScore >= 40 ? "needs_live_probe" : "poor";
+  return {
+    product: "rpc-capability-probe",
+    schema_version: "1.0",
+    fetched_at: fetchedAt,
+    chain,
+    requested_capabilities: {
+      methods: methodList,
+      historical_block: historical,
+      requires_trace: requiresTrace,
+      requires_websocket: requiresWebsocket,
+    },
+    assessment: {
+      research_fit: researchFit,
+      fit_score: fitScore,
+      risk_level: chainDataRiskLevel(100 - fitScore),
+      flags,
+      local_fork_readiness:
+        historical !== null || requiresTrace
+          ? "verify_archive_and_trace_before_use"
+          : "basic_read_only_route_may_be_enough",
+    },
+    recommended_live_probes: [
+      "eth_chainId",
+      "eth_blockNumber",
+      ...(methodList.includes("eth_getLogs") ? ["eth_getLogs"] : []),
+      ...(methodList.includes("eth_getStorageAt") ? ["eth_getStorageAt at the target block"] : []),
+      ...(requiresTrace ? ["debug_traceTransaction or trace_transaction"] : []),
+    ],
+    limitations: [
+      "This is a planning probe and does not perform live RPC calls.",
+      "Provider-specific archive, trace, REST, gRPC-Web, and WebSocket behavior must be tested on the final route.",
+    ],
+  };
+}
+
+export function buildAgentChainDataRoutePlan({
+  task,
+  chain,
+  dataNeed = "mixed",
+  budgetUsdc = "0.02",
+  riskTolerance = "medium",
+  fetchedAt = new Date().toISOString(),
+}) {
+  const budget = parseNonNegativeNumber(budgetUsdc, 0.02);
+  const need = String(dataNeed || "mixed").toLowerCase();
+  const route = [
+    routeStep("agent-rpc-preflight", "Screen endpoint, method, price, and budget before chain-data access."),
+  ];
+  if (["storage", "trace", "fork", "rpc", "mixed"].includes(need)) {
+    route.push(
+      routeStep("rpc-capability-probe", "Confirm the route fits historical reads, trace, logs, or local-fork research."),
+    );
+  }
+  if (["indexed", "sql", "logs", "mixed"].includes(need)) {
+    route.push(
+      routeStep("indexed-chain-query-preflight", "Check query shape, result size, and schema discovery before indexed-data spend."),
+    );
+  }
+  route.push(
+    routeStep("x402-rpc-payment-guard", "Guard the final RPC or indexed-data payment before wallet signing."),
+  );
+
+  const affordable = [];
+  let total = 0;
+  for (const step of route) {
+    const price = parseNonNegativeNumber(step.price_usdc.replace(/^\$/, ""), 0);
+    if (total + price <= budget || affordable.length === 0) {
+      affordable.push(step);
+      total += price;
+    }
+  }
+  return {
+    product: "agent-chain-data-route-plan",
+    schema_version: "1.0",
+    fetched_at: fetchedAt,
+    task,
+    chain,
+    data_need: need,
+    risk_tolerance: riskTolerance,
+    budget_usdc: budget,
+    recommended_route: affordable,
+    full_route: route,
+    estimated_cost_usdc: Number(total.toFixed(6)),
+    stop_conditions: [
+      "Endpoint preflight returns BLOCK.",
+      "Capability probe says the requested research workflow needs unsupported archive, trace, or WebSocket behavior.",
+      "Indexed query estimate exceeds budget or lacks schema discovery.",
+      riskTolerance === "low"
+        ? "Any medium-risk chain-data flag appears."
+        : "Multiple medium-risk chain-data flags appear.",
+    ],
+    escalation:
+      affordable.length < route.length
+        ? "Budget is too small for the full chain-data route; run the prefix and escalate before paying more."
+        : "Route fits budget; use the payment guard before signing.",
+    limitations: [
+      "This route plan is provider-neutral and does not disclose or depend on a named upstream.",
+      "Live upstream behavior and terms still need owner review for production use.",
+    ],
+  };
+}
+
+export function buildIndexedChainQueryPreflight({
+  chain,
+  queryType,
+  estimatedRows = null,
+  maxPriceUsdc = null,
+  fetchedAt = new Date().toISOString(),
+}) {
+  const rows = parseNonNegativeInteger(estimatedRows);
+  const maxPrice = parseNonNegativeNumber(maxPriceUsdc);
+  const flags = [];
+  let riskScore = 0;
+  if (queryType !== "schema" && rows === null) {
+    flags.push({
+      code: "RESULT_SIZE_UNKNOWN",
+      severity: "medium",
+      detail: "Run schema discovery or add row limits before paying for the query.",
+    });
+    riskScore += 20;
+  } else if (rows !== null && rows > 100_000) {
+    flags.push({
+      code: "BROAD_QUERY_RESULT",
+      severity: "medium",
+      detail: "Estimated rows are high; narrow block range, address set, or event topics first.",
+    });
+    riskScore += 25;
+  }
+  if (maxPrice !== null && maxPrice > 0.10) {
+    flags.push({
+      code: "HIGH_QUERY_PRICE_LIMIT",
+      severity: "medium",
+      detail: "The maximum price is high for an autonomous indexed-data probe.",
+    });
+    riskScore += 15;
+  }
+  if (["sql", "protocol_timeline"].includes(queryType) && maxPrice === null) {
+    flags.push({
+      code: "NO_PRICE_CEILING",
+      severity: "high",
+      detail: "SQL-style chain-data queries should have a price ceiling before autonomous payment.",
+    });
+    riskScore += 35;
+  }
+  riskScore = Math.max(0, Math.min(100, Math.round(riskScore)));
+  return {
+    product: "indexed-chain-query-preflight",
+    schema_version: "1.0",
+    fetched_at: fetchedAt,
+    chain,
+    query_type: queryType,
+    query_context: {
+      estimated_rows: rows,
+      max_price_usdc: maxPrice,
+      schema_discovery_recommended: queryType !== "schema",
+    },
+    assessment: {
+      decision: chainDataDecision(riskScore),
+      risk_level: chainDataRiskLevel(riskScore),
+      risk_score: riskScore,
+      flags,
+      next_query_shape:
+        queryType === "schema"
+          ? "Fetch schema and table metadata before selecting paid query fields."
+          : "Use explicit chain, address/topic filters, block range, row limit, and price ceiling.",
+    },
+    limitations: [
+      "This preflight does not execute SQL or fetch indexed data.",
+      "Actual query price and available schema depend on the selected provider route.",
+    ],
+  };
+}
+
+export function buildX402RpcPaymentGuard({
+  requestId,
+  endpointUrl,
+  chain,
+  method,
+  payTo = null,
+  amountUsdc,
+  maxSingleUsdc = "0.01",
+  sessionBudgetUsdc = "1.00",
+  fetchedAt = new Date().toISOString(),
+}) {
+  const preflight = buildAgentRpcPreflight({
+    endpointUrl,
+    chain,
+    method,
+    maxPriceUsdc: amountUsdc,
+    sessionBudgetUsdc,
+    fetchedAt,
+  });
+  const amount = parseNonNegativeNumber(amountUsdc);
+  const maxSingle = parseNonNegativeNumber(maxSingleUsdc, 0.01);
+  const sessionBudget = parseNonNegativeNumber(sessionBudgetUsdc, 1);
+  const flags = [...preflight.assessment.flags];
+  let riskScore = preflight.assessment.risk_score;
+  if (amount === null) {
+    flags.push({
+      code: "INVALID_AMOUNT",
+      severity: "high",
+      detail: "The requested amount is not a valid non-negative USDC decimal.",
+    });
+    riskScore += 60;
+  } else {
+    if (amount > maxSingle) {
+      flags.push({
+        code: "AMOUNT_EXCEEDS_SINGLE_LIMIT",
+        severity: "high",
+        detail: "The requested RPC/data payment exceeds the single-payment limit.",
+      });
+      riskScore += 45;
+    }
+    if (amount > sessionBudget) {
+      flags.push({
+        code: "AMOUNT_EXCEEDS_SESSION_BUDGET",
+        severity: "high",
+        detail: "The requested RPC/data payment exceeds the session budget.",
+      });
+      riskScore += 45;
+    }
+  }
+  if (payTo && !ADDRESS_PATTERN.test(payTo)) {
+    flags.push({
+      code: "INVALID_PAYMENT_RECIPIENT",
+      severity: "high",
+      detail: "The payment recipient is not a valid EVM address.",
+    });
+    riskScore += 60;
+  }
+  riskScore = Math.max(0, Math.min(100, Math.round(riskScore)));
+  const decision = chainDataDecision(riskScore);
+  return {
+    product: "x402-rpc-payment-guard",
+    schema_version: "1.0",
+    fetched_at: fetchedAt,
+    request_id: requestId,
+    endpoint: preflight.endpoint,
+    payment: {
+      pay_to: payTo,
+      amount_usdc: amount,
+      max_single_usdc: maxSingle,
+      session_budget_usdc: sessionBudget,
+      protocol: "x402",
+    },
+    decision,
+    signer_directive:
+      decision === "ALLOW"
+        ? "sign_only_if_wallet_policy_matches_this_request"
+        : decision === "REVIEW"
+          ? "pause_for_policy_owner_review"
+          : "do_not_sign",
+    assessment: {
+      risk_level: chainDataRiskLevel(riskScore),
+      risk_score: riskScore,
+      flags,
+    },
+    replay_protection: {
+      idempotency_key: requestId,
+      bind_endpoint_origin: preflight.endpoint.origin,
+      bind_method: method,
+      bind_chain: chain,
+    },
+    limitations: [
+      "This public wrapper does not mint a production authorization token.",
+      "Use owner-controlled signer policy, KMS, MPC, or smart-account modules for real signing.",
+    ],
+  };
+}
+
+function agentUtilityDecision(score) {
+  if (score >= 70) return "BLOCK";
+  if (score >= 30) return "REVIEW";
+  return "ALLOW";
+}
+
+function riskLevelFromScore(score) {
+  if (score >= 70) return "HIGH";
+  if (score >= 30) return "MEDIUM";
+  return "LOW";
+}
+
+function stableReceiptStub(product, input, score, flags) {
+  const body = JSON.stringify({
+    product,
+    input,
+    score,
+    flags: flags.map(flag => flag.code),
+  });
+  let hash = 2166136261;
+  for (let index = 0; index < body.length; index += 1) {
+    hash ^= body.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `signgate-demo:${(hash >>> 0).toString(16).padStart(8, "0")}`;
+}
+
+export function buildAgentRiskUtility({
+  productId,
+  input,
+  fetchedAt = new Date().toISOString(),
+}) {
+  const flags = [];
+  let score = 8;
+  const amount = parseNonNegativeNumber(input.amount_usdc ?? input.value_usdc);
+  const riskScore = parseNonNegativeInteger(input.risk_score);
+  if (riskScore !== null) score += Math.min(100, riskScore);
+  if (amount !== null && amount >= 1000) {
+    flags.push({
+      code: "HIGH_VALUE_ACTION",
+      severity: "medium",
+      detail: "The value at risk is high enough to require policy review.",
+    });
+    score += 25;
+  }
+  if (amount !== null && amount >= 10_000) {
+    flags.push({
+      code: "MATERIAL_VALUE_ACTION",
+      severity: "high",
+      detail: "Material-value autonomous actions should not proceed without human approval.",
+    });
+    score += 35;
+  }
+  if (input.address && !ADDRESS_PATTERN.test(input.address)) {
+    flags.push({
+      code: "INVALID_ADDRESS",
+      severity: "high",
+      detail: "The supplied address is not a valid EVM address.",
+    });
+    score += 80;
+  }
+  if (input.token && !ADDRESS_PATTERN.test(input.token)) {
+    flags.push({
+      code: "INVALID_TOKEN_CONTRACT",
+      severity: "high",
+      detail: "The supplied token is not a valid EVM contract address.",
+    });
+    score += 80;
+  }
+  if (input.to && !ADDRESS_PATTERN.test(input.to)) {
+    flags.push({
+      code: "INVALID_TRANSACTION_TARGET",
+      severity: "high",
+      detail: "The transaction target is not a valid EVM address.",
+    });
+    score += 80;
+  }
+  if (input.from && !ADDRESS_PATTERN.test(input.from)) {
+    flags.push({
+      code: "INVALID_TRANSACTION_SENDER",
+      severity: "high",
+      detail: "The transaction sender is not a valid EVM address.",
+    });
+    score += 80;
+  }
+  if (input.calldata && String(input.calldata) !== "0x") {
+    flags.push({
+      code: "CALLDATA_REQUIRES_DECODE",
+      severity: "medium",
+      detail: "Non-empty calldata should be decoded before autonomous signing.",
+    });
+    score += 20;
+  }
+  if (input.max_slippage_bps && Number(input.max_slippage_bps) > 300) {
+    flags.push({
+      code: "HIGH_SWAP_SLIPPAGE",
+      severity: "medium",
+      detail: "The requested slippage tolerance is high for an unattended swap.",
+    });
+    score += 20;
+  }
+  if (productId === "token-risk") {
+    flags.push(
+      {
+        code: "HONEYPOT_SIMULATION_REQUIRED",
+        severity: "info",
+        detail: "Run live buy/sell simulation before treating this token as safe.",
+      },
+      {
+        code: "AUTHORITY_CHECK_REQUIRED",
+        severity: "info",
+        detail: "Check mint, pause, blacklist, proxy, and owner authority before approval.",
+      },
+    );
+    score += 8;
+  }
+  if (productId === "stablecoin-health") {
+    flags.push({
+      code: "ISSUER_CONTROL_REVIEW",
+      severity: "info",
+      detail: "Stablecoin blacklist, freeze, and issuer-control behavior should be part of treasury policy.",
+    });
+  }
+  if (productId === "wallet-dossier") {
+    flags.push({
+      code: "DOSSIER_IS_COMPACT",
+      severity: "info",
+      detail: "Use deeper trace or counterparty checks for high-value or regulated workflows.",
+    });
+  }
+  if (productId === "policy-decide" && !input.risk_score) {
+    flags.push({
+      code: "CALLER_RISK_SCORE_MISSING",
+      severity: "medium",
+      detail: "Policy decision used default risk because caller did not provide a risk score.",
+    });
+    score += 20;
+  }
+  score = Math.max(0, Math.min(100, Math.round(score)));
+  const decision = agentUtilityDecision(score);
+  return {
+    product: productId,
+    schema_version: "1.0",
+    fetched_at: fetchedAt,
+    decision,
+    risk_score: score,
+    risk_level: riskLevelFromScore(score),
+    reasons: flags.map(flag => flag.code),
+    input: Object.fromEntries(
+      Object.entries(input).filter(([, value]) => value !== null && value !== ""),
+    ),
+    evidence: {
+      flags,
+      freshness: "live-preflight",
+      source: "signgate-policy-and-risk-heuristics",
+      upstream_disclosure:
+        "Provider-neutral public endpoint; no named upstream dependency is exposed.",
+    },
+    valid_until: new Date(Date.now() + 5 * 60_000).toISOString(),
+    signed_receipt: stableReceiptStub(productId, input, score, flags),
+    next_actions:
+      decision === "ALLOW"
+        ? ["Proceed only through the owner-controlled signer policy."]
+        : decision === "REVIEW"
+          ? ["Pause for Payment Guard or policy-owner review before signing."]
+          : ["Do not sign or pay until the flagged risk is resolved."],
+    limitations: [
+      "This endpoint returns preflight intelligence, not custody or transaction execution.",
+      "High-value, regulated, or uncertain actions should combine this result with signed Payment Guard policy.",
+    ],
+  };
+}
+
+export function buildTokenExitRisk({
+  token,
+  tokenRisk,
+  dexMarket,
+  fetchedAt = new Date().toISOString(),
+}) {
+  const pair =
+    dexMarket?.deepest_pair ?? tokenRisk?.dex_liquidity?.best_pair ?? null;
+  const liquidityUsd = Number(pair?.liquidity_usd ?? 0);
+  const volumeUsd = Number(
+    dexMarket?.aggregate_top5?.volume_24h_usd ?? pair?.volume_24h_usd ?? 0,
+  );
+  const buys = Number(dexMarket?.aggregate_top5?.buys_24h ?? pair?.buys_24h ?? 0);
+  const sells = Number(
+    dexMarket?.aggregate_top5?.sells_24h ?? pair?.sells_24h ?? 0,
+  );
+  const ageHours = pairAgeHours(pair?.pair_created_at, fetchedAt);
+  const flags = [...(tokenRisk?.assessment?.flags ?? [])];
+  let riskScore = Number(tokenRisk?.assessment?.risk_score ?? 0);
+  if (!pair) {
+    flags.push({
+      code: "NO_DEX_EXIT_PATH",
+      severity: "high",
+      detail: "No Base DEX pair was found for an exit route.",
+    });
+    riskScore += 45;
+  }
+  if (liquidityUsd > 0 && liquidityUsd < 50_000) {
+    flags.push({
+      code: "THIN_EXIT_LIQUIDITY",
+      severity: "medium",
+      detail: `Observed exit liquidity is about $${liquidityUsd.toFixed(2)}.`,
+    });
+    riskScore += liquidityUsd < 10_000 ? 30 : 15;
+  }
+  const volumeToLiquidity = liquidityUsd > 0 ? volumeUsd / liquidityUsd : null;
+  if (volumeToLiquidity !== null && volumeToLiquidity > 3) {
+    flags.push({
+      code: "HIGH_VOLUME_TO_LIQUIDITY",
+      severity: "medium",
+      detail: "24h volume is high relative to available liquidity, increasing slippage/exit risk.",
+    });
+    riskScore += 15;
+  }
+  if (sells >= Math.max(10, buys * 1.5)) {
+    flags.push({
+      code: "SELL_PRESSURE_EXIT_RISK",
+      severity: "medium",
+      detail: "Sell count materially exceeds buy count.",
+    });
+    riskScore += 15;
+  }
+  if (ageHours !== null && ageHours < 24) {
+    flags.push({
+      code: "NEW_PAIR_EXIT_UNPROVEN",
+      severity: "medium",
+      detail: `Deepest pair is about ${ageHours} hour(s) old.`,
+    });
+    riskScore += 10;
+  }
+  riskScore = Math.max(0, Math.min(100, Math.round(riskScore)));
+  const exitRisk =
+    riskScore >= 70 ? "high" : riskScore >= 35 ? "medium" : "low";
+  return {
+    product: "base-token-exit-risk",
+    schema_version: "1.0",
+    network: BASE_MAINNET,
+    token,
+    fetched_at: fetchedAt,
+    market: {
+      deepest_pair: pair,
+      pair_age_hours: ageHours,
+      liquidity_usd: liquidityUsd,
+      volume_24h_usd: volumeUsd,
+      volume_to_liquidity: volumeToLiquidity,
+      buys_24h: buys,
+      sells_24h: sells,
+      sell_buy_ratio: buys > 0 ? sells / buys : null,
+    },
+    assessment: {
+      exit_risk: exitRisk,
+      risk_score: riskScore,
+      flags,
+      bot_action:
+        exitRisk === "high"
+          ? "Do not enter automatically; require manual review or a much smaller size."
+          : exitRisk === "medium"
+            ? "Limit size, recheck immediately before execution, and require slippage controls."
+            : "Exit conditions look usable for small automated checks; still enforce slippage and sizing.",
+    },
+    machine_tags: [
+      "kind:token-exit",
+      `exit-risk:${exitRisk}`,
+      ...(tokenRisk?.token_metadata?.symbol
+        ? [`symbol:${tokenRisk.token_metadata.symbol}`]
+        : []),
+    ],
+    provenance: {
+      providers: ["Blockscout Base", "DexScreener"],
+      token_url: `${BLOCKSCOUT}/token/${token}`,
+      dexscreener_url: `https://dexscreener.com/search?q=${token}`,
+    },
+    limitations: [
+      "This is not a sell simulation and does not guarantee successful exit.",
+      "Liquidity, taxes, pauses, and route availability can change before execution.",
+      "Bots should still enforce max slippage, max size, and post-entry stop conditions.",
+    ],
+  };
+}
+
+export async function tokenExitRisk(token, fetchImpl = fetch) {
+  const [tokenRisk, dexMarket] = await Promise.all([
+    tokenPreflight(token, fetchImpl),
+    dexMarketMonitor(token, fetchImpl),
+  ]);
+  return buildTokenExitRisk({ token, tokenRisk, dexMarket });
+}
+
+function validateBcsChain(value) {
+  return /^[a-z0-9_-]{2,32}$/.test(String(value ?? ""));
+}
+
+function validateBcsAddress(value) {
+  return /^[A-Za-z0-9:_-]{3,128}$/.test(String(value ?? ""));
+}
+
+function parseCsvList(value, pattern, limit = 30) {
+  return String(value ?? "")
+    .split(",")
+    .map(item => item.trim())
+    .filter(Boolean)
+    .filter(item => pattern.test(item))
+    .slice(0, limit);
+}
+
+function buildBcsGatewayResponse({
+  product,
+  method,
+  upstreamPath,
+  request,
+  upstream,
+  headers = {},
+  fetchedAt = new Date().toISOString(),
+}) {
+  return {
+    product,
+    schema_version: "1.0",
+    network: BASE_MAINNET,
+    upstream_service: "blockchainsecurity-atlantis",
+    request,
+    fetched_at: fetchedAt,
+    upstream_status: headers.status ?? null,
+    upstream_headers: {
+      request_id: headers.requestId ?? null,
+      credit_cost: headers.creditCost ?? null,
+      credit_remaining: headers.creditRemaining ?? null,
+    },
+    upstream_response: upstream,
+    provenance: {
+      upstream_base_url: BCS_API_BASE,
+      upstream_path: upstreamPath,
+      upstream_method: method,
+      auth_model: "server-side X-API-Key secret",
+    },
+    limitations: [
+      "This x402 resource proxies BlockchainSecurity API responses; upstream availability and credits are required.",
+      "The caller receives BlockchainSecurity response data but never receives the upstream API key.",
+    ],
+  };
+}
+
+export async function bcsGatewayRequest({
+  product,
+  apiKey,
+  method = "GET",
+  upstreamPath,
+  query = {},
+  body = null,
+  fetchImpl = fetch,
+}) {
+  if (!apiKey) throw new Error("bcs_api_key_missing");
+  const url = new URL(upstreamPath, BCS_API_BASE);
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== null && value !== undefined && value !== "") {
+      url.searchParams.set(key, String(value));
+    }
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+  try {
+    const response = await fetchImpl(url.toString(), {
+      method,
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        "user-agent": "AgentPaymentGuardBCSProxy/1.0",
+        "x-api-key": apiKey,
+      },
+      body: body === null ? undefined : JSON.stringify(body),
+      signal: controller.signal,
+    });
+    const contentType = response.headers.get("content-type") ?? "";
+    const payload = contentType.includes("application/json")
+      ? await response.json()
+      : { raw: await response.text() };
+    if (!response.ok) {
+      const error = new Error(`bcs_http_${response.status}`);
+      error.payload = payload;
+      throw error;
+    }
+    return buildBcsGatewayResponse({
+      product,
+      method,
+      upstreamPath,
+      request: { ...query, ...(body ? { body } : {}) },
+      upstream: payload,
+      headers: {
+        status: response.status,
+        requestId: response.headers.get("x-request-id"),
+        creditCost: response.headers.get("x-credit-cost"),
+        creditRemaining: response.headers.get("x-credit-remaining"),
+      },
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function usdcToAtomic(value) {
@@ -2064,6 +6126,529 @@ export async function dexMarketMonitor(token, fetchImpl = fetch) {
   return buildDexMarketMonitor({ token, pairs: payload.pairs ?? [] });
 }
 
+export function buildAlphaRiskContext({
+  subject,
+  requestedKind = "auto",
+  addressRisk = null,
+  tokenRisk = null,
+  dexMarket = null,
+  counterparty = null,
+  fetchedAt = new Date().toISOString(),
+}) {
+  const tokenSignals = tokenRisk?.token_metadata
+    ? {
+        symbol: tokenRisk.token_metadata.symbol,
+        name: tokenRisk.token_metadata.name,
+        holders_count: tokenRisk.token_metadata.holders_count,
+        liquidity_usd:
+          tokenRisk.dex_liquidity?.best_pair?.liquidity_usd ??
+          dexMarket?.deepest_pair?.liquidity_usd ??
+          0,
+        volume_24h_usd:
+          dexMarket?.aggregate_top5?.volume_24h_usd ??
+          tokenRisk.dex_liquidity?.best_pair?.volume_24h_usd ??
+          0,
+        buys_24h:
+          dexMarket?.aggregate_top5?.buys_24h ??
+          tokenRisk.dex_liquidity?.best_pair?.buys_24h ??
+          0,
+        sells_24h:
+          dexMarket?.aggregate_top5?.sells_24h ??
+          tokenRisk.dex_liquidity?.best_pair?.sells_24h ??
+          0,
+        deepest_pair_url:
+          dexMarket?.deepest_pair?.url ??
+          tokenRisk.dex_liquidity?.best_pair?.url ??
+          null,
+      }
+    : null;
+  const detectedKind =
+    requestedKind === "token" ||
+    (requestedKind === "auto" && tokenSignals)
+      ? "token"
+      : "wallet";
+  const sourceFlags = [
+    ...(addressRisk?.assessment?.flags ?? []),
+    ...(tokenRisk?.assessment?.flags ?? []),
+  ];
+  const severeFlagScore = sourceFlags.reduce((score, flag) => {
+    const severity = String(flag.severity ?? "").toLowerCase();
+    if (severity === "critical") return Math.max(score, 100);
+    if (severity === "high") return Math.max(score, 75);
+    if (severity === "medium") return Math.max(score, 40);
+    return Math.max(score, 10);
+  }, 0);
+  const baseScore = Math.max(
+    Number(addressRisk?.assessment?.risk_score ?? 0),
+    Number(tokenRisk?.assessment?.risk_score ?? 0),
+    severeFlagScore,
+  );
+  const counterpartyPenalty =
+    Number(counterparty?.adverse_counterparties ?? 0) > 0 ? 15 : 0;
+  const liquidityPenalty =
+    tokenSignals && tokenSignals.liquidity_usd > 0 && tokenSignals.liquidity_usd < 10_000
+      ? 15
+      : 0;
+  const noLiquidityPenalty =
+    detectedKind === "token" && tokenSignals && tokenSignals.liquidity_usd === 0
+      ? 20
+      : 0;
+  const riskScore = Math.min(
+    100,
+    baseScore + counterpartyPenalty + liquidityPenalty + noLiquidityPenalty,
+  );
+  const riskLevel =
+    riskScore >= 70 ? "high" : riskScore >= 25 ? "medium" : "low";
+  const alphaScore =
+    detectedKind === "token" && tokenSignals
+      ? Math.max(
+          0,
+          Math.min(
+            100,
+            Math.round(
+              Math.log10(Math.max(tokenSignals.volume_24h_usd, 1)) * 12 +
+                Math.log10(Math.max(tokenSignals.liquidity_usd, 1)) * 10 +
+                Math.min(tokenSignals.buys_24h + tokenSignals.sells_24h, 500) / 10 -
+                riskScore * 0.7,
+            ),
+          ),
+        )
+      : Math.max(
+          0,
+          Math.min(
+            100,
+            Math.round(
+              Number(counterparty?.unique_counterparties ?? 0) * 3 -
+                Number(counterparty?.adverse_counterparties ?? 0) * 12 -
+                riskScore * 0.5,
+            ),
+          ),
+        );
+  const tradeBias =
+    riskLevel === "high"
+      ? "avoid"
+      : alphaScore >= 65
+        ? "watch"
+        : alphaScore >= 35
+          ? "monitor"
+          : "ignore";
+  const nextAction =
+    tradeBias === "avoid"
+      ? "Do not copy, buy, or interact automatically."
+      : tradeBias === "watch"
+        ? "Add to a short-lived watchlist and recheck before execution."
+        : tradeBias === "monitor"
+          ? "Monitor only; require stronger liquidity or activity before action."
+          : "Ignore unless a separate strategy has a stronger signal.";
+
+  return {
+    product: "base-alpha-risk-context",
+    schema_version: "1.0",
+    network: BASE_MAINNET,
+    subject,
+    requested_kind: requestedKind,
+    detected_kind: detectedKind,
+    fetched_at: fetchedAt,
+    assessment: {
+      risk_level: riskLevel,
+      risk_score: riskScore,
+      alpha_score: alphaScore,
+      trade_bias: tradeBias,
+      next_action: nextAction,
+      flags: sourceFlags.slice(0, 12),
+    },
+    token: tokenSignals,
+    wallet: {
+      identity: addressRisk?.identity ?? null,
+      transactions_count:
+        addressRisk?.activity?.transactions_count ?? null,
+      token_transfers_count:
+        addressRisk?.activity?.token_transfers_count ?? null,
+      unique_counterparties:
+        counterparty?.unique_counterparties ?? null,
+      adverse_counterparties:
+        counterparty?.adverse_counterparties ?? null,
+      top_counterparties:
+        counterparty?.counterparties?.slice(0, 5) ?? [],
+    },
+    machine_tags: [
+      `kind:${detectedKind}`,
+      `risk:${riskLevel}`,
+      `bias:${tradeBias}`,
+      ...(tokenSignals?.symbol ? [`symbol:${tokenSignals.symbol}`] : []),
+    ],
+    provenance: {
+      providers: [
+        "Blockscout Base",
+        ...(tokenSignals ? ["DexScreener"] : []),
+      ],
+      subject_url: `${BLOCKSCOUT}/address/${subject}`,
+      dexscreener_url: tokenSignals
+        ? `https://dexscreener.com/search?q=${subject}`
+        : null,
+    },
+    limitations: [
+      "This endpoint is a fast pre-trade signal, not investment advice.",
+      "Public labels, DEX liquidity, and volume can change quickly.",
+      "The response is designed for bot filtering; execution still needs slippage, simulation, and position sizing controls.",
+    ],
+  };
+}
+
+export async function alphaRiskContext(
+  subject,
+  requestedKind = "auto",
+  fetchImpl = fetch,
+) {
+  const normalizedKind = ["auto", "wallet", "token"].includes(requestedKind)
+    ? requestedKind
+    : "auto";
+  const addressRisk = await addressPreflight(subject, fetchImpl);
+  const wantsToken =
+    normalizedKind === "token" ||
+    (normalizedKind === "auto" && addressRisk.identity?.is_contract);
+  const [counterpartyResult, tokenResult, dexResult] = await Promise.allSettled([
+    walletCounterparty(subject, fetchImpl),
+    wantsToken ? tokenPreflight(subject, fetchImpl) : Promise.resolve(null),
+    wantsToken ? dexMarketMonitor(subject, fetchImpl) : Promise.resolve(null),
+  ]);
+  return buildAlphaRiskContext({
+    subject,
+    requestedKind: normalizedKind,
+    addressRisk,
+    counterparty:
+      counterpartyResult.status === "fulfilled" ? counterpartyResult.value : null,
+    tokenRisk:
+      tokenResult.status === "fulfilled" ? tokenResult.value : null,
+    dexMarket:
+      dexResult.status === "fulfilled" ? dexResult.value : null,
+  });
+}
+
+function scoreTradingActivity({ liquidityUsd, volumeUsd, buys, sells }) {
+  return Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(
+        Math.log10(Math.max(liquidityUsd, 1)) * 9 +
+          Math.log10(Math.max(volumeUsd, 1)) * 11 +
+          Math.min(buys + sells, 700) / 9,
+      ),
+    ),
+  );
+}
+
+function pairAgeHours(pairCreatedAt, fetchedAt) {
+  if (!pairCreatedAt) return null;
+  const created = Date.parse(pairCreatedAt);
+  const fetched = Date.parse(fetchedAt);
+  if (!Number.isFinite(created) || !Number.isFinite(fetched)) return null;
+  return Math.max(0, Number(((fetched - created) / 3_600_000).toFixed(2)));
+}
+
+export function buildTokenAlphaSnapshot({
+  token,
+  tokenRisk,
+  dexMarket,
+  fetchedAt = new Date().toISOString(),
+}) {
+  const pair =
+    dexMarket?.deepest_pair ?? tokenRisk?.dex_liquidity?.best_pair ?? null;
+  const liquidityUsd = Number(pair?.liquidity_usd ?? 0);
+  const volumeUsd = Number(
+    dexMarket?.aggregate_top5?.volume_24h_usd ?? pair?.volume_24h_usd ?? 0,
+  );
+  const buys = Number(dexMarket?.aggregate_top5?.buys_24h ?? pair?.buys_24h ?? 0);
+  const sells = Number(
+    dexMarket?.aggregate_top5?.sells_24h ?? pair?.sells_24h ?? 0,
+  );
+  const buySellImbalance = buys - sells;
+  const riskScore = Number(tokenRisk?.assessment?.risk_score ?? 0);
+  const activityScore = scoreTradingActivity({
+    liquidityUsd,
+    volumeUsd,
+    buys,
+    sells,
+  });
+  const alphaScore = Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(
+        activityScore + Math.max(0, buySellImbalance) / 12 - riskScore * 0.55,
+      ),
+    ),
+  );
+  const tradeBias =
+    riskScore >= 70
+      ? "avoid"
+      : alphaScore >= 70
+        ? "watch"
+        : alphaScore >= 40
+          ? "monitor"
+          : "ignore";
+
+  return {
+    product: "base-token-alpha-snapshot",
+    schema_version: "1.0",
+    network: BASE_MAINNET,
+    token,
+    fetched_at: fetchedAt,
+    token_metadata: tokenRisk?.token_metadata ?? null,
+    market: {
+      pair_count:
+        dexMarket?.pair_count ?? tokenRisk?.dex_liquidity?.pair_count_on_base ?? 0,
+      deepest_pair: pair,
+      liquidity_usd: liquidityUsd,
+      volume_24h_usd: volumeUsd,
+      buys_24h: buys,
+      sells_24h: sells,
+      buy_sell_imbalance: buySellImbalance,
+      price_change: pair?.price_change ?? {},
+    },
+    assessment: {
+      risk_score: riskScore,
+      alpha_score: alphaScore,
+      activity_score: activityScore,
+      trade_bias: tradeBias,
+      flags: tokenRisk?.assessment?.flags ?? [],
+      next_action:
+        tradeBias === "avoid"
+          ? "Do not let a bot buy or route through this token automatically."
+          : tradeBias === "watch"
+            ? "Add to a short-lived watchlist and recheck liquidity before execution."
+            : tradeBias === "monitor"
+              ? "Monitor only until activity or liquidity strengthens."
+              : "Ignore unless another strategy provides a stronger signal.",
+    },
+    machine_tags: [
+      "kind:token",
+      `bias:${tradeBias}`,
+      `risk:${riskScore >= 70 ? "high" : riskScore >= 25 ? "medium" : "low"}`,
+      ...(tokenRisk?.token_metadata?.symbol
+        ? [`symbol:${tokenRisk.token_metadata.symbol}`]
+        : []),
+    ],
+    provenance: {
+      providers: ["Blockscout Base", "DexScreener"],
+      token_url: `${BLOCKSCOUT}/token/${token}`,
+      dexscreener_url: `https://dexscreener.com/search?q=${token}`,
+    },
+    limitations: [
+      "This is a fast ranking signal, not investment advice.",
+      "It does not simulate buy or sell execution.",
+      "Liquidity and volume can change before a bot acts.",
+    ],
+  };
+}
+
+export async function tokenAlphaSnapshot(token, fetchImpl = fetch) {
+  const [tokenRisk, dexMarket] = await Promise.all([
+    tokenPreflight(token, fetchImpl),
+    dexMarketMonitor(token, fetchImpl),
+  ]);
+  return buildTokenAlphaSnapshot({ token, tokenRisk, dexMarket });
+}
+
+export function buildWalletCopytradeRisk({
+  address,
+  addressRisk,
+  counterparty,
+  fetchedAt = new Date().toISOString(),
+}) {
+  const baseRisk = Number(addressRisk?.assessment?.risk_score ?? 0);
+  const txCount = Number(addressRisk?.activity?.transactions_count ?? 0);
+  const transferCount = Number(addressRisk?.activity?.token_transfers_count ?? 0);
+  const uniqueCounterparties = Number(counterparty?.unique_counterparties ?? 0);
+  const adverseCounterparties = Number(counterparty?.adverse_counterparties ?? 0);
+  const activityScore = Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(Math.log10(Math.max(txCount + transferCount, 1)) * 24),
+    ),
+  );
+  const networkQuality = Math.max(
+    0,
+    Math.min(100, uniqueCounterparties * 5 - adverseCounterparties * 18),
+  );
+  const copytradeScore = Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(activityScore * 0.45 + networkQuality * 0.55 - baseRisk * 0.6),
+    ),
+  );
+  const recommendation =
+    baseRisk >= 70 || adverseCounterparties >= 3
+      ? "avoid"
+      : copytradeScore >= 65
+        ? "candidate"
+        : copytradeScore >= 35
+          ? "monitor"
+          : "ignore";
+
+  return {
+    product: "base-wallet-copytrade-risk",
+    schema_version: "1.0",
+    network: BASE_MAINNET,
+    address,
+    fetched_at: fetchedAt,
+    assessment: {
+      public_risk_score: baseRisk,
+      activity_score: activityScore,
+      network_quality_score: networkQuality,
+      copytrade_score: copytradeScore,
+      recommendation,
+      flags: addressRisk?.assessment?.flags ?? [],
+      next_action:
+        recommendation === "avoid"
+          ? "Do not copy this wallet automatically."
+          : recommendation === "candidate"
+            ? "Candidate for a small watchlist; recheck before copy execution."
+            : recommendation === "monitor"
+              ? "Monitor for repeatable behavior before copying."
+              : "Ignore unless another strategy already selected this wallet.",
+    },
+    wallet: {
+      identity: addressRisk?.identity ?? null,
+      transactions_count: txCount,
+      token_transfers_count: transferCount,
+      unique_counterparties: uniqueCounterparties,
+      adverse_counterparties: adverseCounterparties,
+      top_counterparties: counterparty?.counterparties?.slice(0, 10) ?? [],
+    },
+    machine_tags: [
+      "kind:wallet",
+      `copytrade:${recommendation}`,
+      `risk:${baseRisk >= 70 ? "high" : baseRisk >= 25 ? "medium" : "low"}`,
+    ],
+    provenance: {
+      provider: "Blockscout Base",
+      address_url: `${BLOCKSCOUT}/address/${address}`,
+    },
+    limitations: [
+      "This endpoint does not compute realized trading PnL.",
+      "Counterparty quality is based on the current public result pages.",
+      "Copytrading still needs sizing, slippage, and strategy controls.",
+    ],
+  };
+}
+
+export async function walletCopytradeRisk(address, fetchImpl = fetch) {
+  const [addressRisk, counterparty] = await Promise.all([
+    addressPreflight(address, fetchImpl),
+    walletCounterparty(address, fetchImpl),
+  ]);
+  return buildWalletCopytradeRisk({ address, addressRisk, counterparty });
+}
+
+export function buildNewPoolRisk({
+  token,
+  tokenRisk,
+  dexMarket,
+  fetchedAt = new Date().toISOString(),
+}) {
+  const pair =
+    dexMarket?.deepest_pair ?? tokenRisk?.dex_liquidity?.best_pair ?? null;
+  const liquidityUsd = Number(pair?.liquidity_usd ?? 0);
+  const volumeUsd = Number(pair?.volume_24h_usd ?? 0);
+  const buys = Number(pair?.buys_24h ?? 0);
+  const sells = Number(pair?.sells_24h ?? 0);
+  const ageHours = pairAgeHours(pair?.pair_created_at, fetchedAt);
+  const flags = [...(tokenRisk?.assessment?.flags ?? [])];
+  let riskScore = Number(tokenRisk?.assessment?.risk_score ?? 0);
+  if (!pair) {
+    flags.push({
+      code: "NO_BASE_POOL",
+      severity: "high",
+      detail: "No Base liquidity pool was found.",
+    });
+    riskScore += 35;
+  }
+  if (ageHours !== null && ageHours < 24) {
+    flags.push({
+      code: "VERY_NEW_PAIR",
+      severity: "medium",
+      detail: `Deepest pair is about ${ageHours} hour(s) old.`,
+    });
+    riskScore += 20;
+  }
+  if (liquidityUsd > 0 && liquidityUsd < 25_000) {
+    flags.push({
+      code: "LOW_LAUNCH_LIQUIDITY",
+      severity: "medium",
+      detail: `Observed liquidity is about $${liquidityUsd.toFixed(2)}.`,
+    });
+    riskScore += 20;
+  }
+  if (sells > buys * 1.8 && sells >= 10) {
+    flags.push({
+      code: "SELL_PRESSURE",
+      severity: "medium",
+      detail: "24h sells materially exceed buys on the deepest pair.",
+    });
+    riskScore += 15;
+  }
+  riskScore = Math.min(100, riskScore);
+  const launchRisk =
+    riskScore >= 70 ? "high" : riskScore >= 35 ? "medium" : "low";
+
+  return {
+    product: "base-new-pool-risk",
+    schema_version: "1.0",
+    network: BASE_MAINNET,
+    token,
+    fetched_at: fetchedAt,
+    pool: {
+      deepest_pair: pair,
+      age_hours: ageHours,
+      liquidity_usd: liquidityUsd,
+      volume_24h_usd: volumeUsd,
+      buys_24h: buys,
+      sells_24h: sells,
+      buy_sell_imbalance: buys - sells,
+    },
+    assessment: {
+      launch_risk: launchRisk,
+      risk_score: riskScore,
+      flags,
+      next_action:
+        launchRisk === "high"
+          ? "Block automated buying until liquidity, source, and sellability are independently verified."
+          : launchRisk === "medium"
+            ? "Allow monitoring only; require a later refresh before execution."
+            : "Eligible for watchlist monitoring with normal execution controls.",
+    },
+    machine_tags: [
+      "kind:new-pool",
+      `risk:${launchRisk}`,
+      ...(tokenRisk?.token_metadata?.symbol
+        ? [`symbol:${tokenRisk.token_metadata.symbol}`]
+        : []),
+    ],
+    provenance: {
+      providers: ["Blockscout Base", "DexScreener"],
+      token_url: `${BLOCKSCOUT}/token/${token}`,
+      dexscreener_url: `https://dexscreener.com/search?q=${token}`,
+    },
+    limitations: [
+      "This endpoint does not prove that a token can be sold.",
+      "Pair age is based on indexed DEX metadata and may be missing.",
+      "Launch-stage liquidity can change abruptly.",
+    ],
+  };
+}
+
+export async function newPoolRisk(token, fetchImpl = fetch) {
+  const [tokenRisk, dexMarket] = await Promise.all([
+    tokenPreflight(token, fetchImpl),
+    dexMarketMonitor(token, fetchImpl),
+  ]);
+  return buildNewPoolRisk({ token, tokenRisk, dexMarket });
+}
+
 export function buildPredictionMarketSnapshot({
   ticker,
   market,
@@ -2285,6 +6870,83 @@ async function sha256Hex(value) {
   return [...new Uint8Array(digest)]
     .map(byte => byte.toString(16).padStart(2, "0"))
     .join("");
+}
+
+export function shouldRecordX402PurchaseEvent({ method, status, paymentHeader }) {
+  if (!status || status >= 400) return false;
+  if (method === "HEAD" || method === "OPTIONS") return false;
+  return Boolean(String(paymentHeader ?? "").trim());
+}
+
+async function recordX402PurchaseEvent(db, c) {
+  if (!db) return;
+  const url = new URL(c.req.url);
+  const product =
+    PRODUCTS_BY_PATH[url.pathname] ??
+    (url.pathname === PAYMENT_GUARD_POLICY_PATH
+      ? { id: "payment-guard-policy", price: PRODUCTS[25].price }
+      : null);
+  if (!product) return;
+  const paymentHeader =
+    c.req.header("x-payment") ??
+    c.req.header("payment") ??
+    c.req.header("payment-signature") ??
+    "";
+  if (
+    !shouldRecordX402PurchaseEvent({
+      method: c.req.method,
+      status: c.res?.status,
+      paymentHeader,
+    })
+  ) {
+    return;
+  }
+  const paymentHeaderHash = paymentHeader
+    ? await sha256Hex(paymentHeader.slice(0, 4096))
+    : null;
+  const userAgent = (c.req.header("user-agent") ?? "").slice(0, 240);
+  const country = (c.req.header("cf-ipcountry") ?? "").slice(0, 8);
+  const campaign = (
+    url.searchParams.get("campaign") ??
+    url.searchParams.get("utm_campaign") ??
+    url.searchParams.get("ref") ??
+    ""
+  )
+    .replace(/[^A-Za-z0-9._:-]/g, "-")
+    .slice(0, 120);
+  const referrer = (
+    c.req.header("referer") ??
+    c.req.header("referrer") ??
+    url.searchParams.get("utm_source") ??
+    ""
+  ).slice(0, 500);
+  const queryStringHash = url.search
+    ? await sha256Hex(url.search.slice(0, 4096))
+    : null;
+  await db
+    .prepare(
+      `INSERT INTO x402_purchase_events
+       (product_id, method, path, price_usdc, pay_to, payment_header_hash,
+        user_agent, country, status, campaign, referrer, query_string_hash,
+        created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(
+      product.id,
+      c.req.method,
+      url.pathname,
+      productPriceNumber(product),
+      PAY_TO,
+      paymentHeaderHash,
+      userAgent || null,
+      country || null,
+      c.res?.status ?? null,
+      campaign || null,
+      referrer || null,
+      queryStringHash,
+      new Date().toISOString(),
+    )
+    .run();
 }
 
 function decodePaymentRequirement(value) {
@@ -3975,6 +8637,389 @@ function safeAtomicNumber(value) {
   } catch {
     return null;
   }
+}
+
+function parseRiskSignals(input = {}) {
+  const labels = parseStringList(input.labels ?? input.risk_labels ?? [], 25);
+  const score = Math.max(
+    0,
+    Math.min(
+      100,
+      Number(input.score ?? input.risk_score ?? input.address_risk_score ?? 0),
+    ),
+  );
+  return {
+    score: Number.isFinite(score) ? score : 0,
+    level: String(input.level ?? input.risk_level ?? "unknown").toLowerCase(),
+    labels,
+    sanctioned: Boolean(input.sanctioned ?? input.is_sanctioned),
+    phishing: Boolean(input.phishing ?? input.is_phishing),
+    drainer: Boolean(input.drainer ?? input.is_drainer),
+    source: input.source ? String(input.source).slice(0, 120) : "caller_supplied",
+  };
+}
+
+export function buildVerifiableIntent({
+  input = {},
+  evaluatedAt = new Date().toISOString(),
+} = {}) {
+  const reasons = [];
+  const requestId = String(input.request_id ?? "").trim();
+  const agentId = String(input.agent_id ?? "").trim();
+  const sessionId = String(input.session_id ?? "").trim();
+  const payTo = String(input.pay_to ?? input.recipient ?? "").toLowerCase();
+  const chain = String(input.chain ?? input.network ?? BASE_MAINNET);
+  const token = String(input.token ?? input.asset ?? USDC).toLowerCase();
+  const purpose = String(input.purpose ?? "").trim().toLowerCase();
+  const nonce = String(input.nonce ?? "").trim();
+  const expiresAt = String(
+    input.expires_at ??
+      new Date(Date.parse(evaluatedAt) + 5 * 60_000).toISOString(),
+  );
+  const amountAtomic =
+    input.amount_atomic !== undefined
+      ? safeAtomicNumber(input.amount_atomic)
+      : safeAtomicNumber(usdcToAtomic(String(input.amount_usdc ?? "")));
+
+  if (!/^[A-Za-z0-9._:-]{1,128}$/.test(requestId)) {
+    reasons.push(
+      guardReason(
+        "INVALID_REQUEST_ID",
+        "critical",
+        "request_id is required and must be stable for this payment attempt.",
+        "intent",
+      ),
+    );
+  }
+  if (!/^[A-Za-z0-9._:-]{1,96}$/.test(agentId)) {
+    reasons.push(
+      guardReason(
+        "INVALID_AGENT_ID",
+        "critical",
+        "agent_id is required so policy can bind the intent to a caller.",
+        "intent",
+      ),
+    );
+  }
+  if (sessionId && !/^[A-Za-z0-9._:-]{1,96}$/.test(sessionId)) {
+    reasons.push(
+      guardReason(
+        "INVALID_SESSION_ID",
+        "critical",
+        "session_id contains unsupported characters.",
+        "intent",
+      ),
+    );
+  }
+  if (!ADDRESS_PATTERN.test(payTo)) {
+    reasons.push(
+      guardReason(
+        "INVALID_RECIPIENT",
+        "critical",
+        "pay_to must be an EVM address for this MVP.",
+        "intent",
+      ),
+    );
+  }
+  if (chain !== BASE_MAINNET) {
+    reasons.push(
+      guardReason(
+        "UNSUPPORTED_CHAIN",
+        "critical",
+        "Only Base mainnet is enabled for signing-gate authorization in this MVP.",
+        "intent",
+      ),
+    );
+  }
+  if (token !== USDC.toLowerCase()) {
+    reasons.push(
+      guardReason(
+        "UNSUPPORTED_TOKEN",
+        "critical",
+        "Only canonical Base USDC is enabled for stablecoin authorization in this MVP.",
+        "intent",
+      ),
+    );
+  }
+  if (amountAtomic === null || amountAtomic <= 0) {
+    reasons.push(
+      guardReason(
+        "INVALID_AMOUNT",
+        "critical",
+        "amount_usdc or amount_atomic must be a positive USDC amount.",
+        "intent",
+      ),
+    );
+  }
+  if (!purpose || purpose.length > 80) {
+    reasons.push(
+      guardReason(
+        "INVALID_PURPOSE",
+        "critical",
+        "purpose is required and must be short enough for audit logs.",
+        "intent",
+      ),
+    );
+  }
+  if (!/^[A-Za-z0-9._:-]{8,128}$/.test(nonce)) {
+    reasons.push(
+      guardReason(
+        "INVALID_NONCE",
+        "critical",
+        "nonce is required to make the payment intent non-replayable.",
+        "intent",
+      ),
+    );
+  }
+  if (!Number.isFinite(Date.parse(expiresAt))) {
+    reasons.push(
+      guardReason(
+        "INVALID_EXPIRY",
+        "critical",
+        "expires_at must be an ISO-8601 timestamp.",
+        "intent",
+      ),
+    );
+  } else if (Date.parse(expiresAt) <= Date.parse(evaluatedAt)) {
+    reasons.push(
+      guardReason(
+        "INTENT_EXPIRED",
+        "critical",
+        "The payment intent has already expired.",
+        "intent",
+      ),
+    );
+  }
+
+  const invoiceHash = input.invoice_hash
+    ? String(input.invoice_hash).toLowerCase()
+    : null;
+  const invoiceId = input.invoice_id ? String(input.invoice_id).slice(0, 160) : null;
+  if (
+    !invoiceId &&
+    (!invoiceHash || !/^0x[a-fA-F0-9]{64}$/.test(invoiceHash))
+  ) {
+    reasons.push(
+      guardReason(
+        "MISSING_COMMERCIAL_CONTEXT",
+        "high",
+        "invoice_id or invoice_hash is required to bind payment to an external obligation.",
+        "intent",
+      ),
+    );
+  }
+
+  const valid = !reasons.some(reason => reason.severity === "critical");
+  const normalizedIntent = {
+    request_id: requestId || null,
+    session_id: sessionId || null,
+    agent_id: agentId || null,
+    user_id: input.user_id ? String(input.user_id).slice(0, 120) : null,
+    purpose: purpose || null,
+    pay_to: ADDRESS_PATTERN.test(payTo) ? payTo : null,
+    chain,
+    token,
+    amount_atomic: amountAtomic,
+    amount_usdc:
+      amountAtomic === null ? null : formatUnits(BigInt(amountAtomic), 6),
+    invoice_id: invoiceId,
+    invoice_hash: invoiceHash,
+    merchant_id: input.merchant_id ? String(input.merchant_id).slice(0, 120) : null,
+    nonce: nonce || null,
+    expires_at: Number.isFinite(Date.parse(expiresAt)) ? expiresAt : null,
+  };
+  return {
+    product: "agent-payment-risk-gateway",
+    schema_version: "0.1",
+    evaluated_at: evaluatedAt,
+    valid,
+    normalized_intent: normalizedIntent,
+    reasons,
+    limitations: [
+      "This verifies intent structure and policy fit; it does not guarantee merchant delivery.",
+      "The service is a signing gate and must not expose private keys to agents.",
+    ],
+  };
+}
+
+export async function buildAgentPaymentAuthorization({
+  input = {},
+  signingSecret = null,
+  evaluatedAt = new Date().toISOString(),
+} = {}) {
+  const intent = buildVerifiableIntent({ input, evaluatedAt });
+  let policy;
+  try {
+    policy = paymentGuardPolicyFromInput(input.policy ?? input);
+  } catch {
+    policy = paymentGuardPolicyFromInput({});
+  }
+  const risk = parseRiskSignals(input.risk ?? input.address_risk ?? {});
+  const reasons = [...intent.reasons];
+  let hardBlock = !intent.valid;
+  let needsReview = false;
+  let riskScore = risk.score;
+  const payTo = intent.normalized_intent.pay_to;
+  const amountAtomic = intent.normalized_intent.amount_atomic;
+
+  if (payTo && policy.blockPayTo.includes(payTo)) {
+    reasons.push(
+      guardReason(
+        "RECIPIENT_BLOCKED",
+        "critical",
+        "The recipient is on the policy blocklist.",
+      ),
+    );
+    hardBlock = true;
+  }
+  if (payTo && policy.allowPayTo.length && !policy.allowPayTo.includes(payTo)) {
+    reasons.push(
+      guardReason(
+        "RECIPIENT_NOT_ALLOWLISTED",
+        "critical",
+        "The recipient is not on the policy allowlist.",
+      ),
+    );
+    hardBlock = true;
+  }
+  if (amountAtomic !== null && amountAtomic > policy.maxSingleAtomic) {
+    reasons.push(
+      guardReason(
+        "SINGLE_PAYMENT_LIMIT_EXCEEDED",
+        "critical",
+        `The requested ${formatUnits(BigInt(amountAtomic), 6)} USDC exceeds the ${formatUnits(BigInt(policy.maxSingleAtomic), 6)} USDC single-payment limit.`,
+      ),
+    );
+    hardBlock = true;
+  }
+  if (
+    amountAtomic !== null &&
+    Number.isFinite(policy.humanReviewAtomic) &&
+    amountAtomic >= policy.humanReviewAtomic
+  ) {
+    reasons.push(
+      guardReason(
+        "HUMAN_APPROVAL_REQUIRED",
+        "medium",
+        "The payment meets the policy threshold for explicit human review.",
+      ),
+    );
+    needsReview = true;
+  }
+  if (risk.sanctioned) {
+    reasons.push(
+      guardReason(
+        "SANCTIONED_COUNTERPARTY",
+        "critical",
+        "Caller-supplied risk evidence marks the recipient as sanctioned.",
+        "risk",
+      ),
+    );
+    hardBlock = true;
+    riskScore = 100;
+  }
+  if (risk.phishing || risk.drainer) {
+    reasons.push(
+      guardReason(
+        "KNOWN_ABUSE_INFRASTRUCTURE",
+        "critical",
+        "Caller-supplied risk evidence marks the recipient as phishing or drainer infrastructure.",
+        "risk",
+      ),
+    );
+    hardBlock = true;
+    riskScore = Math.max(riskScore, 95);
+  }
+  if (riskScore >= 80) {
+    reasons.push(
+      guardReason(
+        "HIGH_COUNTERPARTY_RISK",
+        "critical",
+        "Recipient risk score is above the automatic denial threshold.",
+        "risk",
+      ),
+    );
+    hardBlock = true;
+  } else if (riskScore >= 35 || risk.level === "medium" || risk.level === "high") {
+    reasons.push(
+      guardReason(
+        "COUNTERPARTY_REVIEW_REQUIRED",
+        "medium",
+        "Recipient risk requires human or higher-trust policy review before signing.",
+        "risk",
+      ),
+    );
+    needsReview = true;
+  }
+
+  const decision = hardBlock ? "deny" : needsReview ? "review" : "allow";
+  const signingDirective =
+    decision === "allow"
+      ? "sign_with_policy_controlled_key"
+      : decision === "review"
+        ? "hold_for_human_review"
+        : "do_not_sign";
+  const expiresAt = intent.normalized_intent.expires_at;
+  let authorizationToken = null;
+  if (decision === "allow" && signingSecret) {
+    authorizationToken = await signPaymentGuardDecision(
+      {
+        type: "agent_payment_authorization",
+        request_id: intent.normalized_intent.request_id,
+        agent_id: intent.normalized_intent.agent_id,
+        pay_to: intent.normalized_intent.pay_to,
+        amount_atomic: intent.normalized_intent.amount_atomic,
+        chain: intent.normalized_intent.chain,
+        token: intent.normalized_intent.token,
+        nonce: intent.normalized_intent.nonce,
+        issued_at: evaluatedAt,
+        expires_at: expiresAt,
+      },
+      signingSecret,
+    );
+  }
+
+  return {
+    product: "agent-payment-risk-gateway",
+    schema_version: "0.1",
+    evaluated_at: evaluatedAt,
+    decision,
+    signing_directive: signingDirective,
+    authorization_token: authorizationToken,
+    max_allowed_amount_usdc: formatUnits(BigInt(policy.maxSingleAtomic), 6),
+    intent: intent.normalized_intent,
+    policy: {
+      max_single_usdc: formatUnits(BigInt(policy.maxSingleAtomic), 6),
+      session_budget_usdc: formatUnits(BigInt(policy.sessionBudgetAtomic), 6),
+      daily_budget_usdc: formatUnits(BigInt(policy.dailyBudgetAtomic), 6),
+      human_review_above_usdc: formatUnits(
+        BigInt(policy.humanReviewAtomic),
+        6,
+      ),
+      allow_pay_to: policy.allowPayTo,
+      block_pay_to: policy.blockPayTo,
+    },
+    risk: {
+      score: riskScore,
+      level:
+        riskScore >= 80
+          ? "high"
+          : riskScore >= 35
+            ? "medium"
+            : risk.level === "unknown"
+              ? "low"
+              : risk.level,
+      labels: risk.labels,
+      source: risk.source,
+    },
+    reasons,
+    next_action:
+      decision === "allow"
+        ? "Send this authorization to a policy-controlled signer; never disclose private keys to the agent."
+        : decision === "review"
+          ? "Pause signing and request owner or higher-trust policy approval."
+          : "Reject the payment intent and do not sign or submit a transaction.",
+  };
 }
 
 function randomToken(prefix) {
@@ -5688,47 +10733,149 @@ async function paymentGuardStatus(db, profileId, ownerToken) {
 }
 
 function discovery(product) {
-  if (product.id === "agent-payment-guard") {
+  if (product.id === "base-alpha-risk-context") {
     return declareDiscoveryExtension({
       method: "GET",
       input: product.input,
       inputSchema: product.inputSchema,
       output: {
         example: {
-          product: "agent-payment-guard",
-          decision: "ALLOW",
-          risk_score: 4,
-          payment: {
-            network: BASE_MAINNET,
-            amount_usdc: "0.01",
-            pay_to: PAY_TO,
+          product: "base-alpha-risk-context",
+          network: BASE_MAINNET,
+          detected_kind: "token",
+          assessment: {
+            risk_level: "low",
+            risk_score: 12,
+            alpha_score: 74,
+            trade_bias: "watch",
+            next_action: "Add to a short-lived watchlist and recheck before execution.",
+            flags: [],
           },
-          policy: {
-            budget_enforced: true,
-            replay_protection: true,
-            human_approval: true,
-            mandate_enforced: true,
+          token: {
+            symbol: "USDC",
+            liquidity_usd: 1000000,
+            volume_24h_usd: 250000,
           },
-          evidence: {
-            merchant_risk: "low",
-            domain_risk: "low",
-            transaction_simulation: "success",
-          },
-          reasons: [],
+          machine_tags: ["kind:token", "risk:low", "bias:watch"],
         },
         schema: {
           properties: {
             product: { type: "string" },
-            decision: { type: "string", enum: ["ALLOW", "REVIEW", "BLOCK"] },
-            risk_score: { type: "number" },
-            payment: { type: "object" },
-            policy: { type: "object" },
-            budget: { type: "object" },
-            reasons: { type: "array" },
-            evidence: { type: "object" },
-            decision_token: { type: "string" },
+            detected_kind: { type: "string", enum: ["wallet", "token"] },
+            assessment: { type: "object" },
+            token: { type: "object" },
+            wallet: { type: "object" },
+            machine_tags: { type: "array" },
           },
-          required: ["product", "decision", "risk_score", "payment", "reasons"],
+          required: ["product", "detected_kind", "assessment"],
+        },
+      },
+    });
+  }
+  if (product.id === "agent-payment-guard") {
+    return declareDiscoveryExtension({
+      method: "GET",
+      input: product.input,
+      inputSchema: product.inputSchema,
+      output: PAYMENT_GUARD_OUTPUT,
+    });
+  }
+  if (product.id.startsWith("bcs-")) {
+    return declareDiscoveryExtension({
+      method: "GET",
+      input: product.input,
+      inputSchema: product.inputSchema,
+      output: {
+        example: {
+          product: product.id,
+          upstream_service: "blockchainsecurity-atlantis",
+          upstream_headers: {
+            request_id: "example-request-id",
+            credit_cost: null,
+            credit_remaining: null,
+          },
+          upstream_response: {
+            data: {},
+            meta: { request_id: "example-request-id" },
+          },
+        },
+        schema: {
+          properties: {
+            product: { type: "string" },
+            upstream_service: { type: "string" },
+            request: { type: "object" },
+            upstream_headers: { type: "object" },
+            upstream_response: { type: "object" },
+            provenance: { type: "object" },
+          },
+          required: ["product", "upstream_service", "upstream_response"],
+        },
+      },
+    });
+  }
+  if (product.id.startsWith("public-wallet-risk-")) {
+    return declareDiscoveryExtension({
+      method: "GET",
+      input: product.input,
+      inputSchema: product.inputSchema,
+      output: {
+        example:
+          product.id === "public-wallet-risk-lookup"
+            ? {
+                product: "public-wallet-risk-lookup",
+                chain: "ETH",
+                address: PAY_TO.toLowerCase(),
+                hit: false,
+                risk_score: 0,
+                risk_level: "none",
+                labels: [],
+                provenance: {
+                  source_count: 0,
+                  source_keys: [],
+                  manifest_sha256: "sha256:example",
+                  batch_key: ADDRESS_RISK_DEFAULT_BATCH,
+                },
+              }
+            : product.id === "public-wallet-risk-sample"
+            ? {
+                product: "public-wallet-risk-sample",
+                sample_size: 2,
+                records: [
+                  {
+                    chain: "ETH",
+                    address: "0x0000000000000000000000000000000000000000",
+                    risk_type: "sanction",
+                    label: "example schema record",
+                    confidence: "high",
+                    source_key: "example-source",
+                    evidence_url: "https://example.com/source",
+                  },
+                ],
+                dataset: {
+                  active_labels: 25357,
+                  source_count: 28,
+                  batch_key: ADDRESS_RISK_DEFAULT_BATCH,
+                },
+              }
+            : {
+                product: product.id,
+                content_type: "application/x-ndjson",
+                format: "jsonl",
+                includes:
+                  "chain, address, label, risk_type, confidence, source_key, evidence_url, batch metadata",
+              },
+        schema: {
+          properties: {
+            product: { type: "string" },
+            chain: { type: "string" },
+            address: { type: "string" },
+            hit: { type: "boolean" },
+            risk_score: { type: "number" },
+            risk_level: { type: "string" },
+            labels: { type: "array" },
+            provenance: { type: "object" },
+            dataset: { type: "object" },
+          },
         },
       },
     });
@@ -5760,11 +10907,15 @@ function discovery(product) {
 function openApi(origin) {
   const document = {
     openapi: "3.1.0",
-    info: {
-      title: "Agent Payment Guard API",
-      version: "2.0.0",
-      description:
-        "A stateful x402 payment firewall for AI agents with budget policy, merchant and domain risk, transaction simulation, human approval, replay protection, delivery evidence, webhooks, MCP, and twenty-five underlying safety tools.",
+      info: {
+        title:
+          "SignGate Agent Buyer Identity Preflight | x402 Purchase Governance",
+        version: "2.0.0",
+        description:
+        "Before an AI agent buys an x402 API, dataset, or tool, SignGate verifies whether the buyer agent role fits the product category, purpose, data sensitivity, price, and approval policy. Includes hosted buyer identity preflight, a $49 policy kit, payment controls, wallet and token risk, RPC safety, chain-data routing, API supply-chain checks, and source-attributed KYT intelligence.",
+        contact: { email: "hello@signgate.dev" },
+        "x-guidance":
+          "Use agent-buyer-identity-preflight before an agent buys a paid x402 API. Use paid address-risk routes for source-attributed wallet screening, snapshot downloads, and batch deltas. Call unpaid metadata routes first when you need catalog or schema context.",
     },
     servers: [{ url: origin }],
     paths: {},
@@ -5785,8 +10936,17 @@ function openApi(origin) {
             schema,
           }),
         ),
+        security: [],
         "x-payment-protocol": "x402",
         "x-price-usdc": product.price,
+        "x-payment-info": {
+          price: {
+            mode: "fixed",
+            currency: "USD",
+            amount: product.price.replace("$", ""),
+          },
+          protocols: [{ x402: {} }],
+        },
         responses: {
           200: { description: "Paid safety intelligence response" },
           400: { description: "Invalid input" },
@@ -5804,72 +10964,21 @@ function openApi(origin) {
       required: true,
       content: {
         "application/json": {
-          schema: {
-            type: "object",
-            properties: {
-              url: { type: "string", format: "uri" },
-              session_id: { type: "string" },
-              request_id: { type: "string" },
-              profile_id: { type: "string" },
-              agent_token: { type: "string" },
-              max_single_usdc: { type: "string" },
-              session_budget_usdc: { type: "string" },
-              daily_budget_usdc: { type: "string" },
-              reservation_ttl_seconds: {
-                type: "integer",
-                minimum: 30,
-                maximum: 3600,
-              },
-              retention_days: {
-                type: "integer",
-                minimum: 1,
-                maximum: 365,
-              },
-              human_review_above_usdc: { type: "string" },
-              fail_closed: { type: "boolean", default: true },
-              allowed_domains: {
-                oneOf: [
-                  { type: "string" },
-                  { type: "array", items: { type: "string" } },
-                ],
-              },
-              allowed_tools: {
-                oneOf: [
-                  { type: "string" },
-                  { type: "array", items: { type: "string" } },
-                ],
-              },
-              allowed_purposes: {
-                oneOf: [
-                  { type: "string" },
-                  { type: "array", items: { type: "string" } },
-                ],
-              },
-              active_from_hour_utc: {
-                type: "integer",
-                minimum: 0,
-                maximum: 23,
-              },
-              active_until_hour_utc: {
-                type: "integer",
-                minimum: 1,
-                maximum: 24,
-              },
-              tool_id: { type: "string" },
-              purpose: { type: "string" },
-              allow_pay_to: { type: "string" },
-              block_pay_to: { type: "string" },
-              to: { type: "string" },
-              data: { type: "string" },
-              value: { type: "string" },
-            },
-            required: ["url", "session_id", "request_id"],
-          },
+          schema: PAYMENT_GUARD_EVALUATE_BODY_SCHEMA,
         },
       },
     },
     "x-payment-protocol": "x402",
     "x-price-usdc": PRODUCTS[25].price,
+    "x-payment-info": {
+      price: {
+        mode: "fixed",
+        currency: "USD",
+        amount: PRODUCTS[25].price.replace("$", ""),
+      },
+      protocols: [{ x402: {} }],
+    },
+    security: [],
     responses: {
       200: { description: "Signed Payment Guard decision" },
       400: { description: "Invalid request" },
@@ -5877,13 +10986,117 @@ function openApi(origin) {
       403: { description: "Policy authentication failed" },
     },
   };
+  const intentProperties = {
+    request_id: { type: "string" },
+    session_id: { type: "string" },
+    agent_id: { type: "string" },
+    user_id: { type: "string" },
+    purpose: { type: "string" },
+    pay_to: { type: "string" },
+    chain: { type: "string", default: BASE_MAINNET },
+    token: { type: "string", default: USDC },
+    amount_usdc: { type: "string" },
+    amount_atomic: { type: "integer" },
+    invoice_id: { type: "string" },
+    invoice_hash: { type: "string" },
+    merchant_id: { type: "string" },
+    nonce: { type: "string" },
+    expires_at: { type: "string", format: "date-time" },
+    policy: { type: "object" },
+    risk: { type: "object" },
+  };
+  document.paths[INTENT_VERIFY_PATH] = {
+    post: {
+      operationId: "verifyAgentPaymentIntent",
+      summary:
+        "Normalize and validate a verifiable stablecoin payment intent before any signer sees it.",
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: intentProperties,
+              required: [
+                "request_id",
+                "agent_id",
+                "purpose",
+                "pay_to",
+                "amount_usdc",
+                "nonce",
+              ],
+            },
+          },
+        },
+      },
+      responses: {
+        200: { description: "Normalized intent and validation reasons" },
+        400: { description: "Invalid JSON body" },
+      },
+    },
+  };
+  document.paths[PAYMENT_PREFLIGHT_PATH] = {
+    post: {
+      operationId: "preflightAgentStablecoinPayment",
+      summary:
+        "Run verifiable intent, dynamic limit, and caller-supplied risk checks without producing a signer authorization.",
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: { type: "object", properties: intentProperties },
+          },
+        },
+      },
+      responses: {
+        200: { description: "Allow, review, or deny preflight decision" },
+        400: { description: "Invalid JSON body" },
+      },
+    },
+  };
+  document.paths[PAYMENT_AUTHORIZE_PATH] = {
+    post: {
+      operationId: "authorizeAgentStablecoinPayment",
+      summary:
+        "Return a signing directive for a policy-controlled signer; never exposes private keys to the AI agent.",
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: { type: "object", properties: intentProperties },
+          },
+        },
+      },
+      responses: {
+        200: { description: "Signing directive and optional authorization token" },
+        400: { description: "Invalid JSON body" },
+      },
+    },
+  };
   document.paths[PAYMENT_GUARD_POLICY_PATH] = {
     post: {
       operationId: "createPaymentGuardPolicy",
       summary:
         "Create an owner-controlled policy profile and one-time owner and agent tokens.",
+      requestBody: {
+        required: true,
+        content: {
+        "application/json": {
+            schema: PAYMENT_GUARD_POLICY_BODY_SCHEMA,
+          },
+        },
+      },
       "x-payment-protocol": "x402",
       "x-price-usdc": PRODUCTS[25].price,
+      "x-payment-info": {
+        price: {
+          mode: "fixed",
+          currency: "USD",
+          amount: PRODUCTS[25].price.replace("$", ""),
+        },
+        protocols: [{ x402: {} }],
+      },
+      security: [],
       responses: {
         200: { description: "Policy profile and one-time tokens" },
         402: { description: "x402 payment required" },
@@ -5963,18 +11176,32 @@ function openApi(origin) {
       },
     },
   };
+  for (const path of MARKETPLACE_HIDDEN_OPENAPI_PATHS) {
+    delete document.paths[path];
+  }
   return document;
 }
 
 function agentCard(origin) {
   const orderedProducts = [
+    PRODUCTS[26],
+    PRODUCTS[27],
+    PRODUCTS[28],
+    PRODUCTS[29],
     PRODUCTS[25],
-    ...PRODUCTS.filter(product => product !== PRODUCTS[25]),
+    ...PRODUCTS.filter(
+      product =>
+        product !== PRODUCTS[25] &&
+        product !== PRODUCTS[26] &&
+        product !== PRODUCTS[27] &&
+        product !== PRODUCTS[28] &&
+        product !== PRODUCTS[29],
+    ),
   ];
   return {
-    name: "Agent Payment Guard",
+    name: "SignGate Agent Buyer Identity Preflight",
     description:
-      "Protect autonomous AI-agent spending with x402 payment risk scoring, budget and mandate enforcement, transaction simulation, human approval, replay protection, and auditable delivery evidence.",
+      "Agent-aware x402 purchase governance: decide whether a buyer agent should buy a specific API, dataset, or tool before payment, with role fit, product category, price, sensitivity, approval, and audit guidance.",
     url: origin,
     version: "2.0.0",
     documentationUrl: `${origin}/openapi.json`,
@@ -5988,13 +11215,28 @@ function agentCard(origin) {
         .join(" "),
       description: product.description,
       tags:
-        product.id === "agent-payment-guard"
+        [
+          "base-alpha-risk-context",
+          "base-token-alpha-snapshot",
+          "base-wallet-copytrade-risk",
+          "base-new-pool-risk",
+        ].includes(product.id)
+          ? ["x402", "Base", "trading bot", "wallet risk", "token alpha"]
+          : product.id === "agent-payment-guard"
           ? ["x402", "AI agent", "payment firewall", "risk", "budget"]
+          : product.id === "agent-buyer-identity-preflight"
+          ? ["x402", "agent identity", "purchase governance", "Agent IAM", "approval"]
+          : product.id === "agent-payment-risk-gateway"
+          ? ["SignGate", "AI agent", "pre-signing", "stablecoin", "risk"]
+          : product.id.startsWith("public-wallet-risk-")
+          ? ["x402", "wallet risk", "KYT", "sanctions", "dataset"]
+          : product.id.startsWith("bcs-")
+          ? ["x402", "BlockchainSecurity", "KYT", "wallet intelligence"]
           : ["Base", "x402", "agent-commerce", "payment-safety"],
       examples: [product.description],
     })),
     provider: {
-      organization: "Agent Commerce Safety",
+      organization: "Bytoken Labs",
       url: origin,
     },
   };
@@ -6002,22 +11244,63 @@ function agentCard(origin) {
 
 function serviceManifest(origin) {
   const orderedProducts = [
+    PRODUCTS[26],
+    PRODUCTS[27],
+    PRODUCTS[28],
+    PRODUCTS[29],
     PRODUCTS[25],
-    ...PRODUCTS.filter(product => product !== PRODUCTS[25]),
+    ...PRODUCTS.filter(
+      product =>
+        product !== PRODUCTS[25] &&
+        product !== PRODUCTS[26] &&
+        product !== PRODUCTS[27] &&
+        product !== PRODUCTS[28] &&
+        product !== PRODUCTS[29],
+    ),
   ];
   return {
     schema_version: "1.0",
-    name: "Agent Payment Guard API",
+    name: "SignGate Agent Buyer Identity Preflight",
     description:
-      "Agent Payment Guard with policy, budget, replay, audit, merchant, domain, and transaction checks, plus twenty-five underlying tools.",
+      "Before an AI agent buys an x402 API, dataset, or tool, verify whether that buyer agent role is allowed to buy this product category. Includes hosted preflight, a customizable policy kit, approval guidance, audit reasons, and related payment safety checks.",
     base_url: origin,
     openapi_url: `${origin}/openapi.json`,
+    wallet_risk_url: `${origin}/wallet-risk`,
     agent_card_url: `${origin}/.well-known/agent-card.json`,
     mcp_url: `${origin}${PAYMENT_GUARD_MCP_PATH}`,
+    ai_buyer_catalog_url: `${origin}/catalog.json`,
     authentication: { type: "x402", network: BASE_MAINNET },
     facilitator: FACILITATOR,
     payment_recipient: PAY_TO,
     main_product: {
+      id: PRODUCTS_BY_ID["agent-payment-risk-gateway"].id,
+      path: PRODUCTS_BY_ID["agent-payment-risk-gateway"].path,
+      price_usdc: PRODUCTS_BY_ID["agent-payment-risk-gateway"].price,
+      capabilities: [
+        "verifiable payment intent",
+        "dynamic amount limits",
+        "recipient allowlist and blocklist",
+        "recipient risk screening",
+        "allow/review/deny decision",
+        "policy-controlled signer directive",
+        "agent never receives private keys",
+      ],
+    },
+    agent_buyer_identity_product: {
+      id: PRODUCTS_BY_ID["agent-buyer-identity-preflight"].id,
+      path: PRODUCTS_BY_ID["agent-buyer-identity-preflight"].path,
+      price_usdc: PRODUCTS_BY_ID["agent-buyer-identity-preflight"].price,
+      positioning:
+        "Use before an AI agent buys any x402 API, dataset, or tool to verify role, purpose, product category, price, and approval fit.",
+      starter_roles: [
+        "research_agent",
+        "writer_agent",
+        "accounting_agent",
+        "finance_agent",
+        "operator_agent",
+      ],
+    },
+    payment_guard_capabilities: {
       id: PRODUCTS[25].id,
       path: PRODUCTS[25].path,
       price_usdc: PRODUCTS[25].price,
@@ -6043,6 +11326,27 @@ function serviceManifest(origin) {
         "MCP discovery and status tools",
       ],
     },
+    promoted_product: {
+      id: PRODUCTS[26].id,
+      path: PRODUCTS[26].path,
+      price_usdc: PRODUCTS[26].price,
+      positioning:
+        "High-frequency paid signal for bots that need wallet or token risk, liquidity, activity, and a machine-readable trade bias in one call.",
+    },
+    wallet_risk_product: {
+      id: PRODUCTS_BY_ID["public-wallet-risk-lookup"].id,
+      path: PRODUCTS_BY_ID["public-wallet-risk-lookup"].path,
+      price_usdc: PRODUCTS_BY_ID["public-wallet-risk-lookup"].price,
+      page_url: `${origin}/wallet-risk`,
+      capabilities: [
+        "single wallet lookup",
+        "low-cost paid dataset sample",
+        "full source-attributed JSONL snapshot",
+        "batch delta JSONL",
+        "sanctions, scam, ransomware, malicious contract, and stablecoin blacklist labels",
+        "confidence, provenance, evidence URL, and manifest hash fields",
+      ],
+    },
     products: orderedProducts.map(product => ({
         id: product.id,
         method: "GET",
@@ -6056,6 +11360,350 @@ function serviceManifest(origin) {
 function productExampleUrl(origin, product) {
   const query = new URLSearchParams(product.input);
   return `${origin}${product.path}?${query.toString()}`;
+}
+
+function productTitle(product) {
+  return product.id
+    .split("-")
+    .map(part => part[0].toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function buyerCatalogProduct(origin, product) {
+  const metadata = CATALOG_METADATA[product.id] ?? {
+    group: "agent-api-supply-chain",
+    when_to_buy: product.description,
+    returns: "Machine-readable JSON response with public evidence and limitations.",
+    price_reason: "Priced for repeat autonomous-agent preflight checks.",
+  };
+  const required = product.inputSchema.required ?? [];
+  return {
+    id: product.id,
+    title: productTitle(product),
+    group: metadata.group,
+    method: "GET",
+    path: product.path,
+    price_usdc: product.price,
+    ai_should_buy_when: metadata.when_to_buy,
+    returns: metadata.returns,
+    price_reason: metadata.price_reason,
+    description: product.description,
+    required_inputs: required,
+    optional_inputs: Object.keys(product.inputSchema.properties).filter(
+      name => !required.includes(name),
+    ),
+    example_url: productExampleUrl(origin, product),
+    payment: {
+      protocol: "x402",
+      network: BASE_MAINNET,
+      pay_to: PAY_TO,
+    },
+    limitations:
+      product.id.startsWith("bcs-")
+        ? [
+            "Upstream BlockchainSecurity availability and license terms still apply.",
+            "The hosted Worker keeps the upstream API key server-side; agents receive only the paid response.",
+          ]
+        : [
+            "Uses public data and deterministic heuristics; it is not a guarantee of safety.",
+            "High-risk or high-value actions should still use human review or a stricter policy.",
+          ],
+  };
+}
+
+function buyerCatalog(origin) {
+  const products = PRODUCTS.map(product => buyerCatalogProduct(origin, product));
+  const workflows = recommendedWorkflows();
+  return {
+    schema_version: "1.0",
+    name: "Agent Buyer Identity and Commerce Safety Catalog",
+    description:
+      "Machine-readable buyer guide for AI agents choosing which paid x402 resource to buy, whether the buyer role fits the product category, and when approval is required.",
+    origin,
+    x402scan_server:
+      "https://www.x402scan.com/server/b0ce6f4e-73e9-431d-b23c-814ac89cc77b",
+    openapi_url: `${origin}/openapi.json`,
+    agent_card_url: `${origin}/.well-known/agent-card.json`,
+    service_manifest_url: `${origin}/.well-known/service.json`,
+    product_families: PRODUCTS.length,
+    paid_operations_observed_on_x402scan: PRODUCTS.length + 2,
+    paid_operations_note:
+      "x402scan counts paid OpenAPI operations. Product families count GET products; the extra paid operations are Payment Guard JSON evaluation and policy creation.",
+    groups: CATALOG_GROUPS.map(group => ({
+      ...group,
+      products: products
+        .filter(product => product.group === group.id)
+        .map(product => product.id),
+    })),
+    recommended_workflows: workflows,
+    products,
+  };
+}
+
+function recommendedWorkflows() {
+  return [
+      {
+        id: "agent-buyer-identity-before-x402-purchase",
+        goal: "Verify that the buyer agent role fits the x402 API, dataset, or tool before payment.",
+        sequence: [
+          "agent-buyer-identity-preflight",
+          "x402-endpoint-preflight",
+          "agent-payment-guard",
+        ],
+        escalation:
+          "Require approval when the agent role and product category do not clearly match, data sensitivity is high, payment execution is involved, or price exceeds the role limit.",
+      },
+      {
+        id: "ai-buyer-before-paying-x402-api",
+        goal: "Let an autonomous agent decide whether to pay an unknown x402 API.",
+        sequence: [
+          "x402-origin-due-diligence",
+          "x402-resource-compare",
+          "x402-endpoint-preflight",
+          "x402-server-trust",
+          "agent-payment-guard",
+        ],
+        escalation:
+          "Use human review when endpoint metadata is malformed, seller activity is concentrated, or Payment Guard returns REVIEW/BLOCK.",
+      },
+      {
+        id: "wallet-or-token-kyt-preflight",
+        goal: "Screen an address or token before payment, onboarding, copytrading, or contract interaction.",
+        sequence: [
+          "public-wallet-risk-lookup",
+          "base-address-preflight",
+          "bcs-address-labels",
+          "base-wallet-counterparty",
+          "evm-transaction-intent",
+        ],
+        escalation:
+          "Buy the label/counterparty steps only when the first preflight returns medium/high risk or the value at risk is material.",
+      },
+      {
+        id: "kyt-or-aml-local-dataset-import",
+        goal: "Import source-attributed wallet risk intelligence into a KYT, AML, VASP, wallet-security, or payment-risk system.",
+        sequence: [
+          "public-wallet-risk-sample",
+          "public-wallet-risk-snapshot",
+          "public-wallet-risk-delta",
+          "public-wallet-risk-lookup",
+          "bcs-address-risk-score",
+          "bcs-fund-trace",
+        ],
+        escalation:
+          "Use BCS risk score or fund trace only for addresses that hit the public feed, handle high-value flows, or require investigation evidence.",
+      },
+      {
+        id: "stablecoin-payout-screening",
+        goal: "Check whether a payout or recipient wallet appears in sanctions, scam, ransomware, or stablecoin issuer blacklist intelligence.",
+        sequence: [
+          "public-wallet-risk-sample",
+          "public-wallet-risk-lookup",
+          "bcs-wallet-overview",
+          "bcs-address-classify",
+          "bcs-address-risk-score",
+        ],
+        escalation:
+          "Block or require manual review when sanctions, stablecoin blacklist, ransomware, or high-confidence scam evidence is present.",
+      },
+      {
+        id: "trading-bot-fast-filter",
+        goal: "Keep bot checks cheap while preserving a path to deeper review.",
+        sequence: [
+          "base-alpha-risk-context",
+          "base-token-exit-risk",
+          "base-token-alpha-snapshot",
+          "base-new-pool-risk",
+          "base-dex-market-monitor",
+        ],
+        escalation:
+          "Stop at the 0.003 USDC filter for low-value candidates; continue only for high-alpha or suspicious tokens.",
+      },
+      {
+        id: "agent-tool-supply-chain",
+        goal: "Preflight a tool, API, dependency, or agent before an AI runtime imports or delegates to it.",
+        sequence: [
+          "domain-trust-preflight",
+          "openapi-spec-preflight",
+          "a2a-agent-card-preflight",
+          "npm-package-preflight",
+          "pypi-package-preflight",
+          "github-repository-health",
+        ],
+        escalation:
+          "Block or require review when package vulnerabilities, stale repos, unsafe domains, or mismatched agent endpoints appear.",
+      },
+    ];
+}
+
+function paidDiscoveryOperations(origin) {
+  const productOperations = PRODUCTS.map(product => {
+    const metadata = CATALOG_METADATA[product.id] ?? {
+      group: "agent-api-supply-chain",
+    };
+    return {
+      id: product.id,
+      method: "GET",
+      path: product.path,
+      url: `${origin}${product.path}`,
+      price_usdc: product.price,
+      group: metadata.group,
+      description: product.description,
+      required_inputs: product.inputSchema.required ?? [],
+      example_url: productExampleUrl(origin, product),
+      input_schema: product.inputSchema,
+    };
+  });
+  const guardProduct = PRODUCTS_BY_ID["agent-payment-guard"];
+  return [
+    ...productOperations,
+    {
+      id: "agent-payment-guard-json-evaluate",
+      method: "POST",
+      path: guardProduct.path,
+      url: `${origin}${guardProduct.path}`,
+      price_usdc: guardProduct.price,
+      group: "x402-payment-safety",
+      description:
+        "Evaluate an agent payment with a JSON request body and return an auditable ALLOW/REVIEW/BLOCK decision.",
+      required_inputs: PAYMENT_GUARD_EVALUATE_BODY_SCHEMA.required ?? [],
+      input_schema: PAYMENT_GUARD_EVALUATE_BODY_SCHEMA,
+    },
+    {
+      id: "agent-payment-guard-policy-create",
+      method: "POST",
+      path: PAYMENT_GUARD_POLICY_PATH,
+      url: `${origin}${PAYMENT_GUARD_POLICY_PATH}`,
+      price_usdc: guardProduct.price,
+      group: "x402-payment-safety",
+      description:
+        "Create an owner-controlled Payment Guard policy profile for budget, approval, and signer controls.",
+      required_inputs: PAYMENT_GUARD_POLICY_BODY_SCHEMA.required ?? [],
+      input_schema: PAYMENT_GUARD_POLICY_BODY_SCHEMA,
+    },
+  ];
+}
+
+function workflowCatalog(origin) {
+  const catalog = buyerCatalog(origin);
+  const productsById = Object.fromEntries(
+    catalog.products.map(product => [product.id, product]),
+  );
+  return {
+    schema_version: "1.0",
+    name: "SignGate Agent Risk Utility Workflows",
+    description:
+      "Workflow-first bundles that tell AI agents which x402 risk utilities to buy before payment, signing, routing, or chain-data access.",
+    origin,
+    openapi_url: `${origin}/openapi.json`,
+    registry_url: `${origin}/registry.json`,
+    endpoints_txt_url: `${origin}/endpoints.txt`,
+    workflows: catalog.recommended_workflows.map(workflow => ({
+      ...workflow,
+      estimated_max_price_usdc: workflow.sequence
+        .map(id => productsById[id]?.price_usdc ?? "$0")
+        .map(price => Number(String(price).replace("$", "")) || 0)
+        .reduce((sum, price) => sum + price, 0)
+        .toFixed(3),
+      operations: workflow.sequence
+        .map(id => productsById[id])
+        .filter(Boolean)
+        .map(product => ({
+          id: product.id,
+          method: product.method,
+          path: product.path,
+          price_usdc: product.price_usdc,
+          buy_when: product.ai_should_buy_when,
+          returns: product.returns,
+          example_url: product.example_url,
+        })),
+    })),
+  };
+}
+
+function registry(origin) {
+  const operations = paidDiscoveryOperations(origin);
+  return {
+    schema_version: "1.0",
+    name: "SignGate Agent Risk Utilities",
+    description:
+      "AI-agent payment, signing, wallet-risk, RPC, chain-data, and API supply-chain preflight utilities exposed as x402 paid operations.",
+    positioning:
+      "Use SignGate before an autonomous agent pays, signs, grants approval, calls chain-data infrastructure, or imports a paid tool.",
+    origin,
+    x402_network: BASE_MAINNET,
+    facilitator: FACILITATOR,
+    payment_recipient: PAY_TO,
+    counts: {
+      product_families: PRODUCTS.length,
+      paid_operations: operations.length,
+      workflow_bundles: recommendedWorkflows().length,
+    },
+    discovery: {
+      openapi: `${origin}/openapi.json`,
+      x402: `${origin}/.well-known/x402`,
+      agent_card: `${origin}/.well-known/agent-card.json`,
+      service_manifest: `${origin}/.well-known/service.json`,
+      ai_buyer_catalog: `${origin}/catalog.json`,
+      workflows: `${origin}/workflows.json`,
+      endpoints_txt: `${origin}/endpoints.txt`,
+      llms_txt: `${origin}/llms.txt`,
+      mcp: `${origin}/.well-known/mcp.json`,
+    },
+    clusters: CATALOG_GROUPS.map(group => ({
+      ...group,
+      operations: operations
+        .filter(operation => operation.group === group.id)
+        .map(operation => operation.id),
+    })),
+    operations,
+  };
+}
+
+function endpointsTxt(origin) {
+  const lines = [
+    "# SignGate Agent Risk Utilities",
+    `origin: ${origin}`,
+    `openapi: ${origin}/openapi.json`,
+    `x402: ${origin}/.well-known/x402`,
+    `registry: ${origin}/registry.json`,
+    `workflows: ${origin}/workflows.json`,
+    "",
+    "# paid operations",
+  ];
+  for (const operation of paidDiscoveryOperations(origin)) {
+    lines.push(
+      `${operation.method} ${operation.url} | ${operation.price_usdc} USDC | ${operation.group} | ${operation.description}`,
+    );
+  }
+  lines.push("", "# recommended workflows");
+  for (const workflow of recommendedWorkflows()) {
+    lines.push(`${workflow.id}: ${workflow.sequence.join(" -> ")}`);
+  }
+  return `${lines.join("\n")}\n`;
+}
+
+function x402WellKnown(origin) {
+  const operations = paidDiscoveryOperations(origin);
+  return {
+    version: 1,
+    name: "SignGate Agent Risk Utilities",
+    operation_count: operations.length,
+    resources: PRODUCTS.map(product => `${origin}${product.path}`),
+    paid_operations: operations.map(operation => ({
+      id: operation.id,
+      method: operation.method,
+      resource: operation.url,
+      price_usdc: operation.price_usdc,
+      group: operation.group,
+    })),
+    openapi: `${origin}/openapi.json`,
+    catalog: `${origin}/catalog.json`,
+    agent_card: `${origin}/.well-known/agent-card.json`,
+    registry: `${origin}/registry.json`,
+    endpoints_txt: `${origin}/endpoints.txt`,
+    workflows: `${origin}/workflows.json`,
+  };
 }
 
 async function verificationData(origin) {
@@ -6089,10 +11737,11 @@ async function verificationData(origin) {
   }
 
   return {
-    service: "Agent Commerce Safety API",
+    service: "SignGate Agent Risk Utilities",
     deployment_url: origin,
     checked_at: new Date().toISOString(),
     openapi_url: `${origin}/openapi.json`,
+    ai_buyer_catalog_url: `${origin}/catalog.json`,
     agent_card_url: `${origin}/.well-known/agent-card.json`,
     service_manifest_url: `${origin}/.well-known/service.json`,
     expected_product_count: PRODUCTS.length,
@@ -6122,7 +11771,7 @@ function verificationHtml(origin) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Agent Payment Guard — Deployment Verification</title>
+  <title>SignGate Agent Risk Utilities — Deployment Verification</title>
   <style>
     body{font:16px/1.5 system-ui,sans-serif;max-width:920px;margin:40px auto;padding:0 18px;background:#0b1020;color:#edf2ff}
     h1{font-size:28px}.ok{color:#62e6a7}.bad{color:#ff8b8b}
@@ -6131,10 +11780,10 @@ function verificationHtml(origin) {
   </style>
 </head>
 <body>
-  <h1>Agent Payment Guard API</h1>
+  <h1>SignGate Agent Risk Utilities</h1>
   <p id="summary">Checking deployment and PayAI Bazaar…</p>
   <div id="products"></div>
-  <p><a href="/openapi.json">OpenAPI</a> · <a href="/.well-known/agent-card.json">Agent Card</a> · <a href="/.well-known/service.json">Service Manifest</a> · <a href="/verification.json">Raw verification JSON</a></p>
+  <p><a href="/openapi.json">OpenAPI</a> · <a href="/catalog.json">AI Buyer Catalog</a> · <a href="/.well-known/agent-card.json">Agent Card</a> · <a href="/.well-known/service.json">Service Manifest</a> · <a href="/verification.json">Raw verification JSON</a></p>
   <script>
     fetch('/verification.json').then(r=>r.json()).then(data=>{
       const good=data.all_products_indexed;
@@ -6154,46 +11803,388 @@ function verificationHtml(origin) {
 </html>`;
 }
 
-function landingHtml(origin) {
-  const example = productExampleUrl(origin, PRODUCTS[25]);
+function landingHtml(origin, locale = "en") {
+  const signGateProduct = PRODUCTS_BY_ID["agent-payment-risk-gateway"];
+  const signGateExample = productExampleUrl(origin, signGateProduct);
+  const zh = locale === "zh";
+  const copy = {
+    zh: {
+      lang: "zh-Hant",
+      title: "SignGate - AI Agent Payment 風控基礎設施",
+      meta:
+        "SignGate 是 AI Agent 動用穩定幣之前的 Policy、風險與 Signer 控制層，在任何私鑰簽署發生之前回傳可執行的 allow、review 或 deny 決策。",
+      product: "產品",
+      apiDocs: "API 文件",
+      useCases: "Use Cases",
+      security: "安全與合規",
+      docsCta: "查看 API 文件",
+      paymentCta: "測試 Payment Preflight",
+      previewNote:
+        "Developer Preview：以 x402 付費試打放在頁面後段，避免首屏看起來像低價玩具 API。",
+      language: "繁體中文 / EN",
+      eyebrow: "AI AGENT 支付風控基礎設施",
+      h1: "讓 AI Agent 可以付款，但不能亂付款。",
+      subtitle:
+        "SignGate 是 AI Agent 動用穩定幣之前的 Policy、風險與 Signer 控制層。在任何私鑰簽署發生之前，先驗證付款意圖、套用企業規則、評估收款方與合約風險，回傳可執行的決策，而不只是一個分數。",
+      flowTitle: "Pre-signing flow",
+      flowSubtitle: "Agent 請求付款，Signer 只照政策簽名。",
+      step1: "付款請求",
+      step2: "Intent 驗證",
+      step3: "Policy + Risk",
+      step4: "Allow / Review / Deny",
+      step5: "Signer directive",
+      problemTitle:
+        "AI Agent 一旦能自主付款，風險就不再只是「錯誤」，而是「規模化的錯誤」",
+      problemBody:
+        "當 AI Agent 開始自己購買 API、訂閱資料、支付服務費、呼叫 x402 商家，甚至在鏈上結算，會出現一批過去不存在的風險：金額錯誤、重複付款、收款方遭竄改、惡意商家、prompt injection，以及沒有審核軌跡。這些不是 AI 模型會不會犯錯的問題，而是企業有沒有在簽署之前放一層控制的問題。SignGate 就是那一層。",
+      howTitle: "付款前，先經過五道關卡",
+      howBody:
+        "AI Agent 發起付款請求，SignGate 先驗證付款意圖，套用企業 policy，檢查收款方、商家與合約風險，回傳 allow、review 或 deny，最後產生 signer directive。SignGate 不會取代你原本的 KMS、MPC、smart account 或 custody signer，它只負責在簽署之前做出能不能簽的判斷。",
+      decisionTitle: "不是回傳一個分數，而是回傳一個可以執行的決定",
+      decisionBody:
+        "企業不需要自己猜為什麼被擋。每個決策都會附上 reason code，讓工程、風控、財務與合規團隊能追溯同一筆付款。",
+      policyTitle: "把風控規則，變成機器能執行的簽署指令",
+      policyBody:
+        "SignGate 的 policy engine 支援單筆限額、每日限額、Agent 層級預算、商家與地址 allowlist、blocklist、新收款方強制審核、高風險收款方拒絕、manual review threshold、policy versioning 與 policy simulation。",
+      riskTitle: "這不是傳統 AML，是 AI Agent 付款前的風險預檢",
+      riskBody:
+        "SignGate 檢查錢包地址、商家、網域、智慧合約、發票完整性、recipient mismatch、鏈與代幣一致性、異常金額、新往來對象、已知惡意基礎設施與封鎖名單來源。目的不是只回答地址是否髒，而是回答這筆由 AI Agent 自主發起的付款，現在能不能被信任地執行。",
+      signerTitle: "Agent 永遠碰不到私鑰",
+      signerBody:
+        "Agent 可以請求付款。SignGate 負責判斷。Signer 只在政策允許時簽名。私鑰永遠留在受控環境中：KMS、MPC、Smart Account 模組或企業級 custody signer。SignGate 只做 preflight 決策與 signer directive，不持有、不保管任何資產。",
+      useCasesTitle: "誰在用 SignGate",
+      useCaseItems: [
+        ["AI Agent SaaS", "控制 Agent 何時可以代客戶付款，超出授權範圍一律轉人工審核。"],
+        ["x402 API Marketplace", "在每一次 paid API call 扣款前，先做一次 payment preflight。"],
+        ["Stablecoin Payment Company", "在 USDC / USDT 付款前加入 policy 與收款方風險檢查。"],
+        ["Wallet / Smart Account", "在簽名前加入 AI 付款意圖驗證，不需要重寫 signer 邏輯。"],
+        ["Custody Provider", "把既有 signer 變成一個可被政策驅動的企業簽署系統。"],
+        ["銀行 / 企業創新單位", "用最小成本驗證 AI Agent payment、穩定幣結算、policy-controlled signer 在自家場景是否可行。"],
+      ],
+      trustTitle: "給法遵與風控看的頁面，不只是給工程師看的頁面",
+      trustItems: [
+        "不持有私鑰，不直接保管資產",
+        "Policy 版本管理，每次規則變更都有紀錄",
+        "不可竄改的稽核軌跡（immutable audit trail）",
+        "每個決策都附 reason code，可回溯、可解釋",
+        "nonce + expiry + invoice hash，防止重放與竄改",
+        "Signer directive 與既有 KMS / MPC / custody signer 整合，不需要更換你現有的簽署基礎設施",
+        "人工審核佇列（review queue），高風險案件不會被自動放行",
+      ],
+      apiTitle: "一個請求，決定這筆錢能不能付",
+      scoreNote:
+        "risk_score 為 0-100，分數越高代表風險越高：0-30 低風險，31-70 中風險，71-100 高風險。完整文件請見 /docs 或 /openapi。",
+      decision: "Decision",
+      directive: "Signer Directive",
+      reasons: "Reason Code",
+      decisionAllow: "allow：符合政策，可以繼續",
+      decisionReview: "review：需要人工或二次確認",
+      decisionDeny: "deny：直接拒絕",
+      directiveSign: "sign：允許簽署",
+      directiveReview: "require_approval：需要額外核准才能簽署",
+      directiveReject: "reject：拒絕簽署",
+      developer: "開發者",
+      company: "公司",
+      about: "關於",
+      contact: "聯絡我們",
+      productFooter: "產品",
+      copyright:
+        "© 2026 SignGate. 私鑰不經手，不保管資產，僅提供 preflight 決策服務。",
+      footerText:
+        "SignGate — AI Agent 付款前的 Policy、風險與 Signer 控制層。",
+    },
+    en: {
+      lang: "en",
+      title: "Agent Buyer Identity Preflight | x402 Purchase Governance",
+      meta:
+        "Before an AI agent buys an x402 API, dataset, or tool, SignGate verifies whether the buyer role fits the product category, price, sensitivity, and approval policy.",
+      product: "Product",
+      apiDocs: "API Docs",
+      useCases: "Use Cases",
+      security: "Trust & Compliance",
+      docsCta: "View API Docs",
+      paymentCta: "Run Payment Preflight Test",
+      previewNote:
+        "Developer Preview: Test with x402 — keep this below the fold, not in the hero, so the product doesn't read like a toy API.",
+      language: "繁體中文 / EN",
+      eyebrow: "AGENT BUYER IDENTITY FOR X402",
+      h1: "Check who is buying before your agent pays.",
+      subtitle:
+        "SignGate is the buyer identity and purchase governance layer for x402 agents. It checks the agent role, purpose, product category, data sensitivity, price, and approval evidence before payment, then returns an enforceable allow, review, or deny decision.",
+      flowTitle: "Pre-signing flow",
+      flowSubtitle: "The agent requests payment. The signer only signs under policy.",
+      step1: "Payment request",
+      step2: "Intent verification",
+      step3: "Policy + Risk",
+      step4: "Allow / Review / Deny",
+      step5: "Signer directive",
+      problemTitle:
+        "Once agents can pay on their own, mistakes don't stay small — they scale.",
+      problemBody:
+        "As AI agents start buying API access, paying subscriptions, settling invoices, and calling x402 merchants, a new class of payment risk shows up — one that didn't exist when a human clicked confirm: misread intent leading to overpayment, duplicate or replayed payment requests, recipient addresses tampered with in transit, malicious merchants that look legitimate to an agent, prompt injection triggering an unauthorized payment call, and no audit trail when someone finally asks who approved this, and why. This isn't a question of whether the model will make a mistake. It's a question of whether there's a control layer in front of the signature. SignGate is that layer.",
+      howTitle: "Five checkpoints before any key signs",
+      howBody:
+        "Agent request, intent verification, policy check, recipient and merchant risk, decision, signer directive, then a controlled signer executes — or doesn't. SignGate doesn't replace your signer, whether that is KMS, MPC, a smart account, or custody. It decides whether that signer is allowed to sign.",
+      decisionTitle: "Not another risk score. An enforceable decision.",
+      decisionBody:
+        "Teams should not guess why a payment was blocked. Every decision includes reason codes so engineering, risk, finance, and compliance teams can trace the same payment.",
+      policyTitle: "Turn risk rules into machine-executable signing instructions",
+      policyBody:
+        "SignGate supports per-transaction and daily spending limits, agent-level budgets, merchant and address allowlists, blocklists, mandatory review for new recipients, automatic denial for high-risk recipients, manual approval thresholds, policy versioning, and policy simulation against historical traffic before you ship a change.",
+      riskTitle: "This isn't generic AML. It's preflight risk for agent-initiated payments.",
+      riskBody:
+        "SignGate checks wallet address risk, merchant risk, domain reputation and verification status, smart contract risk, invoice integrity, recipient-to-intent mismatch, chain and token mismatch, unusual amount detection, new counterparty flagging, known malicious infrastructure matching, and blocklist or sanctions sources where available. The question SignGate answers isn't whether this address is risky in general. It is whether this specific agent-initiated payment should be trusted right now.",
+      signerTitle: "Agents never touch private keys",
+      signerBody:
+        "Agent can request. SignGate decides. Signer executes only when policy allows. SignGate doesn't replace your signer. It sits between the agent and the signer, issuing a signer directive. The key stays exactly where it already is: KMS, MPC, smart account modules, or enterprise custody signers. SignGate holds no assets and takes no custody. It only issues the preflight decision and the signer directive.",
+      useCasesTitle: "Who runs this in front of their signer",
+      useCaseItems: [
+        ["AI Agent SaaS", "Control exactly when an agent is allowed to pay on a customer's behalf."],
+        ["x402 API Marketplaces", "Preflight every paid API call before the charge goes through."],
+        ["Stablecoin Payment Companies", "Add policy and recipient risk checks in front of USDC/USDT settlement."],
+        ["Wallets / Smart Accounts", "Add agent payment-intent verification before signing — no signer rewrite required."],
+        ["Custody Providers", "Turn an existing signer into a policy-driven enterprise signing system."],
+        ["Bank Innovation Teams", "Pilot AI agent payments, stablecoin settlement, and policy-controlled signing with minimal integration risk."],
+      ],
+      trustTitle: "Built for the security lead's questions, not just the API docs.",
+      trustItems: [
+        "No private key custody, ever",
+        "Policy versioning — every rule change is recorded",
+        "Immutable audit trail",
+        "Every decision ships with a reason code",
+        "Nonce + expiry + invoice hash prevent replay and tampering",
+        "Signer directives integrate with your existing KMS / MPC / custody signer",
+        "Review queue — high-risk cases don't get auto-approved",
+      ],
+      apiTitle: "One request decides whether this payment can move",
+      scoreNote:
+        "risk_score is 0-100. Higher means riskier: 0-30 low risk, 31-70 medium risk, 71-100 high risk. Full docs are available at /docs or /openapi.",
+      decision: "Decision",
+      directive: "Signer Directive",
+      reasons: "Reason Code",
+      decisionAllow: "allow: policy-compliant, continue",
+      decisionReview: "review: human or secondary confirmation required",
+      decisionDeny: "deny: reject immediately",
+      directiveSign: "sign: signing allowed",
+      directiveReview: "require_approval: approval required before signing",
+      directiveReject: "reject: signing rejected",
+      developer: "Developers",
+      company: "Company",
+      about: "About",
+      contact: "Contact",
+      productFooter: "Product",
+      copyright:
+        "© 2026 SignGate. No custody. No private key access. Preflight decisions only.",
+      footerText:
+        "SignGate — The policy, risk, and signer control layer before AI agents pay.",
+    },
+  };
+  const t = zh ? copy.zh : copy.en;
+  const requestJson = `{
+  "agent_id": "agent_ap_research_01",
+  "intent_id": "intent_2026_001",
+  "merchant": {
+    "name": "Data API Vendor",
+    "domain": "api.vendor.com"
+  },
+  "payment": {
+    "chain": "base",
+    "token": "USDC",
+    "amount": "12.50",
+    "recipient": "0x742d..."
+  },
+  "invoice": {
+    "invoice_id": "inv_8842",
+    "invoice_hash": "0x91ab..."
+  },
+  "controls": {
+    "nonce": "n_7fd9",
+    "expires_at": "2026-07-03T08:30:00Z"
+  }
+}`;
+  const responseJson = `{
+  "decision": "review",
+  "risk_score": 72,
+  "risk_level": "high",
+  "signer_directive": "require_approval",
+  "reason_codes": [
+    "NEW_RECIPIENT_REVIEW_REQUIRED",
+    "RECIPIENT_RISK_HIGH"
+  ],
+  "policy_id": "policy_enterprise_stablecoin_v1",
+  "policy_version": "2026-07-01",
+  "audit_id": "audit_9x28f"
+}`;
+
   return `<!doctype html>
-<html lang="en">
+<html lang="${t.lang}">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Agent Payment Guard — x402 Payment Firewall for AI Agents</title>
-  <meta name="description" content="Protect autonomous AI-agent payments with x402 risk scoring, budgets, mandates, transaction simulation, human approval, replay protection, and delivery audits.">
-  <link rel="icon" href="/icon.svg" type="image/svg+xml">
-  <style>
-    :root{color-scheme:dark}body{margin:0;background:#07101f;color:#edf5ff;font:16px/1.55 system-ui,sans-serif}
-    main{max-width:960px;margin:auto;padding:64px 22px}.hero{padding:38px;border:1px solid #294369;border-radius:22px;background:linear-gradient(145deg,#101d35,#0b1629)}
-    h1{font-size:clamp(36px,7vw,68px);line-height:1.02;margin:0 0 18px}.tag{color:#70e1ae;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-    .lead{font-size:21px;color:#c5d5ec;max-width:760px}.buttons{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
-    a.button{padding:11px 16px;border-radius:10px;text-decoration:none;background:#3d82f6;color:white;font-weight:700}.secondary{background:#172a48!important}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:28px 0}.card{padding:18px;border:1px solid #263b5e;border-radius:14px;background:#0d192d}
-    code{color:#ffd27d;overflow-wrap:anywhere}.price{font-size:30px;font-weight:800;color:#70e1ae}a{color:#8bc5ff}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${t.title}</title>
+<meta name="description" content="${t.meta}">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<style>
+:root{color-scheme:dark;--bg:#080D18;--bg2:#0D1424;--panel:#111B2E;--panel2:#0D1728;--line:#243149;--text:#F2F5FA;--muted:#96A5BF;--soft:#C4CEE0;--blue:#7C9CFA;--blue2:#4F6FE8;--green:#6EE7B7;--amber:#F2C94C;--red:#F2777A;--mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;--sans:Inter,"PingFang TC","Noto Sans TC",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 80% 0%,rgba(79,111,232,.18),transparent 34rem),linear-gradient(180deg,var(--bg),#090E19 45rem);color:var(--text);font-family:var(--sans);line-height:1.62}a{color:inherit;text-decoration:none}button{font:inherit}.nav{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:2rem;padding:1rem 7vw;border-bottom:1px solid rgba(36,49,73,.78);background:rgba(8,13,24,.86);backdrop-filter:blur(18px)}.brand{font-size:1.35rem;font-weight:800}.links{display:flex;align-items:center;gap:1.25rem;margin-left:auto;color:var(--soft);font-size:.95rem}.links a:hover{color:var(--text)}.nav-cta{padding:.55rem .85rem;border:1px solid var(--blue2);border-radius:.5rem;background:rgba(124,156,250,.11);color:var(--text);font-weight:700}.lang-toggle{border:0;background:transparent;color:var(--muted);font-weight:700;cursor:pointer}.wrap{max-width:1180px;margin:0 auto;padding:0 1.5rem}.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(22rem,.95fr);gap:3.5rem;align-items:center;min-height:42rem;padding:5.5rem 0 4rem}.eyebrow{color:var(--green);font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1rem}h1{max-width:11ch;margin:0 0 1.4rem;font-size:4.7rem;line-height:1.04;letter-spacing:0}h2{margin:0 0 1rem;font-size:2.15rem;line-height:1.18;letter-spacing:0}h3{margin:0 0 .65rem;font-size:1.1rem}.subtitle{max-width:48rem;color:#CBD5E7;font-size:1.18rem;margin:0}.cta-row{display:flex;gap:.85rem;flex-wrap:wrap;margin-top:2rem}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:2.9rem;border-radius:.5rem;padding:.72rem 1rem;border:1px solid var(--blue2);background:var(--blue);color:#07101E;font-weight:800}.btn.secondary{background:rgba(124,156,250,.08);color:var(--text)}.flow-card,.panel,.api-card{border:1px solid var(--line);border-radius:.65rem;background:rgba(17,27,46,.82);box-shadow:0 1.5rem 5rem rgba(0,0,0,.24)}.flow-card{padding:1.25rem}.flow-card p{margin:.2rem 0 1.1rem;color:var(--muted)}.flow-step{display:grid;grid-template-columns:2rem 1fr;gap:.85rem;align-items:start;padding:.85rem 0;border-top:1px solid var(--line)}.flow-step:first-of-type{border-top:0}.num{display:flex;align-items:center;justify-content:center;width:2rem;height:2rem;border-radius:999px;background:rgba(124,156,250,.14);border:1px solid rgba(124,156,250,.38);font-family:var(--mono);font-size:.78rem;color:var(--green)}.decision-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem;margin-top:1rem}.chip{border:1px solid var(--line);border-radius:.45rem;padding:.58rem .7rem;text-align:center;font-family:var(--mono);font-size:.8rem}.chip.allow{color:var(--green);border-color:rgba(110,231,183,.45)}.chip.review{color:var(--amber);border-color:rgba(242,201,76,.45)}.chip.deny{color:var(--red);border-color:rgba(242,119,122,.45)}.section{padding:4.2rem 0;border-top:1px solid rgba(36,49,73,.82)}.section.noline{border-top:0}.text-block{max-width:56rem}.text-block p{margin:0;color:var(--soft);font-size:1.05rem}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}.panel{padding:1.25rem}.panel p{margin:0;color:var(--muted)}.panel ul{margin:.85rem 0 0;padding:0;list-style:none;color:var(--soft)}.panel li{padding:.38rem 0;border-top:1px solid rgba(36,49,73,.6)}.panel li:first-child{border-top:0}.code{font-family:var(--mono);font-size:.85rem;color:#DCE8FA;white-space:pre;overflow:auto;margin:0;padding:1rem;background:#08101D;border:1px solid var(--line);border-radius:.5rem}.api-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.api-card{padding:1rem}.api-card h3{font-family:var(--mono);font-size:.82rem;color:var(--green);text-transform:uppercase}.note{margin:1rem 0 0;color:var(--muted)}.footer{border-top:1px solid var(--line);padding:2rem 0 3rem;color:var(--muted)}.footer-grid{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:2rem}.footer a{display:block;margin:.35rem 0;color:var(--soft)}code.inline{color:#FFD27D;font-family:var(--mono)}
+@media (max-width:900px){.nav{position:static;align-items:flex-start;flex-direction:column;padding:1rem 1.25rem}.links{margin-left:0;flex-wrap:wrap}.hero,.grid-2,.api-grid,.footer-grid{grid-template-columns:1fr}.hero{min-height:0;padding:3.5rem 0}.grid-3{grid-template-columns:1fr}h1{font-size:3.4rem}.wrap{padding:0 1.25rem}}
+@media (max-width:560px){.links{gap:.8rem}.nav-cta{order:4}.decision-strip{grid-template-columns:1fr}h1{font-size:2.65rem}h2{font-size:1.65rem}.subtitle{font-size:1.03rem}.section{padding:3rem 0}.code{font-size:.76rem}}
+</style>
 </head>
-<body><main>
-  <section class="hero">
-    <div class="tag">Agentic commerce safety</div>
-    <h1>Stop unsafe agent payments before they happen.</h1>
-    <p class="lead">Agent Payment Guard is a stateful x402 payment firewall for autonomous AI agents. It returns one decision—ALLOW, REVIEW, or BLOCK—after enforcing budgets, mandates, merchant and domain risk, transaction simulation, replay protection, and human approval.</p>
-    <div class="price">0.01 USDC / evaluation</div>
-    <div class="buttons">
-      <a class="button" href="${example}">Try the x402 endpoint</a>
-      <a class="button secondary" href="/openapi.json">OpenAPI</a>
-      <a class="button secondary" href="/.well-known/mcp.json">MCP</a>
+<body>
+<nav class="nav">
+  <a class="brand" href="/">SignGate</a>
+  <div class="links">
+    <a href="#product">${t.product}</a>
+    <a href="/openapi.json">${t.apiDocs}</a>
+    <a href="#use-cases">${t.useCases}</a>
+    <a href="#security">${t.security}</a>
+    <a class="nav-cta" href="/openapi.json">${t.docsCta}</a>
+    <button id="lang-toggle" class="lang-toggle">${t.language}</button>
+  </div>
+</nav>
+<main class="wrap" data-locale="${zh ? "zh" : "en"}">
+  <section class="hero" id="product">
+    <div>
+      <div class="eyebrow">${t.eyebrow}</div>
+      <h1>${t.h1}</h1>
+      <p class="subtitle">${t.subtitle}</p>
+      <div class="cta-row">
+        <a class="btn" href="/openapi.json">${t.docsCta}</a>
+        <a class="btn secondary" href="#api-preview">${t.paymentCta}</a>
+      </div>
+    </div>
+    <aside class="flow-card" aria-label="SignGate payment flow">
+      <h3>${t.flowTitle}</h3>
+      <p>${t.flowSubtitle}</p>
+      <div class="flow-step"><span class="num">01</span><strong>${t.step1}</strong></div>
+      <div class="flow-step"><span class="num">02</span><strong>${t.step2}</strong></div>
+      <div class="flow-step"><span class="num">03</span><strong>${t.step3}</strong></div>
+      <div class="flow-step"><span class="num">04</span><strong>${t.step4}</strong></div>
+      <div class="flow-step"><span class="num">05</span><strong>${t.step5}</strong></div>
+      <div class="decision-strip"><span class="chip allow">allow</span><span class="chip review">review</span><span class="chip deny">deny</span></div>
+    </aside>
+  </section>
+
+  <section class="section noline">
+    <div class="text-block">
+      <h2>${t.problemTitle}</h2>
+      <p>${t.problemBody}</p>
     </div>
   </section>
-  <section class="grid">
-    <div class="card"><h2>Policy enforcement</h2><p>Single, session, and daily budgets; allowlists, blocklists, tool and purpose mandates, UTC windows, and credential rotation.</p></div>
-    <div class="card"><h2>Risk evidence</h2><p>x402 metadata, merchant history, domain trust, Base transaction intent, simulation, approvals, velocity, and price changes.</p></div>
-    <div class="card"><h2>Operational controls</h2><p>Signed decision tokens, reserve/commit/release, human approval queue, delivery evidence, audit history, and signed webhooks.</p></div>
+
+  <section class="section">
+    <div class="grid-2">
+      <div class="text-block">
+        <h2>${t.howTitle}</h2>
+        <p>${t.howBody}</p>
+      </div>
+      <div class="panel">
+        <ul>
+          <li>Agent payment request</li>
+          <li>Verifiable intent</li>
+          <li>Enterprise policy</li>
+          <li>Recipient and contract risk</li>
+          <li>Signer directive</li>
+        </ul>
+      </div>
+    </div>
   </section>
-  <p><strong>For agents:</strong> <code>GET ${PRODUCTS[25].path}</code> or POST JSON to the same path.</p>
-  <p><a href="/.well-known/service.json">Service manifest</a> · <a href="/.well-known/agent-card.json">A2A Agent Card</a> · <a href="/llms.txt">llms.txt</a> · <a href="/verify">Deployment verification</a></p>
-</main></body></html>`;
+
+  <section class="section">
+    <div class="text-block">
+      <h2>${t.decisionTitle}</h2>
+      <p>${t.decisionBody}</p>
+    </div>
+    <div class="grid-3" style="margin-top:1.25rem">
+      <div class="panel"><h3>${t.decision}</h3><ul><li>${t.decisionAllow}</li><li>${t.decisionReview}</li><li>${t.decisionDeny}</li></ul></div>
+      <div class="panel"><h3>${t.directive}</h3><ul><li>${t.directiveSign}</li><li>${t.directiveReview}</li><li>${t.directiveReject}</li></ul></div>
+      <div class="panel"><h3>${t.reasons}</h3><ul><li>POLICY_LIMIT_EXCEEDED</li><li>NEW_RECIPIENT_REVIEW_REQUIRED</li><li>RECIPIENT_RISK_HIGH</li><li>INVOICE_HASH_MISMATCH</li><li>EXPIRED_INTENT</li><li>NONCE_REPLAY_DETECTED</li><li>BLOCKLISTED_MERCHANT</li><li>DOMAIN_NOT_VERIFIED</li></ul></div>
+    </div>
+  </section>
+
+  <section class="section" id="policy-engine">
+    <div class="grid-2">
+      <div class="panel"><h2>${t.policyTitle}</h2><p>${t.policyBody}</p></div>
+      <div class="panel" id="risk-checks"><h2>${t.riskTitle}</h2><p>${t.riskBody}</p></div>
+    </div>
+  </section>
+
+  <section class="section" id="signer-isolation">
+    <div class="text-block">
+      <h2>${t.signerTitle}</h2>
+      <p>${t.signerBody}</p>
+    </div>
+  </section>
+
+  <section class="section" id="api-preview">
+    <div class="text-block">
+      <h2>${t.apiTitle}</h2>
+      <p><code class="inline">POST /v1/payments/preflight</code></p>
+    </div>
+    <div class="api-grid" style="margin-top:1.25rem">
+      <div class="api-card"><h3>Request</h3><pre class="code">${requestJson}</pre></div>
+      <div class="api-card"><h3>Response</h3><pre class="code">${responseJson}</pre></div>
+    </div>
+    <p class="note">${t.scoreNote}</p>
+    <p class="note">x402 wrapper: <a href="${signGateExample}"><code class="inline">GET ${signGateProduct.path}</code></a> · ${signGateProduct.price}</p>
+  </section>
+
+  <section class="section" id="use-cases">
+    <div class="text-block">
+      <h2>${t.useCasesTitle}</h2>
+    </div>
+    <div class="grid-3" style="margin-top:1.25rem">
+      ${t.useCaseItems
+        .map(
+          ([title, body]) =>
+            `<div class="panel"><h3>${title}</h3><p>${body}</p></div>`,
+        )
+        .join("")}
+    </div>
+  </section>
+
+  <section class="section" id="security">
+    <div class="grid-2">
+      <div class="text-block">
+        <h2>${t.trustTitle}</h2>
+        <p>${t.footerText}</p>
+      </div>
+      <div class="panel">
+        <ul>${t.trustItems.map(item => `<li>${item}</li>`).join("")}</ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="panel">
+      <h2>${t.apiTitle}</h2>
+      <div class="cta-row">
+        <a class="btn" href="/openapi.json">${t.docsCta}</a>
+        <a class="btn secondary" href="#api-preview">${t.paymentCta}</a>
+      </div>
+      <p class="note">${t.previewNote}</p>
+    </div>
+  </section>
+</main>
+<footer class="footer">
+  <div class="wrap footer-grid">
+    <div><strong>SignGate</strong><p>${t.footerText}</p></div>
+    <div><strong>${t.productFooter}</strong><a href="#policy-engine">Policy Engine</a><a href="#risk-checks">Risk Checks</a><a href="#signer-isolation">Signer Isolation</a><a href="#use-cases">Use Cases</a></div>
+    <div><strong>${t.developer}</strong><a href="/openapi.json">${t.apiDocs}</a><a href="/openapi.json">OpenAPI</a><a href="/catalog.json">Catalog</a><a href="/.well-known/agent-card.json">Agent Card</a><a href="/verify">Verify</a></div>
+    <div><strong>${t.company}</strong><a href="/">${t.about}</a><a href="#security">${t.security}</a><a href="mailto:hello@signgate.dev">${t.contact}</a></div>
+  </div>
+  <div class="wrap"><p class="note">${t.copyright}</p></div>
+</footer>
+<script>
+document.getElementById("lang-toggle").addEventListener("click", event => {
+  event.preventDefault();
+  const current = document.querySelector("main").dataset.locale;
+  window.location.href = current === "zh" ? "/en/signgate" : "/zh/signgate";
+});
+</script>
+</body>
+</html>`;
 }
 
 function createPaidApp() {
@@ -6217,14 +12208,39 @@ function createPaidApp() {
         },
       ],
       description: product.description,
-      mimeType: "application/json",
-      serviceName:
-        product.id === "agent-payment-guard"
+      mimeType: product.id === "public-wallet-risk-snapshot" || product.id === "public-wallet-risk-delta"
+        ? "application/x-ndjson"
+        : "application/json",
+        serviceName:
+        product.id === "base-alpha-risk-context"
+          ? "Base Alpha Risk Context"
+          : product.id === "base-token-alpha-snapshot"
+          ? "Base Token Alpha Snapshot"
+          : product.id === "base-wallet-copytrade-risk"
+          ? "Base Wallet Copytrade Risk"
+          : product.id === "base-new-pool-risk"
+          ? "Base New Pool Risk"
+          : product.id === "agent-payment-guard"
           ? "Agent Payment Guard"
-          : "Agent Commerce Safety",
+          : product.id.startsWith("public-wallet-risk-")
+          ? "Public Wallet Risk Intelligence"
+          : product.id.startsWith("bcs-")
+          ? "BlockchainSecurity Atlantis"
+          : "SignGate Agent Risk Utilities",
       tags:
-        product.id === "agent-payment-guard"
+        [
+          "base-alpha-risk-context",
+          "base-token-alpha-snapshot",
+          "base-wallet-copytrade-risk",
+          "base-new-pool-risk",
+        ].includes(product.id)
+          ? ["x402", "Base", "trading bots", "wallet risk", "token alpha"]
+          : product.id === "agent-payment-guard"
           ? ["x402", "AI agents", "payment firewall", "risk", "budget"]
+          : product.id.startsWith("bcs-")
+          ? ["x402", "BlockchainSecurity", "labels", "asset registry", "KYT"]
+          : product.id.startsWith("public-wallet-risk-")
+          ? ["x402", "wallet risk", "KYT", "sanctions", "ransomware"]
           : ["x402", "Base", "agent safety"],
       iconUrl: SERVICE_ICON,
       extensions: discovery(product),
@@ -6242,9 +12258,16 @@ function createPaidApp() {
     ],
     description: `${guardProduct.description} Accepts a JSON request body.`,
     mimeType: "application/json",
-    serviceName: "Agent Payment Guard",
+    serviceName: "SignGate Payment Guard",
     tags: ["x402", "AI agents", "payment firewall", "risk", "budget"],
     iconUrl: SERVICE_ICON,
+    extensions: declareDiscoveryExtension({
+      method: "POST",
+      bodyType: "json",
+      input: PAYMENT_GUARD_EVALUATE_BODY_EXAMPLE,
+      inputSchema: PAYMENT_GUARD_EVALUATE_BODY_SCHEMA,
+      output: PAYMENT_GUARD_OUTPUT,
+    }),
   };
   routes[`POST ${PAYMENT_GUARD_POLICY_PATH}`] = {
     accepts: [
@@ -6258,12 +12281,55 @@ function createPaidApp() {
     description:
       "Create an owner-controlled Payment Guard policy profile and receive one-time owner and agent tokens.",
     mimeType: "application/json",
-    serviceName: "Agent Payment Guard",
+    serviceName: "SignGate Payment Guard",
     tags: ["x402", "AI agents", "payment policy", "budget", "security"],
     iconUrl: SERVICE_ICON,
+    extensions: declareDiscoveryExtension({
+      method: "POST",
+      bodyType: "json",
+      input: PAYMENT_GUARD_POLICY_BODY_EXAMPLE,
+      inputSchema: PAYMENT_GUARD_POLICY_BODY_SCHEMA,
+      output: {
+        example: {
+          product: "agent-payment-guard-policy",
+          profile_id: "policy_demo",
+          owner_token: "owner_token_example",
+          agent_token: "agent_token_example",
+          policy: {
+            max_single_usdc: "0.10",
+            session_budget_usdc: "1.00",
+            daily_budget_usdc: "5.00",
+          },
+        },
+        schema: {
+          properties: {
+            product: { type: "string" },
+            profile_id: { type: "string" },
+            owner_token: { type: "string" },
+            agent_token: { type: "string" },
+            policy: { type: "object" },
+          },
+          required: ["product", "profile_id", "owner_token", "agent_token"],
+        },
+      },
+    }),
   };
   const httpServer = new x402HTTPResourceServer(resourceServer, routes);
   app.use("*", paymentMiddlewareFromHTTPServer(httpServer));
+  app.use("*", async (c, next) => {
+    await next();
+    if (c.res?.status && c.res.status < 400) {
+      try {
+        await recordX402PurchaseEvent(c.env?.GUARD_DB, c);
+      } catch (error) {
+        console.warn(
+          `purchase event log failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      }
+    }
+  });
 
   app.get(PRODUCTS[0].path, async c => {
   const address = c.req.query("address") ?? "";
@@ -6916,6 +12982,82 @@ function createPaidApp() {
     }
   });
 
+  app.get(PRODUCTS[26].path, async c => {
+    const subject = c.req.query("subject") ?? "";
+    const kind = c.req.query("kind") ?? "auto";
+    if (
+      !ADDRESS_PATTERN.test(subject) ||
+      !["auto", "wallet", "token"].includes(kind)
+    ) {
+      return c.json({ error: "invalid_alpha_risk_input" }, 400);
+    }
+    try {
+      return c.json(await alphaRiskContext(subject, kind));
+    } catch (error) {
+      return c.json(
+        {
+          error: "upstream_unavailable",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS[27].path, async c => {
+    const token = c.req.query("token") ?? "";
+    if (!ADDRESS_PATTERN.test(token)) {
+      return c.json({ error: "invalid_token_alpha_input" }, 400);
+    }
+    try {
+      return c.json(await tokenAlphaSnapshot(token));
+    } catch (error) {
+      return c.json(
+        {
+          error: "upstream_unavailable",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS[28].path, async c => {
+    const address = c.req.query("address") ?? "";
+    if (!ADDRESS_PATTERN.test(address)) {
+      return c.json({ error: "invalid_copytrade_wallet_input" }, 400);
+    }
+    try {
+      return c.json(await walletCopytradeRisk(address));
+    } catch (error) {
+      return c.json(
+        {
+          error: "upstream_unavailable",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS[29].path, async c => {
+    const token = c.req.query("token") ?? "";
+    if (!ADDRESS_PATTERN.test(token)) {
+      return c.json({ error: "invalid_new_pool_input" }, 400);
+    }
+    try {
+      return c.json(await newPoolRisk(token));
+    } catch (error) {
+      return c.json(
+        {
+          error: "upstream_unavailable",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
   app.post(PAYMENT_GUARD_POLICY_PATH, async c => {
     try {
       const input = await c.req.json();
@@ -6927,6 +13069,835 @@ function createPaidApp() {
           message: error instanceof Error ? error.message : String(error),
         },
         400,
+      );
+    }
+  });
+
+  app.get(PRODUCTS[30].path, async c => {
+    const serverUrl = c.req.query("server_url") ?? "";
+    const seller = c.req.query("seller") || null;
+    let parsedTarget;
+    try {
+      parsedTarget = validatePublicUrl(serverUrl);
+    } catch (error) {
+      return c.json(
+        {
+          error: "invalid_x402_server_url",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        400,
+      );
+    }
+    if (seller !== null && !ADDRESS_PATTERN.test(seller)) {
+      return c.json({ error: "invalid_x402_seller_address" }, 400);
+    }
+    const volumeUsdc = c.req.query("volume_usdc") ?? null;
+    const txns = c.req.query("txns") ?? null;
+    const buyers = c.req.query("buyers") ?? null;
+    const latestSeenHours = c.req.query("latest_seen_hours") ?? null;
+    const chains = c.req.query("chains") ?? "";
+    if (
+      (volumeUsdc !== null && parseNonNegativeNumber(volumeUsdc) === null) ||
+      (txns !== null && parseNonNegativeInteger(txns) === null) ||
+      (buyers !== null && parseNonNegativeInteger(buyers) === null) ||
+      (latestSeenHours !== null &&
+        parseNonNegativeNumber(latestSeenHours) === null)
+    ) {
+      return c.json({ error: "invalid_x402_server_stats" }, 400);
+    }
+    try {
+      if (parsedTarget.origin === new URL(c.req.url).origin && !seller) {
+        return c.json(
+          buildX402ServerTrust({
+            serverUrl,
+            seller: PAY_TO,
+            volumeUsdc,
+            txns,
+            buyers,
+            latestSeenHours,
+            chains,
+          }),
+        );
+      }
+      return c.json(
+        await x402ServerTrust({
+          serverUrl,
+          seller,
+          volumeUsdc,
+          txns,
+          buyers,
+          latestSeenHours,
+          chains,
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "upstream_unavailable",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["x402-origin-due-diligence"].path, async c => {
+    const serverUrl = c.req.query("server_url") ?? "";
+    const seller = c.req.query("seller") || null;
+    const resources = c.req.query("resources") || null;
+    const txns = c.req.query("txns") || null;
+    const buyers = c.req.query("buyers") || null;
+    try {
+      validatePublicUrl(serverUrl);
+    } catch (error) {
+      return c.json(
+        {
+          error: "invalid_x402_origin_url",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        400,
+      );
+    }
+    if (
+      (seller !== null && !ADDRESS_PATTERN.test(seller)) ||
+      (resources !== null && parseNonNegativeInteger(resources) === null) ||
+      (txns !== null && parseNonNegativeInteger(txns) === null) ||
+      (buyers !== null && parseNonNegativeInteger(buyers) === null)
+    ) {
+      return c.json({ error: "invalid_x402_origin_due_diligence_input" }, 400);
+    }
+    try {
+      const requestOrigin = new URL(c.req.url).origin;
+      if (
+        new URL(serverUrl).origin === requestOrigin ||
+        serverUrl.startsWith(SERVICE_ORIGIN)
+      ) {
+        const document = openApi(requestOrigin);
+        const openapi = await buildOpenApiSpecPreflight({
+          requestedUrl: `${requestOrigin}/openapi.json`,
+          finalUrl: `${requestOrigin}/openapi.json`,
+          document,
+          raw: JSON.stringify(document),
+        });
+        return c.json(
+          buildX402OriginDueDiligence({
+            serverUrl,
+            origin: requestOrigin,
+            title: "Agent Payment Guard API",
+            seller: seller ?? PAY_TO,
+            resources: resources ?? String(PRODUCTS.length + 2),
+            resourceUrls: PRODUCTS.map(product => `${requestOrigin}${product.path}`),
+            payToAddresses: [seller ?? PAY_TO],
+            txns,
+            buyers,
+            openapi,
+            serverTrust: buildX402ServerTrust({
+              serverUrl: requestOrigin,
+              seller: seller ?? PAY_TO,
+              txns,
+              buyers,
+              chains: "base",
+            }),
+          }),
+        );
+      }
+      return c.json(
+        await x402OriginDueDiligence({
+          serverUrl,
+          seller,
+          resources,
+          txns,
+          buyers,
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "x402_origin_due_diligence_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["x402-resource-compare"].path, async c => {
+    const resources = c.req.query("resources") ?? "";
+    const budgetUsdc = c.req.query("budget_usdc") || null;
+    const urls = parseResourceList(resources);
+    if (
+      urls.length < 2 ||
+      urls.length > 5 ||
+      (budgetUsdc !== null && parseNonNegativeNumber(budgetUsdc) === null)
+    ) {
+      return c.json({ error: "invalid_x402_resource_compare_input" }, 400);
+    }
+    try {
+      return c.json(
+        await x402ResourceCompare({
+          resources,
+          budgetUsdc,
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "x402_resource_compare_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["agent-spend-route-plan"].path, async c => {
+    const task = c.req.query("task") ?? "";
+    const budgetUsdc = c.req.query("budget_usdc") ?? "0.02";
+    const riskTolerance = c.req.query("risk_tolerance") ?? "medium";
+    if (
+      task.length < 3 ||
+      task.length > 500 ||
+      parseNonNegativeNumber(budgetUsdc) === null ||
+      !["low", "medium", "high"].includes(riskTolerance)
+    ) {
+      return c.json({ error: "invalid_agent_spend_route_plan_input" }, 400);
+    }
+    return c.json(
+      buildAgentSpendRoutePlan({
+        task,
+        budgetUsdc,
+        riskTolerance,
+      }),
+    );
+  });
+
+  app.get(PRODUCTS_BY_ID["agent-buyer-identity-preflight"].path, async c => {
+    const agentRole = c.req.query("agent_role") ?? "";
+    const productCategory = c.req.query("product_category") ?? "";
+    const purpose = c.req.query("purpose") ?? "";
+    const priceUsdc = c.req.query("price_usdc") ?? "0";
+    const dataSensitivity = c.req.query("data_sensitivity") ?? "medium";
+    const agentStatus = c.req.query("agent_status") ?? "active";
+    const approvalRef = c.req.query("approval_ref") ?? "";
+    if (
+      !/^[A-Za-z0-9_ -]{2,80}$/.test(agentRole) ||
+      !/^[A-Za-z0-9_ -]{2,80}$/.test(productCategory) ||
+      (purpose && !/^[A-Za-z0-9_ -]{2,80}$/.test(purpose)) ||
+      parseNonNegativeNumber(priceUsdc) === null ||
+      !["low", "medium", "high", "restricted"].includes(dataSensitivity) ||
+      !["active", "paused", "disabled"].includes(agentStatus)
+    ) {
+      return c.json({ error: "invalid_agent_buyer_identity_preflight_input" }, 400);
+    }
+    return c.json(
+      buildAgentBuyerIdentityPreflight({
+        agentRole,
+        productCategory,
+        purpose,
+        priceUsdc,
+        dataSensitivity,
+        agentStatus,
+        approvalRef,
+      }),
+    );
+  });
+
+  app.get(PRODUCTS_BY_ID["agent-buyer-policy-kit"].path, async c => {
+    const format = c.req.query("format") ?? "manifest";
+    const buyerType = c.req.query("buyer_type") ?? "developer";
+    if (
+      !["manifest", "policy", "quickstart"].includes(format) ||
+      !["developer", "startup", "enterprise"].includes(buyerType)
+    ) {
+      return c.json({ error: "invalid_agent_buyer_policy_kit_input" }, 400);
+    }
+    return c.json(buildAgentBuyerPolicyKitDelivery({ format, buyerType }));
+  });
+
+  app.get(PRODUCTS_BY_ID["agent-payment-risk-gateway"].path, async c => {
+    const input = {
+      request_id: c.req.query("request_id") ?? "",
+      agent_id: c.req.query("agent_id") ?? "",
+      session_id: c.req.query("session_id") ?? "",
+      purpose: c.req.query("purpose") ?? "",
+      pay_to: c.req.query("pay_to") ?? "",
+      amount_usdc: c.req.query("amount_usdc") ?? "",
+      invoice_id: c.req.query("invoice_id") ?? "",
+      invoice_hash: c.req.query("invoice_hash") ?? "",
+      nonce: c.req.query("nonce") ?? "",
+      expires_at:
+        c.req.query("expires_at") ??
+        new Date(Date.now() + 5 * 60_000).toISOString(),
+      max_single_usdc: c.req.query("max_single_usdc") ?? "0.10",
+      human_review_above_usdc:
+        c.req.query("human_review_above_usdc") ?? "0.09",
+      allow_pay_to: c.req.query("allow_pay_to") ?? "",
+      block_pay_to: c.req.query("block_pay_to") ?? "",
+      risk: {
+        score: c.req.query("risk_score") ?? "0",
+        labels: c.req.query("risk_labels") ?? "",
+        source: "query",
+      },
+    };
+    const result = await buildAgentPaymentAuthorization({ input });
+    return c.json({
+      ...result,
+      authorization_token: null,
+      limitations: [
+        "This x402 wrapper is for discoverable paid preflight; use POST /v1/payments/authorize with an authenticated signer policy before production signing.",
+        "Private keys must remain in KMS, MPC, smart-account modules, or another owner-controlled signer.",
+      ],
+    });
+  });
+
+  app.get(PRODUCTS_BY_ID["agent-rpc-preflight"].path, async c => {
+    const endpointUrl = c.req.query("endpoint_url") ?? "";
+    const chain = c.req.query("chain") ?? "";
+    const method = c.req.query("method") ?? "";
+    const maxPriceUsdc = c.req.query("max_price_usdc") || null;
+    const sessionBudgetUsdc = c.req.query("session_budget_usdc") || null;
+    if (
+      endpointUrl.length > 2048 ||
+      !chain ||
+      !/^[A-Za-z0-9:_ -]{2,80}$/.test(chain) ||
+      !/^[A-Za-z0-9_.:-]{2,80}$/.test(method) ||
+      (maxPriceUsdc !== null && parseNonNegativeNumber(maxPriceUsdc) === null) ||
+      (sessionBudgetUsdc !== null && parseNonNegativeNumber(sessionBudgetUsdc) === null)
+    ) {
+      return c.json({ error: "invalid_agent_rpc_preflight_input" }, 400);
+    }
+    try {
+      return c.json(
+        buildAgentRpcPreflight({
+          endpointUrl,
+          chain,
+          method,
+          maxPriceUsdc,
+          sessionBudgetUsdc,
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "agent_rpc_preflight_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        400,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["rpc-capability-probe"].path, async c => {
+    const chain = c.req.query("chain") ?? "";
+    const methods = c.req.query("methods") ?? "";
+    const historicalBlock = c.req.query("historical_block") || null;
+    const requiresTrace = c.req.query("requires_trace") ?? "false";
+    const requiresWebsocket = c.req.query("requires_websocket") ?? "false";
+    if (
+      !/^[A-Za-z0-9:_ -]{2,80}$/.test(chain) ||
+      !/^[A-Za-z0-9_.,:-]{2,400}$/.test(methods) ||
+      (historicalBlock !== null && parseNonNegativeInteger(historicalBlock) === null) ||
+      !/^(?:true|false)$/.test(requiresTrace) ||
+      !/^(?:true|false)$/.test(requiresWebsocket)
+    ) {
+      return c.json({ error: "invalid_rpc_capability_probe_input" }, 400);
+    }
+    return c.json(
+      buildRpcCapabilityProbe({
+        chain,
+        methods,
+        historicalBlock,
+        requiresTrace: parseBooleanString(requiresTrace),
+        requiresWebsocket: parseBooleanString(requiresWebsocket),
+      }),
+    );
+  });
+
+  app.get(PRODUCTS_BY_ID["agent-chain-data-route-plan"].path, async c => {
+    const task = c.req.query("task") ?? "";
+    const chain = c.req.query("chain") ?? "";
+    const dataNeed = c.req.query("data_need") ?? "mixed";
+    const budgetUsdc = c.req.query("budget_usdc") ?? "0.02";
+    const riskTolerance = c.req.query("risk_tolerance") ?? "medium";
+    if (
+      task.length < 3 ||
+      task.length > 500 ||
+      !/^[A-Za-z0-9:_ -]{2,80}$/.test(chain) ||
+      !["rpc", "logs", "storage", "trace", "indexed", "sql", "fork", "mixed"].includes(dataNeed) ||
+      parseNonNegativeNumber(budgetUsdc) === null ||
+      !["low", "medium", "high"].includes(riskTolerance)
+    ) {
+      return c.json({ error: "invalid_agent_chain_data_route_plan_input" }, 400);
+    }
+    return c.json(
+      buildAgentChainDataRoutePlan({
+        task,
+        chain,
+        dataNeed,
+        budgetUsdc,
+        riskTolerance,
+      }),
+    );
+  });
+
+  app.get(PRODUCTS_BY_ID["indexed-chain-query-preflight"].path, async c => {
+    const chain = c.req.query("chain") ?? "";
+    const queryType = c.req.query("query_type") ?? "";
+    const estimatedRows = c.req.query("estimated_rows") || null;
+    const maxPriceUsdc = c.req.query("max_price_usdc") || null;
+    if (
+      !/^[A-Za-z0-9:_ -]{2,80}$/.test(chain) ||
+      !["schema", "event_logs", "transfers", "balances", "transactions", "sql", "protocol_timeline"].includes(queryType) ||
+      (estimatedRows !== null && parseNonNegativeInteger(estimatedRows) === null) ||
+      (maxPriceUsdc !== null && parseNonNegativeNumber(maxPriceUsdc) === null)
+    ) {
+      return c.json({ error: "invalid_indexed_chain_query_preflight_input" }, 400);
+    }
+    return c.json(
+      buildIndexedChainQueryPreflight({
+        chain,
+        queryType,
+        estimatedRows,
+        maxPriceUsdc,
+      }),
+    );
+  });
+
+  app.get(PRODUCTS_BY_ID["x402-rpc-payment-guard"].path, async c => {
+    const requestId = c.req.query("request_id") ?? "";
+    const endpointUrl = c.req.query("endpoint_url") ?? "";
+    const chain = c.req.query("chain") ?? "";
+    const method = c.req.query("method") ?? "";
+    const payTo = c.req.query("pay_to") || null;
+    const amountUsdc = c.req.query("amount_usdc") ?? "";
+    const maxSingleUsdc = c.req.query("max_single_usdc") ?? "0.01";
+    const sessionBudgetUsdc = c.req.query("session_budget_usdc") ?? "1.00";
+    if (
+      !/^[A-Za-z0-9._:-]{1,128}$/.test(requestId) ||
+      endpointUrl.length > 2048 ||
+      !/^[A-Za-z0-9:_ -]{2,80}$/.test(chain) ||
+      !/^[A-Za-z0-9_.:-]{2,80}$/.test(method) ||
+      (payTo !== null && !ADDRESS_PATTERN.test(payTo)) ||
+      parseNonNegativeNumber(amountUsdc) === null ||
+      parseNonNegativeNumber(maxSingleUsdc) === null ||
+      parseNonNegativeNumber(sessionBudgetUsdc) === null
+    ) {
+      return c.json({ error: "invalid_x402_rpc_payment_guard_input" }, 400);
+    }
+    try {
+      return c.json(
+        buildX402RpcPaymentGuard({
+          requestId,
+          endpointUrl,
+          chain,
+          method,
+          payTo,
+          amountUsdc,
+          maxSingleUsdc,
+          sessionBudgetUsdc,
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "x402_rpc_payment_guard_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        400,
+      );
+    }
+  });
+
+  for (const productId of [
+    "address-risk",
+    "token-risk",
+    "transaction-decode-risk",
+    "wallet-dossier",
+    "safe-transaction-review",
+    "swap-preflight",
+    "stablecoin-health",
+    "policy-decide",
+  ]) {
+    app.get(PRODUCTS_BY_ID[productId].path, c => {
+      const product = PRODUCTS_BY_ID[productId];
+      const input = {};
+      for (const name of Object.keys(product.inputSchema.properties)) {
+        input[name] = c.req.query(name) ?? product.input[name] ?? "";
+      }
+      for (const required of product.inputSchema.required ?? []) {
+        if (!input[required]) {
+          return c.json(
+            { error: `missing_${productId.replaceAll("-", "_")}_${required}` },
+            400,
+          );
+        }
+      }
+      return c.json(buildAgentRiskUtility({ productId, input }));
+    });
+  }
+
+  app.get(PRODUCTS_BY_ID["base-token-exit-risk"].path, async c => {
+    const token = c.req.query("token") ?? "";
+    if (!ADDRESS_PATTERN.test(token)) {
+      return c.json({ error: "invalid_token_exit_risk_input" }, 400);
+    }
+    try {
+      return c.json(await tokenExitRisk(token));
+    } catch (error) {
+      return c.json(
+        {
+          error: "upstream_unavailable",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["bcs-address-labels"].path, async c => {
+    const chain = (c.req.query("chain") ?? "").toLowerCase();
+    const address = c.req.query("address") ?? "";
+    const sources = c.req.query("sources") || null;
+    const refresh = c.req.query("refresh") || null;
+    if (
+      !validateBcsChain(chain) ||
+      !validateBcsAddress(address) ||
+      (sources !== null && !/^[A-Za-z0-9,_-]{1,80}$/.test(sources)) ||
+      (refresh !== null && !/^(?:true|false)$/.test(refresh))
+    ) {
+      return c.json({ error: "invalid_bcs_labels_input" }, 400);
+    }
+    try {
+      return c.json(
+        await bcsGatewayRequest({
+          product: "bcs-address-labels",
+          apiKey: c.env?.BCS_API_KEY,
+          upstreamPath: "/v1/labels",
+          query: { chain, address, sources, refresh },
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "bcs_labels_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["bcs-assets"].path, async c => {
+    const chain = (c.req.query("chain") ?? "").toLowerCase();
+    if (!validateBcsChain(chain)) {
+      return c.json({ error: "invalid_bcs_assets_chain" }, 400);
+    }
+    try {
+      return c.json(
+        await bcsGatewayRequest({
+          product: "bcs-assets",
+          apiKey: c.env?.BCS_API_KEY,
+          upstreamPath: "/v1/assets",
+          query: { chain },
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "bcs_assets_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["bcs-chains"].path, async c => {
+    try {
+      return c.json(
+        await bcsGatewayRequest({
+          product: "bcs-chains",
+          apiKey: c.env?.BCS_API_KEY,
+          upstreamPath: "/v1/chains",
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "bcs_chains_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["bcs-token-registry"].path, async c => {
+    try {
+      return c.json(
+        await bcsGatewayRequest({
+          product: "bcs-token-registry",
+          apiKey: c.env?.BCS_API_KEY,
+          upstreamPath: "/v1/registry",
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "bcs_registry_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["bcs-asset-resolve"].path, async c => {
+    const blockchain = (c.req.query("blockchain") ?? "").toLowerCase();
+    const symbols = parseCsvList(
+      c.req.query("symbols") ?? "",
+      /^[A-Za-z0-9._-]{1,40}$/,
+    );
+    const contracts = parseCsvList(
+      c.req.query("contracts") ?? "",
+      /^[A-Za-z0-9:._-]{3,128}$/,
+    );
+    if (
+      !validateBcsChain(blockchain) ||
+      (symbols.length === 0 && contracts.length === 0)
+    ) {
+      return c.json({ error: "invalid_bcs_resolve_input" }, 400);
+    }
+    try {
+      return c.json(
+        await bcsGatewayRequest({
+          product: "bcs-asset-resolve",
+          apiKey: c.env?.BCS_API_KEY,
+          method: "POST",
+          upstreamPath: "/v1/resolve",
+          body: {
+            blockchain,
+            ...(symbols.length ? { symbols } : {}),
+            ...(contracts.length ? { contracts } : {}),
+          },
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "bcs_resolve_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["bcs-address-risk-score"].path, async c => {
+    const blockchain = (c.req.query("blockchain") ?? "").toLowerCase();
+    const address = c.req.query("address") ?? "";
+    const symbols = parseCsvList(
+      c.req.query("symbols") ?? "",
+      /^[A-Za-z0-9._-]{1,40}$/,
+    );
+    const contracts = parseCsvList(
+      c.req.query("contracts") ?? "",
+      /^[A-Za-z0-9:._-]{3,128}$/,
+    );
+    if (!["ethereum", "tron"].includes(blockchain) || !validateBcsAddress(address)) {
+      return c.json({ error: "invalid_bcs_address_risk_input" }, 400);
+    }
+    try {
+      return c.json(
+        await bcsGatewayRequest({
+          product: "bcs-address-risk-score",
+          apiKey: c.env?.BCS_API_KEY,
+          method: "POST",
+          upstreamPath: "/v1/address-risk",
+          body: {
+            blockchain,
+            address,
+            ...(symbols.length ? { symbols } : {}),
+            ...(contracts.length ? { contracts } : {}),
+          },
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "bcs_address_risk_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["bcs-address-classify"].path, async c => {
+    const blockchain = (c.req.query("blockchain") ?? "tron").toLowerCase();
+    const addresses = parseCsvList(
+      c.req.query("addresses") ?? "",
+      /^[A-Za-z0-9:._-]{3,128}$/,
+    );
+    if (
+      !["ethereum", "tron", "bitcoin"].includes(blockchain) ||
+      addresses.length < 1 ||
+      addresses.length > 100
+    ) {
+      return c.json({ error: "invalid_bcs_address_classify_input" }, 400);
+    }
+    try {
+      return c.json(
+        await bcsGatewayRequest({
+          product: "bcs-address-classify",
+          apiKey: c.env?.BCS_API_KEY,
+          method: "POST",
+          upstreamPath: "/v1/address-classify",
+          body: { blockchain, addresses },
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "bcs_address_classify_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["bcs-wallet-overview"].path, async c => {
+    const blockchain = (c.req.query("blockchain") ?? "").toLowerCase();
+    const address = c.req.query("address") ?? "";
+    const symbols = parseCsvList(
+      c.req.query("symbols") ?? "",
+      /^[A-Za-z0-9._-]{1,40}$/,
+    );
+    const contracts = parseCsvList(
+      c.req.query("contracts") ?? "",
+      /^[A-Za-z0-9:._-]{3,128}$/,
+    );
+    const outputAsset = c.req.query("output_asset") || null;
+    if (
+      !validateBcsChain(blockchain) ||
+      !validateBcsAddress(address) ||
+      (outputAsset !== null && !/^[A-Za-z0-9._-]{1,40}$/.test(outputAsset))
+    ) {
+      return c.json({ error: "invalid_bcs_wallet_overview_input" }, 400);
+    }
+    try {
+      return c.json(
+        await bcsGatewayRequest({
+          product: "bcs-wallet-overview",
+          apiKey: c.env?.BCS_API_KEY,
+          method: "POST",
+          upstreamPath: "/v1/wallet-overview",
+          body: {
+            blockchain,
+            address,
+            ...(symbols.length ? { symbols } : {}),
+            ...(contracts.length ? { contracts } : {}),
+            ...(outputAsset ? { output_asset: outputAsset } : {}),
+          },
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "bcs_wallet_overview_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["bcs-fund-trace"].path, async c => {
+    const blockchain = (c.req.query("blockchain") ?? "").toLowerCase();
+    const address = c.req.query("address") ?? "";
+    const direction = c.req.query("direction") ?? "out";
+    const depth = Number(c.req.query("depth") ?? "2");
+    const limit = Number(c.req.query("limit") ?? "50");
+    const symbols = parseCsvList(
+      c.req.query("symbols") ?? "",
+      /^[A-Za-z0-9._-]{1,40}$/,
+    );
+    const minValue = c.req.query("min_value") || null;
+    if (
+      !["ethereum", "tron", "bitcoin"].includes(blockchain) ||
+      !validateBcsAddress(address) ||
+      !["in", "out", "both"].includes(direction) ||
+      !Number.isInteger(depth) ||
+      depth < 1 ||
+      depth > 5 ||
+      !Number.isInteger(limit) ||
+      limit < 1 ||
+      limit > 500 ||
+      (minValue !== null && !/^[0-9]+(?:\.[0-9]+)?$/.test(minValue))
+    ) {
+      return c.json({ error: "invalid_bcs_trace_input" }, 400);
+    }
+    const filterCriterias =
+      symbols.length || minValue
+        ? [
+            {
+              ...(symbols.length ? { symbols } : {}),
+              ...(minValue ? { min_value: minValue } : {}),
+            },
+          ]
+        : undefined;
+    try {
+      return c.json(
+        await bcsGatewayRequest({
+          product: "bcs-fund-trace",
+          apiKey: c.env?.BCS_API_KEY,
+          method: "POST",
+          upstreamPath: "/v1/trace",
+          body: {
+            blockchain,
+            address,
+            track_setting: { direction, depth, limit },
+            ...(filterCriterias ? { filter_criterias: filterCriterias } : {}),
+          },
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "bcs_trace_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["bcs-cross-chain-track"].path, async c => {
+    const txhash = c.req.query("txhash") ?? "";
+    const label = (c.req.query("label") ?? "").toLowerCase();
+    if (
+      !/^[A-Za-z0-9:_-]{16,160}$/.test(txhash) ||
+      !/^[A-Za-z0-9_-]{2,40}$/.test(label)
+    ) {
+      return c.json({ error: "invalid_bcs_cross_chain_input" }, 400);
+    }
+    try {
+      return c.json(
+        await bcsGatewayRequest({
+          product: "bcs-cross-chain-track",
+          apiKey: c.env?.BCS_API_KEY,
+          upstreamPath: "/v1/cross-chain",
+          query: { txhash, label },
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "bcs_cross_chain_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
       );
     }
   });
@@ -7010,6 +13981,51 @@ function createPaidApp() {
           message,
         },
         message.startsWith("policy_") ? 403 : 502,
+      );
+    }
+  });
+
+  app.post(INTENT_VERIFY_PATH, async c => {
+    try {
+      const input = await c.req.json();
+      return c.json(buildVerifiableIntent({ input }));
+    } catch {
+      return c.json({ error: "invalid_json_body" }, 400);
+    }
+  });
+
+  app.post(PAYMENT_PREFLIGHT_PATH, async c => {
+    try {
+      const input = await c.req.json();
+      const result = await buildAgentPaymentAuthorization({ input });
+      return c.json({ ...result, authorization_token: null });
+    } catch (error) {
+      return c.json(
+        {
+          error: "payment_preflight_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        400,
+      );
+    }
+  });
+
+  app.post(PAYMENT_AUTHORIZE_PATH, async c => {
+    try {
+      const input = await c.req.json();
+      return c.json(
+        await buildAgentPaymentAuthorization({
+          input,
+          signingSecret: c.env?.GUARD_SIGNING_SECRET ?? null,
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "payment_authorize_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        400,
       );
     }
   });
@@ -7204,6 +14220,24 @@ function createPaidApp() {
                 required: ["profile_id", "owner_token"],
               },
             },
+            {
+              name: "x402_agent_buyer_preflight",
+              description:
+                "Check whether the buyer agent role, purpose, product category, and price fit before buying an x402 service.",
+              inputSchema: {
+                type: "object",
+                properties: {
+                  agent_role: { type: "string" },
+                  product_category: { type: "string" },
+                  purpose: { type: "string" },
+                  price_usdc: { type: "string" },
+                  data_sensitivity: { type: "string" },
+                  agent_status: { type: "string" },
+                  approval_ref: { type: "string" },
+                },
+                required: ["agent_role", "product_category"],
+              },
+            },
           ],
         },
       });
@@ -7255,6 +14289,26 @@ function createPaidApp() {
           },
         });
       }
+      if (name === "x402_agent_buyer_preflight") {
+        const product = PRODUCTS_BY_ID["agent-buyer-identity-preflight"];
+        return c.json({
+          jsonrpc: "2.0",
+          id: request.id,
+          result: {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({
+                  paid_endpoint: `${new URL(c.req.url).origin}${product.path}`,
+                  method: "GET",
+                  price_usdc: product.price,
+                  query: args,
+                }),
+              },
+            ],
+          },
+        });
+      }
       return c.json({
         jsonrpc: "2.0",
         id: request.id,
@@ -7268,7 +14322,542 @@ function createPaidApp() {
     });
   });
 
+  app.get(PRODUCTS_BY_ID["public-wallet-risk-lookup"].path, async c => {
+    const chain = c.req.query("chain") ?? "ETH";
+    const address = c.req.query("address") ?? "";
+    if (chain.toUpperCase() !== "ETH" || !ADDRESS_PATTERN.test(address)) {
+      return c.json({ error: "invalid_address_risk_lookup_input" }, 400);
+    }
+    try {
+      const result = await addressRiskLookup(c.env, chain, address);
+      if (result.error) return c.json(result, 400);
+      return c.json(result);
+    } catch (error) {
+      return c.json(
+        {
+          error: "address_risk_lookup_unavailable",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["public-wallet-risk-snapshot"].path, async c => {
+    try {
+      return await addressRiskFileResponse(
+        c.env,
+        ADDRESS_RISK_SNAPSHOT_KEY,
+        "address_labels_snapshot.jsonl",
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "address_risk_snapshot_unavailable",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["public-wallet-risk-sample"].path, async c => {
+    const limit = c.req.query("limit") ?? "5";
+    if (!/^[1-9]$|^10$/.test(limit)) {
+      return c.json({ error: "invalid_address_risk_sample_limit" }, 400);
+    }
+    try {
+      return c.json(await addressRiskSample(c.env, new URL(c.req.url).origin, limit));
+    } catch (error) {
+      return c.json(
+        {
+          error: "address_risk_sample_unavailable",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["public-wallet-risk-delta"].path, async c => {
+    const batchKey = c.req.query("batch_key") ?? ADDRESS_RISK_DEFAULT_BATCH;
+    if (!/^20[0-9]{2}-W[0-9]{2}$/.test(batchKey)) {
+      return c.json({ error: "invalid_address_risk_batch_key" }, 400);
+    }
+    try {
+      return await addressRiskFileResponse(
+        c.env,
+        `${ADDRESS_RISK_DELTA_PREFIX}${batchKey}`,
+        `address_labels_delta_${batchKey}.jsonl`,
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "address_risk_delta_unavailable",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
   return app;
+}
+
+function adminAuthorized(request, env) {
+  const token = env?.ADMIN_DASHBOARD_TOKEN;
+  if (!token) return false;
+  const url = new URL(request.url);
+  const bearer = request.headers.get("authorization") ?? "";
+  const supplied =
+    bearer.toLowerCase().startsWith("bearer ")
+      ? bearer.slice(7)
+      : url.searchParams.get("token") ?? "";
+  return supplied === token;
+}
+
+async function purchaseDashboardData(db) {
+  if (!db) throw new Error("purchase_db_unavailable");
+  const payablePurchaseWhere =
+    "payment_header_hash IS NOT NULL AND method NOT IN ('HEAD', 'OPTIONS')";
+  const probeWhere =
+    "payment_header_hash IS NULL OR method IN ('HEAD', 'OPTIONS')";
+  const [
+    totals,
+    routeProbes,
+    byProduct,
+    byCampaign,
+    recent,
+    recentProbes,
+    legacyAggregates,
+  ] = await Promise.all([
+    db
+      .prepare(
+        `SELECT
+           COUNT(*) AS purchase_count,
+           COALESCE(SUM(price_usdc), 0) AS gross_usd,
+           MAX(created_at) AS last_seen_at
+         FROM x402_purchase_events
+         WHERE ${payablePurchaseWhere}`,
+      )
+      .first(),
+    db
+      .prepare(
+        `SELECT
+           COUNT(*) AS probe_count,
+           COALESCE(SUM(price_usdc), 0) AS nominal_price_usd,
+           MAX(created_at) AS last_seen_at
+         FROM x402_purchase_events
+         WHERE ${probeWhere}`,
+      )
+      .first(),
+    db
+      .prepare(
+        `SELECT
+           product_id,
+           path,
+           campaign,
+           COUNT(*) AS purchase_count,
+           COALESCE(SUM(price_usdc), 0) AS gross_usd,
+           MAX(created_at) AS last_seen_at
+         FROM x402_purchase_events
+         WHERE ${payablePurchaseWhere}
+         GROUP BY product_id, path, campaign
+         ORDER BY purchase_count DESC, gross_usd DESC, last_seen_at DESC
+         LIMIT 100`,
+      )
+      .all(),
+    db
+      .prepare(
+        `SELECT
+           COALESCE(campaign, '(none)') AS campaign,
+           COUNT(*) AS purchase_count,
+           COALESCE(SUM(price_usdc), 0) AS gross_usd,
+           COUNT(DISTINCT product_id) AS product_count,
+           MAX(created_at) AS last_seen_at
+         FROM x402_purchase_events
+         WHERE ${payablePurchaseWhere}
+         GROUP BY COALESCE(campaign, '(none)')
+         ORDER BY purchase_count DESC, gross_usd DESC, last_seen_at DESC
+         LIMIT 50`,
+      )
+      .all(),
+    db
+      .prepare(
+        `SELECT
+           created_at,
+           product_id,
+           method,
+           path,
+           price_usdc,
+           status,
+           country,
+           campaign,
+           referrer,
+           payment_header_hash
+       FROM x402_purchase_events
+       WHERE ${payablePurchaseWhere}
+       ORDER BY created_at DESC
+       LIMIT 100`,
+      )
+      .all(),
+    db
+      .prepare(
+        `SELECT
+           created_at,
+           product_id,
+           method,
+           path,
+           price_usdc,
+           status,
+           country,
+           campaign,
+           payment_header_hash
+       FROM x402_purchase_events
+       WHERE ${probeWhere}
+       ORDER BY created_at DESC
+       LIMIT 100`,
+      )
+      .all(),
+    db
+      .prepare(
+        `SELECT
+           source,
+           source_url,
+           origin_id,
+           pay_to,
+           timeframe_days,
+           total_transactions,
+           total_amount_usdc,
+           unique_buyers,
+           unique_sellers,
+           latest_block_timestamp,
+           observed_at
+         FROM x402_legacy_aggregates
+         ORDER BY timeframe_days DESC, observed_at DESC`,
+      )
+      .all(),
+  ]);
+  return {
+    schema_version: "1.0",
+    generated_at: new Date().toISOString(),
+    totals,
+    route_probes: routeProbes,
+    by_product: byProduct.results ?? [],
+    by_campaign: byCampaign.results ?? [],
+    recent: recent.results ?? [],
+    recent_probes: recentProbes.results ?? [],
+    legacy_aggregates: legacyAggregates.results ?? [],
+  };
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function purchaseDashboardHtml(data) {
+  const totalCount = Number(data.totals?.purchase_count ?? 0);
+  const gross = Number(data.totals?.gross_usd ?? 0).toFixed(3);
+  const probeCount = Number(data.route_probes?.probe_count ?? 0);
+  const probeNominal = Number(data.route_probes?.nominal_price_usd ?? 0).toFixed(3);
+  const legacy30 =
+    data.legacy_aggregates.find(row => Number(row.timeframe_days) === 30) ??
+    null;
+  const legacyAll =
+    data.legacy_aggregates.find(row => Number(row.timeframe_days) === 0) ??
+    null;
+  const chainTransactions = Number(
+    legacy30?.total_transactions ?? legacyAll?.total_transactions ?? 0,
+  );
+  const chainVolume = Number(
+    legacy30?.total_amount_usdc ?? legacyAll?.total_amount_usdc ?? 0,
+  ).toFixed(6);
+  const latestChainPayment =
+    legacy30?.latest_block_timestamp ??
+    legacyAll?.latest_block_timestamp ??
+    "none";
+  const rows = data.by_product
+    .map(
+      row => `<tr><td>${escapeHtml(row.product_id)}</td><td><code>${escapeHtml(row.path)}</code></td><td>${escapeHtml(row.campaign ?? "")}</td><td>${row.purchase_count}</td><td>$${Number(row.gross_usd ?? 0).toFixed(3)}</td><td>${escapeHtml(row.last_seen_at)}</td></tr>`,
+    )
+    .join("");
+  const recentRows = data.recent
+    .map(
+      row => `<tr><td>${escapeHtml(row.created_at)}</td><td>${escapeHtml(row.product_id)}</td><td><code>${escapeHtml(row.path)}</code></td><td>$${Number(row.price_usdc ?? 0).toFixed(3)}</td><td>${escapeHtml(row.campaign ?? "")}</td><td>${escapeHtml(row.country)}</td><td><code>${escapeHtml(String(row.payment_header_hash ?? "").slice(0, 16))}</code></td></tr>`,
+    )
+    .join("");
+  const campaignRows = data.by_campaign
+    .map(
+      row => `<tr><td>${escapeHtml(row.campaign)}</td><td>${row.purchase_count}</td><td>${row.product_count}</td><td>$${Number(row.gross_usd ?? 0).toFixed(3)}</td><td>${escapeHtml(row.last_seen_at)}</td></tr>`,
+    )
+    .join("");
+  const probeRows = data.recent_probes
+    .map(
+      row => `<tr><td>${escapeHtml(row.created_at)}</td><td>${escapeHtml(row.product_id)}</td><td>${escapeHtml(row.method)}</td><td><code>${escapeHtml(row.path)}</code></td><td>$${Number(row.price_usdc ?? 0).toFixed(3)}</td><td>${escapeHtml(row.country)}</td><td>${escapeHtml(row.status)}</td></tr>`,
+    )
+    .join("");
+  const legacyRows = data.legacy_aggregates
+    .map(
+      row => `<tr><td>${row.timeframe_days === 0 ? "All time" : `${row.timeframe_days} days`}</td><td>${row.total_transactions}</td><td>$${Number(row.total_amount_usdc ?? 0).toFixed(6)}</td><td>${row.unique_buyers}</td><td>${escapeHtml(row.latest_block_timestamp)}</td><td><code>${escapeHtml(row.pay_to)}</code></td></tr>`,
+    )
+    .join("");
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>x402 Purchases</title>
+<style>
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;background:#f7f7f5;color:#171717}
+main{max-width:1180px;margin:0 auto;padding:32px 20px}
+h1{font-size:28px;margin:0 0 6px}
+h2{font-size:18px;margin:28px 0 10px}
+.muted{color:#666;margin:0 0 20px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}
+.stat{background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px}
+.label{font-size:12px;color:#666;text-transform:uppercase}
+.value{font-size:28px;font-weight:700;margin-top:6px}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #ddd;border-radius:8px;overflow:hidden}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #eee;font-size:13px;vertical-align:top}
+th{background:#efefeb;color:#333;font-size:12px;text-transform:uppercase}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+@media(max-width:760px){.stats{grid-template-columns:1fr}main{padding:20px 12px}table{display:block;overflow-x:auto}}
+</style>
+</head>
+<body><main>
+<h1>x402 Purchases</h1>
+<p class="muted">Generated ${escapeHtml(data.generated_at)}. Attributed paid calls require a successful non-HEAD request with a payment header. x402scan chain aggregates are shown separately because they do not include per-route attribution.</p>
+<section class="stats">
+<div class="stat"><div class="label">Attributed Paid Calls</div><div class="value">${totalCount}</div></div>
+<div class="stat"><div class="label">Attributed Gross USD</div><div class="value">$${gross}</div></div>
+<div class="stat"><div class="label">Route Probes</div><div class="value">${probeCount}</div><div class="muted">Nominal list price: $${probeNominal}</div></div>
+<div class="stat"><div class="label">x402scan 30d Txns</div><div class="value">${chainTransactions}</div></div>
+<div class="stat"><div class="label">x402scan 30d Volume</div><div class="value">$${chainVolume}</div></div>
+<div class="stat"><div class="label">Latest Chain Payment</div><div class="value" style="font-size:16px">${escapeHtml(latestChainPayment)}</div></div>
+</section>
+<h2>Attributed Paid Calls by Product</h2>
+<table><thead><tr><th>Product</th><th>Path</th><th>Campaign</th><th>Count</th><th>Gross</th><th>Last Seen</th></tr></thead><tbody>${rows || '<tr><td colspan="6">No purchases recorded yet.</td></tr>'}</tbody></table>
+<h2>Attributed Paid Calls by Campaign</h2>
+<table><thead><tr><th>Campaign</th><th>Purchases</th><th>Products</th><th>Gross</th><th>Last Seen</th></tr></thead><tbody>${campaignRows || '<tr><td colspan="5">No campaign purchases recorded yet.</td></tr>'}</tbody></table>
+<h2>Recent Attributed Paid Calls</h2>
+<table><thead><tr><th>Time</th><th>Product</th><th>Path</th><th>Price</th><th>Campaign</th><th>Country</th><th>Payment Hash</th></tr></thead><tbody>${recentRows || '<tr><td colspan="7">No purchases recorded yet.</td></tr>'}</tbody></table>
+<h2>Recent Route Probes / Discovery Calls</h2>
+<p class="muted">These are successful HEAD/OPTIONS/discovery executions or calls without payment evidence. They are useful for x402scan registration and route interest, but they are not revenue.</p>
+<table><thead><tr><th>Time</th><th>Product</th><th>Method</th><th>Path</th><th>List Price</th><th>Country</th><th>Status</th></tr></thead><tbody>${probeRows || '<tr><td colspan="7">No route probes recorded yet.</td></tr>'}</tbody></table>
+<h2>Legacy x402scan Aggregate</h2>
+<p class="muted">Public x402scan aggregate by payment recipient. This is historical aggregate activity, not per-route purchase detail.</p>
+<table><thead><tr><th>Timeframe</th><th>Transactions</th><th>Volume</th><th>Buyers</th><th>Latest Payment</th><th>Pay To</th></tr></thead><tbody>${legacyRows || '<tr><td colspan="6">No legacy aggregate imported.</td></tr>'}</tbody></table>
+</main></body></html>`;
+}
+
+function walletRiskHtml(origin, manifest = null) {
+  const lookup = PRODUCTS_BY_ID["public-wallet-risk-lookup"];
+  const sample = PRODUCTS_BY_ID["public-wallet-risk-sample"];
+  const snapshot = PRODUCTS_BY_ID["public-wallet-risk-snapshot"];
+  const delta = PRODUCTS_BY_ID["public-wallet-risk-delta"];
+  const bcsRisk = PRODUCTS_BY_ID["bcs-address-risk-score"];
+  const bcsTrace = PRODUCTS_BY_ID["bcs-fund-trace"];
+  const activeLabels = manifest?.active_labels ?? "25,357+";
+  const sourceCount = manifest?.source_count ?? "20+";
+  const batchKey = manifest?.batch_key ?? ADDRESS_RISK_DEFAULT_BATCH;
+  const lookupUrl = productExampleUrl(origin, lookup);
+  const sampleUrl = `${origin}${sample.path}?limit=5&campaign=wallet-risk-page`;
+  const snapshotUrl = `${origin}${snapshot.path}?campaign=wallet-risk-page`;
+  const deltaUrl = `${origin}${delta.path}?batch_key=${encodeURIComponent(batchKey)}&campaign=wallet-risk-page`;
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Public Wallet Risk Intelligence</title>
+<meta name="description" content="Source-attributed wallet risk lookup, full snapshot, and batch delta for KYT and AML screening through x402 payments.">
+<style>
+body{margin:0;background:#f6f7f4;color:#171717;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}
+a{color:#174ea6;text-decoration:none}a:hover{text-decoration:underline}
+header,main,footer{max-width:1120px;margin:0 auto;padding:28px 20px}
+nav{display:flex;justify-content:space-between;gap:16px;align-items:center;font-size:14px}
+.brand{font-weight:700;color:#111}.navlinks{display:flex;gap:16px;flex-wrap:wrap}
+.hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:28px;align-items:center;padding:42px 20px 26px}
+h1{font-size:44px;line-height:1.05;margin:0 0 18px;letter-spacing:0}
+.lead{font-size:18px;color:#3f3f46;max-width:740px;margin:0 0 24px}
+.actions{display:flex;flex-wrap:wrap;gap:10px}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border-radius:7px;border:1px solid #111;background:#111;color:#fff;font-weight:650}.btn.secondary{background:#fff;color:#111;border-color:#d4d4d8}
+.panel{background:#fff;border:1px solid #d9ddd2;border-radius:8px;padding:18px}
+.visual{min-height:280px;display:grid;place-items:center;background:#eef2ea;border:1px solid #d9ddd2;border-radius:8px;overflow:hidden}
+.visual svg{width:100%;height:100%;min-height:280px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:20px 0}
+.stat{background:#fff;border:1px solid #d9ddd2;border-radius:8px;padding:16px}.stat b{font-size:26px;display:block}.stat span{color:#5b5f55;font-size:13px}
+h2{font-size:24px;margin:36px 0 12px}.muted{color:#5b5f55}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #d9ddd2;border-radius:8px;overflow:hidden}th,td{text-align:left;padding:12px;border-bottom:1px solid #ecefe8;font-size:14px;vertical-align:top}th{background:#eef2ea;font-size:12px;text-transform:uppercase;color:#3f4638}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.card{background:#fff;border:1px solid #d9ddd2;border-radius:8px;padding:16px}.card h3{margin:0 0 8px;font-size:17px}.card p{margin:0;color:#4f5349}
+footer{color:#666;font-size:13px}
+@media(max-width:820px){.hero{grid-template-columns:1fr;padding-top:20px}h1{font-size:34px}.grid,.cards{grid-template-columns:1fr}table{display:block;overflow-x:auto}}
+</style>
+</head>
+<body>
+<header>
+<nav>
+<a class="brand" href="/">SignGate</a>
+<div class="navlinks">
+<a href="/wallet-risk">Wallet Risk</a>
+<a href="/catalog.json">Catalog</a>
+<a href="/openapi.json">OpenAPI</a>
+<a href="/admin/purchases">Purchases</a>
+</div>
+</nav>
+</header>
+<main>
+<section class="hero">
+<div>
+<h1>Public Wallet Risk Intelligence</h1>
+<p class="lead">Source-attributed wallet screening and importable JSONL datasets for sanctions, scam, ransomware, malicious contract, and stablecoin blacklist workflows. Available as x402 paid lookup, snapshot, and batch delta resources.</p>
+<div class="actions">
+<a class="btn" href="${escapeHtml(sampleUrl)}">Buy sample</a>
+<a class="btn" href="${escapeHtml(lookupUrl)}">Open lookup endpoint</a>
+<a class="btn secondary" href="/catalog.json">AI buyer catalog</a>
+<a class="btn secondary" href="/openapi.json">OpenAPI</a>
+</div>
+</div>
+<div class="visual" aria-label="Wallet risk intelligence coverage map">
+<svg viewBox="0 0 640 360" role="img" aria-labelledby="riskTitle">
+<title id="riskTitle">Wallet risk intelligence coverage</title>
+<rect width="640" height="360" fill="#eef2ea"/>
+<g fill="none" stroke="#94a684" stroke-width="2" opacity=".65">
+<path d="M92 168 C168 84 257 86 334 166 S505 257 572 142"/>
+<path d="M76 248 C158 196 238 221 302 270 S454 318 548 242"/>
+<path d="M126 92 C210 142 254 118 330 82 S474 64 540 112"/>
+</g>
+<g>
+<circle cx="120" cy="170" r="34" fill="#fff" stroke="#31572c" stroke-width="3"/><text x="120" y="176" text-anchor="middle" font-size="12" fill="#31572c">OFAC</text>
+<circle cx="260" cy="92" r="28" fill="#fff" stroke="#8a1c1c" stroke-width="3"/><text x="260" y="98" text-anchor="middle" font-size="11" fill="#8a1c1c">Scam</text>
+<circle cx="354" cy="180" r="42" fill="#111" stroke="#111" stroke-width="3"/><text x="354" y="176" text-anchor="middle" font-size="13" fill="#fff">Risk</text><text x="354" y="193" text-anchor="middle" font-size="13" fill="#fff">Feed</text>
+<circle cx="508" cy="126" r="33" fill="#fff" stroke="#174ea6" stroke-width="3"/><text x="508" y="132" text-anchor="middle" font-size="11" fill="#174ea6">USDT</text>
+<circle cx="492" cy="258" r="30" fill="#fff" stroke="#6b3f16" stroke-width="3"/><text x="492" y="264" text-anchor="middle" font-size="10" fill="#6b3f16">Ransom</text>
+</g>
+<g fill="#111">
+<rect x="78" y="294" width="484" height="18" rx="4" opacity=".12"/>
+<rect x="116" y="300" width="408" height="6" rx="3"/>
+</g>
+</svg>
+</div>
+</section>
+<section class="grid">
+<div class="stat"><b>${escapeHtml(activeLabels)}</b><span>active labels in hosted snapshot</span></div>
+<div class="stat"><b>${escapeHtml(sourceCount)}</b><span>public sources with provenance</span></div>
+<div class="stat"><b>${escapeHtml(batchKey)}</b><span>current batch key</span></div>
+</section>
+<section>
+<h2>Paid Resources</h2>
+<table>
+<thead><tr><th>Resource</th><th>Price</th><th>Use Case</th><th>Endpoint</th></tr></thead>
+<tbody>
+<tr><td>Single address lookup</td><td>${escapeHtml(lookup.price)}</td><td>Screen one wallet before payout, onboarding, API payment, or agent interaction.</td><td><code>${escapeHtml(lookup.path)}</code></td></tr>
+<tr><td>Dataset sample</td><td>${escapeHtml(sample.price)}</td><td>Inspect sample records, provenance fields, evidence URLs, and schema before buying the full dataset.</td><td><code>${escapeHtml(sample.path)}</code></td></tr>
+<tr><td>Full snapshot</td><td>${escapeHtml(snapshot.price)}</td><td>Download the complete source-attributed JSONL dataset for local KYT/AML import.</td><td><code>${escapeHtml(snapshot.path)}</code></td></tr>
+<tr><td>Batch delta</td><td>${escapeHtml(delta.price)}</td><td>Download the latest changed labels and issuer blacklist events for an existing local copy.</td><td><code>${escapeHtml(delta.path)}</code></td></tr>
+<tr><td>BCS risk score</td><td>${escapeHtml(bcsRisk.price)}</td><td>Run BlockchainSecurity behavior-based address scoring when static labels are not enough.</td><td><code>${escapeHtml(bcsRisk.path)}</code></td></tr>
+<tr><td>BCS fund trace</td><td>${escapeHtml(bcsTrace.price)}</td><td>Buy a heavier multi-hop trace only when a wallet hit needs investigation.</td><td><code>${escapeHtml(bcsTrace.path)}</code></td></tr>
+</tbody>
+</table>
+</section>
+<section class="cards">
+<div class="card"><h3>What the feed includes</h3><p>Sanctions, scams, phishing, ransomware, malicious contracts, and stablecoin issuer blacklist labels with confidence and evidence URLs.</p></div>
+<div class="card"><h3>What it is not</h3><p>It is not a guarantee of safety and not a substitute for licensed compliance advice. High-value actions should still escalate to review.</p></div>
+<div class="card"><h3>How agents buy it</h3><p>x402 clients call the endpoint, receive a 402 payment requirement, pay Base USDC, then receive JSON or JSONL from the Worker.</p></div>
+<div class="card"><h3>Campaign tracking</h3><p>Add <code>?campaign=twitter-thread</code> or <code>?utm_campaign=x402scan-demo</code> to paid links; successful purchases show in the admin dashboard.</p></div>
+</section>
+<section>
+<h2>Direct Links</h2>
+<p class="muted"><a href="${escapeHtml(sampleUrl)}">Sample paid endpoint</a> · <a href="${escapeHtml(snapshotUrl)}">Snapshot paid endpoint</a> · <a href="${escapeHtml(deltaUrl)}">Delta paid endpoint</a> · <a href="${escapeHtml(origin)}/wallet-risk/manifest.json">Free manifest</a> · <a href="${escapeHtml(origin)}/.well-known/ai-buyer-catalog.json">Machine-readable catalog</a></p>
+</section>
+</main>
+<footer>Public-source intelligence with source attribution. Hosted by the existing SignGate x402 Worker.</footer>
+</body>
+</html>`;
+}
+
+function agentBuyerIdentityHtml(origin) {
+  const endpoint = `${origin}${PRODUCTS_BY_ID["agent-buyer-identity-preflight"].path}`;
+  const catalogUrl = `${origin}/catalog.json`;
+  const kitPath = "packages/agent-buyer-policy-kit";
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent Buyer Identity Preflight for x402 | SignGate</title>
+<meta name="description" content="Before an AI agent buys an x402 API, dataset, or tool, verify whether that buyer agent role is allowed to buy this product category.">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<style>
+:root{color-scheme:dark;--bg:#08101d;--panel:#101a2e;--line:#27344f;--text:#f3f7ff;--muted:#9eacc5;--green:#67e8b9;--blue:#8aa7ff;--amber:#f3c969;--red:#ff8585;--mono:SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;--sans:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#08101d,#0b1020 38rem);color:var(--text);font-family:var(--sans);line-height:1.58}.wrap{max-width:1080px;margin:0 auto;padding:0 1.25rem}.nav{display:flex;gap:1rem;align-items:center;padding:1rem 0;border-bottom:1px solid var(--line)}.brand{font-weight:800;font-size:1.2rem}.nav a{color:var(--muted);text-decoration:none}.nav a:first-child{color:var(--text)}.hero{padding:5rem 0 3.5rem;max-width:820px}.eyebrow{color:var(--green);font:800 .78rem/1 var(--mono);text-transform:uppercase;letter-spacing:.08em}h1{font-size:4rem;line-height:1.03;letter-spacing:0;margin:1rem 0 1.2rem;max-width:12ch}h2{font-size:2rem;line-height:1.18;margin:0 0 1rem}p{color:var(--muted);font-size:1.06rem}.cta{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:1.6rem}.btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid #4f6fe8;border-radius:.5rem;min-height:2.8rem;padding:.7rem 1rem;text-decoration:none;color:#07101e;background:var(--blue);font-weight:800}.btn.secondary{background:transparent;color:var(--text)}.section{padding:3.5rem 0;border-top:1px solid var(--line)}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}.card{background:var(--panel);border:1px solid var(--line);border-radius:.65rem;padding:1.1rem}.card p{margin:.3rem 0 0}.decision{font-family:var(--mono);font-weight:800}.allow{color:var(--green)}.approval{color:var(--amber)}.deny{color:var(--red)}pre{white-space:pre;overflow:auto;background:#060b14;border:1px solid var(--line);border-radius:.55rem;padding:1rem;color:#dbe7ff;font-family:var(--mono);font-size:.86rem}code{font-family:var(--mono);color:#ffd98a}.matrix{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:.65rem}.row{display:contents}.cell{border:1px solid var(--line);background:rgba(16,26,46,.72);padding:.75rem;border-radius:.45rem}.footer{padding:2rem 0;color:var(--muted);border-top:1px solid var(--line)}
+@media(max-width:820px){h1{font-size:2.75rem}.grid{grid-template-columns:1fr}.matrix{grid-template-columns:1fr}.row{display:block}.cell{margin:.45rem 0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="nav">
+  <a class="brand" href="/">SignGate</a>
+  <a href="/catalog.json">Catalog</a>
+  <a href="/openapi.json">OpenAPI</a>
+  <a href="/.well-known/x402">x402</a>
+  <a href="/signgate">Payment Guard</a>
+</nav>
+<main>
+  <section class="hero">
+    <div class="eyebrow">Agent Buyer Identity Preflight for x402</div>
+    <h1>Check who is buying before your agent pays.</h1>
+    <p>SignGate verifies whether the buyer agent role, purpose, product category, data sensitivity, price, and approval evidence fit before an AI agent buys an x402 API, dataset, or tool.</p>
+    <div class="cta">
+      <a class="btn" href="${endpoint}?agent_role=research_agent&product_category=wallet_risk&purpose=security_research&price_usdc=0.005&data_sensitivity=medium">Try the x402 endpoint</a>
+      <a class="btn secondary" href="${catalogUrl}">View AI buyer catalog</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>The problem</h2>
+    <p>Payment checks only ask whether an agent can pay. Enterprise buyers need a stricter question: should this kind of agent be allowed to buy this kind of data or tool?</p>
+    <div class="grid">
+      <div class="card"><strong>Writer agent</strong><p>Should not silently buy wallet-risk data just to write a draft.</p></div>
+      <div class="card"><strong>Accounting agent</strong><p>Should buy invoice verification, not unrelated market intelligence.</p></div>
+      <div class="card"><strong>Finance agent</strong><p>May handle settlement context, but payment execution still needs approval.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Starter role decisions</h2>
+    <div class="matrix">
+      <div class="cell"><strong>Buyer role + product</strong></div><div class="cell"><strong>Decision</strong></div><div class="cell"><strong>Reason</strong></div>
+      <div class="row"><div class="cell">research_agent + wallet_risk</div><div class="cell decision allow">ALLOW</div><div class="cell">Security research role fits risk data.</div></div>
+      <div class="row"><div class="cell">writer_agent + wallet_risk</div><div class="cell decision approval">APPROVAL_REQUIRED</div><div class="cell">Writing role does not normally need wallet risk data.</div></div>
+      <div class="row"><div class="cell">accounting_agent + market_intelligence</div><div class="cell decision deny">DENY</div><div class="cell">Accounting role does not fit market intelligence.</div></div>
+      <div class="row"><div class="cell">accounting_agent + invoice_verification</div><div class="cell decision allow">ALLOW</div><div class="cell">Invoice verification fits accounting.</div></div>
+      <div class="row"><div class="cell">finance_agent + payment_execution</div><div class="cell decision approval">APPROVAL_REQUIRED</div><div class="cell">Payment execution is always approval-gated.</div></div>
+      <div class="row"><div class="cell">operator_agent + api_security</div><div class="cell decision allow">ALLOW</div><div class="cell">API security checks fit operator role.</div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>API</h2>
+    <p>Hosted x402 endpoint: <code>GET /v1/x402/agent/buyer-identity-preflight</code> at <code>$0.005</code> per decision.</p>
+    <pre>curl "${endpoint}?agent_role=research_agent&product_category=wallet_risk&purpose=security_research&price_usdc=0.005&data_sensitivity=medium"</pre>
+    <p>Unpaid calls return <code>402 Payment Required</code>. Paid responses return <code>ALLOW</code>, <code>DENY</code>, or <code>APPROVAL_REQUIRED</code> with reason codes and audit guidance.</p>
+  </section>
+
+  <section class="section">
+    <h2>Developer Kit</h2>
+    <p>Teams that want to customize the policy locally can use the starter kit at <code>${kitPath}</code>: JSON policies, role x product matrix, JavaScript evaluator, Python evaluator, and tests.</p>
+    <p>Paid x402 kit endpoint: <code>GET /v1/x402/agent/buyer-policy-kit</code> at <code>$49.00</code>. Hosted preflight API remains <code>$0.005</code> per decision.</p>
+  </section>
+</main>
+<footer class="footer">SignGate — Agent-aware x402 purchase governance. No custody. No private keys. Preflight decisions only.</footer>
+</div>
+</body>
+</html>`;
 }
 
 const paidApp = createPaidApp();
@@ -7297,7 +14886,35 @@ export default {
 
     const origin = url.origin;
     let response;
-    if (url.pathname === "/health") {
+    if (
+      url.pathname === "/admin/purchases" ||
+      url.pathname === "/admin/purchases.json"
+    ) {
+      if (!adminAuthorized(request, env)) {
+        response = json({ error: "not_found" }, 404);
+      } else {
+        try {
+          const data = await purchaseDashboardData(env.GUARD_DB);
+          response =
+            url.pathname.endsWith(".json")
+              ? json(data, 200, { "cache-control": "no-store" })
+              : new Response(purchaseDashboardHtml(data), {
+                  headers: {
+                    "content-type": "text/html; charset=utf-8",
+                    "cache-control": "no-store",
+                  },
+                });
+        } catch (error) {
+          response = json(
+            {
+              error: "purchase_dashboard_failed",
+              message: error instanceof Error ? error.message : String(error),
+            },
+            500,
+          );
+        }
+      }
+    } else if (url.pathname === "/health") {
       response = json({
         ok: true,
         service: "agent-payment-guard",
@@ -7306,10 +14923,43 @@ export default {
       });
     } else if (url.pathname === "/openapi.json") {
       response = json(openApi(origin));
+    } else if (
+      url.pathname === "/catalog.json" ||
+      url.pathname === "/.well-known/ai-buyer-catalog.json"
+    ) {
+      response = json(buyerCatalog(origin));
+    } else if (
+      url.pathname === "/registry.json" ||
+      url.pathname === "/.well-known/registry.json"
+    ) {
+      response = json(registry(origin), 200, {
+        "cache-control": "no-store",
+      });
+    } else if (
+      url.pathname === "/workflows.json" ||
+      url.pathname === "/.well-known/workflows.json"
+    ) {
+      response = json(workflowCatalog(origin), 200, {
+        "cache-control": "no-store",
+      });
+    } else if (
+      url.pathname === "/endpoints.txt" ||
+      url.pathname === "/.well-known/endpoints.txt"
+    ) {
+      response = new Response(endpointsTxt(origin), {
+        headers: {
+          "content-type": "text/plain; charset=utf-8",
+          "cache-control": "no-store",
+        },
+      });
     } else if (url.pathname === "/.well-known/agent-card.json") {
       response = json(agentCard(origin));
     } else if (url.pathname === "/.well-known/service.json") {
       response = json(serviceManifest(origin));
+    } else if (url.pathname === "/.well-known/x402") {
+      response = json(x402WellKnown(origin), 200, {
+        "cache-control": "no-store",
+      });
     } else if (url.pathname === "/.well-known/mcp.json") {
       response = json({
         name: "agent-payment-guard",
@@ -7318,7 +14968,11 @@ export default {
           type: "streamable-http",
           url: `${origin}${PAYMENT_GUARD_MCP_PATH}`,
         },
-        tools: ["payment_guard_evaluate", "payment_guard_status"],
+        tools: [
+          "payment_guard_evaluate",
+          "payment_guard_status",
+          "x402_agent_buyer_preflight",
+        ],
       });
     } else if (url.pathname === "/verification.json") {
       response = json(await verificationData(origin), 200, {
@@ -7331,6 +14985,48 @@ export default {
           "cache-control": "no-store",
         },
       });
+    } else if (
+      url.pathname === "/agent-buyer-identity" ||
+      url.pathname === "/agent-identity" ||
+      url.pathname === "/x402-agent-buyer"
+    ) {
+      response = new Response(agentBuyerIdentityHtml(origin), {
+        headers: {
+          "content-type": "text/html; charset=utf-8",
+          "cache-control": "public, max-age=120",
+        },
+      });
+    } else if (
+      url.pathname === "/wallet-risk" ||
+      url.pathname === "/risk" ||
+      url.pathname === "/address-risk"
+    ) {
+      let manifest = null;
+      try {
+        manifest = await addressRiskManifest(env);
+      } catch {
+        manifest = null;
+      }
+      response = new Response(walletRiskHtml(origin, manifest), {
+        headers: {
+          "content-type": "text/html; charset=utf-8",
+          "cache-control": "public, max-age=120",
+        },
+      });
+    } else if (url.pathname === "/wallet-risk/manifest.json") {
+      try {
+        response = json(await publicWalletRiskManifest(env, origin), 200, {
+          "cache-control": "public, max-age=300",
+        });
+      } catch (error) {
+        response = json(
+          {
+            error: "wallet_risk_manifest_unavailable",
+            message: error instanceof Error ? error.message : String(error),
+          },
+          502,
+        );
+      }
     } else if (url.pathname === "/icon.svg") {
       response = new Response(
         `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><rect width="128" height="128" rx="26" fill="#0b1629"/><path d="M64 15 108 32v31c0 26-17 43-44 53C37 106 20 89 20 63V32l44-17Z" fill="#3d82f6"/><path d="M43 64 58 79l29-34" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
@@ -7348,18 +15044,36 @@ export default {
       );
     } else if (url.pathname === "/sitemap.xml") {
       response = new Response(
-        `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/</loc></url><url><loc>${origin}/verify</loc></url><url><loc>${origin}/openapi.json</loc></url><url><loc>${origin}/.well-known/agent-card.json</loc></url><url><loc>${origin}/.well-known/mcp.json</loc></url></urlset>`,
+        `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/</loc></url><url><loc>${origin}/agent-buyer-identity</loc></url><url><loc>${origin}/signgate</loc></url><url><loc>${origin}/wallet-risk</loc></url><url><loc>${origin}/wallet-risk/manifest.json</loc></url><url><loc>${origin}/en/signgate</loc></url><url><loc>${origin}/zh/signgate</loc></url><url><loc>${origin}/verify</loc></url><url><loc>${origin}/openapi.json</loc></url><url><loc>${origin}/catalog.json</loc></url><url><loc>${origin}/registry.json</loc></url><url><loc>${origin}/workflows.json</loc></url><url><loc>${origin}/endpoints.txt</loc></url><url><loc>${origin}/.well-known/x402</loc></url><url><loc>${origin}/.well-known/agent-card.json</loc></url><url><loc>${origin}/.well-known/mcp.json</loc></url></urlset>`,
         { headers: { "content-type": "application/xml; charset=utf-8" } },
       );
     } else if (url.pathname === "/llms.txt") {
       response = new Response(
-        `# Agent Payment Guard API
+        `# SignGate API
 
-Stateful x402 payment firewall for autonomous AI agents, plus twenty-five underlying commerce and safety tools.
+Pre-signing risk and policy gateway for AI agent payments. SignGate verifies intent, enforces dynamic limits, screens recipient risk, and returns allow/review/deny before any policy-controlled key signs.
+
+SignGate also provides Agent Buyer Identity Preflight for x402: before an AI agent buys an API, dataset, or tool, verify whether that buyer agent role is allowed to buy this product category.
 
 - OpenAPI: ${origin}/openapi.json
+- Agent Buyer Identity page: ${origin}/agent-buyer-identity
+- SignGate landing page: ${origin}/signgate
+- Wallet Risk Intelligence page: ${origin}/wallet-risk
+- SignGate English page: ${origin}/en/signgate
+- SignGate Traditional Chinese page: ${origin}/zh/signgate
+- AI buyer catalog: ${origin}/catalog.json
+- Agent utility registry: ${origin}/registry.json
+- Plain endpoints list: ${origin}/endpoints.txt
+- Workflow catalog: ${origin}/workflows.json
+- x402 discovery: ${origin}/.well-known/x402
 - Agent card: ${origin}/.well-known/agent-card.json
 - Product catalog: ${origin}/.well-known/service.json
+- Wallet risk manifest: ${origin}/wallet-risk/manifest.json
+- SignGate x402 wrapper: ${productExampleUrl(origin, PRODUCTS_BY_ID["agent-payment-risk-gateway"])}
+- Featured Alpha Risk: ${productExampleUrl(origin, PRODUCTS[26])}
+- Token alpha snapshot: ${productExampleUrl(origin, PRODUCTS[27])}
+- Wallet copytrade risk: ${productExampleUrl(origin, PRODUCTS[28])}
+- New pool risk: ${productExampleUrl(origin, PRODUCTS[29])}
 - Main Payment Guard: ${productExampleUrl(origin, PRODUCTS[25])}
 - Address preflight: ${origin}${PRODUCTS[0].path}?address=${PAY_TO}
 - Token preflight: ${origin}${PRODUCTS[1].path}?token=${USDC}
@@ -7386,8 +15100,12 @@ Stateful x402 payment firewall for autonomous AI agents, plus twenty-five underl
 - OpenAPI specification preflight: ${productExampleUrl(origin, PRODUCTS[22])}
 - Domain trust preflight: ${productExampleUrl(origin, PRODUCTS[23])}
 - PyPI package preflight: ${productExampleUrl(origin, PRODUCTS[24])}
+- Wallet risk lookup: ${productExampleUrl(origin, PRODUCTS_BY_ID["public-wallet-risk-lookup"])}
+- Wallet risk sample: ${origin}${PRODUCTS_BY_ID["public-wallet-risk-sample"].path}?limit=5&campaign=llms
+- Wallet risk snapshot: ${origin}${PRODUCTS_BY_ID["public-wallet-risk-snapshot"].path}?campaign=llms
+- Wallet risk delta: ${origin}${PRODUCTS_BY_ID["public-wallet-risk-delta"].path}?batch_key=${ADDRESS_RISK_DEFAULT_BATCH}&campaign=llms
 
-Use these services before or after an autonomous payment, software installation, agent connection, API integration, web-monitoring task, or contract interaction.
+Use these services before or after an autonomous payment, software installation, agent connection, API integration, web-monitoring task, trading-bot filter, or contract interaction.
 Results are public-data heuristics, not guarantees of safety.
 `,
         {
@@ -7398,13 +15116,19 @@ Results are public-data heuristics, not guarantees of safety.
           },
         },
       );
-    } else if (url.pathname === "/") {
+    } else if (
+      url.pathname === "/" ||
+      url.pathname === "/signgate" ||
+      url.pathname === "/en/signgate" ||
+      url.pathname === "/zh/signgate"
+    ) {
+      const locale = url.pathname === "/zh/signgate" ? "zh" : "en";
       response = request.headers.get("accept")?.includes("application/json")
         ? json(serviceManifest(origin))
-        : new Response(landingHtml(origin), {
+        : new Response(landingHtml(origin, locale), {
             headers: {
               "content-type": "text/html; charset=utf-8",
-              "cache-control": "public, max-age=300",
+              "cache-control": "no-cache",
             },
           });
     } else {

@@ -1,0 +1,25 @@
+{
+  "name": "@signgate/agent-buyer-policy-kit",
+  "version": "0.1.0",
+  "description": "Policy kit for verifying whether an AI agent should buy an x402 API, dataset, or tool.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./policy/default": "./policy/default-agent-buyer-policy.json",
+    "./policy/categories": "./policy/product-categories.json"
+  },
+  "files": [
+    "README.md",
+    "PRICING.md",
+    "RELEASE_CHECKLIST.md",
+    "src/",
+    "policy/",
+    "test/"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

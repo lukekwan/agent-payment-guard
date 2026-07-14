@@ -1,0 +1,11 @@
+[project]
+name = "signgate-agent-buyer-policy-kit"
+version = "0.1.0"
+description = "Policy evaluator for deciding whether an AI agent should buy an x402 API, dataset, or tool."
+requires-python = ">=3.10"
+license = { text = "UNLICENSED" }
+authors = [{ name = "SignGate" }]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"

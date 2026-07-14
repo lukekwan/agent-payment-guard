@@ -1,0 +1,126 @@
+{
+  "schema_version": "agent_buyer_policy.v1",
+  "policy_version": "signgate-agent-buyer-policy-2026-07-14",
+  "default_decision": "APPROVAL_REQUIRED",
+  "decisions": ["ALLOW", "DENY", "APPROVAL_REQUIRED"],
+  "roles": {
+    "research_agent": {
+      "description": "Security, protocol, market, and technical research agent.",
+      "status": "active",
+      "default_spend_limit_usdc": 1,
+      "allowed_categories": [
+        "wallet_risk",
+        "token_risk",
+        "market_intelligence",
+        "chain_data",
+        "api_security",
+        "protocol_research"
+      ],
+      "approval_required_categories": [
+        "invoice_verification",
+        "payment_execution",
+        "production_deploy"
+      ],
+      "denied_categories": ["payroll", "customer_pii"]
+    },
+    "writer_agent": {
+      "description": "Content, documentation, and public writing agent.",
+      "status": "active",
+      "default_spend_limit_usdc": 0.1,
+      "allowed_categories": ["content_research", "public_docs", "market_summary"],
+      "approval_required_categories": [
+        "wallet_risk",
+        "token_risk",
+        "market_intelligence"
+      ],
+      "denied_categories": [
+        "payment_execution",
+        "production_deploy",
+        "invoice_verification",
+        "customer_pii"
+      ]
+    },
+    "accounting_agent": {
+      "description": "Invoice, reconciliation, vendor, and bookkeeping agent.",
+      "status": "active",
+      "default_spend_limit_usdc": 0.5,
+      "allowed_categories": [
+        "invoice_verification",
+        "receipt_reconciliation",
+        "vendor_due_diligence"
+      ],
+      "approval_required_categories": ["wallet_risk", "payment_execution"],
+      "denied_categories": [
+        "market_intelligence",
+        "token_risk",
+        "trading_alpha",
+        "production_deploy"
+      ]
+    },
+    "finance_agent": {
+      "description": "Treasury, settlement, payment review, and financial risk agent.",
+      "status": "active",
+      "default_spend_limit_usdc": 1,
+      "allowed_categories": [
+        "invoice_verification",
+        "receipt_reconciliation",
+        "treasury_risk",
+        "vendor_due_diligence"
+      ],
+      "approval_required_categories": [
+        "payment_execution",
+        "wallet_risk",
+        "market_intelligence"
+      ],
+      "denied_categories": ["production_deploy", "code_execution"]
+    },
+    "operator_agent": {
+      "description": "Runtime, API, deployment-prep, and service reliability agent.",
+      "status": "active",
+      "default_spend_limit_usdc": 0.25,
+      "allowed_categories": [
+        "service_monitoring",
+        "api_security",
+        "domain_trust",
+        "openapi_preflight",
+        "github_health"
+      ],
+      "approval_required_categories": [
+        "production_deploy",
+        "payment_execution",
+        "wallet_risk"
+      ],
+      "denied_categories": ["payroll", "customer_pii"]
+    }
+  },
+  "global_rules": {
+    "inactive_agent_decision": "DENY",
+    "unknown_role_decision": "DENY",
+    "high_sensitivity_decision": "APPROVAL_REQUIRED",
+    "restricted_sensitivity_decision": "DENY",
+    "price_over_limit_decision": "APPROVAL_REQUIRED",
+    "payment_execution_decision": "APPROVAL_REQUIRED"
+  },
+  "required_audit_fields": [
+    "agent_id",
+    "agent_role",
+    "product_category",
+    "purpose",
+    "price_usdc",
+    "decision",
+    "reason_codes",
+    "policy_version"
+  ],
+  "reason_codes": {
+    "ROLE_PRODUCT_CATEGORY_ALLOWED": "Buyer role is allowed to buy this product category.",
+    "ROLE_PRODUCT_CATEGORY_APPROVAL_REQUIRED": "Buyer role may buy this product category only after approval.",
+    "ROLE_PRODUCT_CATEGORY_DENIED": "Buyer role is not allowed to buy this product category.",
+    "UNKNOWN_AGENT_ROLE": "Buyer role is not defined in policy.",
+    "INACTIVE_AGENT": "Agent status is disabled, paused, or inactive.",
+    "HIGH_DATA_SENSITIVITY": "Data sensitivity requires approval.",
+    "RESTRICTED_DATA_SENSITIVITY": "Restricted data is denied by starter policy.",
+    "PRICE_EXCEEDS_ROLE_LIMIT": "Requested spend exceeds the role limit.",
+    "PAYMENT_EXECUTION_REQUIRES_APPROVAL": "Payment execution requires approval even when role matches.",
+    "APPROVAL_REFERENCE_PRESENT": "Caller supplied approval evidence."
+  }
+}

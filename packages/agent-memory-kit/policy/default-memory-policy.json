@@ -1,0 +1,42 @@
+{
+  "schema_version": "agent_memory_policy.v1",
+  "policy_version": "signgate-agent-memory-policy-2026-07-14",
+  "max_context_chars": 6000,
+  "min_confidence": 0.55,
+  "default_ttl_days": 90,
+  "promotion_required_fields": [
+    "memory_id",
+    "type",
+    "claim",
+    "source_episode_id",
+    "evidence_ref",
+    "confidence",
+    "tags"
+  ],
+  "types": [
+    "preference",
+    "procedure",
+    "decision",
+    "lesson",
+    "constraint",
+    "fact",
+    "risk"
+  ],
+  "scoring": {
+    "tag_match": 4,
+    "scope_match": 3,
+    "type_match": 2,
+    "pinned": 8,
+    "recent_within_days": 14,
+    "recent_bonus": 2,
+    "stale_penalty": -4,
+    "expired_penalty": -100
+  },
+  "promotion_rules": {
+    "raw_chat_to_memory": "blocked",
+    "episode_candidate_to_memory": "allowed_after_review",
+    "failed_task_lessons": "allowed_with_failure_evidence",
+    "identity_policy_changes": "allowed_with_commit_or_approval",
+    "runtime_deploy_lessons": "allowed_with_verification"
+  }
+}
