@@ -12,13 +12,30 @@ x402scan server:
 
 ## Product Shape
 
-- Product families: 65
-- Paid operations observed through `.well-known/x402`: 67
+- Product families: 73
+- Paid operations observed through `.well-known/x402`: 75
 - Reason for the difference: x402scan counts paid OpenAPI operations. Product
   families count GET products; the extra paid operations are Payment Guard JSON
   evaluation and policy creation.
 - Payment network: Base
 - Payment protocol: x402
+
+## Sumsub-backed Compliance Evidence
+
+SignGate now exposes 8 Sumsub-backed evidence products through x402 discovery:
+
+1. `sumsub-case-management-evidence`
+2. `sumsub-db-net-evidence`
+3. `sumsub-kyt-evidence`
+4. `sumsub-payment-method-crypto-evidence`
+5. `sumsub-poa-evidence`
+6. `sumsub-crystal-crypto-risk-evidence`
+7. `sumsub-travel-rule-evidence`
+8. `sumsub-watchlist-aml-evidence`
+
+These endpoints productize normalized evidence contracts and sandbox capability
+mapping. They do not create applicants, upload documents, make compliance
+claims, perform production signing, or move money.
 
 ## Recommended AI Workflows
 

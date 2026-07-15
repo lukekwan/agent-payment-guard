@@ -25,6 +25,7 @@ import worker, {
   buildAgentBuyerIdentityPreflight,
   buildAgenticCommercePreflight,
   buildAgentSpendRoutePlan,
+  buildSumsubEvidenceServiceResponse,
   sampleAgenticCommercePreflightInput,
   buildAgentPaymentAuthorization,
   buildStablecoinBalance,
@@ -175,6 +176,14 @@ test("worker exposes discovery documents", async () => {
   assert.ok(document.paths["/v1/x402/address-risk/sample"]);
   assert.ok(document.paths["/v1/x402/address-risk/snapshot"]);
   assert.ok(document.paths["/v1/x402/address-risk/delta"]);
+  assert.ok(document.paths["/v1/x402/sumsub/case-management-evidence"]);
+  assert.ok(document.paths["/v1/x402/sumsub/db-net-evidence"]);
+  assert.ok(document.paths["/v1/x402/sumsub/kyt-evidence"]);
+  assert.ok(document.paths["/v1/x402/sumsub/payment-method-crypto-evidence"]);
+  assert.ok(document.paths["/v1/x402/sumsub/poa-evidence"]);
+  assert.ok(document.paths["/v1/x402/sumsub/crystal-crypto-risk-evidence"]);
+  assert.ok(document.paths["/v1/x402/sumsub/travel-rule-evidence"]);
+  assert.ok(document.paths["/v1/x402/sumsub/watchlist-aml-evidence"]);
   assert.ok(document.paths["/v1/agentic-commerce/preflight/sample"]);
   assert.ok(document.paths["/v1/agentic-commerce/preflight"].post);
   assert.ok(
@@ -194,8 +203,8 @@ test("worker exposes discovery documents", async () => {
     new Request("https://example.test/catalog.json"),
   );
   const catalogDocument = await catalog.json();
-  assert.equal(catalogDocument.product_families, 65);
-  assert.equal(catalogDocument.paid_operations_observed_on_x402scan, 67);
+  assert.equal(catalogDocument.product_families, 73);
+  assert.equal(catalogDocument.paid_operations_observed_on_x402scan, 75);
   assert.ok(
     catalogDocument.products.find(
       product => product.id === "x402-origin-due-diligence",
@@ -209,6 +218,11 @@ test("worker exposes discovery documents", async () => {
   assert.ok(
     catalogDocument.products.find(
       product => product.id === "agent-buyer-identity-preflight",
+    ).ai_should_buy_when,
+  );
+  assert.ok(
+    catalogDocument.products.find(
+      product => product.id === "sumsub-kyt-evidence",
     ).ai_should_buy_when,
   );
   assert.match(catalogDocument.description, /economic policy decisions/i);
@@ -230,15 +244,15 @@ test("worker exposes discovery documents", async () => {
   const card = await worker.fetch(
     new Request("https://example.test/.well-known/agent-card.json"),
   );
-  assert.equal((await card.json()).skills.length, 65);
+  assert.equal((await card.json()).skills.length, 73);
 
   const x402Discovery = await worker.fetch(
     new Request("https://example.test/.well-known/x402"),
   );
   const x402DiscoveryDocument = await x402Discovery.json();
-  assert.equal(x402DiscoveryDocument.resources.length, 65);
-  assert.equal(x402DiscoveryDocument.operation_count, 67);
-  assert.equal(x402DiscoveryDocument.paid_operations.length, 67);
+  assert.equal(x402DiscoveryDocument.resources.length, 73);
+  assert.equal(x402DiscoveryDocument.operation_count, 75);
+  assert.equal(x402DiscoveryDocument.paid_operations.length, 75);
   assert.ok(
     x402DiscoveryDocument.paid_operations.find(
       operation =>
@@ -264,6 +278,11 @@ test("worker exposes discovery documents", async () => {
     ),
   );
   assert.ok(
+    x402DiscoveryDocument.resources.includes(
+      "https://example.test/v1/x402/sumsub/kyt-evidence",
+    ),
+  );
+  assert.ok(
     x402DiscoveryDocument.paid_operations.find(
       operation =>
         operation.id === "agent-buyer-policy-kit" &&
@@ -275,8 +294,8 @@ test("worker exposes discovery documents", async () => {
     new Request("https://example.test/registry.json"),
   );
   const registryDocument = await registry.json();
-  assert.equal(registryDocument.counts.product_families, 65);
-  assert.equal(registryDocument.counts.paid_operations, 67);
+  assert.equal(registryDocument.counts.product_families, 73);
+  assert.equal(registryDocument.counts.paid_operations, 75);
   assert.ok(
     registryDocument.operations.find(
       operation => operation.id === "x402-rpc-payment-guard",
@@ -285,6 +304,11 @@ test("worker exposes discovery documents", async () => {
   assert.ok(
     registryDocument.clusters.find(
       cluster => cluster.id === "x402-payment-safety",
+    ),
+  );
+  assert.ok(
+    registryDocument.clusters.find(
+      cluster => cluster.id === "sumsub-compliance-evidence",
     ),
   );
 
@@ -1471,6 +1495,35 @@ test("payment guard enforces mandates and simulates Base transactions", async ()
   );
   assert.equal(simulation.success, true);
   assert.equal(simulation.estimated_gas, 21000);
+});
+
+test("buildSumsubEvidenceServiceResponse returns fail-closed evidence contract", () => {
+  const result = buildSumsubEvidenceServiceResponse({
+    productId: "sumsub-kyt-evidence",
+    input: {
+      transaction_id: "tx_demo_001",
+      asset: "USDC",
+      chain: "base",
+    },
+    fetchedAt: "2026-07-16T00:00:00.000Z",
+  });
+
+  assert.equal(result.provider, "sumsub");
+  assert.equal(result.service.id, "sumsub.kyt");
+  assert.equal(result.service.enabled, true);
+  assert.equal(result.decision_support, "EVIDENCE_READY");
+  assert.equal(result.evidence.evidence_digest_ready, true);
+  assert.equal(result.evidence.demo_result.production_signing, false);
+
+  const missing = buildSumsubEvidenceServiceResponse({
+    productId: "sumsub-watchlist-aml-evidence",
+    input: {},
+    fetchedAt: "2026-07-16T00:00:00.000Z",
+  });
+  assert.equal(missing.decision_support, "REQUIRE_APPROVAL");
+  assert.ok(
+    missing.reason_codes.includes("SUMSUB_REQUIRED_INPUT_MISSING_APPLICANT_ID"),
+  );
 });
 
 test("paid routes advertise their exact Base USDC prices", async () => {

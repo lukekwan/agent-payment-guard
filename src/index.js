@@ -9,7 +9,9 @@ import { paymentMiddlewareFromHTTPServer } from "@x402/hono";
 import { Hono } from "hono";
 import { parse as parseYaml } from "yaml";
 import {
+  buildSumsubEvidenceManifest,
   evaluateAgenticCommercePreflight as evaluateAgenticCommercePolicy,
+  listSumsubEvidenceServices,
 } from "../packages/agent-buyer-policy-kit/src/index.js";
 
 const BASE_MAINNET = "eip155:8453";
@@ -85,6 +87,12 @@ const CATALOG_GROUPS = [
     name: "Wallet risk and BlockchainSecurity intelligence",
     buyer_goal:
       "Screen wallets, download source-attributed public risk data, or buy deeper BlockchainSecurity scoring and tracing through x402.",
+  },
+  {
+    id: "sumsub-compliance-evidence",
+    name: "Sumsub-backed compliance evidence",
+    buyer_goal:
+      "Let SignGate buyers purchase normalized KYB, KYT, AML, Travel Rule, identity, and review evidence before an agent-triggered economic action.",
   },
   {
     id: "market-context",
@@ -621,6 +629,78 @@ const CATALOG_METADATA = {
       "ALLOW/REVIEW/BLOCK decision, reason codes, evidence summary, policy version, and signed-decision placeholder.",
     price_reason:
       "Low-cost generic policy decision endpoint designed to become the shared agent control schema.",
+  },
+  "sumsub-case-management-evidence": {
+    group: "sumsub-compliance-evidence",
+    when_to_buy:
+      "When an agent payment or merchant onboarding decision requires human/compliance review state as evidence.",
+    returns:
+      "Normalized Sumsub case-management evidence schema, required inputs, fail-closed states, demo response, and audit limitations.",
+    price_reason:
+      "Enterprise evidence endpoint because it supports reviewer workflow and audit context rather than a single risk lookup.",
+  },
+  "sumsub-db-net-evidence": {
+    group: "sumsub-compliance-evidence",
+    when_to_buy:
+      "When SignGate needs identity database evidence for the verified principal behind an agent mandate.",
+    returns:
+      "Normalized identity database evidence contract, entitlement state, required applicant/principal reference, and decision mapping.",
+    price_reason:
+      "Identity evidence endpoint priced above utility calls because it supports principal and mandate authority checks.",
+  },
+  "sumsub-kyt-evidence": {
+    group: "sumsub-compliance-evidence",
+    when_to_buy:
+      "Before an autonomous agent commits value and needs Sumsub KYT transaction or counterparty risk evidence.",
+    returns:
+      "Normalized KYT evidence contract, supported currency context, transaction reference input, and SignGate decision usage.",
+    price_reason:
+      "Risk evidence endpoint for transaction monitoring signals that can directly influence ALLOW/REQUIRE_APPROVAL/DENY.",
+  },
+  "sumsub-payment-method-crypto-evidence": {
+    group: "sumsub-compliance-evidence",
+    when_to_buy:
+      "When a wallet or crypto payment method must be checked before accepting it in an agent payment workflow.",
+    returns:
+      "Normalized crypto payment-method evidence schema, wallet/payment-method references, fail-closed model, and demo response.",
+    price_reason:
+      "Risk evidence endpoint because wallet/payment-method suitability can gate agent payment execution.",
+  },
+  "sumsub-poa-evidence": {
+    group: "sumsub-compliance-evidence",
+    when_to_buy:
+      "When buyer, merchant, or responsible-principal jurisdiction/residency evidence is needed for policy gates.",
+    returns:
+      "Normalized proof-of-address evidence contract, applicant/principal input requirements, and decision mapping.",
+    price_reason:
+      "Identity evidence endpoint for residency and address policy gates rather than high-frequency transaction checks.",
+  },
+  "sumsub-crystal-crypto-risk-evidence": {
+    group: "sumsub-compliance-evidence",
+    when_to_buy:
+      "When a high-impact crypto transfer needs premium Crystal-backed risk scoring evidence.",
+    returns:
+      "Normalized Crystal crypto risk evidence contract, crypto transaction or wallet reference, and fail-closed response.",
+    price_reason:
+      "Premium risk evidence endpoint because it represents a stronger crypto risk scoring source for material transfers.",
+  },
+  "sumsub-travel-rule-evidence": {
+    group: "sumsub-compliance-evidence",
+    when_to_buy:
+      "When a VASP-style crypto transfer needs originator, beneficiary, and Travel Rule compliance evidence.",
+    returns:
+      "Normalized Travel Rule evidence contract, originator/beneficiary reference requirements, and signer-boundary usage.",
+    price_reason:
+      "Premium compliance evidence endpoint for regulated transfer workflows and auditability.",
+  },
+  "sumsub-watchlist-aml-evidence": {
+    group: "sumsub-compliance-evidence",
+    when_to_buy:
+      "Before paying or onboarding a counterparty that needs sanctions, PEP, watchlist, or adverse-media evidence.",
+    returns:
+      "Normalized AML/watchlist evidence contract, applicant or counterparty reference inputs, and DENY/escalation mapping.",
+    price_reason:
+      "Premium AML evidence endpoint because sanctions or unresolved hits can directly block autonomous payments.",
   },
 };
 const PRODUCTS = [
@@ -2499,10 +2579,213 @@ const PRODUCTS = [
       required: [],
     },
   },
+  {
+    id: "sumsub-case-management-evidence",
+    path: "/v1/x402/sumsub/case-management-evidence",
+    price: "$0.05",
+    description:
+      "Return the Sumsub case-management evidence contract for review state, escalation, and audit workflows.",
+    input: { case_id: "case_demo_001", reference_id: "agent-payment-review-1" },
+    inputSchema: {
+      properties: {
+        case_id: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,128}$",
+          description: "Sumsub case id or sandbox fixture reference.",
+        },
+        reference_id: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,128}$",
+          description: "Internal SignGate request, applicant, or transaction reference.",
+        },
+      },
+      required: ["case_id"],
+    },
+  },
+  {
+    id: "sumsub-db-net-evidence",
+    path: "/v1/x402/sumsub/db-net-evidence",
+    price: "$0.03",
+    description:
+      "Return the Sumsub DB_NET identity database evidence contract for verified-principal and mandate checks.",
+    input: { applicant_id: "applicant_demo_001", principal_reference: "merchant_demo" },
+    inputSchema: {
+      properties: {
+        applicant_id: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,128}$",
+          description: "Sumsub applicant id or sandbox fixture reference.",
+        },
+        principal_reference: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,128}$",
+          description: "Buyer, merchant, or responsible principal reference.",
+        },
+      },
+      required: ["applicant_id"],
+    },
+  },
+  {
+    id: "sumsub-kyt-evidence",
+    path: "/v1/x402/sumsub/kyt-evidence",
+    price: "$0.03",
+    description:
+      "Return the Sumsub KYT transaction evidence contract for crypto transaction and counterparty risk.",
+    input: { transaction_id: "tx_demo_001", asset: "USDC", chain: "base" },
+    inputSchema: {
+      properties: {
+        transaction_id: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,128}$",
+          description: "Sumsub transaction id, SignGate transaction reference, or sandbox fixture id.",
+        },
+        asset: { type: "string", pattern: "^[A-Za-z0-9._:-]{2,32}$" },
+        chain: { type: "string", pattern: "^[A-Za-z0-9._:-]{2,64}$" },
+      },
+      required: ["transaction_id"],
+    },
+  },
+  {
+    id: "sumsub-payment-method-crypto-evidence",
+    path: "/v1/x402/sumsub/payment-method-crypto-evidence",
+    price: "$0.03",
+    description:
+      "Return the Sumsub crypto payment-method evidence contract for wallet ownership and payment method risk.",
+    input: { applicant_id: "applicant_demo_001", wallet: PAY_TO },
+    inputSchema: {
+      properties: {
+        applicant_id: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,128}$",
+          description: "Sumsub applicant id or sandbox fixture reference.",
+        },
+        wallet: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Crypto wallet/payment method address.",
+        },
+      },
+      required: ["applicant_id", "wallet"],
+    },
+  },
+  {
+    id: "sumsub-poa-evidence",
+    path: "/v1/x402/sumsub/poa-evidence",
+    price: "$0.03",
+    description:
+      "Return the Sumsub proof-of-address evidence contract for residency, jurisdiction, and onboarding policy gates.",
+    input: { applicant_id: "applicant_demo_001", jurisdiction: "HK" },
+    inputSchema: {
+      properties: {
+        applicant_id: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,128}$",
+          description: "Sumsub applicant id or sandbox fixture reference.",
+        },
+        jurisdiction: {
+          type: "string",
+          pattern: "^[A-Z]{2}$",
+          description: "ISO-3166 country code used by the policy gate.",
+        },
+      },
+      required: ["applicant_id"],
+    },
+  },
+  {
+    id: "sumsub-crystal-crypto-risk-evidence",
+    path: "/v1/x402/sumsub/crystal-crypto-risk-evidence",
+    price: "$0.05",
+    description:
+      "Return the Sumsub Crystal crypto risk scoring evidence contract for high-impact crypto transfers.",
+    input: { wallet: PAY_TO, transaction_reference: "crystal_demo_001" },
+    inputSchema: {
+      properties: {
+        wallet: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Wallet or crypto counterparty address.",
+        },
+        transaction_reference: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,128}$",
+          description: "Crypto transaction or SignGate request reference.",
+        },
+      },
+      required: ["wallet"],
+    },
+  },
+  {
+    id: "sumsub-travel-rule-evidence",
+    path: "/v1/x402/sumsub/travel-rule-evidence",
+    price: "$0.05",
+    description:
+      "Return the Sumsub Travel Rule evidence contract for originator, beneficiary, and VASP compliance checks.",
+    input: {
+      transfer_reference: "travel_rule_demo_001",
+      originator: "merchant_demo",
+      beneficiary: "vendor_demo",
+    },
+    inputSchema: {
+      properties: {
+        transfer_reference: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,128}$",
+          description: "Crypto transfer, VASP, or SignGate payment reference.",
+        },
+        originator: { type: "string", pattern: "^[A-Za-z0-9._:-]{1,128}$" },
+        beneficiary: { type: "string", pattern: "^[A-Za-z0-9._:-]{1,128}$" },
+      },
+      required: ["transfer_reference"],
+    },
+  },
+  {
+    id: "sumsub-watchlist-aml-evidence",
+    path: "/v1/x402/sumsub/watchlist-aml-evidence",
+    price: "$0.05",
+    description:
+      "Return the Sumsub watchlist and AML evidence contract for sanctions, PEP, watchlist, and adverse-media screening.",
+    input: { applicant_id: "applicant_demo_001", counterparty_reference: "merchant_demo" },
+    inputSchema: {
+      properties: {
+        applicant_id: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,128}$",
+          description: "Sumsub applicant id or sandbox fixture reference.",
+        },
+        counterparty_reference: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,128}$",
+          description: "Merchant, buyer, VASP, or counterparty reference.",
+        },
+      },
+      required: ["applicant_id"],
+    },
+  },
 ];
 const PAID_PATHS = new Set(PRODUCTS.map(product => product.path));
 const PRODUCTS_BY_ID = Object.fromEntries(PRODUCTS.map(product => [product.id, product]));
 const PRODUCTS_BY_PATH = Object.fromEntries(PRODUCTS.map(product => [product.path, product]));
+const SUMSUB_PRODUCT_TO_SERVICE_ID = {
+  "sumsub-case-management-evidence": "sumsub.case_management",
+  "sumsub-db-net-evidence": "sumsub.db_net",
+  "sumsub-kyt-evidence": "sumsub.kyt",
+  "sumsub-payment-method-crypto-evidence": "sumsub.payment_method_crypto",
+  "sumsub-poa-evidence": "sumsub.poa",
+  "sumsub-crystal-crypto-risk-evidence": "sumsub.crystal_crypto_risk",
+  "sumsub-travel-rule-evidence": "sumsub.travel_rule",
+  "sumsub-watchlist-aml-evidence": "sumsub.watchlists",
+};
+const SUMSUB_EVIDENCE_PRODUCT_IDS = Object.keys(SUMSUB_PRODUCT_TO_SERVICE_ID);
+const SUMSUB_SANDBOX_ALLOWED_CHECKS = {
+  CASE_MANAGEMENT: "Case Management",
+  DB_NET: "Database Network",
+  KYT: "KYT",
+  PAYMENT_METHOD_CRYPTO: "Payment Method Crypto",
+  POA: "Proof of Address",
+  TM_CRYPTO_RISK_SCORING_CRYSTAL: "Crystal crypto risk scoring",
+  TRAVEL_RULE: "Travel Rule",
+  WATCHLISTS: "Watchlists",
+};
 const PAYMENT_GUARD_POLICY_PATH = "/v1/x402/payment-guard/policies";
 const PAYMENT_GUARD_POLICY_MANAGE_PATH =
   "/v1/payment-guard/policies/manage";
@@ -5551,6 +5834,94 @@ export function buildAgentRiskUtility({
       "This endpoint returns preflight intelligence, not custody or transaction execution.",
       "High-value, regulated, or uncertain actions should combine this result with signed Payment Guard policy.",
     ],
+  };
+}
+
+export function buildSumsubEvidenceServiceResponse({
+  productId,
+  input = {},
+  fetchedAt = new Date().toISOString(),
+}) {
+  const serviceId = SUMSUB_PRODUCT_TO_SERVICE_ID[productId];
+  const product = PRODUCTS_BY_ID[productId];
+  const manifest = buildSumsubEvidenceManifest({
+    environment: "sandbox",
+    evaluated_at: fetchedAt,
+    allowedChecks: SUMSUB_SANDBOX_ALLOWED_CHECKS,
+  });
+  const service =
+    manifest.services.find(candidate => candidate.id === serviceId) ??
+    listSumsubEvidenceServices().find(candidate => candidate.id === serviceId);
+  const missingInputs = (product?.inputSchema.required ?? []).filter(
+    key => !input[key],
+  );
+  const enabled = Boolean(service?.enabled);
+  const decisionSupport = !enabled
+    ? "DENY"
+    : missingInputs.length > 0
+      ? "REQUIRE_APPROVAL"
+      : "EVIDENCE_READY";
+
+  return {
+    product: productId,
+    provider: "sumsub",
+    schema_version: "sumsub_evidence_response.v0",
+    fetched_at: fetchedAt,
+    service: {
+      id: service?.id ?? serviceId,
+      name: service?.name ?? productTitle(product),
+      entitlement: service?.entitlement ?? null,
+      enabled,
+      category: service?.category ?? "compliance_evidence",
+      normalized_output: service?.normalized_output ?? "sumsub_evidence.v0",
+      pricing_tier: service?.pricing_tier ?? "evidence",
+      fail_closed_on_error: service?.fail_closed_on_error ?? true,
+    },
+    request: Object.fromEntries(
+      Object.entries(input).filter(([, value]) => value !== null && value !== ""),
+    ),
+    decision_support: decisionSupport,
+    reason_codes: [
+      ...(!enabled ? ["SUMSUB_SERVICE_NOT_ENABLED"] : []),
+      ...missingInputs.map(key => `SUMSUB_REQUIRED_INPUT_MISSING_${key.toUpperCase()}`),
+      "SANDBOX_DEMO_EVIDENCE_ONLY",
+    ],
+    evidence: {
+      status: enabled && missingInputs.length === 0 ? "available" : "not_ready",
+      normalized_output_schema: service?.normalized_output ?? "sumsub_evidence.v0",
+      entitlement_description: service?.entitlement_description ?? null,
+      source: "sumsub-sandbox-capability-manifest",
+      evidence_digest_ready: true,
+      live_adapter_status: "not_connected_in_worker",
+      demo_result: {
+        creates_applicant: false,
+        uploads_documents: false,
+        moves_money: false,
+        production_signing: false,
+      },
+    },
+    manifest_summary: {
+      schema_version: manifest.schema_version,
+      service_count: manifest.service_count,
+      enabled_service_count: manifest.enabled_service_count,
+      disabled_service_count: manifest.disabled_service_count,
+    },
+    next_actions:
+      decisionSupport === "EVIDENCE_READY"
+        ? [
+            "Bind this normalized evidence object into a SignGate evidence_digest.",
+            "Use live Sumsub API response data only inside a server-side adapter.",
+          ]
+        : [
+            "Fail closed until the required input and Sumsub entitlement are available.",
+            "Do not treat missing evidence as approval.",
+          ],
+    limitations: [
+      "This x402 resource productizes the evidence contract and sandbox capability mapping.",
+      "It does not create Sumsub applicants, upload documents, trigger real KYC/KYB, move funds, or perform production signing.",
+      "Sandbox evidence is for product integration testing only, not a compliance guarantee.",
+    ],
+    price_usdc: product?.price ?? null,
   };
 }
 
@@ -14030,6 +14401,17 @@ function createPaidApp() {
     });
   }
 
+  for (const productId of SUMSUB_EVIDENCE_PRODUCT_IDS) {
+    app.get(PRODUCTS_BY_ID[productId].path, c => {
+      const product = PRODUCTS_BY_ID[productId];
+      const input = {};
+      for (const name of Object.keys(product.inputSchema.properties)) {
+        input[name] = c.req.query(name) ?? product.input[name] ?? "";
+      }
+      return c.json(buildSumsubEvidenceServiceResponse({ productId, input }));
+    });
+  }
+
   app.get(PRODUCTS_BY_ID["base-token-exit-risk"].path, async c => {
     const token = c.req.query("token") ?? "";
     if (!ADDRESS_PATTERN.test(token)) {
@@ -15672,7 +16054,7 @@ export default {
       );
     } else if (url.pathname === "/sitemap.xml") {
       response = new Response(
-        `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/</loc></url><url><loc>${origin}/agentic-commerce-preflight</loc></url><url><loc>${origin}/v1/agentic-commerce/preflight/sample</loc></url><url><loc>${origin}/agent-buyer-identity</loc></url><url><loc>${origin}/signgate</loc></url><url><loc>${origin}/wallet-risk</loc></url><url><loc>${origin}/wallet-risk/manifest.json</loc></url><url><loc>${origin}/en/signgate</loc></url><url><loc>${origin}/zh/signgate</loc></url><url><loc>${origin}/verify</loc></url><url><loc>${origin}/openapi.json</loc></url><url><loc>${origin}/catalog.json</loc></url><url><loc>${origin}/registry.json</loc></url><url><loc>${origin}/workflows.json</loc></url><url><loc>${origin}/endpoints.txt</loc></url><url><loc>${origin}/.well-known/x402</loc></url><url><loc>${origin}/.well-known/agent-card.json</loc></url><url><loc>${origin}/.well-known/mcp.json</loc></url></urlset>`,
+        `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/</loc></url><url><loc>${origin}/agentic-commerce-preflight</loc></url><url><loc>${origin}/v1/agentic-commerce/preflight/sample</loc></url><url><loc>${origin}/agent-buyer-identity</loc></url><url><loc>${origin}/signgate</loc></url><url><loc>${origin}/wallet-risk</loc></url><url><loc>${origin}/wallet-risk/manifest.json</loc></url><url><loc>${origin}/en/signgate</loc></url><url><loc>${origin}/zh/signgate</loc></url><url><loc>${origin}/verify</loc></url><url><loc>${origin}/openapi.json</loc></url><url><loc>${origin}/catalog.json</loc></url><url><loc>${origin}/registry.json</loc></url><url><loc>${origin}/workflows.json</loc></url><url><loc>${origin}/endpoints.txt</loc></url><url><loc>${origin}/.well-known/x402</loc></url><url><loc>${origin}/.well-known/agent-card.json</loc></url><url><loc>${origin}/.well-known/mcp.json</loc></url><url><loc>${origin}${PRODUCTS_BY_ID["sumsub-kyt-evidence"].path}</loc></url><url><loc>${origin}${PRODUCTS_BY_ID["sumsub-watchlist-aml-evidence"].path}</loc></url></urlset>`,
         { headers: { "content-type": "application/xml; charset=utf-8" } },
       );
     } else if (url.pathname === "/llms.txt") {
@@ -15700,6 +16082,9 @@ Agent Buyer Identity, wallet risk, RPC safety, chain data, and KYT endpoints are
 - Product catalog: ${origin}/.well-known/service.json
 - Wallet risk manifest: ${origin}/wallet-risk/manifest.json
 - SignGate x402 wrapper: ${productExampleUrl(origin, PRODUCTS_BY_ID["agent-payment-risk-gateway"])}
+- Sumsub KYT evidence: ${productExampleUrl(origin, PRODUCTS_BY_ID["sumsub-kyt-evidence"])}
+- Sumsub AML/watchlist evidence: ${productExampleUrl(origin, PRODUCTS_BY_ID["sumsub-watchlist-aml-evidence"])}
+- Sumsub Travel Rule evidence: ${productExampleUrl(origin, PRODUCTS_BY_ID["sumsub-travel-rule-evidence"])}
 - Agentic Commerce POST demo: ${origin}/v1/agentic-commerce/preflight
 - Featured Alpha Risk: ${productExampleUrl(origin, PRODUCTS[26])}
 - Token alpha snapshot: ${productExampleUrl(origin, PRODUCTS[27])}
