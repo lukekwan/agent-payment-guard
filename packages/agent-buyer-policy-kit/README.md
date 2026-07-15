@@ -27,6 +27,8 @@ Preflight logic instead of only calling the hosted SignGate API.
 - Deterministic JavaScript evaluator.
 - Deterministic Agentic Commerce evaluator covering mandate, merchant trust,
   and signer directive checks.
+- Sumsub-backed compliance evidence service catalog for eight sandbox
+  capabilities.
 - JSON policy pack intended to be edited by customers.
 - Tests covering `ALLOW`, `DENY`, `APPROVAL_REQUIRED`, missing mandate, role
   mismatch, merchant wallet mismatch, and payment signer directive.
@@ -132,6 +134,39 @@ not hold or use unrestricted signing authority. It does not prevent an approved
 agent workflow from initiating execution through an isolated HSM, KMS, custody
 platform, or smart-account module.
 
+Sumsub evidence service manifest:
+
+```js
+import {
+  buildSumsubEvidenceManifest,
+  listSumsubEvidenceServices,
+} from "@signgate/agent-buyer-policy-kit";
+
+const services = listSumsubEvidenceServices();
+console.log(services.length); // 8
+
+const manifest = buildSumsubEvidenceManifest({
+  environment: "sandbox",
+  allowedChecks: {
+    CASE_MANAGEMENT: "Case Management",
+    DB_NET: "Database network verification",
+    KYT: "Know Your Transaction",
+    PAYMENT_METHOD_CRYPTO: "Crypto payment method check",
+    POA: "Proof of Address",
+    TM_CRYPTO_RISK_SCORING_CRYSTAL: "Crystal crypto risk scoring",
+    TRAVEL_RULE: "Travel Rule compliance",
+    WATCHLISTS: "AML Screening",
+  },
+});
+
+console.log(manifest.service_count); // 8
+console.log(manifest.enabled_service_count); // 8
+```
+
+The Sumsub manifest is a normalized service catalog for evidence binding. It
+does not create applicants, upload documents, run production compliance checks,
+move money, or issue a cryptographic Decision Artifact.
+
 ## Starter Outcomes
 
 | Buyer | Product category | Decision |
@@ -189,6 +224,19 @@ Recommended default before Founder approval:
 The Developer Kit price is not public/live until Founder approves final
 pricing, license, and delivery flow.
 
+Sumsub-backed evidence service pricing should be based on normalized evidence
+objects, not raw Sumsub endpoints:
+
+- `identity_evidence`: medium
+- `risk_evidence`: medium
+- `premium_risk_evidence`: premium
+- `compliance_evidence`: premium
+- `aml_evidence`: premium
+- `audit_ops`: enterprise
+
+See [`docs/SUMSUB_EVIDENCE_SERVICES.md`](./docs/SUMSUB_EVIDENCE_SERVICES.md)
+for the eight service schemas, error model, demo boundaries, and pricing tiers.
+
 ## Non-Goals
 
 - No wallet custody.
@@ -197,8 +245,10 @@ pricing, license, and delivery flow.
 - No token approval.
 - No autonomous money movement.
 - No seller-delivery guarantee.
-- No live AP2, x402, KYT, or chain-state verification inside the local
+- No live AP2, x402, Sumsub, KYT, or chain-state calls inside the deterministic
   evaluator.
+- Sumsub service catalog functions normalize capability/evidence metadata only;
+  callers must inject live Sumsub evidence through an approved adapter.
 
 ## Enterprise Notes
 

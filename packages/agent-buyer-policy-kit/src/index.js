@@ -3,6 +3,194 @@ import productCategories from "../policy/product-categories.json" with { type: "
 
 export { defaultPolicy, productCategories };
 
+export const SUMSUB_EVIDENCE_SERVICE_SCHEMA_VERSION =
+  "sumsub_evidence_service_catalog.v0";
+
+export const SUMSUB_EVIDENCE_SERVICES = [
+  {
+    id: "sumsub.case_management",
+    entitlement: "CASE_MANAGEMENT",
+    name: "Case Management Evidence",
+    category: "ops_review",
+    status: "productized_sandbox_v0",
+    pricing_tier: "audit_ops",
+    signgate_role: "Human or compliance-ops review state for elevated-risk agent actions.",
+    decision_use: "REQUIRE_APPROVAL evidence, reviewer workflow evidence, audit escalation context.",
+    required_inputs: ["case_id or linked applicant/transaction reference"],
+    normalized_output: "case_management_evidence.v0",
+    demo_mode: "read_only_or_fixture_first",
+    fail_closed_on_error: true,
+  },
+  {
+    id: "sumsub.db_net",
+    entitlement: "DB_NET",
+    name: "Identity Database Evidence",
+    category: "identity",
+    status: "productized_sandbox_v0",
+    pricing_tier: "identity_evidence",
+    signgate_role: "Database-backed identity evidence for the principal behind an agent mandate.",
+    decision_use: "ALLOW/REQUIRE_APPROVAL/DENY support for verified principal and mandate authority checks.",
+    required_inputs: ["applicant_id or verified principal reference"],
+    normalized_output: "identity_database_evidence.v0",
+    demo_mode: "fixture_or_applicant_reference",
+    fail_closed_on_error: true,
+  },
+  {
+    id: "sumsub.kyt",
+    entitlement: "KYT",
+    name: "KYT Transaction Evidence",
+    category: "transaction_risk",
+    status: "productized_sandbox_v0",
+    pricing_tier: "risk_evidence",
+    signgate_role: "Transaction and counterparty risk evidence before an agent commits value.",
+    decision_use: "High risk can DENY; medium risk can REQUIRE_APPROVAL; low risk can support ALLOW.",
+    required_inputs: ["transaction_id or transaction intent/counterparty reference"],
+    normalized_output: "kyt_transaction_evidence.v0",
+    demo_mode: "currency_metadata_live_plus_fixture_risk",
+    fail_closed_on_error: true,
+  },
+  {
+    id: "sumsub.payment_method_crypto",
+    entitlement: "PAYMENT_METHOD_CRYPTO",
+    name: "Crypto Payment Method Evidence",
+    category: "wallet_payment_method",
+    status: "productized_sandbox_v0",
+    pricing_tier: "risk_evidence",
+    signgate_role: "Crypto payment method and wallet ownership/risk evidence.",
+    decision_use: "Validate whether a wallet/payment method is acceptable for an agent payment.",
+    required_inputs: ["applicant_id and wallet/payment method reference"],
+    normalized_output: "crypto_payment_method_evidence.v0",
+    demo_mode: "fixture_first",
+    fail_closed_on_error: true,
+  },
+  {
+    id: "sumsub.poa",
+    entitlement: "POA",
+    name: "Proof of Address Evidence",
+    category: "identity",
+    status: "productized_sandbox_v0",
+    pricing_tier: "identity_evidence",
+    signgate_role: "Address/residency evidence for buyer, merchant, or responsible principal.",
+    decision_use: "Supports jurisdiction, residency, and enterprise onboarding policy gates.",
+    required_inputs: ["applicant_id or verified principal reference"],
+    normalized_output: "proof_of_address_evidence.v0",
+    demo_mode: "fixture_or_applicant_reference",
+    fail_closed_on_error: true,
+  },
+  {
+    id: "sumsub.crystal_crypto_risk",
+    entitlement: "TM_CRYPTO_RISK_SCORING_CRYSTAL",
+    name: "Crystal Crypto Risk Scoring Evidence",
+    category: "transaction_risk",
+    status: "productized_sandbox_v0",
+    pricing_tier: "premium_risk_evidence",
+    signgate_role: "Crystal-backed crypto risk scoring as a premium transaction evidence source.",
+    decision_use: "Provides stronger risk score evidence for high-impact crypto transfers.",
+    required_inputs: ["crypto transaction or wallet reference"],
+    normalized_output: "crystal_crypto_risk_evidence.v0",
+    demo_mode: "fixture_first",
+    fail_closed_on_error: true,
+  },
+  {
+    id: "sumsub.travel_rule",
+    entitlement: "TRAVEL_RULE",
+    name: "Travel Rule Evidence",
+    category: "vasp_compliance",
+    status: "productized_sandbox_v0",
+    pricing_tier: "compliance_evidence",
+    signgate_role: "VASP originator/beneficiary compliance evidence for regulated crypto transfers.",
+    decision_use: "Blocks or escalates agent transfers that lack required Travel Rule evidence.",
+    required_inputs: ["originator", "beneficiary", "vasp or transaction reference"],
+    normalized_output: "travel_rule_evidence.v0",
+    demo_mode: "fixture_first",
+    fail_closed_on_error: true,
+  },
+  {
+    id: "sumsub.watchlists",
+    entitlement: "WATCHLISTS",
+    name: "Watchlist / AML Screening Evidence",
+    category: "aml",
+    status: "productized_sandbox_v0",
+    pricing_tier: "aml_evidence",
+    signgate_role: "Sanctions, PEP, watchlist, and adverse-media evidence for counterparties.",
+    decision_use: "Sanctions hit should DENY; unresolved AML hit should REQUIRE_APPROVAL.",
+    required_inputs: ["applicant_id, merchant principal, or counterparty reference"],
+    normalized_output: "watchlist_aml_evidence.v0",
+    demo_mode: "fixture_or_applicant_reference",
+    fail_closed_on_error: true,
+  },
+];
+
+function normalizeEntitlementMap(value = {}) {
+  const allowedChecks = value.allowedChecks || value.allowed_checks || value;
+  if (!allowedChecks || typeof allowedChecks !== "object" || Array.isArray(allowedChecks)) {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(allowedChecks).map(([key, description]) => [
+      String(key).trim().toUpperCase(),
+      String(description ?? key).trim(),
+    ]),
+  );
+}
+
+export function listSumsubEvidenceServices() {
+  return SUMSUB_EVIDENCE_SERVICES.map((service) => ({ ...service }));
+}
+
+export function buildSumsubEvidenceManifest(input = {}) {
+  const now = input.evaluated_at || new Date().toISOString();
+  const entitlements = normalizeEntitlementMap(input.allowedChecks ? input : input.entitlements);
+  const serviceStates = SUMSUB_EVIDENCE_SERVICES.map((service) => {
+    const enabled = Object.prototype.hasOwnProperty.call(entitlements, service.entitlement);
+    return {
+      ...service,
+      provider: "sumsub",
+      enabled,
+      entitlement_description: enabled ? entitlements[service.entitlement] : null,
+      error_model: {
+        unavailable: "SUMSUB_SERVICE_NOT_ENABLED",
+        auth_failed: "SUMSUB_AUTH_FAILED",
+        missing_input: "SUMSUB_REQUIRED_INPUT_MISSING",
+        upstream_error: "SUMSUB_UPSTREAM_ERROR",
+      },
+      demo: {
+        mode: service.demo_mode,
+        creates_real_applicant: false,
+        moves_money: false,
+        production_signing: false,
+      },
+    };
+  });
+
+  return {
+    schema_version: SUMSUB_EVIDENCE_SERVICE_SCHEMA_VERSION,
+    provider: "sumsub",
+    environment: input.environment || "sandbox",
+    evaluated_at: now,
+    service_count: serviceStates.length,
+    enabled_service_count: serviceStates.filter((service) => service.enabled).length,
+    disabled_service_count: serviceStates.filter((service) => !service.enabled).length,
+    services: serviceStates,
+    pricing_model: {
+      policy: "price per normalized evidence object, not per raw Sumsub endpoint",
+      tiers: {
+        identity_evidence: "medium",
+        risk_evidence: "medium",
+        premium_risk_evidence: "premium",
+        compliance_evidence: "premium",
+        aml_evidence: "premium",
+        audit_ops: "enterprise",
+      },
+    },
+    signgate_mapping: {
+      evidence_digest_ready: true,
+      decision_artifact_ready: false,
+      note: "This manifest describes Sumsub-backed evidence services. It does not create applicants, perform live KYC checks, or issue cryptographic Decision Artifacts.",
+    },
+  };
+}
+
 const DECISION_PRIORITY = {
   ALLOW: 1,
   APPROVAL_REQUIRED: 2,

@@ -3,8 +3,10 @@ import test from "node:test";
 import {
   evaluateAgenticCommercePreflight,
   evaluateAgentBuyerPreflight,
+  buildSumsubEvidenceManifest,
   listAgentBuyerRoles,
   listProductCategories,
+  listSumsubEvidenceServices,
 } from "../src/index.js";
 
 test("starter policy defines five buyer roles", () => {
@@ -241,5 +243,90 @@ test("agentic commerce payment execution requires out-of-agent signer", () => {
   ]);
   assert.ok(
     result.reason_codes.includes("PAYMENT_EXECUTION_REQUIRES_OUT_OF_AGENT_SIGNER"),
+  );
+});
+
+const sumsubAllowedChecksFixture = {
+  allowedChecks: {
+    CASE_MANAGEMENT: "Case Management",
+    DB_NET: "Database network verification",
+    KYT: "Know Your Transaction",
+    PAYMENT_METHOD_CRYPTO: "Crypto payment method check",
+    POA: "Proof of Address",
+    TM_CRYPTO_RISK_SCORING_CRYSTAL: "Crystal crypto risk scoring",
+    TRAVEL_RULE: "Travel Rule compliance",
+    WATCHLISTS: "AML Screening",
+  },
+};
+
+test("Sumsub evidence catalog productizes eight sandbox capabilities", () => {
+  const services = listSumsubEvidenceServices();
+
+  assert.equal(services.length, 8);
+  assert.deepEqual(
+    services.map((service) => service.id),
+    [
+      "sumsub.case_management",
+      "sumsub.db_net",
+      "sumsub.kyt",
+      "sumsub.payment_method_crypto",
+      "sumsub.poa",
+      "sumsub.crystal_crypto_risk",
+      "sumsub.travel_rule",
+      "sumsub.watchlists",
+    ],
+  );
+
+  for (const service of services) {
+    assert.equal(service.status, "productized_sandbox_v0");
+    assert.ok(service.entitlement);
+    assert.ok(service.normalized_output.endsWith("_evidence.v0"));
+    assert.ok(service.pricing_tier);
+    assert.ok(service.demo_mode);
+    assert.equal(service.fail_closed_on_error, true);
+  }
+});
+
+test("Sumsub evidence manifest maps enabled entitlements to service states", () => {
+  const manifest = buildSumsubEvidenceManifest({
+    ...sumsubAllowedChecksFixture,
+    evaluated_at: "2026-07-15T15:30:00.000Z",
+  });
+
+  assert.equal(manifest.schema_version, "sumsub_evidence_service_catalog.v0");
+  assert.equal(manifest.environment, "sandbox");
+  assert.equal(manifest.service_count, 8);
+  assert.equal(manifest.enabled_service_count, 8);
+  assert.equal(manifest.disabled_service_count, 0);
+  assert.equal(manifest.signgate_mapping.evidence_digest_ready, true);
+  assert.equal(manifest.signgate_mapping.decision_artifact_ready, false);
+
+  for (const service of manifest.services) {
+    assert.equal(service.enabled, true);
+    assert.equal(service.demo.creates_real_applicant, false);
+    assert.equal(service.demo.moves_money, false);
+    assert.equal(service.demo.production_signing, false);
+    assert.equal(service.error_model.unavailable, "SUMSUB_SERVICE_NOT_ENABLED");
+  }
+});
+
+test("Sumsub evidence manifest fails closed for missing entitlements", () => {
+  const manifest = buildSumsubEvidenceManifest({
+    allowedChecks: {
+      KYT: "Know Your Transaction",
+      WATCHLISTS: "AML Screening",
+    },
+  });
+
+  assert.equal(manifest.service_count, 8);
+  assert.equal(manifest.enabled_service_count, 2);
+  assert.equal(manifest.disabled_service_count, 6);
+  assert.equal(
+    manifest.services.find((service) => service.id === "sumsub.kyt").enabled,
+    true,
+  );
+  assert.equal(
+    manifest.services.find((service) => service.id === "sumsub.travel_rule").enabled,
+    false,
   );
 });

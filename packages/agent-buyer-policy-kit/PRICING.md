@@ -87,6 +87,45 @@ Includes:
 - example policy deployment
 - local audit log example
 
+### Sumsub Evidence Services Add-On
+
+Status: sandbox draft, not public
+
+Pricing unit:
+
+```text
+normalized evidence object
+```
+
+Do not price raw Sumsub endpoint calls as standalone products. The value is the
+normalized SignGate evidence object that can be bound into a policy decision,
+audit trail, and future Decision Artifact evidence digest.
+
+Service tiers:
+
+| Service | Tier |
+| --- | --- |
+| `sumsub.case_management` | `audit_ops` |
+| `sumsub.db_net` | `identity_evidence` |
+| `sumsub.kyt` | `risk_evidence` |
+| `sumsub.payment_method_crypto` | `risk_evidence` |
+| `sumsub.poa` | `identity_evidence` |
+| `sumsub.crystal_crypto_risk` | `premium_risk_evidence` |
+| `sumsub.travel_rule` | `compliance_evidence` |
+| `sumsub.watchlists` | `aml_evidence` |
+
+Recommended packaging:
+
+```text
+Sumsub-backed Compliance Evidence Layer
+8 service capabilities
+sandbox only until production legal/compliance review
+```
+
+Do not publish a production compliance claim until the underlying Sumsub plan,
+permissions, applicant data handling, PII minimization, and customer contract
+are reviewed.
+
 ### Enterprise
 
 Status: future
