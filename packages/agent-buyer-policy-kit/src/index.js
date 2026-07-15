@@ -6,6 +6,7 @@ export { defaultPolicy, productCategories };
 const DECISION_PRIORITY = {
   ALLOW: 1,
   APPROVAL_REQUIRED: 2,
+  REQUIRE_APPROVAL: 2,
   DENY: 3,
 };
 
@@ -27,8 +28,53 @@ function strongerDecision(current, next) {
   return DECISION_PRIORITY[next] > DECISION_PRIORITY[current] ? next : current;
 }
 
+function publicDecision(value) {
+  return value === "APPROVAL_REQUIRED" ? "REQUIRE_APPROVAL" : value;
+}
+
 function roleHas(list, category) {
   return Array.isArray(list) && list.map(normalizeToken).includes(category);
+}
+
+function normalizeList(values) {
+  return Array.isArray(values) ? values.map(normalizeToken).filter(Boolean) : [];
+}
+
+function normalizeDomain(value) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "");
+}
+
+function normalizeAddress(value) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function includesNormalized(list, value) {
+  const token = normalizeToken(value);
+  return normalizeList(list).includes(token);
+}
+
+function includesDomain(list, value) {
+  const domain = normalizeDomain(value);
+  return Array.isArray(list) && list.map(normalizeDomain).includes(domain);
+}
+
+function includesAddress(list, value) {
+  const address = normalizeAddress(value);
+  return Array.isArray(list) && list.map(normalizeAddress).includes(address);
+}
+
+function parseTimestamp(value) {
+  if (!value) return null;
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function pushUnique(values, value) {
+  if (value && !values.includes(value)) values.push(value);
 }
 
 export function evaluateAgentBuyerPreflight(input = {}, policy = defaultPolicy) {
@@ -142,6 +188,213 @@ export function evaluateAgentBuyerPreflight(input = {}, policy = defaultPolicy) 
       "Starter policy only evaluates buyer-role fit, product category, sensitivity, price, and approval reference.",
       "It does not verify wallet custody, payment settlement, seller honesty, or delivery quality.",
       "Production deployments should bind this evaluator to authenticated agent identity and immutable audit logs.",
+    ],
+  };
+}
+
+export function evaluateAgenticCommercePreflight(input = {}, policy = defaultPolicy) {
+  const now = input.evaluated_at || new Date().toISOString();
+  const nowTimestamp = parseTimestamp(now) ?? Date.now();
+  const expiresAt =
+    input.expires_at ||
+    new Date(nowTimestamp + 5 * 60_000).toISOString();
+  const payment = input.payment || {};
+  const mandate = input.mandate || null;
+  const merchant = input.merchant || {};
+  const agentRole = normalizeToken(input.agent_role || mandate?.agent_role);
+  const productCategory = normalizeToken(input.product_category || payment.product_category);
+  const amountUsdc = parseAmount(input.amount_usdc ?? payment.amount_usdc ?? input.price_usdc);
+  const asset = normalizeToken(input.asset || payment.asset || "USDC").toUpperCase();
+  const chain = normalizeToken(input.chain || payment.chain || "base");
+  const merchantDomain = normalizeDomain(
+    input.merchant_domain || payment.merchant_domain || merchant.domain,
+  );
+  const merchantWallet = normalizeAddress(
+    input.merchant_wallet || payment.merchant_wallet || merchant.wallet,
+  );
+  const buyerId = String(input.buyer_id || mandate?.buyer_id || "").trim();
+  const agentId = String(input.agent_id || mandate?.agent_id || "").trim();
+  const reasonCodes = [];
+  const flags = [];
+
+  const buyerResult = evaluateAgentBuyerPreflight(
+    {
+      ...input,
+      agent_id: agentId || input.agent_id,
+      agent_role: agentRole,
+      product_category: productCategory,
+      price_usdc: amountUsdc,
+    },
+    policy,
+  );
+
+  let decision = publicDecision(buyerResult.decision);
+  for (const reason of buyerResult.reason_codes) pushUnique(reasonCodes, reason);
+  for (const flag of buyerResult.flags || []) pushUnique(flags, flag);
+
+  if (!mandate) {
+    decision = strongerDecision(decision, publicDecision(policy.global_rules?.missing_mandate_decision || "DENY"));
+    pushUnique(reasonCodes, "MANDATE_MISSING");
+    pushUnique(flags, "mandate_missing");
+  } else {
+    const mandateType = normalizeToken(mandate.type || "intent");
+    const mandateStatus = normalizeToken(mandate.status || "active");
+    const expiresAt = parseTimestamp(mandate.expires_at);
+
+    if (!includesNormalized(policy.agentic_commerce?.supported_mandate_types, mandateType)) {
+      decision = strongerDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_TYPE_UNSUPPORTED");
+    }
+    if (!["active", "enabled"].includes(mandateStatus)) {
+      decision = strongerDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_INACTIVE");
+    }
+    if (expiresAt !== null && expiresAt < nowTimestamp) {
+      decision = strongerDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_EXPIRED");
+    }
+    if (mandate.buyer_id && buyerId && String(mandate.buyer_id).trim() !== buyerId) {
+      decision = strongerDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_BUYER_MISMATCH");
+    }
+    if (mandate.agent_id && agentId && String(mandate.agent_id).trim() !== agentId) {
+      decision = strongerDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_AGENT_MISMATCH");
+    }
+    if (mandate.agent_role && agentRole && normalizeToken(mandate.agent_role) !== agentRole) {
+      decision = strongerDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_ROLE_MISMATCH");
+    }
+    if (Array.isArray(mandate.merchant_domains) && !includesDomain(mandate.merchant_domains, merchantDomain)) {
+      decision = strongerDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_MERCHANT_DOMAIN_MISMATCH");
+    }
+    if (Array.isArray(mandate.merchant_wallets) && !includesAddress(mandate.merchant_wallets, merchantWallet)) {
+      decision = strongerDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_MERCHANT_WALLET_MISMATCH");
+    }
+    if (Array.isArray(mandate.allowed_categories) && !includesNormalized(mandate.allowed_categories, productCategory)) {
+      decision = strongerDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_CATEGORY_MISMATCH");
+    }
+    if (parseAmount(mandate.max_amount_usdc) > 0 && amountUsdc > parseAmount(mandate.max_amount_usdc)) {
+      decision = strongerDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_AMOUNT_EXCEEDED");
+    }
+    if (Array.isArray(mandate.assets) && !includesNormalized(mandate.assets, asset)) {
+      decision = strongerDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_ASSET_MISMATCH");
+    }
+    if (Array.isArray(mandate.chains) && !includesNormalized(mandate.chains, chain)) {
+      decision = strongerDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_CHAIN_MISMATCH");
+    }
+  }
+
+  if (!merchantDomain) {
+    decision = strongerDecision(decision, publicDecision(policy.global_rules?.unknown_merchant_decision || "APPROVAL_REQUIRED"));
+    pushUnique(reasonCodes, "MERCHANT_DOMAIN_MISSING");
+  }
+  if (!merchantWallet) {
+    decision = strongerDecision(decision, publicDecision(policy.global_rules?.unknown_merchant_decision || "APPROVAL_REQUIRED"));
+    pushUnique(reasonCodes, "MERCHANT_WALLET_MISSING");
+  }
+  if (merchant.expected_wallet && merchantWallet && normalizeAddress(merchant.expected_wallet) !== merchantWallet) {
+    decision = strongerDecision(decision, policy.global_rules?.merchant_wallet_mismatch_decision || "DENY");
+    pushUnique(reasonCodes, "MERCHANT_WALLET_MISMATCH");
+  }
+  if (merchant.openapi_domain && merchantDomain && normalizeDomain(merchant.openapi_domain) !== merchantDomain) {
+      decision = strongerDecision(decision, "REQUIRE_APPROVAL");
+    pushUnique(reasonCodes, "MERCHANT_OPENAPI_DOMAIN_MISMATCH");
+  }
+  if (merchant.agent_card_domain && merchantDomain && normalizeDomain(merchant.agent_card_domain) !== merchantDomain) {
+      decision = strongerDecision(decision, "REQUIRE_APPROVAL");
+    pushUnique(reasonCodes, "MERCHANT_AGENT_CARD_DOMAIN_MISMATCH");
+  }
+  if (merchant.category && productCategory && normalizeToken(merchant.category) !== productCategory) {
+      decision = strongerDecision(decision, "REQUIRE_APPROVAL");
+    pushUnique(reasonCodes, "MERCHANT_CATEGORY_MISMATCH");
+  }
+
+  const kytRisk = normalizeToken(merchant.kyt_risk || input.kyt_risk || "unknown");
+  if (kytRisk === "high") {
+    decision = strongerDecision(decision, policy.global_rules?.high_kyt_risk_decision || "DENY");
+    pushUnique(reasonCodes, "MERCHANT_KYT_HIGH_RISK");
+    pushUnique(flags, "high_kyt_risk");
+  } else if (kytRisk === "medium") {
+      decision = strongerDecision(decision, "REQUIRE_APPROVAL");
+    pushUnique(reasonCodes, "MERCHANT_KYT_MEDIUM_RISK");
+    pushUnique(flags, "medium_kyt_risk");
+  }
+
+  const signerRequired = includesNormalized(
+    policy.agentic_commerce?.signer_required_categories,
+    productCategory,
+  );
+  const signerDirective = signerRequired
+    ? { ...policy.agentic_commerce?.payment_signer_directive }
+    : { ...policy.agentic_commerce?.default_signer_directive };
+
+  if (signerRequired) {
+    decision = strongerDecision(decision, "REQUIRE_APPROVAL");
+    pushUnique(reasonCodes, signerDirective.reason_code);
+    pushUnique(flags, "out_of_agent_signer_required");
+  }
+
+  return {
+    schema_version: "agentic_commerce_preflight_result.v1",
+    response_kind: "decision_response",
+    evaluator_version: "signgate-agentic-commerce-evaluator.0.1.0",
+    policy_version: policy.policy_version,
+    evaluated_at: now,
+    expires_at: expiresAt,
+    decision,
+    reason_codes: reasonCodes,
+    buyer_preflight: {
+      decision: buyerResult.decision,
+      reason_codes: buyerResult.reason_codes,
+      role_product_fit: buyerResult.role_product_fit,
+    },
+    mandate_preflight: {
+      present: Boolean(mandate),
+      mandate_id: mandate?.id || null,
+      mandate_type: normalizeToken(mandate?.type || null) || null,
+    },
+    merchant_trust: {
+      domain: merchantDomain || null,
+      wallet: merchantWallet || null,
+      category: normalizeToken(merchant.category || null) || null,
+      kyt_risk: kytRisk,
+    },
+    signer_directive: signerDirective,
+    decision_artifact: {
+      issued: false,
+      status: "not_cryptographically_signed",
+      note: "Decision Artifact is a future signed object with request, policy, mandate, and evidence digests.",
+    },
+    audit_required: true,
+    input: {
+      buyer_id: buyerId || null,
+      agent_id: agentId || null,
+      agent_role: agentRole,
+      product_category: productCategory,
+      amount_usdc: amountUsdc,
+      asset,
+      chain,
+      merchant_domain: merchantDomain || null,
+      merchant_wallet: merchantWallet || null,
+    },
+    flags,
+    recommended_next_action:
+      decision === "ALLOW"
+        ? "proceed_to_payment_or_checkout"
+        : decision === "DENY"
+          ? "block_agentic_commerce_action"
+          : "request_owner_policy_or_signer_approval",
+    limitations: [
+      "Starter policy is deterministic and local; it does not verify live AP2, x402, KYT, or chain state.",
+      "Signer directives tell downstream signers what class of approval is required; this kit does not sign transactions.",
+      "Production deployments should bind decisions to authenticated agents, immutable policy versions, and audit logs.",
     ],
   };
 }

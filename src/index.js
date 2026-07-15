@@ -8,6 +8,9 @@ import { declareDiscoveryExtension } from "@x402/extensions/bazaar";
 import { paymentMiddlewareFromHTTPServer } from "@x402/hono";
 import { Hono } from "hono";
 import { parse as parseYaml } from "yaml";
+import {
+  evaluateAgenticCommercePreflight as evaluateAgenticCommercePolicy,
+} from "../packages/agent-buyer-policy-kit/src/index.js";
 
 const BASE_MAINNET = "eip155:8453";
 const BLOCKSCOUT = "https://base.blockscout.com";
@@ -362,7 +365,7 @@ const CATALOG_METADATA = {
   "agent-buyer-identity-preflight": {
     group: "x402-payment-safety",
     when_to_buy:
-      "Before an AI agent buys an x402 API or data product and the buyer must verify role, purpose, price, and data-category fit.",
+      "Before an AI agent buys an x402 API or data product and the buyer must verify role, purpose, price, and data-category fit as evidence for a larger SignGate decision.",
     returns:
       "ALLOW/APPROVAL_REQUIRED/DENY decision, role-product fit, reason codes, spend assessment, and audit guidance.",
     price_reason:
@@ -371,11 +374,11 @@ const CATALOG_METADATA = {
   "agent-buyer-policy-kit": {
     group: "x402-payment-safety",
     when_to_buy:
-      "When a team wants to buy a customizable Agent Buyer Identity policy kit and run the evaluator in its own agent runtime.",
+      "When a team wants to embed the Agentic Commerce Policy Engine locally instead of only calling the hosted SignGate API.",
     returns:
-      "Developer kit delivery manifest, starter policy pack, role-product matrix, JavaScript and Python usage, release terms, and integration checklist.",
+      "Developer kit manifest, starter policy pack, mandate checks, merchant trust checks, signer directive rules, JavaScript and Python usage, release terms, and integration checklist.",
     price_reason:
-      "One-time developer-kit price for reusable Agent IAM policy templates and evaluator integration, not a single API lookup.",
+      "One-time developer-kit price for reusable economic policy decision templates and evaluator integration, not a single API lookup.",
   },
   "base-token-exit-risk": {
     group: "trading-bot-alpha-risk",
@@ -4232,6 +4235,64 @@ function normalizePolicyToken(value) {
     .replace(/^_+|_+$/g, "");
 }
 
+function normalizeCommerceDomain(value) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "");
+}
+
+function normalizeCommerceAddress(value) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function normalizeCommerceList(values) {
+  return Array.isArray(values)
+    ? values.map(value => normalizePolicyToken(value)).filter(Boolean)
+    : [];
+}
+
+function includesCommerceToken(values, value) {
+  return normalizeCommerceList(values).includes(normalizePolicyToken(value));
+}
+
+function includesCommerceDomain(values, value) {
+  const domain = normalizeCommerceDomain(value);
+  return Array.isArray(values) && values.map(normalizeCommerceDomain).includes(domain);
+}
+
+function includesCommerceAddress(values, value) {
+  const address = normalizeCommerceAddress(value);
+  return Array.isArray(values) && values.map(normalizeCommerceAddress).includes(address);
+}
+
+function parseCommerceTimestamp(value) {
+  if (!value) return null;
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function pushUnique(values, value) {
+  if (value && !values.includes(value)) values.push(value);
+}
+
+function simpleHash(value) {
+  let hash = 0x811c9dc5;
+  for (const char of String(value ?? "")) {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, "0");
+}
+
+function strongerCommerceDecision(current, candidate) {
+  const priority = { ALLOW: 1, REQUIRE_APPROVAL: 2, APPROVAL_REQUIRED: 2, DENY: 3 };
+  return (priority[candidate] ?? 0) > (priority[current] ?? 0)
+    ? candidate
+    : current;
+}
+
 function agentBuyerDecisionInput({
   agentRole,
   productCategory,
@@ -4383,6 +4444,318 @@ export function buildAgentBuyerIdentityPreflight(input) {
   };
 }
 
+export function sampleAgenticCommercePreflightInput() {
+  return {
+    buyer_id: "buyer.acme",
+    agent_id: "agent.finance.001",
+    agent_role: "finance_agent",
+    action: "payment_execution",
+    product_category: "payment_execution",
+    amount_usdc: "0.25",
+    asset: "USDC",
+    chain: "base",
+    merchant_domain: "pay.vendor.example",
+    merchant_wallet: "0xabc0000000000000000000000000000000000001",
+    mandate: {
+      id: "mandate-001",
+      type: "payment",
+      status: "active",
+      buyer_id: "buyer.acme",
+      agent_id: "agent.finance.001",
+      agent_role: "finance_agent",
+      merchant_domains: ["pay.vendor.example"],
+      merchant_wallets: ["0xabc0000000000000000000000000000000000001"],
+      allowed_categories: ["payment_execution"],
+      max_amount_usdc: "1.00",
+      assets: ["USDC"],
+      chains: ["base"],
+      expires_at: "2099-01-01T00:00:00.000Z",
+    },
+    merchant: {
+      domain: "pay.vendor.example",
+      wallet: "0xabc0000000000000000000000000000000000001",
+      expected_wallet: "0xabc0000000000000000000000000000000000001",
+      openapi_domain: "pay.vendor.example",
+      agent_card_domain: "pay.vendor.example",
+      category: "payment_execution",
+      kyt_risk: "low",
+    },
+  };
+}
+
+export function buildAgenticCommercePreflight(input = {}) {
+  const fetchedAt = input.evaluated_at || new Date().toISOString();
+  const expiresAt =
+    input.expires_at ||
+    new Date((parseCommerceTimestamp(fetchedAt) ?? Date.now()) + 5 * 60_000).toISOString();
+  const nowTimestamp = parseCommerceTimestamp(fetchedAt) ?? Date.now();
+  const payment = input.payment && typeof input.payment === "object" ? input.payment : {};
+  const mandate = input.mandate && typeof input.mandate === "object" ? input.mandate : null;
+  const merchant = input.merchant && typeof input.merchant === "object" ? input.merchant : {};
+  const action = normalizePolicyToken(input.action || payment.action || input.product_category || "payment_execution");
+  const agentRole = normalizePolicyToken(input.agent_role || mandate?.agent_role);
+  const productCategory = normalizePolicyToken(input.product_category || payment.product_category || action);
+  const amountUsdc = parseNonNegativeNumber(
+    input.amount_usdc ?? payment.amount_usdc ?? input.price_usdc,
+    0,
+  );
+  const asset = normalizePolicyToken(input.asset || payment.asset || "USDC").toUpperCase();
+  const chain = normalizePolicyToken(input.chain || payment.chain || "base");
+  const merchantDomain = normalizeCommerceDomain(
+    input.merchant_domain || payment.merchant_domain || merchant.domain,
+  );
+  const merchantWallet = normalizeCommerceAddress(
+    input.merchant_wallet || payment.merchant_wallet || merchant.wallet,
+  );
+  const buyerId = String(input.buyer_id || mandate?.buyer_id || "").trim();
+  const agentId = String(input.agent_id || mandate?.agent_id || "").trim();
+  const decisionIdSeed = [
+    buyerId,
+    agentId,
+    agentRole,
+    action,
+    merchantDomain,
+    merchantWallet,
+    amountUsdc.toFixed(6),
+    fetchedAt,
+  ].join("|");
+  const decisionId = `dec_${simpleHash(decisionIdSeed).slice(0, 16)}`;
+  const policyResult = evaluateAgenticCommercePolicy({
+    ...input,
+    evaluated_at: fetchedAt,
+    expires_at: expiresAt,
+  });
+  const buyerResult = buildAgentBuyerIdentityPreflight({
+    agentRole,
+    productCategory,
+    purpose: normalizePolicyToken(input.purpose || action || "agentic_commerce"),
+    priceUsdc: String(amountUsdc),
+    dataSensitivity: input.data_sensitivity || "medium",
+    agentStatus: input.agent_status || "active",
+    approvalRef: input.approval_ref || "",
+    fetchedAt,
+  });
+  const reasonCodes = [];
+  const evidence = [];
+  let decision =
+    buyerResult.decision === "APPROVAL_REQUIRED"
+      ? "REQUIRE_APPROVAL"
+      : buyerResult.decision;
+
+  for (const reason of buyerResult.reason_codes ?? []) pushUnique(reasonCodes, reason);
+  evidence.push({
+    type: "agent_buyer_identity",
+    source: "signgate",
+    decision: buyerResult.decision,
+    role_product_fit: buyerResult.role_product_fit,
+  });
+
+  if (!mandate) {
+    decision = strongerCommerceDecision(decision, "DENY");
+    pushUnique(reasonCodes, "MANDATE_MISSING");
+  } else {
+    const mandateType = normalizePolicyToken(mandate.type || "intent");
+    const mandateStatus = normalizePolicyToken(mandate.status || "active");
+    const expiresAt = parseCommerceTimestamp(mandate.expires_at);
+    evidence.push({
+      type: "mandate",
+      id: mandate.id || null,
+      mandate_type: mandateType,
+      status: mandateStatus,
+      expires_at: mandate.expires_at || null,
+    });
+    if (!["intent", "checkout", "payment"].includes(mandateType)) {
+      decision = strongerCommerceDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_TYPE_UNSUPPORTED");
+    }
+    if (!["active", "enabled"].includes(mandateStatus)) {
+      decision = strongerCommerceDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_INACTIVE");
+    }
+    if (expiresAt !== null && expiresAt < nowTimestamp) {
+      decision = strongerCommerceDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_EXPIRED");
+    }
+    if (mandate.buyer_id && buyerId && String(mandate.buyer_id).trim() !== buyerId) {
+      decision = strongerCommerceDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_BUYER_MISMATCH");
+    }
+    if (mandate.agent_id && agentId && String(mandate.agent_id).trim() !== agentId) {
+      decision = strongerCommerceDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_AGENT_MISMATCH");
+    }
+    if (mandate.agent_role && agentRole && normalizePolicyToken(mandate.agent_role) !== agentRole) {
+      decision = strongerCommerceDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_ROLE_MISMATCH");
+    }
+    if (Array.isArray(mandate.merchant_domains) && !includesCommerceDomain(mandate.merchant_domains, merchantDomain)) {
+      decision = strongerCommerceDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_MERCHANT_DOMAIN_MISMATCH");
+    }
+    if (Array.isArray(mandate.merchant_wallets) && !includesCommerceAddress(mandate.merchant_wallets, merchantWallet)) {
+      decision = strongerCommerceDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_MERCHANT_WALLET_MISMATCH");
+    }
+    if (Array.isArray(mandate.allowed_categories) && !includesCommerceToken(mandate.allowed_categories, productCategory)) {
+      decision = strongerCommerceDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_CATEGORY_MISMATCH");
+    }
+    if (parseNonNegativeNumber(mandate.max_amount_usdc, 0) > 0 && amountUsdc > parseNonNegativeNumber(mandate.max_amount_usdc, 0)) {
+      decision = strongerCommerceDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_AMOUNT_EXCEEDED");
+    }
+    if (Array.isArray(mandate.assets) && !includesCommerceToken(mandate.assets, asset)) {
+      decision = strongerCommerceDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_ASSET_MISMATCH");
+    }
+    if (Array.isArray(mandate.chains) && !includesCommerceToken(mandate.chains, chain)) {
+      decision = strongerCommerceDecision(decision, "DENY");
+      pushUnique(reasonCodes, "MANDATE_CHAIN_MISMATCH");
+    }
+  }
+
+  evidence.push({
+    type: "merchant_trust",
+    domain: merchantDomain || null,
+    wallet: merchantWallet || null,
+    expected_wallet: merchant.expected_wallet || null,
+    openapi_domain: merchant.openapi_domain || null,
+    agent_card_domain: merchant.agent_card_domain || null,
+    category: normalizePolicyToken(merchant.category || "") || null,
+    kyt_risk: normalizePolicyToken(merchant.kyt_risk || input.kyt_risk || "unknown"),
+  });
+
+  if (!merchantDomain) {
+    decision = strongerCommerceDecision(decision, "REQUIRE_APPROVAL");
+    pushUnique(reasonCodes, "MERCHANT_DOMAIN_MISSING");
+  }
+  if (!merchantWallet) {
+    decision = strongerCommerceDecision(decision, "REQUIRE_APPROVAL");
+    pushUnique(reasonCodes, "MERCHANT_WALLET_MISSING");
+  }
+  if (merchant.expected_wallet && merchantWallet && normalizeCommerceAddress(merchant.expected_wallet) !== merchantWallet) {
+    decision = strongerCommerceDecision(decision, "DENY");
+    pushUnique(reasonCodes, "MERCHANT_WALLET_MISMATCH");
+  }
+  if (merchant.openapi_domain && merchantDomain && normalizeCommerceDomain(merchant.openapi_domain) !== merchantDomain) {
+    decision = strongerCommerceDecision(decision, "REQUIRE_APPROVAL");
+    pushUnique(reasonCodes, "MERCHANT_OPENAPI_DOMAIN_MISMATCH");
+  }
+  if (merchant.agent_card_domain && merchantDomain && normalizeCommerceDomain(merchant.agent_card_domain) !== merchantDomain) {
+    decision = strongerCommerceDecision(decision, "REQUIRE_APPROVAL");
+    pushUnique(reasonCodes, "MERCHANT_AGENT_CARD_DOMAIN_MISMATCH");
+  }
+  if (merchant.category && productCategory && normalizePolicyToken(merchant.category) !== productCategory) {
+    decision = strongerCommerceDecision(decision, "REQUIRE_APPROVAL");
+    pushUnique(reasonCodes, "MERCHANT_CATEGORY_MISMATCH");
+  }
+
+  const kytRisk = normalizePolicyToken(merchant.kyt_risk || input.kyt_risk || "unknown");
+  if (kytRisk === "high") {
+    decision = strongerCommerceDecision(decision, "DENY");
+    pushUnique(reasonCodes, "MERCHANT_KYT_HIGH_RISK");
+  } else if (kytRisk === "medium") {
+    decision = strongerCommerceDecision(decision, "REQUIRE_APPROVAL");
+    pushUnique(reasonCodes, "MERCHANT_KYT_MEDIUM_RISK");
+  }
+
+  const signerRequired = productCategory === "payment_execution" || action === "payment_execution";
+  const signerDirective = signerRequired
+    ? {
+        required: true,
+        mode: "human_fido2_or_controlled_signer",
+        agent_may_directly_sign: false,
+        execution_may_be_agent_initiated: true,
+        signer_isolation_required: true,
+        required_signer: {
+          mode: "out_of_agent",
+          allowed_classes: [
+            "human_fido2",
+            "hsm",
+            "kms",
+            "custody",
+            "smart_account_module",
+          ],
+        },
+        reason_code: "PAYMENT_EXECUTION_REQUIRES_OUT_OF_AGENT_SIGNER",
+      }
+    : {
+        required: false,
+        mode: "none",
+        agent_may_directly_sign: false,
+        execution_may_be_agent_initiated: true,
+        signer_isolation_required: false,
+        required_signer: {
+          mode: "none",
+          allowed_classes: [],
+        },
+        reason_code: "SIGNER_NOT_REQUIRED_FOR_THIS_ACTION",
+      };
+
+  if (signerRequired) {
+    decision = strongerCommerceDecision(decision, "REQUIRE_APPROVAL");
+    pushUnique(reasonCodes, signerDirective.reason_code);
+  }
+
+  return {
+    product: "agentic-commerce-preflight",
+    schema_version: "agentic_commerce_preflight_result.v1",
+    response_kind: "decision_response",
+    evaluator_version:
+      policyResult.evaluator_version || "signgate-agentic-commerce-evaluator.0.1.0",
+    decision: policyResult.decision || decision,
+    decision_id: decisionId,
+    evaluated_at: fetchedAt,
+    expires_at: policyResult.expires_at || expiresAt,
+    policy_version:
+      policyResult.policy_version || "signgate-agentic-commerce-policy-2026-07-15",
+    action,
+    agent: {
+      id: agentId || null,
+      role: agentRole || null,
+    },
+    buyer: {
+      id: buyerId || null,
+    },
+    mandate: {
+      id: mandate?.id || null,
+      type: normalizePolicyToken(mandate?.type || "") || null,
+      status: normalizePolicyToken(mandate?.status || "") || null,
+    },
+    merchant: {
+      domain: merchantDomain || null,
+      wallet: merchantWallet || null,
+      category: normalizePolicyToken(merchant.category || "") || null,
+      kyt_risk: kytRisk,
+    },
+    resource: {
+      category: productCategory,
+      amount_usdc: amountUsdc,
+      asset,
+      chain,
+    },
+    reason_codes: policyResult.reason_codes || reasonCodes,
+    evidence,
+    signer_directive: policyResult.signer_directive || signerDirective,
+    decision_artifact: policyResult.decision_artifact || {
+      issued: false,
+      status: "not_cryptographically_signed",
+      note: "This is a Decision Response. Future Decision Artifacts will add request, policy, mandate, evidence, nonce, issuer, and signature binding.",
+    },
+    recommended_next_action:
+      (policyResult.decision || decision) === "ALLOW"
+        ? "proceed_to_payment_or_checkout"
+        : (policyResult.decision || decision) === "DENY"
+          ? "block_agentic_commerce_action"
+          : "request_owner_policy_or_signer_approval",
+    limitations: [
+      "This demo endpoint is deterministic and does not verify live AP2, x402, KYT, or chain state.",
+      "SignGate does not custody funds, hold private keys, sign transactions, or move money.",
+      "Production use should bind decisions to authenticated agents, immutable policy versions, nonce, expiry, and signer verification.",
+    ],
+  };
+}
+
 export function buildAgentBuyerPolicyKitDelivery({
   format = "manifest",
   buyerType = "developer",
@@ -4426,7 +4799,13 @@ export function buildAgentBuyerPolicyKitDelivery({
       : "developer",
     price_usdc: "49.00",
     positioning:
-      "Buy-and-customize Agent IAM policy kit for x402 buyers and agent runtimes.",
+      "Embed the SignGate Agentic Commerce Policy Engine for mandate, merchant, buyer-role, and signer-directive preflight.",
+    product_ladder: {
+      hosted_api: "try it",
+      policy_kit: "embed it",
+      signer_adapter: "enforce it",
+      audit_pack: "prove it",
+    },
     package: {
       npm_name: "@signgate/agent-buyer-policy-kit",
       python_name: "signgate-agent-buyer-policy-kit",
@@ -4443,14 +4822,58 @@ export function buildAgentBuyerPolicyKitDelivery({
       "policy/role-product-matrix.md",
       "src/index.js",
       "test/evaluator.test.js",
+      "evaluateAgenticCommercePreflight",
       "python/signgate_agent_buyer_policy_kit/evaluator.py",
       "python/tests/test_evaluator.py",
+      "evaluate_agentic_commerce_preflight",
     ],
     starter_policy: {
-      policy_version: "signgate-agent-buyer-policy-2026-07-14",
-      decisions: ["ALLOW", "DENY", "APPROVAL_REQUIRED"],
+      policy_version: "signgate-agentic-commerce-policy-2026-07-15",
+      decisions: ["ALLOW", "DENY", "REQUIRE_APPROVAL"],
       roles,
       role_product_matrix: roleProductMatrix,
+      mandate_checks: [
+        "presence",
+        "status",
+        "expiry",
+        "type",
+        "buyer",
+        "agent",
+        "role",
+        "merchant_domain",
+        "merchant_wallet",
+        "category",
+        "amount",
+        "asset",
+        "chain",
+      ],
+      merchant_trust_checks: [
+        "domain",
+        "wallet",
+        "expected_wallet",
+        "openapi_domain",
+        "agent_card_domain",
+        "category",
+        "kyt_risk",
+      ],
+      signer_directive: {
+        payment_execution: {
+          required: true,
+          agent_may_directly_sign: false,
+          execution_may_be_agent_initiated: true,
+          signer_isolation_required: true,
+          required_signer: {
+            mode: "out_of_agent",
+            allowed_classes: [
+              "human_fido2",
+              "hsm",
+              "kms",
+              "custody",
+              "smart_account_module",
+            ],
+          },
+        },
+      },
       global_rules: {
         unknown_role: "DENY",
         inactive_agent: "DENY",
@@ -4463,13 +4886,13 @@ export function buildAgentBuyerPolicyKitDelivery({
     javascript_quickstart: {
       install: "npm install @signgate/agent-buyer-policy-kit",
       example:
-        'import { evaluateAgentBuyerPreflight } from "@signgate/agent-buyer-policy-kit";\n\nconst result = evaluateAgentBuyerPreflight({\n  agent_role: "research_agent",\n  product_category: "wallet_risk",\n  purpose: "security_research",\n  price_usdc: "0.005"\n});\n\nconsole.log(result.decision);',
+        'import { evaluateAgenticCommercePreflight } from "@signgate/agent-buyer-policy-kit";\n\nconst result = evaluateAgenticCommercePreflight({\n  buyer_id: "buyer.acme",\n  agent_id: "agent.finance.001",\n  agent_role: "finance_agent",\n  product_category: "payment_execution",\n  amount_usdc: "0.25",\n  asset: "USDC",\n  chain: "base",\n  merchant_domain: "pay.vendor.example",\n  merchant_wallet: "0xabc0000000000000000000000000000000000001",\n  mandate: { id: "mandate-001", type: "payment", status: "active" },\n  merchant: { domain: "pay.vendor.example", category: "payment_execution", kyt_risk: "low" }\n});\n\nconsole.log(result.decision);\nconsole.log(result.signer_directive.agent_may_directly_sign);',
       test: "npm test",
     },
     python_quickstart: {
       install: "pip install signgate-agent-buyer-policy-kit",
       example:
-        'from signgate_agent_buyer_policy_kit import evaluate_agent_buyer_preflight\n\nresult = evaluate_agent_buyer_preflight({\n    "agent_role": "research_agent",\n    "product_category": "wallet_risk",\n    "purpose": "security_research",\n    "price_usdc": "0.005",\n})\n\nprint(result["decision"])',
+        'from signgate_agent_buyer_policy_kit import evaluate_agentic_commerce_preflight\n\nresult = evaluate_agentic_commerce_preflight({\n    "buyer_id": "buyer.acme",\n    "agent_id": "agent.finance.001",\n    "agent_role": "finance_agent",\n    "product_category": "payment_execution",\n    "amount_usdc": "0.25",\n    "asset": "USDC",\n    "chain": "base",\n    "mandate": {"id": "mandate-001", "type": "payment", "status": "active"},\n    "merchant": {"domain": "pay.vendor.example", "category": "payment_execution", "kyt_risk": "low"},\n})\n\nprint(result["decision"])\nprint(result["signer_directive"]["agent_may_directly_sign"])',
       test: "python3 -m unittest discover -s tests",
     },
     integration_targets: [
@@ -4478,6 +4901,8 @@ export function buildAgentBuyerPolicyKitDelivery({
       "agent runtimes",
       "wallet automation",
       "API marketplaces",
+      "signer adapters",
+      "custody and KMS policy checks",
       "enterprise AI governance pilots",
     ],
     release_terms: {
@@ -4486,10 +4911,11 @@ export function buildAgentBuyerPolicyKitDelivery({
       public_pypi_publish: "not_yet_published",
       support: "starter kit; no custody, signing, token approval, or money movement",
       customization:
-        "Customers should edit policy JSON, role/category matrix, thresholds, approval rules, and audit bindings.",
+        "Customers should edit policy JSON, role/category matrix, mandate constraints, signer rules, thresholds, approval rules, and audit bindings.",
     },
     limitations: [
       "This paid delivery returns the policy kit manifest and starter policy content; public package registries are not live yet.",
+      "Hosted API = try it; Policy Kit = embed it; Signer Adapter = enforce it; Audit Pack = prove it.",
       "Production use should bind agent_role to authenticated credentials instead of trusting plain query parameters.",
       "The kit does not custody funds, sign transactions, approve tokens, or guarantee seller delivery.",
     ],
@@ -10909,13 +11335,13 @@ function openApi(origin) {
     openapi: "3.1.0",
       info: {
         title:
-          "SignGate Agent Buyer Identity Preflight | x402 Purchase Governance",
+          "SignGate Agentic Commerce Preflight | Economic Policy Decision Layer",
         version: "2.0.0",
         description:
-        "Before an AI agent buys an x402 API, dataset, or tool, SignGate verifies whether the buyer agent role fits the product category, purpose, data sensitivity, price, and approval policy. Includes hosted buyer identity preflight, a $49 policy kit, payment controls, wallet and token risk, RPC safety, chain-data routing, API supply-chain checks, and source-attributed KYT intelligence.",
+        "SignGate is the policy decision layer between autonomous agents and systems that move money. Before an AI agent pays, buys an API, triggers a signer, or commits to an economically consequential action, SignGate evaluates authority, mandate, merchant evidence, risk signals, policy, and signer requirements.",
         contact: { email: "hello@signgate.dev" },
         "x-guidance":
-          "Use agent-buyer-identity-preflight before an agent buys a paid x402 API. Use paid address-risk routes for source-attributed wallet screening, snapshot downloads, and batch deltas. Call unpaid metadata routes first when you need catalog or schema context.",
+          "Use /v1/agentic-commerce/preflight for the unified decision contract. Treat wallet-risk, RPC, chain-data, and buyer-identity endpoints as evidence providers and application-specific x402 products.",
     },
     servers: [{ url: origin }],
     paths: {},
@@ -11176,6 +11602,62 @@ function openApi(origin) {
       },
     },
   };
+  const agenticCommercePreflightSchema = {
+    type: "object",
+    properties: {
+      buyer_id: { type: "string" },
+      agent_id: { type: "string" },
+      agent_role: { type: "string" },
+      action: { type: "string", default: "payment_execution" },
+      product_category: { type: "string", default: "payment_execution" },
+      amount_usdc: { type: "string" },
+      asset: { type: "string", default: "USDC" },
+      chain: { type: "string", default: "base" },
+      merchant_domain: { type: "string" },
+      merchant_wallet: { type: "string" },
+      mandate: { type: "object" },
+      merchant: { type: "object" },
+    },
+    required: ["agent_role", "product_category", "amount_usdc"],
+  };
+  document.paths["/v1/agentic-commerce/preflight/sample"] = {
+    get: {
+      operationId: "getAgenticCommercePreflightSample",
+      summary:
+        "Return a sample request and deterministic response for Agentic Commerce Preflight.",
+      security: [],
+      responses: {
+        200: {
+          description:
+            "Sample request and response for mandate, merchant, and signer-directive evaluation.",
+        },
+      },
+    },
+  };
+  document.paths["/v1/agentic-commerce/preflight"] = {
+    post: {
+      operationId: "evaluateAgenticCommercePreflight",
+      summary:
+        "Evaluate whether an autonomous agent action is authorized before payment or signer execution.",
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: agenticCommercePreflightSchema,
+            example: sampleAgenticCommercePreflightInput(),
+          },
+        },
+      },
+      security: [],
+      responses: {
+        200: {
+          description:
+            "ALLOW, REQUIRE_APPROVAL, or DENY decision with reason codes, evidence, and signer directive.",
+        },
+        400: { description: "Invalid JSON body" },
+      },
+    },
+  };
   for (const path of MARKETPLACE_HIDDEN_OPENAPI_PATHS) {
     delete document.paths[path];
   }
@@ -11199,9 +11681,9 @@ function agentCard(origin) {
     ),
   ];
   return {
-    name: "SignGate Agent Buyer Identity Preflight",
+    name: "SignGate Agentic Commerce Preflight",
     description:
-      "Agent-aware x402 purchase governance: decide whether a buyer agent should buy a specific API, dataset, or tool before payment, with role fit, product category, price, sensitivity, approval, and audit guidance.",
+      "Economic policy decisions between autonomous agents and systems that move money: evaluate agent authority, mandate, merchant evidence, risk signals, and signer requirements before payment or signing.",
     url: origin,
     version: "2.0.0",
     documentationUrl: `${origin}/openapi.json`,
@@ -11260,11 +11742,13 @@ function serviceManifest(origin) {
   ];
   return {
     schema_version: "1.0",
-    name: "SignGate Agent Buyer Identity Preflight",
+    name: "SignGate Agentic Commerce Preflight",
     description:
-      "Before an AI agent buys an x402 API, dataset, or tool, verify whether that buyer agent role is allowed to buy this product category. Includes hosted preflight, a customizable policy kit, approval guidance, audit reasons, and related payment safety checks.",
+      "Policy decision layer between autonomous agents and systems that move money. Includes a hosted Agentic Commerce Preflight API, embedded policy kit, signer directive, audit reasons, and x402 evidence providers.",
     base_url: origin,
     openapi_url: `${origin}/openapi.json`,
+    agentic_commerce_preflight_url: `${origin}/agentic-commerce-preflight`,
+    agentic_commerce_preflight_sample_url: `${origin}/v1/agentic-commerce/preflight/sample`,
     wallet_risk_url: `${origin}/wallet-risk`,
     agent_card_url: `${origin}/.well-known/agent-card.json`,
     mcp_url: `${origin}${PAYMENT_GUARD_MCP_PATH}`,
@@ -11299,6 +11783,16 @@ function serviceManifest(origin) {
         "finance_agent",
         "operator_agent",
       ],
+    },
+    agentic_commerce_decision_layer: {
+      page: `${origin}/agentic-commerce-preflight`,
+      sample: `${origin}/v1/agentic-commerce/preflight/sample`,
+      post: `${origin}/v1/agentic-commerce/preflight`,
+      positioning:
+        "Hosted API = try it; Policy Kit = embed it; Signer Adapter = enforce it; Audit Pack = prove it.",
+      decisions: ["ALLOW", "REQUIRE_APPROVAL", "DENY"],
+      signer_directive:
+        "Payment execution requires an isolated out-of-agent signer. Agents may initiate execution, but may not directly hold or use unrestricted signing authority.",
     },
     payment_guard_capabilities: {
       id: PRODUCTS[25].id,
@@ -11418,7 +11912,7 @@ function buyerCatalog(origin) {
     schema_version: "1.0",
     name: "Agent Buyer Identity and Commerce Safety Catalog",
     description:
-      "Machine-readable buyer guide for AI agents choosing which paid x402 resource to buy, whether the buyer role fits the product category, and when approval is required.",
+      "Machine-readable guide for SignGate economic policy decisions and the x402 evidence providers that support them. Paid endpoints are application-specific signals; the core abstraction is ALLOW, REQUIRE_APPROVAL, or DENY before an agent spends or triggers a signer.",
     origin,
     x402scan_server:
       "https://www.x402scan.com/server/b0ce6f4e-73e9-431d-b23c-814ac89cc77b",
@@ -11627,9 +12121,9 @@ function registry(origin) {
     schema_version: "1.0",
     name: "SignGate Agent Risk Utilities",
     description:
-      "AI-agent payment, signing, wallet-risk, RPC, chain-data, and API supply-chain preflight utilities exposed as x402 paid operations.",
+      "Evidence providers and x402 products for SignGate, the economic policy decision layer between autonomous agents and systems that move money.",
     positioning:
-      "Use SignGate before an autonomous agent pays, signs, grants approval, calls chain-data infrastructure, or imports a paid tool.",
+      "Use SignGate to decide whether an autonomous agent is authorized to buy, pay, call infrastructure, or trigger a signer; use individual x402 endpoints as evidence signals.",
     origin,
     x402_network: BASE_MAINNET,
     facilitator: FACILITATOR,
@@ -11662,14 +12156,14 @@ function registry(origin) {
 
 function endpointsTxt(origin) {
   const lines = [
-    "# SignGate Agent Risk Utilities",
+    "# SignGate Agentic Commerce Preflight",
     `origin: ${origin}`,
     `openapi: ${origin}/openapi.json`,
     `x402: ${origin}/.well-known/x402`,
     `registry: ${origin}/registry.json`,
     `workflows: ${origin}/workflows.json`,
     "",
-    "# paid operations",
+    "# paid evidence operations",
   ];
   for (const operation of paidDiscoveryOperations(origin)) {
     lines.push(
@@ -11687,7 +12181,7 @@ function x402WellKnown(origin) {
   const operations = paidDiscoveryOperations(origin);
   return {
     version: 1,
-    name: "SignGate Agent Risk Utilities",
+    name: "SignGate Agentic Commerce Preflight",
     operation_count: operations.length,
     resources: PRODUCTS.map(product => `${origin}${product.path}`),
     paid_operations: operations.map(operation => ({
@@ -14860,6 +15354,102 @@ function agentBuyerIdentityHtml(origin) {
 </html>`;
 }
 
+function agenticCommercePreflightHtml(origin) {
+  const sampleUrl = `${origin}/v1/agentic-commerce/preflight/sample`;
+  const apiUrl = `${origin}/v1/agentic-commerce/preflight`;
+  const kitUrl = `${origin}${PRODUCTS_BY_ID["agent-buyer-policy-kit"].path}?format=manifest&buyer_type=developer`;
+  const sampleResult = buildAgenticCommercePreflight(sampleAgenticCommercePreflightInput());
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SignGate Agentic Commerce Preflight</title>
+<meta name="description" content="Policy decision layer between autonomous agents and the systems that move money.">
+<style>
+body{margin:0;background:#f7f8fb;color:#111827;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.55}
+a{color:#1457d9;text-decoration:none}a:hover{text-decoration:underline}
+header,main,footer{max-width:1120px;margin:0 auto;padding:28px 20px}
+nav{display:flex;justify-content:space-between;align-items:center;gap:16px;font-size:14px}
+.brand{font-weight:800;color:#111827}.navlinks{display:flex;gap:16px;flex-wrap:wrap}
+.hero{padding:54px 20px 36px;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(320px,.88fr);gap:28px;align-items:center}
+h1{font-size:46px;line-height:1.05;margin:0 0 18px;letter-spacing:0;max-width:13ch}
+.lead{font-size:19px;color:#374151;max-width:760px;margin:0 0 24px}.eyebrow{color:#0f766e;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+.actions{display:flex;flex-wrap:wrap;gap:10px}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 14px;border-radius:7px;border:1px solid #111827;background:#111827;color:#fff;font-weight:700}.btn.secondary{background:#fff;color:#111827;border-color:#cbd5e1}
+.panel,.card{background:#fff;border:1px solid #dbe2ee;border-radius:8px;padding:18px}.panel h2,.card h3{margin-top:0}
+.decision{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-top:18px}.node{border:1px solid #cbd5e1;border-radius:8px;padding:12px;text-align:center;background:#f8fafc;font-weight:700}.arrow{color:#64748b;font-weight:900}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.chip{border:1px solid #cbd5e1;border-radius:7px;padding:9px;text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}.allow{color:#047857}.review{color:#b45309}.deny{color:#b91c1c}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}
+pre{white-space:pre;overflow:auto;background:#0b1020;color:#e5edff;border-radius:8px;padding:14px;font-size:12px;line-height:1.45}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}.muted{color:#64748b}footer{color:#64748b;font-size:13px}
+@media(max-width:860px){.hero,.grid,.cards{grid-template-columns:1fr}h1{font-size:35px}.decision{grid-template-columns:1fr}.arrow{display:none}.chips{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+<nav>
+<a class="brand" href="/">SignGate</a>
+<div class="navlinks"><a href="/openapi.json">OpenAPI</a><a href="/catalog.json">Catalog</a><a href="/registry.json">Registry</a><a href="/wallet-risk">Wallet Risk</a></div>
+</nav>
+</header>
+<main>
+<section class="hero">
+<div>
+<div class="eyebrow">Economic Policy Decision</div>
+<h1>Policy decisions between agents and money movement.</h1>
+<p class="lead">Before an AI agent pays, buys an API, triggers a signer, or commits to an economically consequential action, SignGate checks whether the action is authorized, the merchant is acceptable, and an external signer is required.</p>
+<div class="actions"><a class="btn" href="${escapeHtml(sampleUrl)}">View sample decision</a><a class="btn secondary" href="/openapi.json">OpenAPI</a></div>
+</div>
+<div class="panel">
+<h2>Decision flow</h2>
+<div class="decision"><div class="node">Agent action</div><div class="arrow">→</div><div class="node">SignGate Decision</div><div class="node">Mandate + evidence</div><div class="arrow">→</div><div class="node">Signer / wallet / custody</div></div>
+<div class="chips"><div class="chip allow">ALLOW</div><div class="chip review">REQUIRE_APPROVAL</div><div class="chip deny">DENY</div></div>
+</div>
+</section>
+<section>
+<div class="grid">
+<div class="card"><h3>Inputs / Evidence</h3><p class="muted">Mandate, agent identity, buyer identity, merchant domain, wallet, amount, chain, KYT, transaction intent, RPC metadata, and other decision signals.</p></div>
+<div class="card"><h3>Policy Decision Engine</h3><p class="muted">A deterministic evaluator returns a decision, reason codes, policy version, evidence summary, and signer directive.</p></div>
+</div>
+<div class="cards">
+<div class="card"><h3>Hosted API</h3><p class="muted">Try decisions through the public demo endpoint.</p></div>
+<div class="card"><h3>Policy Kit</h3><p class="muted">Embed the same policy model in JS or Python.</p></div>
+<div class="card"><h3>Signer Adapter</h3><p class="muted">Next: verifiers that reject signing without a valid decision artifact.</p></div>
+<div class="card"><h3>Audit Pack</h3><p class="muted">Next: prove which mandate, policy, evidence, and signer allowed an action.</p></div>
+</div>
+</section>
+<section class="grid">
+<div>
+<h2>Readonly API</h2>
+<p>Sample endpoint: <code>GET /v1/agentic-commerce/preflight/sample</code></p>
+<p>Demo endpoint: <code>POST /v1/agentic-commerce/preflight</code></p>
+<pre>curl -X POST "${escapeHtml(apiUrl)}" \\
+  -H "content-type: application/json" \\
+  --data @sample-agentic-commerce.json</pre>
+<p class="muted">This demo does not custody funds, sign transactions, approve tokens, or move money.</p>
+</div>
+<div>
+<h2>Sample decision</h2>
+<pre>${escapeHtml(JSON.stringify({
+  decision: sampleResult.decision,
+  decision_id: sampleResult.decision_id,
+  reason_codes: sampleResult.reason_codes,
+  signer_directive: sampleResult.signer_directive,
+}, null, 2))}</pre>
+</div>
+</section>
+<section class="panel">
+<h2>Product ladder</h2>
+<p><strong>Hosted API = try it.</strong> <strong>Policy Kit = embed it.</strong> <strong>Signer Adapter = enforce it.</strong> <strong>Audit Pack = prove it.</strong></p>
+<p>Current paid kit manifest: <a href="${escapeHtml(kitUrl)}"><code>/v1/x402/agent/buyer-policy-kit</code></a>. The policy kit is not published to npm or PyPI yet.</p>
+<p class="muted">The demo API returns a Decision Response, not a cryptographically verifiable Decision Artifact. Signer enforcement, request digests, policy digests, mandate digests, evidence digests, nonce, issuer, and signature binding belong to the next Verifier SDK milestone.</p>
+</section>
+</main>
+<footer>SignGate is a policy decision layer, not a wallet, custodian, HSM, TEE, or payment processor.</footer>
+</body>
+</html>`;
+}
+
 const paidApp = createPaidApp();
 
 export default {
@@ -14877,6 +15467,25 @@ export default {
           "access-control-allow-headers": "content-type,payment-signature",
         },
       });
+    }
+    if (
+      request.method === "POST" &&
+      url.pathname === "/v1/agentic-commerce/preflight"
+    ) {
+      try {
+        const input = await request.json();
+        return json(buildAgenticCommercePreflight(input), 200, {
+          "cache-control": "no-store",
+        });
+      } catch (error) {
+        return json(
+          {
+            error: "invalid_agentic_commerce_preflight_input",
+            message: error instanceof Error ? error.message : String(error),
+          },
+          400,
+        );
+      }
     }
     if (!["GET", "HEAD"].includes(request.method)) {
       return json({ error: "method_not_allowed" }, 405, {
@@ -14996,6 +15605,25 @@ export default {
           "cache-control": "public, max-age=120",
         },
       });
+    } else if (url.pathname === "/agentic-commerce-preflight") {
+      response = new Response(agenticCommercePreflightHtml(origin), {
+        headers: {
+          "content-type": "text/html; charset=utf-8",
+          "cache-control": "public, max-age=120",
+        },
+      });
+    } else if (url.pathname === "/v1/agentic-commerce/preflight/sample") {
+      response = json(
+        {
+          sample_request: sampleAgenticCommercePreflightInput(),
+          sample_response: buildAgenticCommercePreflight(
+            sampleAgenticCommercePreflightInput(),
+          ),
+          post_url: `${origin}/v1/agentic-commerce/preflight`,
+        },
+        200,
+        { "cache-control": "no-store" },
+      );
     } else if (
       url.pathname === "/wallet-risk" ||
       url.pathname === "/risk" ||
@@ -15044,18 +15672,20 @@ export default {
       );
     } else if (url.pathname === "/sitemap.xml") {
       response = new Response(
-        `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/</loc></url><url><loc>${origin}/agent-buyer-identity</loc></url><url><loc>${origin}/signgate</loc></url><url><loc>${origin}/wallet-risk</loc></url><url><loc>${origin}/wallet-risk/manifest.json</loc></url><url><loc>${origin}/en/signgate</loc></url><url><loc>${origin}/zh/signgate</loc></url><url><loc>${origin}/verify</loc></url><url><loc>${origin}/openapi.json</loc></url><url><loc>${origin}/catalog.json</loc></url><url><loc>${origin}/registry.json</loc></url><url><loc>${origin}/workflows.json</loc></url><url><loc>${origin}/endpoints.txt</loc></url><url><loc>${origin}/.well-known/x402</loc></url><url><loc>${origin}/.well-known/agent-card.json</loc></url><url><loc>${origin}/.well-known/mcp.json</loc></url></urlset>`,
+        `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/</loc></url><url><loc>${origin}/agentic-commerce-preflight</loc></url><url><loc>${origin}/v1/agentic-commerce/preflight/sample</loc></url><url><loc>${origin}/agent-buyer-identity</loc></url><url><loc>${origin}/signgate</loc></url><url><loc>${origin}/wallet-risk</loc></url><url><loc>${origin}/wallet-risk/manifest.json</loc></url><url><loc>${origin}/en/signgate</loc></url><url><loc>${origin}/zh/signgate</loc></url><url><loc>${origin}/verify</loc></url><url><loc>${origin}/openapi.json</loc></url><url><loc>${origin}/catalog.json</loc></url><url><loc>${origin}/registry.json</loc></url><url><loc>${origin}/workflows.json</loc></url><url><loc>${origin}/endpoints.txt</loc></url><url><loc>${origin}/.well-known/x402</loc></url><url><loc>${origin}/.well-known/agent-card.json</loc></url><url><loc>${origin}/.well-known/mcp.json</loc></url></urlset>`,
         { headers: { "content-type": "application/xml; charset=utf-8" } },
       );
     } else if (url.pathname === "/llms.txt") {
       response = new Response(
         `# SignGate API
 
-Pre-signing risk and policy gateway for AI agent payments. SignGate verifies intent, enforces dynamic limits, screens recipient risk, and returns allow/review/deny before any policy-controlled key signs.
+SignGate is the policy decision layer between autonomous agents and systems that move money. It verifies authority, mandate, merchant evidence, risk signals, policy, and signer requirements before an AI agent pays, buys an API, or triggers a signer.
 
-SignGate also provides Agent Buyer Identity Preflight for x402: before an AI agent buys an API, dataset, or tool, verify whether that buyer agent role is allowed to buy this product category.
+Agent Buyer Identity, wallet risk, RPC safety, chain data, and KYT endpoints are evidence providers and x402 products. The core abstraction is ALLOW, REQUIRE_APPROVAL, or DENY.
 
 - OpenAPI: ${origin}/openapi.json
+- Agentic Commerce Preflight page: ${origin}/agentic-commerce-preflight
+- Agentic Commerce Preflight sample: ${origin}/v1/agentic-commerce/preflight/sample
 - Agent Buyer Identity page: ${origin}/agent-buyer-identity
 - SignGate landing page: ${origin}/signgate
 - Wallet Risk Intelligence page: ${origin}/wallet-risk
@@ -15070,6 +15700,7 @@ SignGate also provides Agent Buyer Identity Preflight for x402: before an AI age
 - Product catalog: ${origin}/.well-known/service.json
 - Wallet risk manifest: ${origin}/wallet-risk/manifest.json
 - SignGate x402 wrapper: ${productExampleUrl(origin, PRODUCTS_BY_ID["agent-payment-risk-gateway"])}
+- Agentic Commerce POST demo: ${origin}/v1/agentic-commerce/preflight
 - Featured Alpha Risk: ${productExampleUrl(origin, PRODUCTS[26])}
 - Token alpha snapshot: ${productExampleUrl(origin, PRODUCTS[27])}
 - Wallet copytrade risk: ${productExampleUrl(origin, PRODUCTS[28])}

@@ -1,7 +1,9 @@
-# Agent Payment Guard
+# SignGate Agentic Commerce Preflight
 
-Pre-payment policy enforcement and post-payment delivery evidence for
-autonomous agents using x402 on Base.
+Policy decision layer between autonomous agents and the systems that move
+money. Before an AI agent pays, buys an API, triggers a signer, or commits to
+an economically consequential action, SignGate evaluates authority, mandate,
+merchant evidence, risk signals, policy, and signer requirements.
 
 Production service:
 https://base-agent-preflight.bytoken2023.workers.dev/
@@ -22,6 +24,30 @@ checks, and failed executions are not counted as purchases.
 
 Human-readable buyer catalog:
 [`AI_BUYER_CATALOG.md`](./AI_BUYER_CATALOG.md)
+
+Agentic Commerce public page:
+`GET /agentic-commerce-preflight`
+
+Readonly sample:
+`GET /v1/agentic-commerce/preflight/sample`
+
+Demo decision API:
+`POST /v1/agentic-commerce/preflight`
+
+The public demo returns `ALLOW`, `REQUIRE_APPROVAL`, or `DENY` with reason
+codes, evidence, and `signer_directive`. It does not custody funds, expose
+private keys, sign transactions, approve tokens, or move money.
+
+This is a **Decision Response**, not a cryptographically verifiable Decision
+Artifact. It includes `schema_version`, `evaluated_at`, `expires_at`,
+`policy_version`, and `evaluator_version` so the future artifact format can add
+`request_digest`, `policy_digest`, `mandate_digest`, `evidence_digest`,
+`nonce`, `issuer`, and `signature` without breaking the demo API.
+
+For `payment_execution`, `agent_may_directly_sign=false` means the agent must
+not hold or use unrestricted signing authority. It does not mean an agent can
+never initiate an approved autonomous payment through an isolated HSM, KMS,
+custody platform, or smart-account module.
 
 ## SDKs
 
@@ -126,15 +152,21 @@ Developer kit:
 
 `packages/agent-buyer-policy-kit`
 
-The kit packages the starter policy so customers can buy or install a local
-copy and customize roles, categories, spend thresholds, data sensitivity rules,
-approval escalation, audit fields, and reason codes without editing the hosted
-Worker. It includes:
+The kit is now the private v0.1 Agentic Commerce Policy Kit. It packages the
+starter policy so customers can buy or install a local copy and customize
+roles, categories, mandate constraints, merchant trust rules, signer
+directives, spend thresholds, approval escalation, audit fields, and reason
+codes without editing the hosted Worker. It includes:
 
 - JSON policy pack
 - product category taxonomy
 - role x product category matrix
 - deterministic JavaScript evaluator
+- deterministic Agentic Commerce evaluator
+- mandate checks
+- merchant trust checks
+- signer directive rules
+- Python evaluator
 - package README and tests
 
 Intended product shape:

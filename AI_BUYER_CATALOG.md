@@ -1,7 +1,8 @@
 # AI Buyer Catalog
 
-This catalog explains when an autonomous AI buyer should pay for each x402
-resource. The machine-readable version is served at:
+This catalog explains when an autonomous AI buyer should use SignGate evidence
+providers before paying, signing, buying data, or triggering another
+economically consequential action. The machine-readable version is served at:
 
 `https://base-agent-preflight.bytoken2023.workers.dev/catalog.json`
 
@@ -20,6 +21,35 @@ x402scan server:
 - Payment protocol: x402
 
 ## Recommended AI Workflows
+
+### 0. Agentic Commerce Policy Decision
+
+Goal: evaluate whether an autonomous agent action is authorized before payment
+or signer execution.
+
+Public page:
+
+`https://base-agent-preflight.bytoken2023.workers.dev/agentic-commerce-preflight`
+
+Sample:
+
+`GET /v1/agentic-commerce/preflight/sample`
+
+Demo API:
+
+`POST /v1/agentic-commerce/preflight`
+
+The decision contract returns `ALLOW`, `REQUIRE_APPROVAL`, or `DENY`, with
+reason codes, evidence, mandate context, merchant context, and
+`signer_directive`.
+
+The current public endpoint returns a Decision Response, not a signed Decision
+Artifact. It does not claim signer enforcement, cryptographic immutability, or
+transaction binding. Future Decision Artifacts should add request, policy,
+mandate, evidence, nonce, issuer, and signature binding.
+
+Use the x402 products below as evidence providers or application-specific
+entry points. They are not the company-level positioning by themselves.
 
 ### 1. Before An Agent Buys Any x402 API
 
@@ -129,10 +159,11 @@ requirements, proof of payment, or seller reputation before or after spending.
 
 - `agent-buyer-identity-preflight` — 0.005 USDC: verify whether the buyer
   agent role, purpose, product category, data sensitivity, and spend amount fit
-  before an x402 purchase.
+  before an x402 purchase. Use as evidence for a broader SignGate decision.
 - `agent-buyer-policy-kit` — 49.00 USDC: buy the customizable Agent Buyer
-  Policy Kit manifest, starter policy pack, role-product matrix, and JS/Python
-  integration guidance.
+  / Agentic Commerce Policy Kit manifest, starter policy pack, mandate checks,
+  merchant trust checks, signer directive rules, role-product matrix, and
+  JS/Python integration guidance.
 - `agent-payment-guard` — 0.01 USDC: core ALLOW/REVIEW/BLOCK payment firewall
   with budget, policy, replay, simulation, evidence, and decision token.
 - `x402-endpoint-preflight` — 0.005 USDC: unpaid endpoint inspection and

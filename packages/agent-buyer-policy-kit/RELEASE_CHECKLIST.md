@@ -1,18 +1,29 @@
-# Agent Buyer Policy Kit Release Checklist
+# Agentic Commerce Policy Kit Release Checklist
 
 Status: DRAFT - not yet publicly released
 
 ## Completed
 
 - JavaScript evaluator.
+- JavaScript Agentic Commerce evaluator.
 - JSON starter policy.
 - Product category taxonomy.
 - Role x product category matrix.
 - Package README.
 - Package tests.
 - Python evaluator.
+- Python Agentic Commerce evaluator.
 - Python tests.
+- Deterministic test vectors for:
+  - missing mandate
+  - mandate role mismatch
+  - merchant wallet mismatch
+  - payment execution signer directive
 - `npm pack --dry-run` verification.
+- Private npm tarball:
+  `signgate-agent-buyer-policy-kit-0.1.0.tgz`
+- Private Python source archive:
+  `dist/signgate-agent-buyer-policy-kit-python-0.1.0.tar.gz`
 - Hosted x402 preflight API is live separately.
 
 ## Not Yet Completed
@@ -40,9 +51,6 @@ Do not perform the following without explicit Founder approval:
 
 Release `v0.1.0-private` as a private/customer-delivered kit:
 
-1. Generate npm tarball.
-2. Generate Python source archive.
-3. Hash both artifacts.
-4. Add an x402 paid delivery endpoint only after Founder approves price.
-5. Provide buyer with hashes, install instructions, and policy customization
+1. Add an x402 paid delivery endpoint only after Founder approves price.
+2. Provide buyer with hashes, install instructions, and policy customization
    guide.

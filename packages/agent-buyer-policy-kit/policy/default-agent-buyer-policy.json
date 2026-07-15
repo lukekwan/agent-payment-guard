@@ -1,6 +1,6 @@
 {
-  "schema_version": "agent_buyer_policy.v1",
-  "policy_version": "signgate-agent-buyer-policy-2026-07-14",
+  "schema_version": "agentic_commerce_policy.v1",
+  "policy_version": "signgate-agentic-commerce-policy-2026-07-15",
   "default_decision": "APPROVAL_REQUIRED",
   "decisions": ["ALLOW", "DENY", "APPROVAL_REQUIRED"],
   "roles": {
@@ -99,7 +99,54 @@
     "high_sensitivity_decision": "APPROVAL_REQUIRED",
     "restricted_sensitivity_decision": "DENY",
     "price_over_limit_decision": "APPROVAL_REQUIRED",
-    "payment_execution_decision": "APPROVAL_REQUIRED"
+    "payment_execution_decision": "APPROVAL_REQUIRED",
+    "missing_mandate_decision": "DENY",
+    "merchant_wallet_mismatch_decision": "DENY",
+    "high_kyt_risk_decision": "DENY",
+    "unknown_merchant_decision": "APPROVAL_REQUIRED"
+  },
+  "agentic_commerce": {
+    "supported_mandate_types": ["intent", "checkout", "payment"],
+    "supported_assets": ["USDC"],
+    "supported_chains": ["base"],
+    "trusted_signer_modes": [
+      "human_fido2",
+      "hsm",
+      "kms",
+      "custody",
+      "hardware_wallet",
+      "smart_account_module"
+    ],
+    "signer_required_categories": ["payment_execution"],
+    "default_signer_directive": {
+      "required": false,
+      "mode": "none",
+      "agent_may_directly_sign": false,
+      "execution_may_be_agent_initiated": true,
+      "signer_isolation_required": false,
+      "required_signer": {
+        "mode": "none",
+        "allowed_classes": []
+      }
+    },
+    "payment_signer_directive": {
+      "required": true,
+      "mode": "human_fido2_or_controlled_signer",
+      "agent_may_directly_sign": false,
+      "execution_may_be_agent_initiated": true,
+      "signer_isolation_required": true,
+      "required_signer": {
+        "mode": "out_of_agent",
+        "allowed_classes": [
+          "human_fido2",
+          "hsm",
+          "kms",
+          "custody",
+          "smart_account_module"
+        ]
+      },
+      "reason_code": "PAYMENT_EXECUTION_REQUIRES_OUT_OF_AGENT_SIGNER"
+    }
   },
   "required_audit_fields": [
     "agent_id",
@@ -121,6 +168,28 @@
     "RESTRICTED_DATA_SENSITIVITY": "Restricted data is denied by starter policy.",
     "PRICE_EXCEEDS_ROLE_LIMIT": "Requested spend exceeds the role limit.",
     "PAYMENT_EXECUTION_REQUIRES_APPROVAL": "Payment execution requires approval even when role matches.",
-    "APPROVAL_REFERENCE_PRESENT": "Caller supplied approval evidence."
+    "APPROVAL_REFERENCE_PRESENT": "Caller supplied approval evidence.",
+    "MANDATE_MISSING": "No mandate was supplied for this agentic commerce action.",
+    "MANDATE_INACTIVE": "Mandate status is not active.",
+    "MANDATE_EXPIRED": "Mandate is expired.",
+    "MANDATE_TYPE_UNSUPPORTED": "Mandate type is not supported by starter policy.",
+    "MANDATE_BUYER_MISMATCH": "Mandate buyer does not match requested buyer.",
+    "MANDATE_AGENT_MISMATCH": "Mandate agent does not match requested agent.",
+    "MANDATE_ROLE_MISMATCH": "Mandate agent role does not match requested role.",
+    "MANDATE_MERCHANT_DOMAIN_MISMATCH": "Merchant domain is outside mandate scope.",
+    "MANDATE_MERCHANT_WALLET_MISMATCH": "Merchant wallet is outside mandate scope.",
+    "MANDATE_CATEGORY_MISMATCH": "Product category is outside mandate scope.",
+    "MANDATE_AMOUNT_EXCEEDED": "Requested amount exceeds mandate limit.",
+    "MANDATE_ASSET_MISMATCH": "Requested asset is outside mandate scope.",
+    "MANDATE_CHAIN_MISMATCH": "Requested chain is outside mandate scope.",
+    "MERCHANT_DOMAIN_MISSING": "Merchant domain is missing.",
+    "MERCHANT_WALLET_MISSING": "Merchant wallet is missing.",
+    "MERCHANT_WALLET_MISMATCH": "Merchant wallet evidence does not match requested wallet.",
+    "MERCHANT_OPENAPI_DOMAIN_MISMATCH": "Merchant OpenAPI domain evidence does not match merchant domain.",
+    "MERCHANT_AGENT_CARD_DOMAIN_MISMATCH": "Merchant agent card evidence does not match merchant domain.",
+    "MERCHANT_CATEGORY_MISMATCH": "Merchant category does not match requested product category.",
+    "MERCHANT_KYT_HIGH_RISK": "Merchant KYT risk is high.",
+    "MERCHANT_KYT_MEDIUM_RISK": "Merchant KYT risk requires approval.",
+    "PAYMENT_EXECUTION_REQUIRES_OUT_OF_AGENT_SIGNER": "Agent cannot directly sign payment execution."
   }
 }

@@ -10,3 +10,5 @@ __pycache__/
 .env.*
 !.env.example
 .DS_Store
+*.tgz
+*.tar.gz

@@ -1,17 +1,18 @@
-# SignGate Agent Buyer Policy Kit
+# SignGate Agentic Commerce Policy Kit
 
 Policy kit for deciding whether an AI agent should buy an x402 API, dataset, or
-tool.
+tool, and whether the mandate, merchant evidence, and signer directive allow
+the action to proceed.
 
 The core question:
 
 ```text
-Before this agent pays for this service, is this agent allowed to buy this kind
-of data or tool for this purpose?
+Before this agent pays or asks a signer to move money, is this action allowed
+by the buyer role, mandate, merchant evidence, and signer policy?
 ```
 
-This package is for teams that want to self-host or customize the Agent Buyer
-Identity Preflight logic instead of only calling the hosted SignGate API.
+This package is for teams that want to self-host or customize Agentic Commerce
+Preflight logic instead of only calling the hosted SignGate API.
 
 ## Included
 
@@ -24,8 +25,11 @@ Identity Preflight logic instead of only calling the hosted SignGate API.
 - Product category taxonomy.
 - Role x product category matrix.
 - Deterministic JavaScript evaluator.
+- Deterministic Agentic Commerce evaluator covering mandate, merchant trust,
+  and signer directive checks.
 - JSON policy pack intended to be edited by customers.
-- Tests covering `ALLOW`, `DENY`, and `APPROVAL_REQUIRED`.
+- Tests covering `ALLOW`, `DENY`, `APPROVAL_REQUIRED`, missing mandate, role
+  mismatch, merchant wallet mismatch, and payment signer directive.
 - Draft pricing memo.
 - Release checklist with public-sale approval gates.
 - Python evaluator under `python/`.
@@ -69,6 +73,65 @@ console.log(result.decision); // ALLOW
 console.log(result.reason_codes); // ROLE_PRODUCT_CATEGORY_ALLOWED
 ```
 
+Agentic commerce preflight:
+
+```js
+import { evaluateAgenticCommercePreflight } from "@signgate/agent-buyer-policy-kit";
+
+const result = evaluateAgenticCommercePreflight({
+  buyer_id: "buyer.acme",
+  agent_id: "agent.finance.001",
+  agent_role: "finance_agent",
+  product_category: "payment_execution",
+  amount_usdc: "0.25",
+  asset: "USDC",
+  chain: "base",
+  merchant_domain: "pay.vendor.example",
+  merchant_wallet: "0xabc0000000000000000000000000000000000001",
+  mandate: {
+    id: "mandate-001",
+    type: "payment",
+    status: "active",
+    buyer_id: "buyer.acme",
+    agent_id: "agent.finance.001",
+    agent_role: "finance_agent",
+    merchant_domains: ["pay.vendor.example"],
+    merchant_wallets: ["0xabc0000000000000000000000000000000000001"],
+    allowed_categories: ["payment_execution"],
+    max_amount_usdc: "1.00",
+    assets: ["USDC"],
+    chains: ["base"],
+    expires_at: "2099-01-01T00:00:00.000Z",
+  },
+  merchant: {
+    domain: "pay.vendor.example",
+    wallet: "0xabc0000000000000000000000000000000000001",
+    expected_wallet: "0xabc0000000000000000000000000000000000001",
+    openapi_domain: "pay.vendor.example",
+    agent_card_domain: "pay.vendor.example",
+    category: "payment_execution",
+    kyt_risk: "low",
+  },
+});
+
+console.log(result.decision); // APPROVAL_REQUIRED
+console.log(result.signer_directive.agent_may_directly_sign); // false
+console.log(result.signer_directive.execution_may_be_agent_initiated); // true
+console.log(result.reason_codes);
+// includes PAYMENT_EXECUTION_REQUIRES_OUT_OF_AGENT_SIGNER
+```
+
+The evaluator returns a Decision Response, not a cryptographically verifiable
+Decision Artifact. It includes `schema_version`, `response_kind`,
+`evaluator_version`, `evaluated_at`, `expires_at`, `policy_version`,
+`reason_codes`, and `signer_directive`. A future Decision Artifact should add
+request, policy, mandate, evidence, nonce, issuer, and signature binding.
+
+For `payment_execution`, `agent_may_directly_sign=false` means the agent must
+not hold or use unrestricted signing authority. It does not prevent an approved
+agent workflow from initiating execution through an isolated HSM, KMS, custody
+platform, or smart-account module.
+
 ## Starter Outcomes
 
 | Buyer | Product category | Decision |
@@ -95,6 +158,10 @@ Common changes:
 - Change spend thresholds.
 - Require approval for sensitive datasets.
 - Deny specific roles from buying certain tools.
+- Bind mandates to specific buyer, agent, merchant, chain, asset, category, and
+  maximum amount.
+- Require FIDO2, HSM, KMS, custody, hardware wallet, or smart-account signing
+  for payment execution.
 - Bind decision output to internal audit logs.
 
 ## Hosted API
@@ -130,6 +197,8 @@ pricing, license, and delivery flow.
 - No token approval.
 - No autonomous money movement.
 - No seller-delivery guarantee.
+- No live AP2, x402, KYT, or chain-state verification inside the local
+  evaluator.
 
 ## Enterprise Notes
 

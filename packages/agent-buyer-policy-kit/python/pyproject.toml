@@ -1,7 +1,7 @@
 [project]
 name = "signgate-agent-buyer-policy-kit"
 version = "0.1.0"
-description = "Policy evaluator for deciding whether an AI agent should buy an x402 API, dataset, or tool."
+description = "Agentic commerce policy evaluator for mandate, merchant, buyer-role, and signer-directive preflight."
 requires-python = ">=3.10"
 license = { text = "UNLICENSED" }
 authors = [{ name = "SignGate" }]

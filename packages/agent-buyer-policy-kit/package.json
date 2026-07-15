@@ -1,7 +1,7 @@
 {
   "name": "@signgate/agent-buyer-policy-kit",
   "version": "0.1.0",
-  "description": "Policy kit for verifying whether an AI agent should buy an x402 API, dataset, or tool.",
+  "description": "Agentic commerce policy kit for mandate, merchant, buyer-role, and signer-directive preflight.",
   "type": "module",
   "main": "src/index.js",
   "exports": {
@@ -15,7 +15,8 @@
     "RELEASE_CHECKLIST.md",
     "src/",
     "policy/",
-    "test/"
+    "test/",
+    "python/"
   ],
   "scripts": {
     "test": "node --test"

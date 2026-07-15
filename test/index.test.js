@@ -23,7 +23,9 @@ import worker, {
   buildPypiPackagePreflight,
   buildNewPoolRisk,
   buildAgentBuyerIdentityPreflight,
+  buildAgenticCommercePreflight,
   buildAgentSpendRoutePlan,
+  sampleAgenticCommercePreflightInput,
   buildAgentPaymentAuthorization,
   buildStablecoinBalance,
   buildTokenPreflight,
@@ -173,6 +175,8 @@ test("worker exposes discovery documents", async () => {
   assert.ok(document.paths["/v1/x402/address-risk/sample"]);
   assert.ok(document.paths["/v1/x402/address-risk/snapshot"]);
   assert.ok(document.paths["/v1/x402/address-risk/delta"]);
+  assert.ok(document.paths["/v1/agentic-commerce/preflight/sample"]);
+  assert.ok(document.paths["/v1/agentic-commerce/preflight"].post);
   assert.ok(
     document.paths["/v1/x402/payment-guard/policies"].post.requestBody,
   );
@@ -207,6 +211,7 @@ test("worker exposes discovery documents", async () => {
       product => product.id === "agent-buyer-identity-preflight",
     ).ai_should_buy_when,
   );
+  assert.match(catalogDocument.description, /economic policy decisions/i);
   assert.equal(
     catalogDocument.products.find(
       product => product.id === "agent-buyer-policy-kit",
@@ -311,6 +316,48 @@ test("worker exposes discovery documents", async () => {
   );
   assert.equal(verify.status, 200);
   assert.match(await verify.text(), /Deployment Verification/);
+
+  const agenticPage = await worker.fetch(
+    new Request("https://example.test/agentic-commerce-preflight"),
+  );
+  assert.equal(agenticPage.status, 200);
+  assert.match(await agenticPage.text(), /Policy decisions between agents and money movement/);
+
+  const agenticSample = await worker.fetch(
+    new Request("https://example.test/v1/agentic-commerce/preflight/sample"),
+  );
+  assert.equal(agenticSample.status, 200);
+  const sampleDocument = await agenticSample.json();
+  assert.equal(sampleDocument.sample_response.decision, "REQUIRE_APPROVAL");
+  assert.equal(sampleDocument.sample_response.response_kind, "decision_response");
+  assert.equal(sampleDocument.sample_response.decision_artifact.issued, false);
+  assert.equal(
+    sampleDocument.sample_response.signer_directive.agent_may_directly_sign,
+    false,
+  );
+  assert.equal(
+    sampleDocument.sample_response.signer_directive.execution_may_be_agent_initiated,
+    true,
+  );
+
+  const agenticPost = await worker.fetch(
+    new Request("https://example.test/v1/agentic-commerce/preflight", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(sampleAgenticCommercePreflightInput()),
+    }),
+  );
+  assert.equal(agenticPost.status, 200);
+  const agenticPostDocument = await agenticPost.json();
+  assert.equal(agenticPostDocument.schema_version, "agentic_commerce_preflight_result.v1");
+  assert.equal(agenticPostDocument.response_kind, "decision_response");
+  assert.equal(agenticPostDocument.decision, "REQUIRE_APPROVAL");
+  assert.equal(agenticPostDocument.decision_artifact.issued, false);
+  assert.ok(
+    agenticPostDocument.reason_codes.includes(
+      "PAYMENT_EXECUTION_REQUIRES_OUT_OF_AGENT_SIGNER",
+    ),
+  );
 });
 
 test("agent buyer identity preflight maps five roles to purchase fit", () => {
@@ -368,6 +415,43 @@ test("agent buyer identity preflight maps five roles to purchase fit", () => {
     dataSensitivity: "low",
   });
   assert.equal(operator.decision, "ALLOW");
+});
+
+test("agentic commerce preflight returns unified decision contract", () => {
+  const sample = buildAgenticCommercePreflight(sampleAgenticCommercePreflightInput());
+  assert.equal(sample.product, "agentic-commerce-preflight");
+  assert.equal(sample.decision, "REQUIRE_APPROVAL");
+  assert.equal(sample.response_kind, "decision_response");
+  assert.equal(sample.signer_directive.agent_may_directly_sign, false);
+  assert.equal(sample.signer_directive.execution_may_be_agent_initiated, true);
+  assert.deepEqual(sample.signer_directive.required_signer.allowed_classes, [
+    "human_fido2",
+    "hsm",
+    "kms",
+    "custody",
+    "smart_account_module",
+  ]);
+  assert.equal(sample.decision_artifact.issued, false);
+  assert.ok(
+    sample.reason_codes.includes("PAYMENT_EXECUTION_REQUIRES_OUT_OF_AGENT_SIGNER"),
+  );
+
+  const missingMandate = buildAgenticCommercePreflight({
+    ...sampleAgenticCommercePreflightInput(),
+    mandate: null,
+  });
+  assert.equal(missingMandate.decision, "DENY");
+  assert.ok(missingMandate.reason_codes.includes("MANDATE_MISSING"));
+
+  const merchantMismatch = buildAgenticCommercePreflight({
+    ...sampleAgenticCommercePreflightInput(),
+    merchant: {
+      ...sampleAgenticCommercePreflightInput().merchant,
+      expected_wallet: "0xdef0000000000000000000000000000000000002",
+    },
+  });
+  assert.equal(merchantMismatch.decision, "DENY");
+  assert.ok(merchantMismatch.reason_codes.includes("MERCHANT_WALLET_MISMATCH"));
 });
 
 test("purchase event logging ignores probes and requires payment evidence", () => {
