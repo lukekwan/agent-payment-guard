@@ -164,12 +164,40 @@ export function validateSignGateDecisionResponse(payload) {
       "SignGate response missing signer_directive",
     );
   }
+  if (typeof payload.signer_directive.agent_may_directly_sign !== "boolean") {
+    throw new SignGateMcpError(
+      "malformed_signgate_response",
+      "SignGate signer_directive.agent_may_directly_sign must be boolean",
+    );
+  }
+  if (
+    payload.signer_directive.required !== undefined &&
+    typeof payload.signer_directive.required !== "boolean"
+  ) {
+    throw new SignGateMcpError(
+      "malformed_signgate_response",
+      "SignGate signer_directive.required must be boolean when present",
+    );
+  }
+  if (
+    payload.signer_directive.signer_isolation_required !== undefined &&
+    typeof payload.signer_directive.signer_isolation_required !== "boolean"
+  ) {
+    throw new SignGateMcpError(
+      "malformed_signgate_response",
+      "SignGate signer_directive.signer_isolation_required must be boolean when present",
+    );
+  }
   return payload;
 }
 
 export function normalizeMcpDecision(signGateRequest, signGateResponse) {
   const response = validateSignGateDecisionResponse(signGateResponse);
-  const autoPaymentAllowed = response.decision === "ALLOW";
+  const autoPaymentAllowed =
+    response.decision === "ALLOW" &&
+    response.signer_directive.agent_may_directly_sign === true &&
+    response.signer_directive.required !== true &&
+    response.signer_directive.signer_isolation_required !== true;
   return {
     schema_version: "signgate.mcp.evaluate_payment.v1",
     response_kind: "mcp_decision_envelope",
@@ -226,7 +254,14 @@ export function failClosedDecision(code, message, details = {}) {
 }
 
 export function mockSignerMayContinue(decisionEnvelope) {
-  return decisionEnvelope?.decision === "ALLOW" && decisionEnvelope?.fail_closed === false;
+  return (
+    decisionEnvelope?.decision === "ALLOW" &&
+    decisionEnvelope?.fail_closed === false &&
+    decisionEnvelope?.auto_payment_allowed === true &&
+    decisionEnvelope?.signer_directive?.agent_may_directly_sign === true &&
+    decisionEnvelope?.signer_directive?.required !== true &&
+    decisionEnvelope?.signer_directive?.signer_isolation_required !== true
+  );
 }
 
 export async function evaluatePayment(input, options = {}) {

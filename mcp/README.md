@@ -145,8 +145,10 @@ The MCP envelope preserves the existing SignGate response under
 }
 ```
 
-Only `ALLOW` sets `auto_payment_allowed=true`. `REQUIRE_APPROVAL`, `DENY`, and
-all uncertain states stop automatic signer continuation.
+`auto_payment_allowed=true` requires both `decision=ALLOW` and a signer directive
+that explicitly permits direct agent signing. `REQUIRE_APPROVAL`, `DENY`,
+missing or malformed signer directives, required external signers, and signer
+isolation all stop automatic signer continuation.
 
 ## Test
 

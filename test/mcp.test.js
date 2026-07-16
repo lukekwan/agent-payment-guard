@@ -40,7 +40,15 @@ const baseInput = {
   payment_scheme: "x402",
 };
 
-function responsePayload(decision) {
+function responsePayload(decision, overrides = {}) {
+  const signerDirective = {
+    required: false,
+    agent_may_directly_sign: true,
+    execution_may_be_agent_initiated: true,
+    signer_isolation_required: false,
+    ...overrides.signer_directive,
+  };
+
   return {
     schema_version: "agentic_commerce_preflight_result.v1",
     response_kind: "decision_response",
@@ -56,12 +64,8 @@ function responsePayload(decision) {
     resource: { category: "wallet_risk", amount_usdc: 0.005, asset: "USDC", chain: "base" },
     reason_codes: ["POLICY_MATCH"],
     evidence: [{ type: "agent_buyer_identity", decision: "ALLOW" }],
-    signer_directive: {
-      required: false,
-      agent_may_directly_sign: false,
-      execution_may_be_agent_initiated: true,
-      signer_isolation_required: false,
-    },
+    ...overrides,
+    signer_directive: signerDirective,
   };
 }
 
@@ -91,7 +95,81 @@ test("normal ALLOW returns signer directive and permits only mock continuation",
   assert.equal(result.decision, "ALLOW");
   assert.equal(result.auto_payment_allowed, true);
   assert.equal(mockSignerMayContinue(result), true);
-  assert.equal(result.signer_directive.agent_may_directly_sign, false);
+  assert.equal(result.signer_directive.agent_may_directly_sign, true);
+});
+
+test("ALLOW with agent_may_directly_sign=false stops automatic signer continuation", async () => {
+  const result = await evaluatePayment(baseInput, {
+    apiKey: "test-key",
+    fetchImpl: async () =>
+      Response.json(
+        responsePayload("ALLOW", {
+          signer_directive: { agent_may_directly_sign: false },
+        }),
+      ),
+  });
+  assert.equal(result.decision, "ALLOW");
+  assert.equal(result.auto_payment_allowed, false);
+  assert.equal(mockSignerMayContinue(result), false);
+});
+
+test("ALLOW with required signer stops automatic signer continuation", async () => {
+  const result = await evaluatePayment(baseInput, {
+    apiKey: "test-key",
+    fetchImpl: async () =>
+      Response.json(
+        responsePayload("ALLOW", {
+          signer_directive: { required: true },
+        }),
+      ),
+  });
+  assert.equal(result.decision, "ALLOW");
+  assert.equal(result.auto_payment_allowed, false);
+  assert.equal(mockSignerMayContinue(result), false);
+});
+
+test("ALLOW with signer isolation required stops automatic signer continuation", async () => {
+  const result = await evaluatePayment(baseInput, {
+    apiKey: "test-key",
+    fetchImpl: async () =>
+      Response.json(
+        responsePayload("ALLOW", {
+          signer_directive: { signer_isolation_required: true },
+        }),
+      ),
+  });
+  assert.equal(result.decision, "ALLOW");
+  assert.equal(result.auto_payment_allowed, false);
+  assert.equal(mockSignerMayContinue(result), false);
+});
+
+test("ALLOW with missing agent_may_directly_sign fails closed", async () => {
+  const payload = responsePayload("ALLOW");
+  delete payload.signer_directive.agent_may_directly_sign;
+  const result = await evaluatePaymentFailClosed(baseInput, {
+    apiKey: "test-key",
+    fetchImpl: async () => Response.json(payload),
+  });
+  assert.equal(result.decision, "DENY");
+  assert.equal(result.fail_closed, true);
+  assert.equal(result.error.code, "malformed_signgate_response");
+  assert.equal(mockSignerMayContinue(result), false);
+});
+
+test("ALLOW with malformed signer directive fails closed", async () => {
+  const result = await evaluatePaymentFailClosed(baseInput, {
+    apiKey: "test-key",
+    fetchImpl: async () =>
+      Response.json(
+        responsePayload("ALLOW", {
+          signer_directive: { agent_may_directly_sign: "true" },
+        }),
+      ),
+  });
+  assert.equal(result.decision, "DENY");
+  assert.equal(result.fail_closed, true);
+  assert.equal(result.error.code, "malformed_signgate_response");
+  assert.equal(mockSignerMayContinue(result), false);
 });
 
 test("REQUIRE_APPROVAL fail-stops automatic signer continuation", async () => {

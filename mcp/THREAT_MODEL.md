@@ -50,10 +50,11 @@ implemented.
 
 ## Mitigations
 
-- MCP output includes `auto_payment_allowed=false` for all non-ALLOW decisions.
+- MCP output includes `auto_payment_allowed=false` for all non-ALLOW decisions
+  and for ALLOW decisions whose signer directive does not explicitly permit
+  direct agent signing.
 - Missing credentials stop before network access.
 - Response schema validation rejects unknown decisions.
 - `verify_decision_receipt` remains unmounted until signing, key discovery,
 rotation, revocation, and replay protection exist.
 - Examples keep secrets in environment variables.
-
