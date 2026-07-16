@@ -10,9 +10,11 @@
     "check": "node --check src/index.js && node --test",
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
+    "mcp": "node mcp/server.js",
     "test": "node --test"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@x402/core": "^2.16.0",
     "@x402/evm": "^2.16.0",
     "@x402/extensions": "^2.16.0",

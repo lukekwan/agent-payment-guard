@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "signgate": {
+      "command": "node",
+      "args": ["/absolute/path/to/projects/base-agent-preflight/mcp/server.js"],
+      "env": {
+        "SIGNGATE_BASE_URL": "https://base-agent-preflight.bytoken2023.workers.dev",
+        "SIGNGATE_API_KEY": "replace-with-service-credential",
+        "SIGNGATE_TIMEOUT_MS": "5000"
+      }
+    }
+  }
+}

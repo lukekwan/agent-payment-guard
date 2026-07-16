@@ -11966,8 +11966,8 @@ function openApi(origin) {
   };
   document.paths[PAYMENT_GUARD_MCP_PATH] = {
     post: {
-      operationId: "paymentGuardMcp",
-      summary: "MCP JSON-RPC endpoint for Payment Guard discovery and status.",
+      operationId: "signGateMcp",
+      summary: "MCP JSON-RPC endpoint exposing the real SignGate evaluate_payment decision tool.",
       responses: {
         200: { description: "MCP JSON-RPC response" },
       },
@@ -15056,7 +15056,7 @@ function createPaidApp() {
         result: {
           protocolVersion: "2025-06-18",
           capabilities: { tools: {} },
-          serverInfo: { name: "agent-payment-guard", version: "2.0.0" },
+          serverInfo: { name: "signgate-mcp", version: "2.0.0" },
         },
       });
     }
@@ -15067,51 +15067,50 @@ function createPaidApp() {
         result: {
           tools: [
             {
-              name: "payment_guard_evaluate",
+              name: "evaluate_payment",
               description:
-                "Evaluate an x402 payment. The paid HTTP endpoint returns an x402 challenge before execution.",
+                "Evaluate whether an autonomous agent may pay, call a signer, or buy an x402 resource. This tool returns a SignGate decision and never signs or moves funds.",
               inputSchema: {
                 type: "object",
                 properties: {
-                  url: { type: "string" },
-                  session_id: { type: "string" },
-                  request_id: { type: "string" },
-                  profile_id: { type: "string" },
-                  agent_token: { type: "string" },
-                  tool_id: { type: "string" },
-                  purpose: { type: "string" },
+                  agent: {
+                    type: "object",
+                    properties: {
+                      id: { type: "string" },
+                      role: { type: "string" },
+                    },
+                    required: ["id", "role"],
+                  },
+                  buyer: {
+                    type: "object",
+                    properties: { id: { type: "string" } },
+                    required: ["id"],
+                  },
+                  mandate: { type: ["object", "null"] },
+                  merchant: { type: "object" },
+                  resource: {
+                    type: "object",
+                    properties: {
+                      id: { type: "string" },
+                      url: { type: "string" },
+                      category: { type: "string" },
+                    },
+                    required: ["category"],
+                  },
+                  requested_amount: { type: ["string", "number"] },
+                  asset: { type: "string" },
+                  network: { type: "string" },
+                  payment_scheme: { type: "string" },
+                  evidence_refs: { type: "array" },
                 },
-                required: ["url", "session_id", "request_id"],
-              },
-            },
-            {
-              name: "payment_guard_status",
-              description: "Read authenticated policy, budget, merchant, and audit status.",
-              inputSchema: {
-                type: "object",
-                properties: {
-                  profile_id: { type: "string" },
-                  owner_token: { type: "string" },
-                },
-                required: ["profile_id", "owner_token"],
-              },
-            },
-            {
-              name: "x402_agent_buyer_preflight",
-              description:
-                "Check whether the buyer agent role, purpose, product category, and price fit before buying an x402 service.",
-              inputSchema: {
-                type: "object",
-                properties: {
-                  agent_role: { type: "string" },
-                  product_category: { type: "string" },
-                  purpose: { type: "string" },
-                  price_usdc: { type: "string" },
-                  data_sensitivity: { type: "string" },
-                  agent_status: { type: "string" },
-                  approval_ref: { type: "string" },
-                },
-                required: ["agent_role", "product_category"],
+                required: [
+                  "agent",
+                  "buyer",
+                  "mandate",
+                  "merchant",
+                  "resource",
+                  "requested_amount",
+                ],
               },
             },
           ],
@@ -15121,13 +15120,31 @@ function createPaidApp() {
     if (request.method === "tools/call") {
       const name = request.params?.name;
       const args = request.params?.arguments ?? {};
-      if (name === "payment_guard_status") {
+      if (name === "evaluate_payment") {
         try {
-          const result = await paymentGuardStatus(
-            c.env?.GUARD_DB,
-            String(args.profile_id ?? ""),
-            String(args.owner_token ?? ""),
-          );
+          const result = buildAgenticCommercePreflight({
+            buyer_id: args.buyer?.id,
+            agent_id: args.agent?.id,
+            agent_role: args.agent?.role,
+            action: args.resource?.category ?? "payment_execution",
+            product_category: args.resource?.category,
+            amount_usdc: args.requested_amount,
+            asset: args.asset ?? args.resource?.asset,
+            chain: args.network ?? args.resource?.network,
+            payment_scheme: args.payment_scheme ?? args.resource?.payment_scheme ?? "x402",
+            payment: {
+              action: args.resource?.category ?? "payment_execution",
+              product_category: args.resource?.category,
+              amount_usdc: args.requested_amount,
+              asset: args.asset ?? args.resource?.asset,
+              chain: args.network ?? args.resource?.network,
+              scheme: args.payment_scheme ?? args.resource?.payment_scheme ?? "x402",
+              resource_url: args.resource?.url,
+            },
+            mandate: args.mandate,
+            merchant: args.merchant,
+            evidence_refs: args.evidence_refs ?? [],
+          });
           return c.json({
             jsonrpc: "2.0",
             id: request.id,
@@ -15145,45 +15162,6 @@ function createPaidApp() {
             },
           });
         }
-      }
-      if (name === "payment_guard_evaluate") {
-        return c.json({
-          jsonrpc: "2.0",
-          id: request.id,
-          result: {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify({
-                  paid_endpoint: `${new URL(c.req.url).origin}${PRODUCTS[25].path}`,
-                  method: "POST",
-                  price_usdc: PRODUCTS[25].price,
-                  body: args,
-                }),
-              },
-            ],
-          },
-        });
-      }
-      if (name === "x402_agent_buyer_preflight") {
-        const product = PRODUCTS_BY_ID["agent-buyer-identity-preflight"];
-        return c.json({
-          jsonrpc: "2.0",
-          id: request.id,
-          result: {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify({
-                  paid_endpoint: `${new URL(c.req.url).origin}${product.path}`,
-                  method: "GET",
-                  price_usdc: product.price,
-                  query: args,
-                }),
-              },
-            ],
-          },
-        });
       }
       return c.json({
         jsonrpc: "2.0",
@@ -15953,17 +15931,13 @@ export default {
       });
     } else if (url.pathname === "/.well-known/mcp.json") {
       response = json({
-        name: "agent-payment-guard",
+        name: "signgate-mcp",
         version: "2.0.0",
         transport: {
           type: "streamable-http",
           url: `${origin}${PAYMENT_GUARD_MCP_PATH}`,
         },
-        tools: [
-          "payment_guard_evaluate",
-          "payment_guard_status",
-          "x402_agent_buyer_preflight",
-        ],
+        tools: ["evaluate_payment"],
       });
     } else if (url.pathname === "/verification.json") {
       response = json(await verificationData(origin), 200, {

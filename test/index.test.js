@@ -315,7 +315,7 @@ test("worker exposes discovery documents", async () => {
   const mcp = await worker.fetch(
     new Request("https://example.test/.well-known/mcp.json"),
   );
-  assert.ok((await mcp.json()).tools.includes("x402_agent_buyer_preflight"));
+  assert.ok((await mcp.json()).tools.includes("evaluate_payment"));
 
   const endpoints = await worker.fetch(
     new Request("https://example.test/endpoints.txt"),
@@ -382,6 +382,56 @@ test("worker exposes discovery documents", async () => {
       "PAYMENT_EXECUTION_REQUIRES_OUT_OF_AGENT_SIGNER",
     ),
   );
+
+  const mcpTools = await worker.fetch(
+    new Request("https://example.test/mcp", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
+    }),
+  );
+  assert.equal(mcpTools.status, 200);
+  const mcpToolsDocument = await mcpTools.json();
+  assert.deepEqual(
+    mcpToolsDocument.result.tools.map(tool => tool.name),
+    ["evaluate_payment"],
+  );
+
+  const mcpCall = await worker.fetch(
+    new Request("https://example.test/mcp", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "evaluate_payment",
+          arguments: {
+            agent: { id: "agent.finance.001", role: "finance_agent" },
+            buyer: { id: "buyer.acme" },
+            mandate: sampleAgenticCommercePreflightInput().mandate,
+            merchant: sampleAgenticCommercePreflightInput().merchant,
+            resource: {
+              id: "paid-resource",
+              url: "https://api.example.com/v1/x402/data",
+              category: "payment_execution",
+            },
+            requested_amount: "0.025",
+            asset: "USDC",
+            network: "base",
+            payment_scheme: "x402",
+          },
+        },
+      }),
+    }),
+  );
+  assert.equal(mcpCall.status, 200);
+  const mcpCallDocument = await mcpCall.json();
+  const mcpDecision = JSON.parse(mcpCallDocument.result.content[0].text);
+  assert.equal(mcpDecision.response_kind, "decision_response");
+  assert.equal(mcpDecision.decision, "REQUIRE_APPROVAL");
+  assert.equal(mcpDecision.signer_directive.agent_may_directly_sign, false);
 });
 
 test("agent buyer identity preflight maps five roles to purchase fit", () => {
