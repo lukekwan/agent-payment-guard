@@ -1677,7 +1677,7 @@ test("paid routes advertise their exact Base USDC prices", async () => {
     ],
     [
       "/v1/x402/payment-guard/evaluate?url=https%3A%2F%2Fx402.twit.sh%2Ftweets%2Fby%2Fid%3Fid%3D1110302988&session_id=demo-session&request_id=demo-request-1&max_single_usdc=0.10&session_budget_usdc=1.00&daily_budget_usdc=5.00",
-      "10000",
+      "100000",
     ],
     [
       "/v1/x402/base/alpha-risk?subject=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913&kind=token",
@@ -1705,11 +1705,11 @@ test("paid routes advertise their exact Base USDC prices", async () => {
     ],
     [
       "/v1/x402/agent/spend-route-plan?task=screen%20a%20Base%20token%20before%20buying&budget_usdc=0.02&risk_tolerance=medium",
-      "5000",
+      "50000",
     ],
     [
       "/v1/x402/agent/payment-risk-gateway?request_id=demo-request-1&agent_id=demo-agent&purpose=api_purchase&pay_to=0x94F751f04b98507D31b500b7Ed50bE68A1514873&amount_usdc=0.025&invoice_id=demo-invoice&nonce=demo-nonce-123&max_single_usdc=0.10&human_review_above_usdc=0.09&risk_score=5",
-      "5000",
+      "150000",
     ],
     [
       "/v1/x402/agent/rpc-preflight?endpoint_url=https%3A%2F%2Fx402.example.com%2Frpc%2Fbase&chain=base&method=eth_blockNumber&max_price_usdc=0.001&session_budget_usdc=1.00",
@@ -1729,7 +1729,7 @@ test("paid routes advertise their exact Base USDC prices", async () => {
     ],
     [
       "/v1/x402/agent/rpc-payment-guard?request_id=rpc-request-1&endpoint_url=https%3A%2F%2Fx402.example.com%2Frpc%2Fbase&chain=base&method=eth_getLogs&pay_to=0x94F751f04b98507D31b500b7Ed50bE68A1514873&amount_usdc=0.001&max_single_usdc=0.01&session_budget_usdc=1.00",
-      "5000",
+      "100000",
     ],
     [
       "/v1/x402/base/token-exit-risk?token=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",

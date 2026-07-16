@@ -297,7 +297,7 @@ const CATALOG_METADATA = {
     returns:
       "ALLOW/REVIEW/BLOCK decision, risk score, policy/budget state, reasons, evidence, signed decision token, and reservation metadata.",
     price_reason:
-      "Mid-priced core product because it combines payment policy, risk, replay protection, simulation, and auditable evidence.",
+      "Premium payment-control decision because it combines policy, budget enforcement, replay protection, simulation, signer directives, and auditable evidence before autonomous spend.",
   },
   "agent-payment-risk-gateway": {
     group: "x402-payment-safety",
@@ -306,7 +306,7 @@ const CATALOG_METADATA = {
     returns:
       "Verifiable intent normalization, dynamic limit decision, recipient risk outcome, signer directive, and reason codes.",
     price_reason:
-      "Low-cost pre-signing firewall check designed for repeated autonomous stablecoin payment attempts.",
+      "Premium pre-signing payment-control check because it returns a signer directive for autonomous stablecoin payment attempts.",
   },
   "base-alpha-risk-context": {
     group: "trading-bot-alpha-risk",
@@ -368,7 +368,7 @@ const CATALOG_METADATA = {
     returns:
       "Ordered spend route, estimated cost, stop conditions, escalation triggers, and alternative products.",
     price_reason:
-      "Low-cost router intended to increase successful multi-step autonomous buying from the existing catalog.",
+      "Control-plane router priced above telemetry because it shapes autonomous spend before paid resources are purchased.",
   },
   "agent-buyer-identity-preflight": {
     group: "x402-payment-safety",
@@ -377,7 +377,7 @@ const CATALOG_METADATA = {
     returns:
       "ALLOW/APPROVAL_REQUIRED/DENY decision, role-product fit, reason codes, spend assessment, and audit guidance.",
     price_reason:
-      "Low-cost governance check that prevents the wrong kind of agent from buying the wrong x402 service.",
+      "Governance decision priced above telemetry because it determines whether an agent role, authority, and purpose fit a paid x402 purchase.",
   },
   "agent-buyer-policy-kit": {
     group: "x402-payment-safety",
@@ -556,7 +556,7 @@ const CATALOG_METADATA = {
     returns:
       "ALLOW/REVIEW/BLOCK decision, recipient and budget checks, replay context, signer directive, and limitations.",
     price_reason:
-      "Low-cost payment guard specialized for chain-data purchases and high-frequency RPC usage.",
+      "Payment-control guard priced above telemetry because it decides whether an agent should pay for RPC or indexed chain-data access before signer execution.",
   },
   "address-risk": {
     group: "kyt-wallet-risk",
@@ -601,7 +601,7 @@ const CATALOG_METADATA = {
     returns:
       "Policy decision, transaction risk, counterparty risk, value-at-risk context, and escalation guidance.",
     price_reason:
-      "Mid-priced safety review because it combines payment, policy, address, and calldata risk.",
+      "Premium transaction-control review because it combines payment policy, counterparty risk, calldata risk, and signer escalation guidance.",
   },
   "swap-preflight": {
     group: "trading-bot-alpha-risk",
@@ -628,7 +628,7 @@ const CATALOG_METADATA = {
     returns:
       "ALLOW/REVIEW/BLOCK decision, reason codes, evidence summary, policy version, and signed-decision placeholder.",
     price_reason:
-      "Low-cost generic policy decision endpoint designed to become the shared agent control schema.",
+      "Premium generic policy decision endpoint because it is the shared control schema for agent payments, signing, and paid tool calls.",
   },
   "sumsub-case-management-evidence": {
     group: "sumsub-compliance-evidence",
@@ -1246,7 +1246,7 @@ const PRODUCTS = [
   {
     id: "agent-payment-guard",
     path: "/v1/x402/payment-guard/evaluate",
-    price: "$0.01",
+    price: "$0.10",
     description:
       "AI agent x402 payment firewall: enforce budgets and mandates, simulate transactions, score merchant and domain risk, prevent replay, require human approval, and audit delivery before autonomous spending.",
     input: {
@@ -1534,7 +1534,7 @@ const PRODUCTS = [
   {
     id: "agent-spend-route-plan",
     path: "/v1/x402/agent/spend-route-plan",
-    price: "$0.005",
+    price: "$0.05",
     description:
       "Plan which Agent Payment Guard x402 resources an autonomous agent should buy for a task, budget, and risk tolerance.",
     input: {
@@ -1567,7 +1567,7 @@ const PRODUCTS = [
   {
     id: "agent-buyer-identity-preflight",
     path: "/v1/x402/agent/buyer-identity-preflight",
-    price: "$0.005",
+    price: "$0.05",
     description:
       "Check whether an AI agent's role, purpose, authority, and spend limit fit the x402 service or data product it wants to buy.",
     input: {
@@ -1964,7 +1964,7 @@ const PRODUCTS = [
   {
     id: "agent-payment-risk-gateway",
     path: "/v1/x402/agent/payment-risk-gateway",
-    price: "$0.005",
+    price: "$0.15",
     description:
       "x402-discoverable AI agent stablecoin payment firewall: verify intent, enforce dynamic limits, score recipient risk, and return a signer directive before payment execution.",
     input: {
@@ -2237,7 +2237,7 @@ const PRODUCTS = [
   {
     id: "x402-rpc-payment-guard",
     path: "/v1/x402/agent/rpc-payment-guard",
-    price: "$0.005",
+    price: "$0.10",
     description:
       "Guard an agent payment for RPC or indexed chain-data access with endpoint, recipient, amount, budget, and signer-directive checks.",
     input: {
@@ -2413,7 +2413,7 @@ const PRODUCTS = [
   {
     id: "safe-transaction-review",
     path: "/v1/x402/agent-risk/safe-transaction-review",
-    price: "$0.02",
+    price: "$0.25",
     description:
       "Review a planned payment, approval, swap, bridge, or contract call before an agent signs.",
     input: {
@@ -2483,7 +2483,7 @@ const PRODUCTS = [
   {
     id: "policy-decide",
     path: "/v1/x402/agent-risk/policy-decide",
-    price: "$0.01",
+    price: "$0.10",
     description:
       "Return a normalized ALLOW/REVIEW/BLOCK policy decision for an agent payment, signing, or tool-call request.",
     input: {
