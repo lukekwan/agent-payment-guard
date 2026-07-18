@@ -1,0 +1,24 @@
+Recorded at: 2026-07-19T01:08:10+08:00
+
+Node: v24.15.0
+npm: 11.12.1
+Wrangler: 4.112.0
+
+Package versions:
+dev-sg-001b-worker-compatibility@0.0.0 /Users/0xkwan/.openclaw/worktrees/dev-sg-001/spikes/dev-sg-001b-worker-compatibility
+├── @humanwhocodes/momoa@3.3.10
+├── canonicalize@3.0.0
+├── esbuild@0.28.1
+├── miniflare@4.20260714.0
+└── wrangler@4.112.0
+
+
+SHA-256 hashes:
+32d356730708688b7a47242d9c182fefd26fe276cca20346eba4051144a56266  package.json
+18752feded5ea6b2653448415d56ccf24f79a8cbf18573eaa558ca5e01a0d72f  package-lock.json
+853d1fa7d1ab3f1c0007386d3358d07036027ffc2d38b41d550cd2493bda86ce  worker.mjs
+d30219f67d897033d462ec91b715fbb9c4e5a4dac5467625db469822c03fb887  test-runner.mjs
+185195a5ccfdb9e35dc0a82a80ecb28d8e4cb0712936e14061f99f54679a58c0  fixtures/deploy-change-envelope-golden.json
+1be2a0169d90a71d260bd236415b4f24dfd06e290916f00e547af27d9b480ebd  dist/worker.bundle.mjs
+ca87e23f2b7f389bd4dfa9eb8bb5f6cde4a9b85e6f5d456a77d59856e748f551  evidence/worker-compatibility-results-final-correction.json
+583470c2a2b938146500fd5bd0fa0636f2c526f2eb9d01536f1b27c9adf1137d  evidence/npm-test-worker-final-correction.txt

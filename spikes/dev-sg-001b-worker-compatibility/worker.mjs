@@ -1,5 +1,6 @@
 import { parse } from "@humanwhocodes/momoa";
 import canonicalize from "canonicalize";
+import goldenFixture from "./fixtures/deploy-change-envelope-golden.json";
 
 const LIMITS = Object.freeze({
   maxBytes: 32768,
@@ -226,10 +227,10 @@ async function sha256Hex(text) {
 function fingerprintEnvelope(request) {
   const action = structuredClone(request.action);
   if (Array.isArray(action.parameters.changed_paths)) {
-    action.parameters.changed_paths = [...action.parameters.changed_paths].sort();
+    action.parameters.changed_paths = [...new Set(action.parameters.changed_paths)].sort();
   }
   if (Array.isArray(action.parameters.changed_routes)) {
-    action.parameters.changed_routes = [...action.parameters.changed_routes].sort();
+    action.parameters.changed_routes = [...new Set(action.parameters.changed_routes)].sort();
   }
   return {
     contract_version: request.contract_version,
@@ -428,8 +429,7 @@ async function runCanonicalVectorTests(request) {
     ["negative_zero", { z: -0 }, "{\"z\":0}"],
     ["unicode_escaping", { newline: "\n", quote: "\"", backslash: "\\", nul: "\u0000" }, "{\"backslash\":\"\\\\\",\"newline\":\"\\n\",\"nul\":\"\\u0000\",\"quote\":\"\\\"\"}"],
     ["non_ascii_unicode", { "€": "Euro", "𝄞": "music", "é": "e-acute" }, "{\"é\":\"e-acute\",\"€\":\"Euro\",\"𝄞\":\"music\"}"],
-    ["key_ordering", { b: 2, a: 1, aa: 3, "ä": 4 }, "{\"a\":1,\"aa\":3,\"b\":2,\"ä\":4}"],
-    ["complete_signgate_envelope", fingerprintEnvelope(request), canonicalize(fingerprintEnvelope(request))]
+    ["key_ordering", { b: 2, a: 1, aa: 3, "ä": 4 }, "{\"a\":1,\"aa\":3,\"b\":2,\"ä\":4}"]
   ];
 
   const results = {};
@@ -444,6 +444,24 @@ async function runCanonicalVectorTests(request) {
   return results;
 }
 
+async function runLiteralCompleteEnvelopeGoldenTest() {
+  const request = parseStrictJsonBytes(new TextEncoder().encode(JSON.stringify(goldenFixture.request)));
+  const envelope = fingerprintEnvelope(request);
+  const actualCanonical = canonicalize(envelope);
+  const actualDigest = await sha256Hex(actualCanonical);
+  const actualByteLength = utf8ByteLength(actualCanonical);
+  return {
+    expected_fixture_sha256: await sha256Hex(JSON.stringify(goldenFixture)),
+    expected_canonical_utf8_byte_length: goldenFixture.expected_canonical_utf8_byte_length,
+    actual_canonical_utf8_byte_length: actualByteLength,
+    complete_envelope_literal_canonical_bytes:
+      actualCanonical === goldenFixture.expected_canonical_utf8 ? "PASS" : "FAIL",
+    complete_envelope_literal_sha256:
+      actualDigest === goldenFixture.expected_sha256 ? "PASS" : "FAIL",
+    actual_sha256: actualDigest
+  };
+}
+
 async function runFingerprintSemanticTests(request, baseFingerprint) {
   const unicodeMutation = setAtPath(request, ["action", "target", "service"], "signgate-worker-é");
   const orderedArrayMutation = setAtPath(request, ["action", "parameters", "ci_evidence"], {
@@ -451,7 +469,9 @@ async function runFingerprintSemanticTests(request, baseFingerprint) {
     checks: ["test", "lint"]
   });
   const changedPathsReordered = setAtPath(request, ["action", "parameters", "changed_paths"], [...request.action.parameters.changed_paths].reverse());
+  const changedPathsDuplicatePermutation = setAtPath(request, ["action", "parameters", "changed_paths"], ["test/index.test.js", "src/index.js", "src/index.js"]);
   const changedRoutesReordered = setAtPath(request, ["action", "parameters", "changed_routes"], ["/z", "/a"]);
+  const changedRoutesDuplicatePermutation = setAtPath(request, ["action", "parameters", "changed_routes"], ["/z", "/a", "/z"]);
   const changedRoutesSorted = setAtPath(request, ["action", "parameters", "changed_routes"], ["/a", "/z"]);
   const omittedArtifact = structuredClone(request);
   delete omittedArtifact.action.parameters.artifact_digest;
@@ -467,8 +487,12 @@ async function runFingerprintSemanticTests(request, baseFingerprint) {
       (await fingerprint(orderedArrayMutation)) !== baseFingerprint ? "PASS" : "FAIL",
     changed_paths_set_normalized_order:
       (await fingerprint(changedPathsReordered)) === baseFingerprint ? "PASS" : "FAIL",
+    changed_paths_sorted_unique_deduplicates:
+      (await fingerprint(changedPathsDuplicatePermutation)) === baseFingerprint ? "PASS" : "FAIL",
     changed_routes_set_normalized_order:
       (await fingerprint(changedRoutesReordered)) === (await fingerprint(changedRoutesSorted)) ? "PASS" : "FAIL",
+    changed_routes_sorted_unique_deduplicates:
+      (await fingerprint(changedRoutesDuplicatePermutation)) === (await fingerprint(changedRoutesSorted)) ? "PASS" : "FAIL",
     omitted_optional_field_changes_fingerprint:
       (await fingerprint(omittedArtifact)) !== (await fingerprint(presentUndefinedArtifact)) ? "PASS" : "FAIL",
     schema_invalid_null_rejected_before_fingerprint:
@@ -513,6 +537,7 @@ async function runSelfTest() {
   const request = parseStrictJsonBytes(new TextEncoder().encode(JSON.stringify(baseDeployRequest())));
   const resourceBoundResults = runResourceBoundTests();
   const rfc8785VectorResults = await runCanonicalVectorTests(request);
+  const completeEnvelopeLiteralGolden = await runLiteralCompleteEnvelopeGoldenTest();
   const shaGolden = await sha256Hex("abc");
   const shaGoldenPass = shaGolden === "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
 
@@ -551,6 +576,7 @@ async function runSelfTest() {
     rejections,
     resource_bound_results: resourceBoundResults,
     rfc8785_vector_results: rfc8785VectorResults,
+    complete_envelope_literal_golden: completeEnvelopeLiteralGolden,
     webcrypto_sha256: shaGoldenPass ? "PASS" : `FAIL_${shaGolden}`,
     base_fingerprint: `sha256:${baseFingerprint}`,
     fingerprint_semantic_results: fingerprintSemanticResults,

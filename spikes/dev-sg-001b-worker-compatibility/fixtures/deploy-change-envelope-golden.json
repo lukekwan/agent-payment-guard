@@ -1,0 +1,84 @@
+{
+  "request": {
+    "contract_version": "0.1",
+    "request_id": "req_golden_01",
+    "organization_id": "org_nomos",
+    "agent": {
+      "id": "codex_dev_01",
+      "type": "coding_agent",
+      "authenticated_by": "internal_service_identity"
+    },
+    "action": {
+      "type": "deploy_change",
+      "target": {
+        "environment": "preview",
+        "service": "signgate-worker-é",
+        "project": "base-agent-preflight",
+        "repository": {
+          "host": "github.com",
+          "owner": "lukekwan",
+          "repo": "agent-payment-guard",
+          "remote_url": "https://github.com/lukekwan/agent-payment-guard"
+        }
+      },
+      "parameters": {
+        "git_commit": "0123456789abcdef0123456789abcdef01234567",
+        "artifact_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "diff_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "changed_paths": [
+          "test/index.test.js",
+          "src/éxample.js",
+          "src/index.js",
+          "src/index.js"
+        ],
+        "changed_routes": [
+          "/z",
+          "/v1/decisions",
+          "/v1/decisions"
+        ],
+        "touches_secrets": false,
+        "touches_dns": false,
+        "touches_permissions": true,
+        "touches_credentials": true,
+        "deployment_strategy": "worker_preview",
+        "deployment_command_id": "wrangler_deploy_preview",
+        "configuration_fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "ci_evidence": {
+          "provider": "local",
+          "run_id": "run_golden_01",
+          "commit": "0123456789abcdef0123456789abcdef01234567",
+          "status": "passed",
+          "checks": [
+            "lint",
+            "test"
+          ]
+        }
+      }
+    },
+    "intent": "Golden fixture with unicode service and duplicate set fields",
+    "mandate": {
+      "id": "mandate_golden_01",
+      "scope": [
+        "deploy:preview"
+      ],
+      "issued_by": "founder",
+      "expires_at": "2026-07-19T12:00:00Z"
+    },
+    "evidence": [
+      {
+        "id": "ev_golden_01",
+        "type": "test_result",
+        "source": "worker_harness",
+        "status": "passed",
+        "observed_at": "2026-07-18T12:00:00Z",
+        "subject_fingerprint": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      }
+    ],
+    "context": {
+      "requested_at": "2026-07-18T12:00:00Z"
+    }
+  },
+  "expected_canonical_utf8": "{\"action\":{\"parameters\":{\"artifact_digest\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"changed_paths\":[\"src/index.js\",\"src/éxample.js\",\"test/index.test.js\"],\"changed_routes\":[\"/v1/decisions\",\"/z\"],\"ci_evidence\":{\"checks\":[\"lint\",\"test\"],\"commit\":\"0123456789abcdef0123456789abcdef01234567\",\"provider\":\"local\",\"run_id\":\"run_golden_01\",\"status\":\"passed\"},\"configuration_fingerprint\":\"sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"deployment_command_id\":\"wrangler_deploy_preview\",\"deployment_strategy\":\"worker_preview\",\"diff_digest\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"git_commit\":\"0123456789abcdef0123456789abcdef01234567\",\"touches_credentials\":true,\"touches_dns\":false,\"touches_permissions\":true,\"touches_secrets\":false},\"target\":{\"environment\":\"preview\",\"project\":\"base-agent-preflight\",\"repository\":{\"host\":\"github.com\",\"owner\":\"lukekwan\",\"remote_url\":\"https://github.com/lukekwan/agent-payment-guard\",\"repo\":\"agent-payment-guard\"},\"service\":\"signgate-worker-é\"},\"type\":\"deploy_change\"},\"agent_id\":\"codex_dev_01\",\"contract_version\":\"0.1\",\"organization_id\":\"org_nomos\"}",
+  "expected_canonical_utf8_byte_length": 1168,
+  "expected_sha256": "9260871e5133d451793b807a34b0782a562dc04807e4f8e4443b5397ff42eda2"
+}

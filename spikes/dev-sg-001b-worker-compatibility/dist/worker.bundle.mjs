@@ -1507,6 +1507,92 @@ function canonicalize(object, seen = /* @__PURE__ */ new Set()) {
   return result;
 }
 
+// fixtures/deploy-change-envelope-golden.json
+var deploy_change_envelope_golden_default = {
+  request: {
+    contract_version: "0.1",
+    request_id: "req_golden_01",
+    organization_id: "org_nomos",
+    agent: {
+      id: "codex_dev_01",
+      type: "coding_agent",
+      authenticated_by: "internal_service_identity"
+    },
+    action: {
+      type: "deploy_change",
+      target: {
+        environment: "preview",
+        service: "signgate-worker-\xE9",
+        project: "base-agent-preflight",
+        repository: {
+          host: "github.com",
+          owner: "lukekwan",
+          repo: "agent-payment-guard",
+          remote_url: "https://github.com/lukekwan/agent-payment-guard"
+        }
+      },
+      parameters: {
+        git_commit: "0123456789abcdef0123456789abcdef01234567",
+        artifact_digest: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        diff_digest: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        changed_paths: [
+          "test/index.test.js",
+          "src/\xE9xample.js",
+          "src/index.js",
+          "src/index.js"
+        ],
+        changed_routes: [
+          "/z",
+          "/v1/decisions",
+          "/v1/decisions"
+        ],
+        touches_secrets: false,
+        touches_dns: false,
+        touches_permissions: true,
+        touches_credentials: true,
+        deployment_strategy: "worker_preview",
+        deployment_command_id: "wrangler_deploy_preview",
+        configuration_fingerprint: "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        ci_evidence: {
+          provider: "local",
+          run_id: "run_golden_01",
+          commit: "0123456789abcdef0123456789abcdef01234567",
+          status: "passed",
+          checks: [
+            "lint",
+            "test"
+          ]
+        }
+      }
+    },
+    intent: "Golden fixture with unicode service and duplicate set fields",
+    mandate: {
+      id: "mandate_golden_01",
+      scope: [
+        "deploy:preview"
+      ],
+      issued_by: "founder",
+      expires_at: "2026-07-19T12:00:00Z"
+    },
+    evidence: [
+      {
+        id: "ev_golden_01",
+        type: "test_result",
+        source: "worker_harness",
+        status: "passed",
+        observed_at: "2026-07-18T12:00:00Z",
+        subject_fingerprint: "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      }
+    ],
+    context: {
+      requested_at: "2026-07-18T12:00:00Z"
+    }
+  },
+  expected_canonical_utf8: '{"action":{"parameters":{"artifact_digest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","changed_paths":["src/index.js","src/\xE9xample.js","test/index.test.js"],"changed_routes":["/v1/decisions","/z"],"ci_evidence":{"checks":["lint","test"],"commit":"0123456789abcdef0123456789abcdef01234567","provider":"local","run_id":"run_golden_01","status":"passed"},"configuration_fingerprint":"sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","deployment_command_id":"wrangler_deploy_preview","deployment_strategy":"worker_preview","diff_digest":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","git_commit":"0123456789abcdef0123456789abcdef01234567","touches_credentials":true,"touches_dns":false,"touches_permissions":true,"touches_secrets":false},"target":{"environment":"preview","project":"base-agent-preflight","repository":{"host":"github.com","owner":"lukekwan","remote_url":"https://github.com/lukekwan/agent-payment-guard","repo":"agent-payment-guard"},"service":"signgate-worker-\xE9"},"type":"deploy_change"},"agent_id":"codex_dev_01","contract_version":"0.1","organization_id":"org_nomos"}',
+  expected_canonical_utf8_byte_length: 1168,
+  expected_sha256: "9260871e5133d451793b807a34b0782a562dc04807e4f8e4443b5397ff42eda2"
+};
+
 // worker.mjs
 var LIMITS = Object.freeze({
   maxBytes: 32768,
@@ -1713,10 +1799,10 @@ async function sha256Hex(text) {
 function fingerprintEnvelope(request) {
   const action = structuredClone(request.action);
   if (Array.isArray(action.parameters.changed_paths)) {
-    action.parameters.changed_paths = [...action.parameters.changed_paths].sort();
+    action.parameters.changed_paths = [...new Set(action.parameters.changed_paths)].sort();
   }
   if (Array.isArray(action.parameters.changed_routes)) {
-    action.parameters.changed_routes = [...action.parameters.changed_routes].sort();
+    action.parameters.changed_routes = [...new Set(action.parameters.changed_routes)].sort();
   }
   return {
     contract_version: request.contract_version,
@@ -1900,8 +1986,7 @@ async function runCanonicalVectorTests(request) {
     ["negative_zero", { z: -0 }, '{"z":0}'],
     ["unicode_escaping", { newline: "\n", quote: '"', backslash: "\\", nul: "\0" }, '{"backslash":"\\\\","newline":"\\n","nul":"\\u0000","quote":"\\""}'],
     ["non_ascii_unicode", { "\u20AC": "Euro", "\u{1D11E}": "music", "\xE9": "e-acute" }, '{"\xE9":"e-acute","\u20AC":"Euro","\u{1D11E}":"music"}'],
-    ["key_ordering", { b: 2, a: 1, aa: 3, "\xE4": 4 }, '{"a":1,"aa":3,"b":2,"\xE4":4}'],
-    ["complete_signgate_envelope", fingerprintEnvelope(request), canonicalize(fingerprintEnvelope(request))]
+    ["key_ordering", { b: 2, a: 1, aa: 3, "\xE4": 4 }, '{"a":1,"aa":3,"b":2,"\xE4":4}']
   ];
   const results = {};
   for (const [name, value, expected] of vectors) {
@@ -1914,6 +1999,21 @@ async function runCanonicalVectorTests(request) {
   }
   return results;
 }
+async function runLiteralCompleteEnvelopeGoldenTest() {
+  const request = parseStrictJsonBytes(new TextEncoder().encode(JSON.stringify(deploy_change_envelope_golden_default.request)));
+  const envelope = fingerprintEnvelope(request);
+  const actualCanonical = canonicalize(envelope);
+  const actualDigest = await sha256Hex(actualCanonical);
+  const actualByteLength = utf8ByteLength(actualCanonical);
+  return {
+    expected_fixture_sha256: await sha256Hex(JSON.stringify(deploy_change_envelope_golden_default)),
+    expected_canonical_utf8_byte_length: deploy_change_envelope_golden_default.expected_canonical_utf8_byte_length,
+    actual_canonical_utf8_byte_length: actualByteLength,
+    complete_envelope_literal_canonical_bytes: actualCanonical === deploy_change_envelope_golden_default.expected_canonical_utf8 ? "PASS" : "FAIL",
+    complete_envelope_literal_sha256: actualDigest === deploy_change_envelope_golden_default.expected_sha256 ? "PASS" : "FAIL",
+    actual_sha256: actualDigest
+  };
+}
 async function runFingerprintSemanticTests(request, baseFingerprint) {
   const unicodeMutation = setAtPath(request, ["action", "target", "service"], "signgate-worker-\xE9");
   const orderedArrayMutation = setAtPath(request, ["action", "parameters", "ci_evidence"], {
@@ -1921,7 +2021,9 @@ async function runFingerprintSemanticTests(request, baseFingerprint) {
     checks: ["test", "lint"]
   });
   const changedPathsReordered = setAtPath(request, ["action", "parameters", "changed_paths"], [...request.action.parameters.changed_paths].reverse());
+  const changedPathsDuplicatePermutation = setAtPath(request, ["action", "parameters", "changed_paths"], ["test/index.test.js", "src/index.js", "src/index.js"]);
   const changedRoutesReordered = setAtPath(request, ["action", "parameters", "changed_routes"], ["/z", "/a"]);
+  const changedRoutesDuplicatePermutation = setAtPath(request, ["action", "parameters", "changed_routes"], ["/z", "/a", "/z"]);
   const changedRoutesSorted = setAtPath(request, ["action", "parameters", "changed_routes"], ["/a", "/z"]);
   const omittedArtifact = structuredClone(request);
   delete omittedArtifact.action.parameters.artifact_digest;
@@ -1933,7 +2035,9 @@ async function runFingerprintSemanticTests(request, baseFingerprint) {
     unicode_value_mutation_changes_fingerprint: await fingerprint(unicodeMutation) !== baseFingerprint ? "PASS" : "FAIL",
     semantically_significant_array_order_changes_fingerprint: await fingerprint(orderedArrayMutation) !== baseFingerprint ? "PASS" : "FAIL",
     changed_paths_set_normalized_order: await fingerprint(changedPathsReordered) === baseFingerprint ? "PASS" : "FAIL",
+    changed_paths_sorted_unique_deduplicates: await fingerprint(changedPathsDuplicatePermutation) === baseFingerprint ? "PASS" : "FAIL",
     changed_routes_set_normalized_order: await fingerprint(changedRoutesReordered) === await fingerprint(changedRoutesSorted) ? "PASS" : "FAIL",
+    changed_routes_sorted_unique_deduplicates: await fingerprint(changedRoutesDuplicatePermutation) === await fingerprint(changedRoutesSorted) ? "PASS" : "FAIL",
     omitted_optional_field_changes_fingerprint: await fingerprint(omittedArtifact) !== await fingerprint(presentUndefinedArtifact) ? "PASS" : "FAIL",
     schema_invalid_null_rejected_before_fingerprint: expectReject("null_artifact_digest", () => parseStrictJsonBytes(new TextEncoder().encode(JSON.stringify({ ...baseDeployRequest(), action: { ...baseDeployRequest().action, parameters: { ...baseDeployRequest().action.parameters, artifact_digest: null } } })))),
     allowed_null_semantics: "PASS_NO_ALLOWED_NULL_FIELDS_IN_DEPLOY_CHANGE_V0_1",
@@ -1969,6 +2073,7 @@ async function runSelfTest() {
   const request = parseStrictJsonBytes(new TextEncoder().encode(JSON.stringify(baseDeployRequest())));
   const resourceBoundResults = runResourceBoundTests();
   const rfc8785VectorResults = await runCanonicalVectorTests(request);
+  const completeEnvelopeLiteralGolden = await runLiteralCompleteEnvelopeGoldenTest();
   const shaGolden = await sha256Hex("abc");
   const shaGoldenPass = shaGolden === "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
   const baseFingerprint = await fingerprint(request);
@@ -1999,6 +2104,7 @@ async function runSelfTest() {
     rejections,
     resource_bound_results: resourceBoundResults,
     rfc8785_vector_results: rfc8785VectorResults,
+    complete_envelope_literal_golden: completeEnvelopeLiteralGolden,
     webcrypto_sha256: shaGoldenPass ? "PASS" : `FAIL_${shaGolden}`,
     base_fingerprint: `sha256:${baseFingerprint}`,
     fingerprint_semantic_results: fingerprintSemanticResults,

@@ -70,6 +70,14 @@ async function main() {
   assert(results.rejections.unknown_field.startsWith("PASS"), "unknown fields must reject");
   assertDeepPass(results.resource_bound_results, "resource_bound_results");
   assertDeepPass(results.rfc8785_vector_results, "rfc8785_vector_results");
+  assert(
+    results.complete_envelope_literal_golden.complete_envelope_literal_canonical_bytes === "PASS",
+    "complete envelope literal canonical bytes must match committed fixture"
+  );
+  assert(
+    results.complete_envelope_literal_golden.complete_envelope_literal_sha256 === "PASS",
+    "complete envelope literal SHA-256 must match committed fixture"
+  );
   assert(results.webcrypto_sha256 === "PASS", "Web Crypto SHA-256 must match golden digest");
   assertDeepPass(results.fingerprint_semantic_results, "fingerprint_semantic_results");
   assert(results.unicode_arrays_omission_null_case_vectors === "PASS", "unicode/array/omission/case vectors must pass");

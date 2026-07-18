@@ -127,3 +127,60 @@ FINGERPRINT_SEMANTIC_RESULTS=PASS
 WORKER_COMPATIBILITY_HARNESS=PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT
 
 DEV_SG_001B_BASELINE_GATE=PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT
+
+## Worker Golden And Set Dedup Final Correction
+
+Correction status: PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT
+
+Recorded at: 2026-07-19T01:08:10+08:00
+
+PM final correction acknowledgement:
+
+- Repository: `lukekwan/openclaw-workspace`
+- Branch: `handoff/signgate-dev-sg-001-final-correction-ack`
+- Exact review commit: `e4025fe0c24a0c046754488e875e2ae918305dab`
+
+Corrected evidence:
+
+- `fixtures/deploy-change-envelope-golden.json`
+- `evidence/npm-test-worker-final-correction.txt`
+- `evidence/worker-compatibility-results-final-correction.json`
+- `evidence/versions-and-hashes-worker-final-correction.txt`
+- `dist/worker.bundle.mjs`
+
+Complete-envelope literal golden:
+
+- Committed fixture SHA-256:
+  `185195a5ccfdb9e35dc0a82a80ecb28d8e4cb0712936e14061f99f54679a58c0`
+- Literal expected canonical UTF-8 byte length: `1168`
+- Literal expected digest:
+  `9260871e5133d451793b807a34b0782a562dc04807e4f8e4443b5397ff42eda2`
+- `COMPLETE_ENVELOPE_LITERAL_CANONICAL_BYTES=PASS`
+- `COMPLETE_ENVELOPE_LITERAL_SHA256=PASS`
+
+Set normalization correction:
+
+- `changed_paths` now uses sorted-unique set semantics before fingerprinting.
+- `changed_routes` now uses sorted-unique set semantics before fingerprinting.
+- Duplicate-bearing changed-path permutations match the canonical set
+  fingerprint.
+- Duplicate-bearing changed-route permutations match the canonical set
+  fingerprint.
+- `CHANGED_PATHS_SORTED_UNIQUE_DEDUP=PASS`
+- `CHANGED_ROUTES_SORTED_UNIQUE_DEDUP=PASS`
+
+Final correction result:
+
+RESOURCE_BOUND_RESULTS=PASS
+
+RFC8785_VECTOR_RESULTS=PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT
+
+FINGERPRINT_SEMANTIC_RESULTS=PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT
+
+WORKER_COMPATIBILITY_HARNESS=PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT
+
+DEV_SG_001B_BASELINE_GATE=PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT
+
+FULL_APPLICATION_IMPLEMENTATION_STATUS=BLOCKED
+
+PRODUCTION_DEPLOYMENT=NOT_AUTHORIZED
