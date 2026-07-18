@@ -14,9 +14,11 @@ Status: ready for PM implementation review.
 ## Frozen Commit
 
 - Implementation base commit: `5ac67be4fe17b5c1b773bcc584080cad704f4959`
-- Frozen implementation commit: `c09da133d79769525bd6a66dda05cb95eb3cee17`
-- Frozen implementation tree: `a414c5f3d1d3a3e73abfa1632c922b13e2c18249`
-- Package SHA-256: `fa418e6f999d9a459e779d38576aaca09c42de7121c53f59a28665df19250e92`
+- Frozen implementation commit: `901080e5315bdef8deb81eb69ed44853f17ce680`
+- Superseded implementation commit: `c09da133d79769525bd6a66dda05cb95eb3cee17`
+- Supersession reason: `c09da133` passed DEV-SG-001 product tests but its package script excluded package-level baseline tests; `901080e` restores the full product baseline scope while still excluding preimplementation spike harnesses.
+- Frozen implementation tree: `68bc61d322ac471fc7acdbbdfeb20b6c81e7a45a`
+- Package SHA-256: `e724df1c95d992a9ac7138b131e3995ba79171ad9463f15deaa2298a39da8344`
 - Lockfile SHA-256: `152dda37652076b148f9498f2137e47ddf3c5ca8d879823842909686e0ce4acd`
 - Wrangler config SHA-256: `d6d96528855f901e4f3f8e4e0405b7d2c984dcbcbf79f0a855249cc20244a770`
 - Migration SHA-256: `a4ef2e131e29f20019b2300ae82748fca9d44d6c13dc0e5e3cb36aa3f0edd862`
@@ -49,11 +51,11 @@ Status: ready for PM implementation review.
 
 - `npm ci`: PASS
 - `npm run check`: PASS
-- Product test count: 46
-- Pass count: 46
+- Product test count: 62
+- Pass count: 62
 - Fail count: 0
 
-The product test command is scoped to `test/*.test.js`; preimplementation spike harnesses are retained as evidence but are not part of the production application test suite.
+The product test command is scoped to `test/*.test.js packages/*/test/*.test.js`; preimplementation spike harnesses are retained as evidence but are not part of the production application test suite.
 
 ## DF Scenarios
 

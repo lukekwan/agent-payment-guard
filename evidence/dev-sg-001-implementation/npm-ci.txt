@@ -1,7 +1,11 @@
+command=npm ci
+start_timestamp=2026-07-18T18:09:57Z
 
-added 155 packages, and audited 156 packages in 5s
+added 155 packages, and audited 156 packages in 6s
 
 51 packages are looking for funding
   run `npm fund` for details
 
 found 0 vulnerabilities
+end_timestamp=2026-07-18T18:10:03Z
+exit_code=0

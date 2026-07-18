@@ -1,1 +1,7 @@
-?? evidence/
+ M evidence/dev-sg-001-implementation/changed-files.txt
+ M evidence/dev-sg-001-implementation/forbidden-scope-check.txt
+ M evidence/dev-sg-001-implementation/git-status-before-evidence-commit.txt
+ M evidence/dev-sg-001-implementation/npm-ci.txt
+ M evidence/dev-sg-001-implementation/npm-run-check.txt
+ M evidence/dev-sg-001-implementation/test-results.tap
+ M evidence/dev-sg-001-implementation/versions-and-hashes.txt
