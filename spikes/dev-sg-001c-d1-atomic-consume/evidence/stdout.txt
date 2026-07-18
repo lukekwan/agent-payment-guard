@@ -1,0 +1,30 @@
+command=python3 run_spike.py
+started_at=2026-07-18T23:08:02+0800
+{
+  "ATOMICITY_MECHANISM": "transactional guarded update with consume_lock_token, guarded receipt insert, guarded audit insert, rollback on receipt/audit failure, persistent expiry transition",
+  "CONCURRENT_CONSUME_RESULT": "PASS_EXACTLY_ONE_SUCCESS",
+  "D1_ATOMICITY_STATUS": "PASS_CLOSEST_SUPPORTED_SQLITE_SPIKE",
+  "EXPIRY_PERSISTENCE_TEST_RESULT": "PASS_EXPIRED_DOES_NOT_REVIVE",
+  "ORPHAN_STATE_TEST_RESULT": "PASS_NO_CONSUMED_WITHOUT_RECEIPT",
+  "backward_time_does_not_revive_expired": "PASS",
+  "concurrent_final_state_consumed": "PASS",
+  "concurrent_losers_conflict": "PASS",
+  "db_path": "/Users/0xkwan/.openclaw/tmp/signgate-d1-spike-mlrlu2mo/spike.sqlite",
+  "different_attempt_returns_conflict": "PASS",
+  "exactly_one_concurrent_consume": "PASS",
+  "expired_audit_created": "PASS",
+  "expired_state_persistent": "PASS",
+  "expired_transition_observed": "PASS",
+  "injected_audit_failure_returns_error": "PASS",
+  "injected_audit_failure_rolls_back_decision_and_receipt": "PASS",
+  "injected_receipt_failure_returns_error": "PASS",
+  "injected_receipt_failure_rolls_back_decision": "PASS",
+  "no_consumed_without_receipt": "PASS",
+  "same_attempt_returns_same_receipt": "PASS",
+  "successful_consume_has_one_receipt": "PASS",
+  "successful_consume_has_one_success_audit": "PASS",
+  "zero_row_update_cannot_create_receipt": "PASS",
+  "zero_row_update_cannot_create_success_audit": "PASS"
+}
+exit_code=0
+finished_at=2026-07-18T23:08:02+0800

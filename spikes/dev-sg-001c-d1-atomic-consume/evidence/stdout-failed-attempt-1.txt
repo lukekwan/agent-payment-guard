@@ -1,0 +1,12 @@
+command=python3 run_spike.py
+started_at=2026-07-18T23:07:27+0800
+Traceback (most recent call last):
+  File "/Users/0xkwan/.openclaw/worktrees/dev-sg-001/spikes/dev-sg-001c-d1-atomic-consume/run_spike.py", line 412, in <module>
+    main()
+  File "/Users/0xkwan/.openclaw/worktrees/dev-sg-001/spikes/dev-sg-001c-d1-atomic-consume/run_spike.py", line 341, in main
+    assert_true(
+  File "/Users/0xkwan/.openclaw/worktrees/dev-sg-001/spikes/dev-sg-001c-d1-atomic-consume/run_spike.py", line 253, in assert_true
+    raise AssertionError(name)
+AssertionError: injected_receipt_failure_returns_error
+exit_code=1
+finished_at=2026-07-18T23:07:28+0800
