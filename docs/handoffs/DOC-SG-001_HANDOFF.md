@@ -153,3 +153,61 @@ Documentation must clearly state:
 - DOC-SG-001_API_DOCUMENTATION_REPORT.md
 
 ## GitBook rules
+
+- Git repository and OpenAPI are the source of truth
+- GitBook is the presentation/publication layer
+- Use GitBook API only through environment variables
+- Never commit GitBook tokens
+- Default operation is validation or dry-run
+- Do not directly publish
+- Create a draft or change request only when separately authorized
+- Keep public and internal specifications separate
+
+## Forbidden changes
+
+Do not modify:
+
+- src/
+- migrations/
+- test/
+- package.json
+- package-lock.json
+- wrangler.jsonc
+- existing evidence
+- existing PM artifacts
+
+Do not:
+
+- change API behavior
+- merge to main
+- publish GitBook
+- use production GitBook credentials
+- claim QA approval
+- claim production availability
+
+## Stop conditions
+
+Stop and report a documentation-contract conflict when:
+
+- source and frozen contract disagree
+- an endpoint schema cannot be determined
+- public/internal boundary is ambiguous
+- examples cannot be validated
+- GitBook automation would require publishing
+- application files would need modification
+
+After creating the file:
+
+1. Commit it separately.
+2. Push the branch.
+3. Return:
+
+HANDOFF_BRANCH=
+HANDOFF_FILE=
+HANDOFF_COMMIT_SHA=
+HANDOFF_FILE_SHA256=
+APPLICATION_FILES_CHANGED=NO
+WORKTREE_STATUS=
+PUSH_STATUS=
+
+Then stop.
