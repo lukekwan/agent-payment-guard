@@ -1,0 +1,9 @@
+{
+  "DF-01": "PASS preview deploy with passing tests produced ALLOW, atomic consume, and preview execution",
+  "DF-02": "PASS preview deploy with touches_permissions produced REQUIRE_APPROVAL, Founder grant, fresh ALLOW, atomic consume, and preview execution",
+  "DF-03": "PASS touches_secrets produced DENY and wrapper refused execution",
+  "DF-04": "PASS failed or missing tests produced DENY and wrapper refused execution",
+  "DF-05": "PASS post-decision action mutation caused fingerprint mismatch/consume refusal",
+  "DF-06": "PASS expired mandate/decision refused execution and persisted expiry where a decision existed",
+  "DF-07": "PASS exact duplicate request returned same decision artifact; changed same request ID returned 409; replay consume was single-use"
+}

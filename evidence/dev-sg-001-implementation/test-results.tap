@@ -1,0 +1,290 @@
+TAP version 13
+# unknown format "uri" ignored in schema at path "\#/properties/input/properties/body/properties/url"
+# unknown format "uri" ignored in schema at path "\#/properties/input/properties/body/properties/url"
+# unknown format "uri" ignored in schema at path "\#/properties/input/properties/body/properties/webhook_url"
+# unknown format "uri" ignored in schema at path "\#/properties/input/properties/body/properties/webhook_url"
+# Subtest: buildAddressPreflight flags an unverified contract
+ok 1 - buildAddressPreflight flags an unverified contract
+  ---
+  duration_ms: 0.831375
+  type: 'test'
+  ...
+# Subtest: buildAddressPreflight elevates scam metadata
+ok 2 - buildAddressPreflight elevates scam metadata
+  ---
+  duration_ms: 379.870542
+  type: 'test'
+  ...
+# Subtest: worker exposes discovery documents
+ok 3 - worker exposes discovery documents
+  ---
+  duration_ms: 14.625709
+  type: 'test'
+  ...
+# Subtest: agent buyer identity preflight maps five roles to purchase fit
+ok 4 - agent buyer identity preflight maps five roles to purchase fit
+  ---
+  duration_ms: 0.145125
+  type: 'test'
+  ...
+# Subtest: agentic commerce preflight returns unified decision contract
+ok 5 - agentic commerce preflight returns unified decision contract
+  ---
+  duration_ms: 0.300625
+  type: 'test'
+  ...
+# Subtest: purchase event logging ignores probes and requires payment evidence
+ok 6 - purchase event logging ignores probes and requires payment evidence
+  ---
+  duration_ms: 0.080458
+  type: 'test'
+  ...
+# Subtest: bcsGatewayRequest wraps BlockchainSecurity responses without exposing API key
+ok 7 - bcsGatewayRequest wraps BlockchainSecurity responses without exposing API key
+  ---
+  duration_ms: 0.431083
+  type: 'test'
+  ...
+# Subtest: buildX402ServerTrust scores x402 marketplace adoption and concentration
+ok 8 - buildX402ServerTrust scores x402 marketplace adoption and concentration
+  ---
+  duration_ms: 0.289583
+  type: 'test'
+  ...
+# Subtest: x402 meta and router builders produce buyer-ready decisions
+ok 9 - x402 meta and router builders produce buyer-ready decisions
+  ---
+  duration_ms: 0.477125
+  type: 'test'
+  ...
+# Subtest: buildAlphaRiskContext summarizes bot-ready wallet and token signals
+ok 10 - buildAlphaRiskContext summarizes bot-ready wallet and token signals
+  ---
+  duration_ms: 0.268916
+  type: 'test'
+  ...
+# Subtest: Base trading bot intelligence builders return machine-readable decisions
+ok 11 - Base trading bot intelligence builders return machine-readable decisions
+  ---
+  duration_ms: 0.443208
+  type: 'test'
+  ...
+# Subtest: four additional product builders return machine-readable results
+ok 12 - four additional product builders return machine-readable results
+  ---
+  duration_ms: 0.442042
+  type: 'test'
+  ...
+# Subtest: five new product builders return machine-readable results
+ok 13 - five new product builders return machine-readable results
+  ---
+  duration_ms: 0.479375
+  type: 'test'
+  ...
+# Subtest: five execution and market-data builders return machine-readable results
+ok 14 - five execution and market-data builders return machine-readable results
+  ---
+  duration_ms: 0.405333
+  type: 'test'
+  ...
+# Subtest: five software and web builders return machine-readable results
+ok 15 - five software and web builders return machine-readable results
+  ---
+  duration_ms: 6.990041
+  type: 'test'
+  ...
+# Subtest: five agent, intent, domain, and package builders return machine-readable results
+ok 16 - five agent, intent, domain, and package builders return machine-readable results
+  ---
+  duration_ms: 1.094708
+  type: 'test'
+  ...
+# Subtest: payment guard combines policy, budget, replay, and evidence into one decision
+ok 17 - payment guard combines policy, budget, replay, and evidence into one decision
+  ---
+  duration_ms: 0.62675
+  type: 'test'
+  ...
+# Subtest: payment guard decision tokens are signed, verified, and expire
+ok 18 - payment guard decision tokens are signed, verified, and expire
+  ---
+  duration_ms: 1.592083
+  type: 'test'
+  ...
+# Subtest: verifiable intent normalizes stablecoin payment context
+ok 19 - verifiable intent normalizes stablecoin payment context
+  ---
+  duration_ms: 0.275166
+  type: 'test'
+  ...
+# Subtest: agent payment authorization allows safe intents and signs only directives
+ok 20 - agent payment authorization allows safe intents and signs only directives
+  ---
+  duration_ms: 0.631333
+  type: 'test'
+  ...
+# Subtest: agent payment authorization denies blocked or high-risk recipients
+ok 21 - agent payment authorization denies blocked or high-risk recipients
+  ---
+  duration_ms: 0.136125
+  type: 'test'
+  ...
+# Subtest: agent payment authorization reviews medium risk or review-threshold intents
+ok 22 - agent payment authorization reviews medium risk or review-threshold intents
+  ---
+  duration_ms: 0.093417
+  type: 'test'
+  ...
+# Subtest: payment guard enforces mandates and simulates Base transactions
+ok 23 - payment guard enforces mandates and simulates Base transactions
+  ---
+  duration_ms: 0.613166
+  type: 'test'
+  ...
+# Subtest: buildSumsubEvidenceServiceResponse returns fail-closed evidence contract
+ok 24 - buildSumsubEvidenceServiceResponse returns fail-closed evidence contract
+  ---
+  duration_ms: 0.320667
+  type: 'test'
+  ...
+# Subtest: paid routes advertise their exact Base USDC prices
+ok 25 - paid routes advertise their exact Base USDC prices
+  ---
+  duration_ms: 730.793833
+  type: 'test'
+  ...
+# Subtest: payment guard POST routes advertise bazaar input and output schemas
+ok 26 - payment guard POST routes advertise bazaar input and output schemas
+  ---
+  duration_ms: 1.165791
+  type: 'test'
+  ...
+# Subtest: maps evaluate_payment input to existing SignGate preflight contract
+ok 27 - maps evaluate_payment input to existing SignGate preflight contract
+  ---
+  duration_ms: 0.930334
+  type: 'test'
+  ...
+# Subtest: normal ALLOW returns signer directive and permits only mock continuation
+ok 28 - normal ALLOW returns signer directive and permits only mock continuation
+  ---
+  duration_ms: 26.119042
+  type: 'test'
+  ...
+# Subtest: ALLOW with agent_may_directly_sign=false stops automatic signer continuation
+ok 29 - ALLOW with agent_may_directly_sign=false stops automatic signer continuation
+  ---
+  duration_ms: 0.269625
+  type: 'test'
+  ...
+# Subtest: ALLOW with required signer stops automatic signer continuation
+ok 30 - ALLOW with required signer stops automatic signer continuation
+  ---
+  duration_ms: 0.20425
+  type: 'test'
+  ...
+# Subtest: ALLOW with signer isolation required stops automatic signer continuation
+ok 31 - ALLOW with signer isolation required stops automatic signer continuation
+  ---
+  duration_ms: 0.210208
+  type: 'test'
+  ...
+# Subtest: ALLOW with missing agent_may_directly_sign fails closed
+ok 32 - ALLOW with missing agent_may_directly_sign fails closed
+  ---
+  duration_ms: 1.028709
+  type: 'test'
+  ...
+# Subtest: ALLOW with malformed signer directive fails closed
+ok 33 - ALLOW with malformed signer directive fails closed
+  ---
+  duration_ms: 0.238042
+  type: 'test'
+  ...
+# Subtest: REQUIRE_APPROVAL fail-stops automatic signer continuation
+ok 34 - REQUIRE_APPROVAL fail-stops automatic signer continuation
+  ---
+  duration_ms: 0.208958
+  type: 'test'
+  ...
+# Subtest: DENY fail-stops automatic signer continuation
+ok 35 - DENY fail-stops automatic signer continuation
+  ---
+  duration_ms: 0.287209
+  type: 'test'
+  ...
+# Subtest: timeout returns fail-closed DENY through MCP helper
+ok 36 - timeout returns fail-closed DENY through MCP helper
+  ---
+  duration_ms: 12.053667
+  type: 'test'
+  ...
+# Subtest: malformed upstream response returns fail-closed DENY
+ok 37 - malformed upstream response returns fail-closed DENY
+  ---
+  duration_ms: 0.304875
+  type: 'test'
+  ...
+# Subtest: missing credential rejects before any production call
+ok 38 - missing credential rejects before any production call
+  ---
+  duration_ms: 0.352167
+  type: 'test'
+  ...
+# Subtest: DEV-SG-001 strict JSON intake rejects malformed input before evaluation
+ok 39 - DEV-SG-001 strict JSON intake rejects malformed input before evaluation
+  ---
+  duration_ms: 39.42925
+  type: 'test'
+  ...
+# Subtest: DEV-SG-001 auth and tenant binding fail closed
+ok 40 - DEV-SG-001 auth and tenant binding fail closed
+  ---
+  duration_ms: 1.641291
+  type: 'test'
+  ...
+# Subtest: DEV-SG-001 policy matrix implements frozen deploy_change outcomes
+ok 41 - DEV-SG-001 policy matrix implements frozen deploy_change outcomes
+  ---
+  duration_ms: 10.808417
+  type: 'test'
+  ...
+# Subtest: DEV-SG-001 idempotency and Founder grant lifecycle match frozen dogfood flow
+ok 42 - DEV-SG-001 idempotency and Founder grant lifecycle match frozen dogfood flow
+  ---
+  duration_ms: 3.506709
+  type: 'test'
+  ...
+# Subtest: DEV-SG-001 consume is single-use, replay-safe, and expiry-persistent
+ok 43 - DEV-SG-001 consume is single-use, replay-safe, and expiry-persistent
+  ---
+  duration_ms: 4.055958
+  type: 'test'
+  ...
+# Subtest: DEV-SG-001 consume rollback and concurrency invariants hold in product store
+ok 44 - DEV-SG-001 consume rollback and concurrency invariants hold in product store
+  ---
+  duration_ms: 2.88
+  type: 'test'
+  ...
+# Subtest: DEV-SG-001 fingerprint contract uses literal golden and sorted-unique set semantics
+ok 45 - DEV-SG-001 fingerprint contract uses literal golden and sorted-unique set semantics
+  ---
+  duration_ms: 2.971834
+  type: 'test'
+  ...
+# Subtest: DEV-SG-001 wrapper fail-closed behavior covers DF-01 through DF-07
+ok 46 - DEV-SG-001 wrapper fail-closed behavior covers DF-01 through DF-07
+  ---
+  duration_ms: 6.058875
+  type: 'test'
+  ...
+1..46
+# tests 46
+# suites 0
+# pass 46
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1369.563708

@@ -1,0 +1,7 @@
+{
+  "strict_json": "PASS malformed JSON, comments, trailing commas, ordinary duplicates, escaped-equivalent duplicates, invalid UTF-8, resource bounds, unknown fields, and schema-invalid nulls are rejected before policy evaluation/fingerprinting",
+  "auth_tenancy": "PASS missing auth returns 401, wrong scope returns 403, organization mismatch returns 403, and request organization_id is mandatory",
+  "idempotency": "PASS exact organization-scoped retry returns same artifact; same request_id with different canonical content returns 409",
+  "error_model": "PASS 5xx/503-style unexpected failures do not include policy decision enum and fail closed",
+  "route_model": "PASS canonical decision, consume, and internal Founder grant routes are implemented; no public dashboard or general IAM added"
+}

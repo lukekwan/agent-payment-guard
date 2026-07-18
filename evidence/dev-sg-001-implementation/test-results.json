@@ -1,0 +1,12 @@
+{
+  "command": "npm run check",
+  "status": "PASS",
+  "test_count": 46,
+  "pass_count": 46,
+  "fail_count": 0,
+  "notes": [
+    "Product test command is scoped to test/*.test.js so preimplementation spike harnesses are not executed as product tests.",
+    "The full npm run check log is retained in npm-run-check.txt.",
+    "TAP output from node --test --test-reporter=tap test/*.test.js is retained in test-results.tap."
+  ]
+}

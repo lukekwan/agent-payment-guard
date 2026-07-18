@@ -1,0 +1,15 @@
+{
+  "allow_available_only": "PASS",
+  "deny_cannot_consume": "PASS",
+  "require_approval_cannot_consume": "PASS",
+  "zero_row_no_receipt_audit": "PASS via mismatch and non-consumable cases",
+  "receipt_failure_rollback": "PASS",
+  "audit_failure_rollback": "PASS",
+  "exactly_one_concurrent_winner": "PASS 1 success and 7 conflicts in product store test",
+  "same_attempt_exact_receipt": "PASS",
+  "different_attempt_conflict": "PASS",
+  "wrong_fingerprint_conflict": "PASS",
+  "expiry_persistence": "PASS",
+  "backward_clock_no_revival": "PASS",
+  "downstream_failure_leaves_consumed": "PASS"
+}

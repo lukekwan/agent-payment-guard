@@ -1,0 +1,10 @@
+Forbidden scope check from base to HEAD:
+DEV-SG-001_IMPLEMENTATION_MAPPING.md
+migrations/0008_signgate_deploy_change_decisions.sql
+package-lock.json
+package.json
+src/index.js
+src/signgate-decision.js
+test/signgate-decision.test.js
+
+No main merge, production deploy, production D1, production credentials, payment/x402 enforcement, send_external_message, dashboard, SSO, or general IAM changes were performed.

@@ -1,0 +1,8 @@
+Changed files from base 5ac67be4fe17b5c1b773bcc584080cad704f4959 to c09da133d79769525bd6a66dda05cb95eb3cee17:
+A	DEV-SG-001_IMPLEMENTATION_MAPPING.md
+A	migrations/0008_signgate_deploy_change_decisions.sql
+M	package-lock.json
+M	package.json
+M	src/index.js
+A	src/signgate-decision.js
+A	test/signgate-decision.test.js

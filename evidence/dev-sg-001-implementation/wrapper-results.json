@@ -1,0 +1,13 @@
+{
+  "valid_allow_executes_preview_only": "PASS",
+  "requires_successful_consume": "PASS",
+  "requires_fingerprint_match": "PASS",
+  "requires_policy_version_match": "PASS",
+  "require_approval_refused": "PASS",
+  "deny_refused": "PASS",
+  "4xx_refused": "PASS",
+  "5xx_refused": "PASS",
+  "expired_refused": "PASS",
+  "replay_refused": "PASS",
+  "downstream_failure_recorded_after_consume_without_restoring_available": "PASS"
+}

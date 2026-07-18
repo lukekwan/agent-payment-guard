@@ -1,0 +1,18 @@
+D1 tables and migration:
+1:CREATE TABLE IF NOT EXISTS signgate_api_credentials (
+19:CREATE INDEX IF NOT EXISTS idx_signgate_api_credentials_lookup
+22:CREATE INDEX IF NOT EXISTS idx_signgate_api_credentials_retention
+25:CREATE TABLE IF NOT EXISTS signgate_decisions (
+48:CREATE UNIQUE INDEX IF NOT EXISTS idx_signgate_decisions_org_decision
+51:CREATE INDEX IF NOT EXISTS idx_signgate_decisions_retention
+54:CREATE TABLE IF NOT EXISTS signgate_request_idempotency (
+66:CREATE INDEX IF NOT EXISTS idx_signgate_request_idempotency_retention
+69:CREATE TABLE IF NOT EXISTS signgate_approval_grants (
+86:CREATE UNIQUE INDEX IF NOT EXISTS idx_signgate_approval_grants_org_grant
+89:CREATE INDEX IF NOT EXISTS idx_signgate_approval_grants_retention
+92:CREATE TABLE IF NOT EXISTS signgate_consume_receipts (
+108:CREATE INDEX IF NOT EXISTS idx_signgate_consume_receipts_retention
+111:CREATE TABLE IF NOT EXISTS signgate_audit_events (
+126:CREATE INDEX IF NOT EXISTS idx_signgate_audit_events_retention
+129:CREATE TABLE IF NOT EXISTS signgate_execution_results (
+141:CREATE INDEX IF NOT EXISTS idx_signgate_execution_results_retention

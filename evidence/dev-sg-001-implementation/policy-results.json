@@ -1,0 +1,13 @@
+{
+  "valid_preview_allow": "PASS",
+  "failed_tests_deny": "PASS",
+  "missing_tests_deny": "PASS",
+  "touches_secrets_deny": "PASS",
+  "secret_like_input_rejected": "PASS",
+  "touches_dns_requires_approval": "PASS",
+  "touches_permissions_requires_approval": "PASS",
+  "touches_credentials_requires_approval": "PASS",
+  "production_never_executable_allow_before_gate_4": "PASS",
+  "expired_mandate_deny": "PASS",
+  "unknown_target_deny": "PASS"
+}

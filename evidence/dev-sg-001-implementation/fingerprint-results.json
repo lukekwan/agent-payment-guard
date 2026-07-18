@@ -1,0 +1,12 @@
+{
+  "literal_complete_envelope_golden": "PASS",
+  "literal_golden_sha256": "9532edbd25e8a81cd35fbc207b7d5a980bdc971aa47f797cf8ead50bbed129ff",
+  "rfc8785_canonicalize_dependency": "canonicalize@3.0.0",
+  "strict_parser_dependency": "@humanwhocodes/momoa@3.3.10",
+  "changed_paths_sorted_unique": "PASS",
+  "changed_routes_sorted_unique": "PASS",
+  "duplicate_bearing_permutations": "PASS",
+  "no_input_mutation": "PASS",
+  "case_distinct_values_preserved": "PASS",
+  "all_execution_relevant_field_mutations_change_fingerprint": "PASS"
+}

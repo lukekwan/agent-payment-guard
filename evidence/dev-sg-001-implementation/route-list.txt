@@ -1,0 +1,5 @@
+Route list:
+POST /v1/decisions
+POST /v1/decisions/{decision_id}/consume
+POST /internal/dogfood/founder-approval-grants
+Existing commerce stub preserved: POST /v1/agentic-commerce/preflight
