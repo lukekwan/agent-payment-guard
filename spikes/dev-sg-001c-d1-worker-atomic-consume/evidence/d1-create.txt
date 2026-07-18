@@ -1,0 +1,18 @@
+
+ ⛅️ wrangler 4.112.0
+────────────────────
+✅ Successfully created DB 'signgate-dev-sg-001c-atomic-20260718-2335' in region APAC
+Created your new D1 database.
+
+To access your new D1 Database in your Worker, add the following snippet to your configuration file:
+{
+  "d1_databases": [
+    {
+      "binding": "signgate_dev_sg_001c_atomic_20260718_2335",
+      "database_name": "signgate-dev-sg-001c-atomic-20260718-2335",
+      "database_id": "e69f49ff-2430-4116-b472-4527462bbdcc"
+    }
+  ]
+}
+? Would you like Wrangler to add it on your behalf?
+🤖 Using fallback value in non-interactive context: no

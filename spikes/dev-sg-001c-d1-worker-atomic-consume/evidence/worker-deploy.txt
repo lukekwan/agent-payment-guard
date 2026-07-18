@@ -1,0 +1,14 @@
+
+ ⛅️ wrangler 4.112.0
+────────────────────
+
+Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+Total Upload: 9.06 KiB / gzip: 2.19 KiB
+Your Worker has access to the following bindings:
+Binding                                                 Resource         
+env.DB (signgate-dev-sg-001c-atomic-20260718-2335)      D1 Database      
+
+Uploaded signgate-dev-sg-001c-atomic-consume-20260718 (1.59 sec)
+Deployed signgate-dev-sg-001c-atomic-consume-20260718 triggers (2.00 sec)
+  https://signgate-dev-sg-001c-atomic-consume-20260718.bytoken2023.workers.dev
+Current Version ID: ed8e2a53-a94c-4052-89b5-b5e1da7517f0

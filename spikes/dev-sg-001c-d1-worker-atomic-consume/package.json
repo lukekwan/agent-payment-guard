@@ -1,0 +1,12 @@
+{
+  "name": "dev-sg-001c-d1-worker-atomic-consume",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node run-d1-spike.mjs"
+  },
+  "dependencies": {
+    "wrangler": "4.112.0"
+  }
+}

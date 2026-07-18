@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "signgate-dev-sg-001c-atomic-consume-20260718",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-07-18",
+  "workers_dev": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "signgate-dev-sg-001c-atomic-20260718-2335",
+      "database_id": "e69f49ff-2430-4116-b472-4527462bbdcc"
+    }
+  ]
+}

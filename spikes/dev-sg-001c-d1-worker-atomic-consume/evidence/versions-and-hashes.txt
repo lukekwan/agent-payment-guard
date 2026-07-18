@@ -1,0 +1,19 @@
+NODE_VERSION=v24.15.0
+NPM_VERSION=11.12.1
+WRANGLER_VERSION=4.112.0
+dev-sg-001c-d1-worker-atomic-consume@0.0.0 /Users/0xkwan/.openclaw/worktrees/dev-sg-001/spikes/dev-sg-001c-d1-worker-atomic-consume
+└── wrangler@4.112.0
+
+ade75eb86a0d6f981a37ca9b06d50a1473deea215fb4507025388aa1cfebdb1f  package.json
+63779edb3274014b937041f7c4b99ca6b0226c6c0e83dca6c3c860293cf07f2f  package-lock.json
+6d65a20807ccdaebfee1bc237e90389c7d3bb46b411f916b5af5b83acf979283  wrangler.jsonc
+c62a6ec2f3df64df7c71bd24f861b25dc6caa66bdfcdf586357701ba5d4c7b17  schema.sql
+22a810ce9de6b07413072ad45177b5c0f1f6ebcd6be312992e626f4f6d9ae519  worker.mjs
+ce7746fe741bb509a7b9b75ba2a780835776eafd0e52a58a34b504396afbfb9a  run-d1-spike.mjs
+d60de21882105a81d1c889aa9d9dd3807bd6d36bc54008613dc0ed2e771fb2ce  evidence/d1-invariant-results.json
+8184db4d49773aad54ef84497ede8d820814a69701d7c4f2d0d24887904f01d8  evidence/request-response-log.json
+48c79efb75212416e23de9058e5334040932884d9a5e31805b67be30fa58e43d  evidence/d1-spike-test.txt
+ccf949f347e15b59a6cbb927bd7c8c748c0ffe97c98b9ba6198d27ee0dca70f9  evidence/d1-create.txt
+14d866b5fa4f90d16d385a7af4023b527c9c161a1b643cd0922440746c667163  evidence/d1-schema-apply.txt
+1541ed7216af16b97b3a50f0c442e24102640bb58d9323a29a38dae4e1b84f28  evidence/worker-deploy.txt
+2eec771ed829480de8d4322887ade3e7a424f28770fcef0726e58e717ada599e  evidence/cleanup.txt

@@ -1,0 +1,36 @@
+
+ ⛅️ wrangler 4.112.0
+────────────────────
+Successfully deleted signgate-dev-sg-001c-atomic-consume-20260718
+
+wrangler d1 delete <name>
+
+Delete a D1 database
+
+POSITIONALS
+  name  The name or binding of the DB  [string] [required]
+
+GLOBAL FLAGS
+  -c, --config          Path to Wrangler configuration file  [string]
+      --cwd             Run as if Wrangler was started in the specified directory instead of the current working directory  [string]
+  -e, --env             Environment to use for operations, and for selecting .env and .dev.vars files  [string]
+      --env-file        Path to an .env file to load - can be specified multiple times - values from earlier files are overridden by values in later files  [array]
+  -h, --help            Show help  [boolean]
+      --install-skills  Install Cloudflare skills for detected AI coding agents before running the command  [boolean] [default: false]
+      --profile         Use a specific auth profile  [string]
+  -v, --version         Show version number  [boolean]
+
+OPTIONS
+  -y, --skip-confirmation  Skip confirmation  [boolean] [default: false]
+
+This command acts on remote D1 Databases.
+
+ ⛅️ wrangler 4.112.0
+────────────────────
+Resource location: remote 
+
+About to delete remote database DB 'signgate-dev-sg-001c-atomic-20260718-2335' (e69f49ff-2430-4116-b472-4527462bbdcc).
+This action is irreversible and will permanently delete all data in the database.
+
+Deleting...
+Deleted 'signgate-dev-sg-001c-atomic-20260718-2335' successfully.

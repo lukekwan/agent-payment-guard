@@ -1,0 +1,3204 @@
+[
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "zero-row-wrong-fp"
+    },
+    "response": {
+      "id": "zero-row-wrong-fp",
+      "state": "AVAILABLE",
+      "expires_at": 1784389920386
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "zero-row-wrong-fp",
+      "execution_attempt_id": "attempt-a",
+      "action_fingerprint": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "NO_OWNERSHIP",
+      "observed": {
+        "decision": {
+          "organization_id": "org_d1_spike",
+          "decision_id": "zero-row-wrong-fp",
+          "state": "AVAILABLE",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "expires_at": 1784389920386,
+          "consumed_at": null,
+          "expired_at": null,
+          "execution_attempt_id": null,
+          "consume_lock_token": null
+        },
+        "receipts": [],
+        "audits": []
+      }
+    }
+  },
+  {
+    "path": "/inspect?decision_id=zero-row-wrong-fp&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "zero-row-wrong-fp",
+        "state": "AVAILABLE",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389920386,
+        "consumed_at": null,
+        "expired_at": null,
+        "execution_attempt_id": null,
+        "consume_lock_token": null
+      },
+      "receipts": [],
+      "audits": []
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "receipt-failure"
+    },
+    "response": {
+      "id": "receipt-failure",
+      "state": "AVAILABLE",
+      "expires_at": 1784389921721
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 500,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "receipt-failure",
+      "execution_attempt_id": "attempt-a",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1",
+      "inject_receipt_failure": true
+    },
+    "response": {
+      "raw": "<!DOCTYPE html>\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if IE 7]>    <html class=\"no-js ie7 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if IE 8]>    <html class=\"no-js ie8 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if gt IE 8]><!--> <html class=\"no-js\" lang=\"en-US\"> <!--<![endif]-->\n<head>\n<title>Worker threw exception | signgate-dev-sg-001c-atomic-consume-20260718.bytoken2023.workers.dev | Cloudflare</title>\n<meta charset=\"UTF-8\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n<meta http-equiv=\"X-UA-Compatible\" content=\"IE=Edge\" />\n<meta name=\"robots\" content=\"noindex, nofollow\" />\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />\n<link rel=\"stylesheet\" id=\"cf_styles-css\" href=\"/cdn-cgi/styles/cf.errors.css\" />\n<!--[if lt IE 9]><link rel=\"stylesheet\" id='cf_styles-ie-css' href=\"/cdn-cgi/styles/cf.errors.ie.css\" /><![endif]-->\n<style>body{margin:0;padding:0}</style>\n\n\n<!--[if gte IE 10]><!-->\n<script>\n  if (!navigator.cookieEnabled) {\n    window.addEventListener('DOMContentLoaded', function () {\n      var cookieEl = document.getElementById('cookie-alert');\n      cookieEl.style.display = 'block';\n    })\n  }\n</script>\n<!--<![endif]-->\n\n</head>\n<body>\n    <div id=\"cf-wrapper\">\n        <div class=\"cf-alert cf-alert-error cf-cookie-error\" id=\"cookie-alert\" data-translate=\"enable_cookies\">Please enable cookies.</div>\n        <div id=\"cf-error-details\" class=\"cf-error-details-wrapper\">\n            <div class=\"cf-wrapper cf-header cf-error-overview\">\n                <h1>\n                    <span class=\"cf-error-type\" data-translate=\"error\">Error</span>\n                    <span class=\"cf-error-code\">1101</span>\n                    <small class=\"heading-ray-id\">Ray ID: a1d2a53c6a4556f5 &bull; 2026-07-18 15:51:02 UTC</small>\n                </h1>\n                <h2 class=\"cf-subheadline\" data-translate=\"error_desc\">Worker threw exception</h2>\n            </div><!-- /.header -->\n    \n            <section></section><!-- spacer -->\n    \n            <div class=\"cf-section cf-wrapper\">\n                <div class=\"cf-columns two\">\n                    <div class=\"cf-column\">\n                        <h2 data-translate=\"what_happened\">What happened?</h2>\n                            <p>You've requested a page on a website (signgate-dev-sg-001c-atomic-consume-20260718.bytoken2023.workers.dev) that is on the <a href=\"https://www.cloudflare.com/5xx-error-landing?utm_source=error_100x\" target=\"_blank\">Cloudflare</a> network. An unknown error occurred while rendering the page.</p>\n                    </div>\n                    \n                    <div class=\"cf-column\">\n                        <h2 data-translate=\"what_can_i_do\">What can I do?</h2>\n                            <p><strong>If you are the owner of this website:</strong><br />refer to <a href=\"https://developers.cloudflare.com/workers/observability/errors/\" target=\"_blank\">Workers - Errors and Exceptions</a> and check Workers Logs for signgate-dev-sg-001c-atomic-consume-20260718.bytoken2023.workers.dev.</p>\n                    </div>\n                    \n                </div>\n            </div><!-- /.section -->\n    \n            <div class=\"cf-error-footer cf-wrapper w-240 lg:w-full py-10 sm:py-4 sm:px-8 mx-auto text-center sm:text-left border-solid border-0 border-t border-gray-300\">\n    <p class=\"text-13\">\n      <span class=\"cf-footer-item sm:block sm:mb-1\">Cloudflare Ray ID: <strong class=\"font-semibold\">a1d2a53c6a4556f5</strong></span>\n      <span class=\"cf-footer-separator sm:hidden\">&bull;</span>\n      <span id=\"cf-footer-item-ip\" class=\"cf-footer-item hidden sm:block sm:mb-1\">\n        Your IP:\n        <button type=\"button\" id=\"cf-footer-ip-reveal\" class=\"cf-footer-ip-reveal-btn\">Click to reveal</button>\n        <span class=\"hidden\" id=\"cf-footer-ip\">2407:4d00:2c02:79ce:6c36:d196:2f7c:ccd4</span>\n        <span class=\"cf-footer-separator sm:hidden\">&bull;</span>\n      </span>\n      <span class=\"cf-footer-item sm:block sm:mb-1\"><span>Performance &amp; security by</span> <a rel=\"noopener noreferrer\" href=\"https://www.cloudflare.com/5xx-error-landing\" id=\"brand_link\" target=\"_blank\">Cloudflare</a></span>\n      \n    </p>\n    <script>(function(){function d(){var b=a.getElementById(\"cf-footer-item-ip\"),c=a.getElementById(\"cf-footer-ip-reveal\");b&&\"classList\"in b&&(b.classList.remove(\"hidden\"),c.addEventListener(\"click\",function(){c.classList.add(\"hidden\");a.getElementById(\"cf-footer-ip\").classList.remove(\"hidden\")}))}var a=document;document.addEventListener&&a.addEventListener(\"DOMContentLoaded\",d)})();</script>\n  </div><!-- /.error-footer -->\n\n        </div><!-- /#cf-error-details -->\n    </div><!-- /#cf-wrapper -->\n\n     <script>\n    window._cf_translation = {};\n    \n    \n  </script> \n</body>\n</html>"
+    }
+  },
+  {
+    "path": "/inspect?decision_id=receipt-failure&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "receipt-failure",
+        "state": "AVAILABLE",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389921721,
+        "consumed_at": null,
+        "expired_at": null,
+        "execution_attempt_id": null,
+        "consume_lock_token": null
+      },
+      "receipts": [],
+      "audits": []
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "audit-failure"
+    },
+    "response": {
+      "id": "audit-failure",
+      "state": "AVAILABLE",
+      "expires_at": 1784389922416
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 500,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "audit-failure",
+      "execution_attempt_id": "attempt-a",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1",
+      "inject_audit_failure": true
+    },
+    "response": {
+      "raw": "<!DOCTYPE html>\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if IE 7]>    <html class=\"no-js ie7 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if IE 8]>    <html class=\"no-js ie8 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if gt IE 8]><!--> <html class=\"no-js\" lang=\"en-US\"> <!--<![endif]-->\n<head>\n<title>Worker threw exception | signgate-dev-sg-001c-atomic-consume-20260718.bytoken2023.workers.dev | Cloudflare</title>\n<meta charset=\"UTF-8\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n<meta http-equiv=\"X-UA-Compatible\" content=\"IE=Edge\" />\n<meta name=\"robots\" content=\"noindex, nofollow\" />\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />\n<link rel=\"stylesheet\" id=\"cf_styles-css\" href=\"/cdn-cgi/styles/cf.errors.css\" />\n<!--[if lt IE 9]><link rel=\"stylesheet\" id='cf_styles-ie-css' href=\"/cdn-cgi/styles/cf.errors.ie.css\" /><![endif]-->\n<style>body{margin:0;padding:0}</style>\n\n\n<!--[if gte IE 10]><!-->\n<script>\n  if (!navigator.cookieEnabled) {\n    window.addEventListener('DOMContentLoaded', function () {\n      var cookieEl = document.getElementById('cookie-alert');\n      cookieEl.style.display = 'block';\n    })\n  }\n</script>\n<!--<![endif]-->\n\n</head>\n<body>\n    <div id=\"cf-wrapper\">\n        <div class=\"cf-alert cf-alert-error cf-cookie-error\" id=\"cookie-alert\" data-translate=\"enable_cookies\">Please enable cookies.</div>\n        <div id=\"cf-error-details\" class=\"cf-error-details-wrapper\">\n            <div class=\"cf-wrapper cf-header cf-error-overview\">\n                <h1>\n                    <span class=\"cf-error-type\" data-translate=\"error\">Error</span>\n                    <span class=\"cf-error-code\">1101</span>\n                    <small class=\"heading-ray-id\">Ray ID: a1d2a540bc9056f5 &bull; 2026-07-18 15:51:02 UTC</small>\n                </h1>\n                <h2 class=\"cf-subheadline\" data-translate=\"error_desc\">Worker threw exception</h2>\n            </div><!-- /.header -->\n    \n            <section></section><!-- spacer -->\n    \n            <div class=\"cf-section cf-wrapper\">\n                <div class=\"cf-columns two\">\n                    <div class=\"cf-column\">\n                        <h2 data-translate=\"what_happened\">What happened?</h2>\n                            <p>You've requested a page on a website (signgate-dev-sg-001c-atomic-consume-20260718.bytoken2023.workers.dev) that is on the <a href=\"https://www.cloudflare.com/5xx-error-landing?utm_source=error_100x\" target=\"_blank\">Cloudflare</a> network. An unknown error occurred while rendering the page.</p>\n                    </div>\n                    \n                    <div class=\"cf-column\">\n                        <h2 data-translate=\"what_can_i_do\">What can I do?</h2>\n                            <p><strong>If you are the owner of this website:</strong><br />refer to <a href=\"https://developers.cloudflare.com/workers/observability/errors/\" target=\"_blank\">Workers - Errors and Exceptions</a> and check Workers Logs for signgate-dev-sg-001c-atomic-consume-20260718.bytoken2023.workers.dev.</p>\n                    </div>\n                    \n                </div>\n            </div><!-- /.section -->\n    \n            <div class=\"cf-error-footer cf-wrapper w-240 lg:w-full py-10 sm:py-4 sm:px-8 mx-auto text-center sm:text-left border-solid border-0 border-t border-gray-300\">\n    <p class=\"text-13\">\n      <span class=\"cf-footer-item sm:block sm:mb-1\">Cloudflare Ray ID: <strong class=\"font-semibold\">a1d2a540bc9056f5</strong></span>\n      <span class=\"cf-footer-separator sm:hidden\">&bull;</span>\n      <span id=\"cf-footer-item-ip\" class=\"cf-footer-item hidden sm:block sm:mb-1\">\n        Your IP:\n        <button type=\"button\" id=\"cf-footer-ip-reveal\" class=\"cf-footer-ip-reveal-btn\">Click to reveal</button>\n        <span class=\"hidden\" id=\"cf-footer-ip\">2407:4d00:2c02:79ce:6c36:d196:2f7c:ccd4</span>\n        <span class=\"cf-footer-separator sm:hidden\">&bull;</span>\n      </span>\n      <span class=\"cf-footer-item sm:block sm:mb-1\"><span>Performance &amp; security by</span> <a rel=\"noopener noreferrer\" href=\"https://www.cloudflare.com/5xx-error-landing\" id=\"brand_link\" target=\"_blank\">Cloudflare</a></span>\n      \n    </p>\n    <script>(function(){function d(){var b=a.getElementById(\"cf-footer-item-ip\"),c=a.getElementById(\"cf-footer-ip-reveal\");b&&\"classList\"in b&&(b.classList.remove(\"hidden\"),c.addEventListener(\"click\",function(){c.classList.add(\"hidden\");a.getElementById(\"cf-footer-ip\").classList.remove(\"hidden\")}))}var a=document;document.addEventListener&&a.addEventListener(\"DOMContentLoaded\",d)})();</script>\n  </div><!-- /.error-footer -->\n\n        </div><!-- /#cf-error-details -->\n    </div><!-- /#cf-wrapper -->\n\n     <script>\n    window._cf_translation = {};\n    \n    \n  </script> \n</body>\n</html>"
+    }
+  },
+  {
+    "path": "/inspect?decision_id=audit-failure&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "audit-failure",
+        "state": "AVAILABLE",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389922416,
+        "consumed_at": null,
+        "expired_at": null,
+        "execution_attempt_id": null,
+        "consume_lock_token": null
+      },
+      "receipts": [],
+      "audits": []
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "concurrent-main"
+    },
+    "response": {
+      "id": "concurrent-main",
+      "state": "AVAILABLE",
+      "expires_at": 1784389923095
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-main",
+      "execution_attempt_id": "attempt-main-1",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-main",
+      "execution_attempt_id": "attempt-main-4",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-main",
+      "execution_attempt_id": "attempt-main-3",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-main",
+      "execution_attempt_id": "attempt-main-2",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-main",
+      "execution_attempt_id": "attempt-main-8",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-main",
+      "execution_attempt_id": "attempt-main-7",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-main",
+      "execution_attempt_id": "attempt-main-5",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-main",
+      "execution_attempt_id": "attempt-main-10",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 200,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-main",
+      "execution_attempt_id": "attempt-main-0",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONSUMED",
+      "receipt": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-main",
+        "execution_attempt_id": "attempt-main-0",
+        "receipt_id": "rcpt_concurrent-main_attempt-main-0",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "consumed_at": 1784389863213,
+        "consume_lock_token": "tok_concurrent-main_attempt-main-0_94099f86-ab42-4b63-bc88-a6abc8bfdd35"
+      }
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-main",
+      "execution_attempt_id": "attempt-main-9",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-main",
+      "execution_attempt_id": "attempt-main-6",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-main",
+      "execution_attempt_id": "attempt-main-11",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/inspect?decision_id=concurrent-main&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-main",
+        "state": "CONSUMED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389923095,
+        "consumed_at": 1784389863213,
+        "expired_at": null,
+        "execution_attempt_id": "attempt-main-0",
+        "consume_lock_token": "tok_concurrent-main_attempt-main-0_94099f86-ab42-4b63-bc88-a6abc8bfdd35"
+      },
+      "receipts": [
+        {
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-main",
+          "execution_attempt_id": "attempt-main-0",
+          "receipt_id": "rcpt_concurrent-main_attempt-main-0",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "consumed_at": 1784389863213,
+          "consume_lock_token": "tok_concurrent-main_attempt-main-0_94099f86-ab42-4b63-bc88-a6abc8bfdd35"
+        }
+      ],
+      "audits": [
+        {
+          "audit_id": "audit_concurrent-main_attempt-main-0",
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-main",
+          "event_type": "CONSUME_SUCCESS",
+          "execution_attempt_id": "attempt-main-0",
+          "receipt_id": "rcpt_concurrent-main_attempt-main-0",
+          "observed_at": 1784389863213,
+          "consume_lock_token": "tok_concurrent-main_attempt-main-0_94099f86-ab42-4b63-bc88-a6abc8bfdd35"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "same-attempt"
+    },
+    "response": {
+      "id": "same-attempt",
+      "state": "AVAILABLE",
+      "expires_at": 1784389924181
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 200,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "same-attempt",
+      "execution_attempt_id": "attempt-a",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONSUMED",
+      "receipt": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "same-attempt",
+        "execution_attempt_id": "attempt-a",
+        "receipt_id": "rcpt_same-attempt_attempt-a",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "consumed_at": 1784389864287,
+        "consume_lock_token": "tok_same-attempt_attempt-a_482d935a-2a03-4c17-bfdc-9fa5fe39790d"
+      }
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 200,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "same-attempt",
+      "execution_attempt_id": "attempt-a",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "SAME_ATTEMPT_RETRY",
+      "receipt": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "same-attempt",
+        "execution_attempt_id": "attempt-a",
+        "receipt_id": "rcpt_same-attempt_attempt-a",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "consumed_at": 1784389864287,
+        "consume_lock_token": "tok_same-attempt_attempt-a_482d935a-2a03-4c17-bfdc-9fa5fe39790d"
+      }
+    }
+  },
+  {
+    "path": "/inspect?decision_id=same-attempt&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "same-attempt",
+        "state": "CONSUMED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389924181,
+        "consumed_at": 1784389864287,
+        "expired_at": null,
+        "execution_attempt_id": "attempt-a",
+        "consume_lock_token": "tok_same-attempt_attempt-a_482d935a-2a03-4c17-bfdc-9fa5fe39790d"
+      },
+      "receipts": [
+        {
+          "organization_id": "org_d1_spike",
+          "decision_id": "same-attempt",
+          "execution_attempt_id": "attempt-a",
+          "receipt_id": "rcpt_same-attempt_attempt-a",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "consumed_at": 1784389864287,
+          "consume_lock_token": "tok_same-attempt_attempt-a_482d935a-2a03-4c17-bfdc-9fa5fe39790d"
+        }
+      ],
+      "audits": [
+        {
+          "audit_id": "audit_same-attempt_attempt-a",
+          "organization_id": "org_d1_spike",
+          "decision_id": "same-attempt",
+          "event_type": "CONSUME_SUCCESS",
+          "execution_attempt_id": "attempt-a",
+          "receipt_id": "rcpt_same-attempt_attempt-a",
+          "observed_at": 1784389864287,
+          "consume_lock_token": "tok_same-attempt_attempt-a_482d935a-2a03-4c17-bfdc-9fa5fe39790d"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "tenant-case"
+    },
+    "response": {
+      "id": "tenant-case",
+      "state": "AVAILABLE",
+      "expires_at": 1784389925028
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 404,
+    "request": {
+      "organization_id": "org_foreign",
+      "decision_id": "tenant-case",
+      "execution_attempt_id": "attempt-a",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "NOT_FOUND_OR_FORBIDDEN"
+    }
+  },
+  {
+    "path": "/inspect?decision_id=tenant-case&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "tenant-case",
+        "state": "AVAILABLE",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389925028,
+        "consumed_at": null,
+        "expired_at": null,
+        "execution_attempt_id": null,
+        "consume_lock_token": null
+      },
+      "receipts": [],
+      "audits": []
+    }
+  },
+  {
+    "path": "/inspect?decision_id=tenant-case&organization_id=org_foreign",
+    "status": 200,
+    "response": {
+      "decision": null,
+      "receipts": [],
+      "audits": []
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "wrong-enum",
+      "state": "DENIED"
+    },
+    "response": {
+      "id": "wrong-enum",
+      "state": "DENIED",
+      "expires_at": 1784389925932
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "wrong-enum",
+      "execution_attempt_id": "attempt-a",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "NO_OWNERSHIP",
+      "observed": {
+        "decision": {
+          "organization_id": "org_d1_spike",
+          "decision_id": "wrong-enum",
+          "state": "DENIED",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "expires_at": 1784389925932,
+          "consumed_at": null,
+          "expired_at": null,
+          "execution_attempt_id": null,
+          "consume_lock_token": null
+        },
+        "receipts": [],
+        "audits": []
+      }
+    }
+  },
+  {
+    "path": "/inspect?decision_id=wrong-enum&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "wrong-enum",
+        "state": "DENIED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389925932,
+        "consumed_at": null,
+        "expired_at": null,
+        "execution_attempt_id": null,
+        "consume_lock_token": null
+      },
+      "receipts": [],
+      "audits": []
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "wrong-state"
+    },
+    "response": {
+      "id": "wrong-state",
+      "state": "AVAILABLE",
+      "expires_at": 1784389927050
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 200,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "wrong-state",
+      "execution_attempt_id": "attempt-a",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONSUMED",
+      "receipt": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "wrong-state",
+        "execution_attempt_id": "attempt-a",
+        "receipt_id": "rcpt_wrong-state_attempt-a",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "consumed_at": 1784389867156,
+        "consume_lock_token": "tok_wrong-state_attempt-a_8b1098e6-7e84-43f2-8324-cca51b7ff06e"
+      }
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "wrong-state",
+      "execution_attempt_id": "attempt-b",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/inspect?decision_id=wrong-state&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "wrong-state",
+        "state": "CONSUMED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389927050,
+        "consumed_at": 1784389867156,
+        "expired_at": null,
+        "execution_attempt_id": "attempt-a",
+        "consume_lock_token": "tok_wrong-state_attempt-a_8b1098e6-7e84-43f2-8324-cca51b7ff06e"
+      },
+      "receipts": [
+        {
+          "organization_id": "org_d1_spike",
+          "decision_id": "wrong-state",
+          "execution_attempt_id": "attempt-a",
+          "receipt_id": "rcpt_wrong-state_attempt-a",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "consumed_at": 1784389867156,
+          "consume_lock_token": "tok_wrong-state_attempt-a_8b1098e6-7e84-43f2-8324-cca51b7ff06e"
+        }
+      ],
+      "audits": [
+        {
+          "audit_id": "audit_wrong-state_attempt-a",
+          "organization_id": "org_d1_spike",
+          "decision_id": "wrong-state",
+          "event_type": "CONSUME_SUCCESS",
+          "execution_attempt_id": "attempt-a",
+          "receipt_id": "rcpt_wrong-state_attempt-a",
+          "observed_at": 1784389867156,
+          "consume_lock_token": "tok_wrong-state_attempt-a_8b1098e6-7e84-43f2-8324-cca51b7ff06e"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "wrong-policy"
+    },
+    "response": {
+      "id": "wrong-policy",
+      "state": "AVAILABLE",
+      "expires_at": 1784389928276
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "wrong-policy",
+      "execution_attempt_id": "attempt-a",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_wrong"
+    },
+    "response": {
+      "status": "NO_OWNERSHIP",
+      "observed": {
+        "decision": {
+          "organization_id": "org_d1_spike",
+          "decision_id": "wrong-policy",
+          "state": "AVAILABLE",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "expires_at": 1784389928276,
+          "consumed_at": null,
+          "expired_at": null,
+          "execution_attempt_id": null,
+          "consume_lock_token": null
+        },
+        "receipts": [],
+        "audits": []
+      }
+    }
+  },
+  {
+    "path": "/inspect?decision_id=wrong-policy&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "wrong-policy",
+        "state": "AVAILABLE",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389928276,
+        "consumed_at": null,
+        "expired_at": null,
+        "execution_attempt_id": null,
+        "consume_lock_token": null
+      },
+      "receipts": [],
+      "audits": []
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "expired-case",
+      "expires_at": 1784389809337
+    },
+    "response": {
+      "id": "expired-case",
+      "state": "AVAILABLE",
+      "expires_at": 1784389809337
+    }
+  },
+  {
+    "path": "/consume?now=1784389929337",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "expired-case",
+      "execution_attempt_id": "attempt-a",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "EXPIRED",
+      "observed": {
+        "decision": {
+          "organization_id": "org_d1_spike",
+          "decision_id": "expired-case",
+          "state": "EXPIRED",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "expires_at": 1784389809337,
+          "consumed_at": null,
+          "expired_at": 1784389929337,
+          "execution_attempt_id": null,
+          "consume_lock_token": null
+        },
+        "receipts": [],
+        "audits": [
+          {
+            "audit_id": "expiry_expired-case_1784389929337",
+            "organization_id": "org_d1_spike",
+            "decision_id": "expired-case",
+            "event_type": "EXPIRED_OBSERVED",
+            "execution_attempt_id": null,
+            "receipt_id": null,
+            "observed_at": 1784389929337,
+            "consume_lock_token": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "path": "/inspect?decision_id=expired-case&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "expired-case",
+        "state": "EXPIRED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389809337,
+        "consumed_at": null,
+        "expired_at": 1784389929337,
+        "execution_attempt_id": null,
+        "consume_lock_token": null
+      },
+      "receipts": [],
+      "audits": [
+        {
+          "audit_id": "expiry_expired-case_1784389929337",
+          "organization_id": "org_d1_spike",
+          "decision_id": "expired-case",
+          "event_type": "EXPIRED_OBSERVED",
+          "execution_attempt_id": null,
+          "receipt_id": null,
+          "observed_at": 1784389929337,
+          "consume_lock_token": null
+        }
+      ]
+    }
+  },
+  {
+    "path": "/consume?now=1784389749337",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "expired-case",
+      "execution_attempt_id": "attempt-b",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "EXPIRED",
+      "observed": {
+        "decision": {
+          "organization_id": "org_d1_spike",
+          "decision_id": "expired-case",
+          "state": "EXPIRED",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "expires_at": 1784389809337,
+          "consumed_at": null,
+          "expired_at": 1784389929337,
+          "execution_attempt_id": null,
+          "consume_lock_token": null
+        },
+        "receipts": [],
+        "audits": [
+          {
+            "audit_id": "expiry_expired-case_1784389929337",
+            "organization_id": "org_d1_spike",
+            "decision_id": "expired-case",
+            "event_type": "EXPIRED_OBSERVED",
+            "execution_attempt_id": null,
+            "receipt_id": null,
+            "observed_at": 1784389929337,
+            "consume_lock_token": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "path": "/inspect?decision_id=expired-case&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "expired-case",
+        "state": "EXPIRED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389809337,
+        "consumed_at": null,
+        "expired_at": 1784389929337,
+        "execution_attempt_id": null,
+        "consume_lock_token": null
+      },
+      "receipts": [],
+      "audits": [
+        {
+          "audit_id": "expiry_expired-case_1784389929337",
+          "organization_id": "org_d1_spike",
+          "decision_id": "expired-case",
+          "event_type": "EXPIRED_OBSERVED",
+          "execution_attempt_id": null,
+          "receipt_id": null,
+          "observed_at": 1784389929337,
+          "consume_lock_token": null
+        }
+      ]
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "obs-ok"
+    },
+    "response": {
+      "id": "obs-ok",
+      "state": "AVAILABLE",
+      "expires_at": 1784389931065
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 200,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "obs-ok",
+      "execution_attempt_id": "attempt-a",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONSUMED",
+      "receipt": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "obs-ok",
+        "execution_attempt_id": "attempt-a",
+        "receipt_id": "rcpt_obs-ok_attempt-a",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "consumed_at": 1784389871170,
+        "consume_lock_token": "tok_obs-ok_attempt-a_a1fe2694-e5d0-4fdc-be8c-e897b9d464a3"
+      }
+    }
+  },
+  {
+    "path": "/inspect?decision_id=obs-ok&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "obs-ok",
+        "state": "CONSUMED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389931065,
+        "consumed_at": 1784389871170,
+        "expired_at": null,
+        "execution_attempt_id": "attempt-a",
+        "consume_lock_token": "tok_obs-ok_attempt-a_a1fe2694-e5d0-4fdc-be8c-e897b9d464a3"
+      },
+      "receipts": [
+        {
+          "organization_id": "org_d1_spike",
+          "decision_id": "obs-ok",
+          "execution_attempt_id": "attempt-a",
+          "receipt_id": "rcpt_obs-ok_attempt-a",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "consumed_at": 1784389871170,
+          "consume_lock_token": "tok_obs-ok_attempt-a_a1fe2694-e5d0-4fdc-be8c-e897b9d464a3"
+        }
+      ],
+      "audits": [
+        {
+          "audit_id": "audit_obs-ok_attempt-a",
+          "organization_id": "org_d1_spike",
+          "decision_id": "obs-ok",
+          "event_type": "CONSUME_SUCCESS",
+          "execution_attempt_id": "attempt-a",
+          "receipt_id": "rcpt_obs-ok_attempt-a",
+          "observed_at": 1784389871170,
+          "consume_lock_token": "tok_obs-ok_attempt-a_a1fe2694-e5d0-4fdc-be8c-e897b9d464a3"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "obs-receipt"
+    },
+    "response": {
+      "id": "obs-receipt",
+      "state": "AVAILABLE",
+      "expires_at": 1784389931777
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 500,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "obs-receipt",
+      "execution_attempt_id": "attempt-a",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1",
+      "inject_receipt_failure": true
+    },
+    "response": {
+      "raw": "<!DOCTYPE html>\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if IE 7]>    <html class=\"no-js ie7 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if IE 8]>    <html class=\"no-js ie8 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if gt IE 8]><!--> <html class=\"no-js\" lang=\"en-US\"> <!--<![endif]-->\n<head>\n<title>Worker threw exception | signgate-dev-sg-001c-atomic-consume-20260718.bytoken2023.workers.dev | Cloudflare</title>\n<meta charset=\"UTF-8\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n<meta http-equiv=\"X-UA-Compatible\" content=\"IE=Edge\" />\n<meta name=\"robots\" content=\"noindex, nofollow\" />\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />\n<link rel=\"stylesheet\" id=\"cf_styles-css\" href=\"/cdn-cgi/styles/cf.errors.css\" />\n<!--[if lt IE 9]><link rel=\"stylesheet\" id='cf_styles-ie-css' href=\"/cdn-cgi/styles/cf.errors.ie.css\" /><![endif]-->\n<style>body{margin:0;padding:0}</style>\n\n\n<!--[if gte IE 10]><!-->\n<script>\n  if (!navigator.cookieEnabled) {\n    window.addEventListener('DOMContentLoaded', function () {\n      var cookieEl = document.getElementById('cookie-alert');\n      cookieEl.style.display = 'block';\n    })\n  }\n</script>\n<!--<![endif]-->\n\n</head>\n<body>\n    <div id=\"cf-wrapper\">\n        <div class=\"cf-alert cf-alert-error cf-cookie-error\" id=\"cookie-alert\" data-translate=\"enable_cookies\">Please enable cookies.</div>\n        <div id=\"cf-error-details\" class=\"cf-error-details-wrapper\">\n            <div class=\"cf-wrapper cf-header cf-error-overview\">\n                <h1>\n                    <span class=\"cf-error-type\" data-translate=\"error\">Error</span>\n                    <span class=\"cf-error-code\">1101</span>\n                    <small class=\"heading-ray-id\">Ray ID: a1d2a57b387b56f5 &bull; 2026-07-18 15:51:12 UTC</small>\n                </h1>\n                <h2 class=\"cf-subheadline\" data-translate=\"error_desc\">Worker threw exception</h2>\n            </div><!-- /.header -->\n    \n            <section></section><!-- spacer -->\n    \n            <div class=\"cf-section cf-wrapper\">\n                <div class=\"cf-columns two\">\n                    <div class=\"cf-column\">\n                        <h2 data-translate=\"what_happened\">What happened?</h2>\n                            <p>You've requested a page on a website (signgate-dev-sg-001c-atomic-consume-20260718.bytoken2023.workers.dev) that is on the <a href=\"https://www.cloudflare.com/5xx-error-landing?utm_source=error_100x\" target=\"_blank\">Cloudflare</a> network. An unknown error occurred while rendering the page.</p>\n                    </div>\n                    \n                    <div class=\"cf-column\">\n                        <h2 data-translate=\"what_can_i_do\">What can I do?</h2>\n                            <p><strong>If you are the owner of this website:</strong><br />refer to <a href=\"https://developers.cloudflare.com/workers/observability/errors/\" target=\"_blank\">Workers - Errors and Exceptions</a> and check Workers Logs for signgate-dev-sg-001c-atomic-consume-20260718.bytoken2023.workers.dev.</p>\n                    </div>\n                    \n                </div>\n            </div><!-- /.section -->\n    \n            <div class=\"cf-error-footer cf-wrapper w-240 lg:w-full py-10 sm:py-4 sm:px-8 mx-auto text-center sm:text-left border-solid border-0 border-t border-gray-300\">\n    <p class=\"text-13\">\n      <span class=\"cf-footer-item sm:block sm:mb-1\">Cloudflare Ray ID: <strong class=\"font-semibold\">a1d2a57b387b56f5</strong></span>\n      <span class=\"cf-footer-separator sm:hidden\">&bull;</span>\n      <span id=\"cf-footer-item-ip\" class=\"cf-footer-item hidden sm:block sm:mb-1\">\n        Your IP:\n        <button type=\"button\" id=\"cf-footer-ip-reveal\" class=\"cf-footer-ip-reveal-btn\">Click to reveal</button>\n        <span class=\"hidden\" id=\"cf-footer-ip\">2407:4d00:2c02:79ce:6c36:d196:2f7c:ccd4</span>\n        <span class=\"cf-footer-separator sm:hidden\">&bull;</span>\n      </span>\n      <span class=\"cf-footer-item sm:block sm:mb-1\"><span>Performance &amp; security by</span> <a rel=\"noopener noreferrer\" href=\"https://www.cloudflare.com/5xx-error-landing\" id=\"brand_link\" target=\"_blank\">Cloudflare</a></span>\n      \n    </p>\n    <script>(function(){function d(){var b=a.getElementById(\"cf-footer-item-ip\"),c=a.getElementById(\"cf-footer-ip-reveal\");b&&\"classList\"in b&&(b.classList.remove(\"hidden\"),c.addEventListener(\"click\",function(){c.classList.add(\"hidden\");a.getElementById(\"cf-footer-ip\").classList.remove(\"hidden\")}))}var a=document;document.addEventListener&&a.addEventListener(\"DOMContentLoaded\",d)})();</script>\n  </div><!-- /.error-footer -->\n\n        </div><!-- /#cf-error-details -->\n    </div><!-- /#cf-wrapper -->\n\n     <script>\n    window._cf_translation = {};\n    \n    \n  </script> \n</body>\n</html>"
+    }
+  },
+  {
+    "path": "/inspect?decision_id=obs-receipt&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "obs-receipt",
+        "state": "AVAILABLE",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389931777,
+        "consumed_at": null,
+        "expired_at": null,
+        "execution_attempt_id": null,
+        "consume_lock_token": null
+      },
+      "receipts": [],
+      "audits": []
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "obs-audit"
+    },
+    "response": {
+      "id": "obs-audit",
+      "state": "AVAILABLE",
+      "expires_at": 1784389932468
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 500,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "obs-audit",
+      "execution_attempt_id": "attempt-a",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1",
+      "inject_audit_failure": true
+    },
+    "response": {
+      "raw": "<!DOCTYPE html>\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if IE 7]>    <html class=\"no-js ie7 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if IE 8]>    <html class=\"no-js ie8 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if gt IE 8]><!--> <html class=\"no-js\" lang=\"en-US\"> <!--<![endif]-->\n<head>\n<title>Worker threw exception | signgate-dev-sg-001c-atomic-consume-20260718.bytoken2023.workers.dev | Cloudflare</title>\n<meta charset=\"UTF-8\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n<meta http-equiv=\"X-UA-Compatible\" content=\"IE=Edge\" />\n<meta name=\"robots\" content=\"noindex, nofollow\" />\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />\n<link rel=\"stylesheet\" id=\"cf_styles-css\" href=\"/cdn-cgi/styles/cf.errors.css\" />\n<!--[if lt IE 9]><link rel=\"stylesheet\" id='cf_styles-ie-css' href=\"/cdn-cgi/styles/cf.errors.ie.css\" /><![endif]-->\n<style>body{margin:0;padding:0}</style>\n\n\n<!--[if gte IE 10]><!-->\n<script>\n  if (!navigator.cookieEnabled) {\n    window.addEventListener('DOMContentLoaded', function () {\n      var cookieEl = document.getElementById('cookie-alert');\n      cookieEl.style.display = 'block';\n    })\n  }\n</script>\n<!--<![endif]-->\n\n</head>\n<body>\n    <div id=\"cf-wrapper\">\n        <div class=\"cf-alert cf-alert-error cf-cookie-error\" id=\"cookie-alert\" data-translate=\"enable_cookies\">Please enable cookies.</div>\n        <div id=\"cf-error-details\" class=\"cf-error-details-wrapper\">\n            <div class=\"cf-wrapper cf-header cf-error-overview\">\n                <h1>\n                    <span class=\"cf-error-type\" data-translate=\"error\">Error</span>\n                    <span class=\"cf-error-code\">1101</span>\n                    <small class=\"heading-ray-id\">Ray ID: a1d2a57f8b3456f5 &bull; 2026-07-18 15:51:12 UTC</small>\n                </h1>\n                <h2 class=\"cf-subheadline\" data-translate=\"error_desc\">Worker threw exception</h2>\n            </div><!-- /.header -->\n    \n            <section></section><!-- spacer -->\n    \n            <div class=\"cf-section cf-wrapper\">\n                <div class=\"cf-columns two\">\n                    <div class=\"cf-column\">\n                        <h2 data-translate=\"what_happened\">What happened?</h2>\n                            <p>You've requested a page on a website (signgate-dev-sg-001c-atomic-consume-20260718.bytoken2023.workers.dev) that is on the <a href=\"https://www.cloudflare.com/5xx-error-landing?utm_source=error_100x\" target=\"_blank\">Cloudflare</a> network. An unknown error occurred while rendering the page.</p>\n                    </div>\n                    \n                    <div class=\"cf-column\">\n                        <h2 data-translate=\"what_can_i_do\">What can I do?</h2>\n                            <p><strong>If you are the owner of this website:</strong><br />refer to <a href=\"https://developers.cloudflare.com/workers/observability/errors/\" target=\"_blank\">Workers - Errors and Exceptions</a> and check Workers Logs for signgate-dev-sg-001c-atomic-consume-20260718.bytoken2023.workers.dev.</p>\n                    </div>\n                    \n                </div>\n            </div><!-- /.section -->\n    \n            <div class=\"cf-error-footer cf-wrapper w-240 lg:w-full py-10 sm:py-4 sm:px-8 mx-auto text-center sm:text-left border-solid border-0 border-t border-gray-300\">\n    <p class=\"text-13\">\n      <span class=\"cf-footer-item sm:block sm:mb-1\">Cloudflare Ray ID: <strong class=\"font-semibold\">a1d2a57f8b3456f5</strong></span>\n      <span class=\"cf-footer-separator sm:hidden\">&bull;</span>\n      <span id=\"cf-footer-item-ip\" class=\"cf-footer-item hidden sm:block sm:mb-1\">\n        Your IP:\n        <button type=\"button\" id=\"cf-footer-ip-reveal\" class=\"cf-footer-ip-reveal-btn\">Click to reveal</button>\n        <span class=\"hidden\" id=\"cf-footer-ip\">2407:4d00:2c02:79ce:6c36:d196:2f7c:ccd4</span>\n        <span class=\"cf-footer-separator sm:hidden\">&bull;</span>\n      </span>\n      <span class=\"cf-footer-item sm:block sm:mb-1\"><span>Performance &amp; security by</span> <a rel=\"noopener noreferrer\" href=\"https://www.cloudflare.com/5xx-error-landing\" id=\"brand_link\" target=\"_blank\">Cloudflare</a></span>\n      \n    </p>\n    <script>(function(){function d(){var b=a.getElementById(\"cf-footer-item-ip\"),c=a.getElementById(\"cf-footer-ip-reveal\");b&&\"classList\"in b&&(b.classList.remove(\"hidden\"),c.addEventListener(\"click\",function(){c.classList.add(\"hidden\");a.getElementById(\"cf-footer-ip\").classList.remove(\"hidden\")}))}var a=document;document.addEventListener&&a.addEventListener(\"DOMContentLoaded\",d)})();</script>\n  </div><!-- /.error-footer -->\n\n        </div><!-- /#cf-error-details -->\n    </div><!-- /#cf-wrapper -->\n\n     <script>\n    window._cf_translation = {};\n    \n    \n  </script> \n</body>\n</html>"
+    }
+  },
+  {
+    "path": "/inspect?decision_id=obs-audit&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "obs-audit",
+        "state": "AVAILABLE",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389932468,
+        "consumed_at": null,
+        "expired_at": null,
+        "execution_attempt_id": null,
+        "consume_lock_token": null
+      },
+      "receipts": [],
+      "audits": []
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "external-failure"
+    },
+    "response": {
+      "id": "external-failure",
+      "state": "AVAILABLE",
+      "expires_at": 1784389933311
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 200,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "external-failure",
+      "execution_attempt_id": "attempt-a",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONSUMED",
+      "receipt": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "external-failure",
+        "execution_attempt_id": "attempt-a",
+        "receipt_id": "rcpt_external-failure_attempt-a",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "consumed_at": 1784389873429,
+        "consume_lock_token": "tok_external-failure_attempt-a_387f0433-84ba-4860-a918-3f955d7ff168"
+      }
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "external-failure",
+      "execution_attempt_id": "attempt-b",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/inspect?decision_id=external-failure&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "external-failure",
+        "state": "CONSUMED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389933311,
+        "consumed_at": 1784389873429,
+        "expired_at": null,
+        "execution_attempt_id": "attempt-a",
+        "consume_lock_token": "tok_external-failure_attempt-a_387f0433-84ba-4860-a918-3f955d7ff168"
+      },
+      "receipts": [
+        {
+          "organization_id": "org_d1_spike",
+          "decision_id": "external-failure",
+          "execution_attempt_id": "attempt-a",
+          "receipt_id": "rcpt_external-failure_attempt-a",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "consumed_at": 1784389873429,
+          "consume_lock_token": "tok_external-failure_attempt-a_387f0433-84ba-4860-a918-3f955d7ff168"
+        }
+      ],
+      "audits": [
+        {
+          "audit_id": "audit_external-failure_attempt-a",
+          "organization_id": "org_d1_spike",
+          "decision_id": "external-failure",
+          "event_type": "CONSUME_SUCCESS",
+          "execution_attempt_id": "attempt-a",
+          "receipt_id": "rcpt_external-failure_attempt-a",
+          "observed_at": 1784389873429,
+          "consume_lock_token": "tok_external-failure_attempt-a_387f0433-84ba-4860-a918-3f955d7ff168"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "concurrent-stress-0"
+    },
+    "response": {
+      "id": "concurrent-stress-0",
+      "state": "AVAILABLE",
+      "expires_at": 1784389934720
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 200,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-0",
+      "execution_attempt_id": "attempt-stress-0-0",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONSUMED",
+      "receipt": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-0",
+        "execution_attempt_id": "attempt-stress-0-0",
+        "receipt_id": "rcpt_concurrent-stress-0_attempt-stress-0-0",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "consumed_at": 1784389874834,
+        "consume_lock_token": "tok_concurrent-stress-0_attempt-stress-0-0_39edc466-d3df-4220-b1a4-b4e133b08fc8"
+      }
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-0",
+      "execution_attempt_id": "attempt-stress-0-1",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-0",
+      "execution_attempt_id": "attempt-stress-0-2",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-0",
+      "execution_attempt_id": "attempt-stress-0-7",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-0",
+      "execution_attempt_id": "attempt-stress-0-4",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-0",
+      "execution_attempt_id": "attempt-stress-0-6",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-0",
+      "execution_attempt_id": "attempt-stress-0-5",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-0",
+      "execution_attempt_id": "attempt-stress-0-3",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/inspect?decision_id=concurrent-stress-0&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-0",
+        "state": "CONSUMED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389934720,
+        "consumed_at": 1784389874834,
+        "expired_at": null,
+        "execution_attempt_id": "attempt-stress-0-0",
+        "consume_lock_token": "tok_concurrent-stress-0_attempt-stress-0-0_39edc466-d3df-4220-b1a4-b4e133b08fc8"
+      },
+      "receipts": [
+        {
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-0",
+          "execution_attempt_id": "attempt-stress-0-0",
+          "receipt_id": "rcpt_concurrent-stress-0_attempt-stress-0-0",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "consumed_at": 1784389874834,
+          "consume_lock_token": "tok_concurrent-stress-0_attempt-stress-0-0_39edc466-d3df-4220-b1a4-b4e133b08fc8"
+        }
+      ],
+      "audits": [
+        {
+          "audit_id": "audit_concurrent-stress-0_attempt-stress-0-0",
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-0",
+          "event_type": "CONSUME_SUCCESS",
+          "execution_attempt_id": "attempt-stress-0-0",
+          "receipt_id": "rcpt_concurrent-stress-0_attempt-stress-0-0",
+          "observed_at": 1784389874834,
+          "consume_lock_token": "tok_concurrent-stress-0_attempt-stress-0-0_39edc466-d3df-4220-b1a4-b4e133b08fc8"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "concurrent-stress-1"
+    },
+    "response": {
+      "id": "concurrent-stress-1",
+      "state": "AVAILABLE",
+      "expires_at": 1784389935858
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-1",
+      "execution_attempt_id": "attempt-stress-1-4",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 200,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-1",
+      "execution_attempt_id": "attempt-stress-1-2",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONSUMED",
+      "receipt": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-1",
+        "execution_attempt_id": "attempt-stress-1-2",
+        "receipt_id": "rcpt_concurrent-stress-1_attempt-stress-1-2",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "consumed_at": 1784389875963,
+        "consume_lock_token": "tok_concurrent-stress-1_attempt-stress-1-2_652ceb27-ed23-418c-ae6e-110e8c17862a"
+      }
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-1",
+      "execution_attempt_id": "attempt-stress-1-0",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-1",
+      "execution_attempt_id": "attempt-stress-1-3",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-1",
+      "execution_attempt_id": "attempt-stress-1-7",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-1",
+      "execution_attempt_id": "attempt-stress-1-5",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-1",
+      "execution_attempt_id": "attempt-stress-1-1",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-1",
+      "execution_attempt_id": "attempt-stress-1-6",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/inspect?decision_id=concurrent-stress-1&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-1",
+        "state": "CONSUMED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389935858,
+        "consumed_at": 1784389875963,
+        "expired_at": null,
+        "execution_attempt_id": "attempt-stress-1-2",
+        "consume_lock_token": "tok_concurrent-stress-1_attempt-stress-1-2_652ceb27-ed23-418c-ae6e-110e8c17862a"
+      },
+      "receipts": [
+        {
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-1",
+          "execution_attempt_id": "attempt-stress-1-2",
+          "receipt_id": "rcpt_concurrent-stress-1_attempt-stress-1-2",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "consumed_at": 1784389875963,
+          "consume_lock_token": "tok_concurrent-stress-1_attempt-stress-1-2_652ceb27-ed23-418c-ae6e-110e8c17862a"
+        }
+      ],
+      "audits": [
+        {
+          "audit_id": "audit_concurrent-stress-1_attempt-stress-1-2",
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-1",
+          "event_type": "CONSUME_SUCCESS",
+          "execution_attempt_id": "attempt-stress-1-2",
+          "receipt_id": "rcpt_concurrent-stress-1_attempt-stress-1-2",
+          "observed_at": 1784389875963,
+          "consume_lock_token": "tok_concurrent-stress-1_attempt-stress-1-2_652ceb27-ed23-418c-ae6e-110e8c17862a"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "concurrent-stress-2"
+    },
+    "response": {
+      "id": "concurrent-stress-2",
+      "state": "AVAILABLE",
+      "expires_at": 1784389936734
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 200,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-2",
+      "execution_attempt_id": "attempt-stress-2-1",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONSUMED",
+      "receipt": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-2",
+        "execution_attempt_id": "attempt-stress-2-1",
+        "receipt_id": "rcpt_concurrent-stress-2_attempt-stress-2-1",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "consumed_at": 1784389876844,
+        "consume_lock_token": "tok_concurrent-stress-2_attempt-stress-2-1_a3f53c93-74ee-4ef5-8f26-61b40950a642"
+      }
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-2",
+      "execution_attempt_id": "attempt-stress-2-5",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-2",
+      "execution_attempt_id": "attempt-stress-2-0",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-2",
+      "execution_attempt_id": "attempt-stress-2-6",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-2",
+      "execution_attempt_id": "attempt-stress-2-3",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-2",
+      "execution_attempt_id": "attempt-stress-2-4",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-2",
+      "execution_attempt_id": "attempt-stress-2-7",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-2",
+      "execution_attempt_id": "attempt-stress-2-2",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/inspect?decision_id=concurrent-stress-2&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-2",
+        "state": "CONSUMED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389936734,
+        "consumed_at": 1784389876844,
+        "expired_at": null,
+        "execution_attempt_id": "attempt-stress-2-1",
+        "consume_lock_token": "tok_concurrent-stress-2_attempt-stress-2-1_a3f53c93-74ee-4ef5-8f26-61b40950a642"
+      },
+      "receipts": [
+        {
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-2",
+          "execution_attempt_id": "attempt-stress-2-1",
+          "receipt_id": "rcpt_concurrent-stress-2_attempt-stress-2-1",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "consumed_at": 1784389876844,
+          "consume_lock_token": "tok_concurrent-stress-2_attempt-stress-2-1_a3f53c93-74ee-4ef5-8f26-61b40950a642"
+        }
+      ],
+      "audits": [
+        {
+          "audit_id": "audit_concurrent-stress-2_attempt-stress-2-1",
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-2",
+          "event_type": "CONSUME_SUCCESS",
+          "execution_attempt_id": "attempt-stress-2-1",
+          "receipt_id": "rcpt_concurrent-stress-2_attempt-stress-2-1",
+          "observed_at": 1784389876844,
+          "consume_lock_token": "tok_concurrent-stress-2_attempt-stress-2-1_a3f53c93-74ee-4ef5-8f26-61b40950a642"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "concurrent-stress-3"
+    },
+    "response": {
+      "id": "concurrent-stress-3",
+      "state": "AVAILABLE",
+      "expires_at": 1784389937593
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 200,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-3",
+      "execution_attempt_id": "attempt-stress-3-2",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONSUMED",
+      "receipt": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-3",
+        "execution_attempt_id": "attempt-stress-3-2",
+        "receipt_id": "rcpt_concurrent-stress-3_attempt-stress-3-2",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "consumed_at": 1784389877703,
+        "consume_lock_token": "tok_concurrent-stress-3_attempt-stress-3-2_6c0bc5e4-4c47-4e9e-a17d-a32cdb3a849d"
+      }
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-3",
+      "execution_attempt_id": "attempt-stress-3-3",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-3",
+      "execution_attempt_id": "attempt-stress-3-5",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-3",
+      "execution_attempt_id": "attempt-stress-3-7",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-3",
+      "execution_attempt_id": "attempt-stress-3-1",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-3",
+      "execution_attempt_id": "attempt-stress-3-6",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-3",
+      "execution_attempt_id": "attempt-stress-3-4",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-3",
+      "execution_attempt_id": "attempt-stress-3-0",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/inspect?decision_id=concurrent-stress-3&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-3",
+        "state": "CONSUMED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389937593,
+        "consumed_at": 1784389877703,
+        "expired_at": null,
+        "execution_attempt_id": "attempt-stress-3-2",
+        "consume_lock_token": "tok_concurrent-stress-3_attempt-stress-3-2_6c0bc5e4-4c47-4e9e-a17d-a32cdb3a849d"
+      },
+      "receipts": [
+        {
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-3",
+          "execution_attempt_id": "attempt-stress-3-2",
+          "receipt_id": "rcpt_concurrent-stress-3_attempt-stress-3-2",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "consumed_at": 1784389877703,
+          "consume_lock_token": "tok_concurrent-stress-3_attempt-stress-3-2_6c0bc5e4-4c47-4e9e-a17d-a32cdb3a849d"
+        }
+      ],
+      "audits": [
+        {
+          "audit_id": "audit_concurrent-stress-3_attempt-stress-3-2",
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-3",
+          "event_type": "CONSUME_SUCCESS",
+          "execution_attempt_id": "attempt-stress-3-2",
+          "receipt_id": "rcpt_concurrent-stress-3_attempt-stress-3-2",
+          "observed_at": 1784389877703,
+          "consume_lock_token": "tok_concurrent-stress-3_attempt-stress-3-2_6c0bc5e4-4c47-4e9e-a17d-a32cdb3a849d"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "concurrent-stress-4"
+    },
+    "response": {
+      "id": "concurrent-stress-4",
+      "state": "AVAILABLE",
+      "expires_at": 1784389938446
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 200,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-4",
+      "execution_attempt_id": "attempt-stress-4-2",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONSUMED",
+      "receipt": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-4",
+        "execution_attempt_id": "attempt-stress-4-2",
+        "receipt_id": "rcpt_concurrent-stress-4_attempt-stress-4-2",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "consumed_at": 1784389878551,
+        "consume_lock_token": "tok_concurrent-stress-4_attempt-stress-4-2_4d94b61a-b653-4338-b18d-bdb547c3e164"
+      }
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-4",
+      "execution_attempt_id": "attempt-stress-4-7",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-4",
+      "execution_attempt_id": "attempt-stress-4-4",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-4",
+      "execution_attempt_id": "attempt-stress-4-6",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-4",
+      "execution_attempt_id": "attempt-stress-4-1",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-4",
+      "execution_attempt_id": "attempt-stress-4-5",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-4",
+      "execution_attempt_id": "attempt-stress-4-3",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-4",
+      "execution_attempt_id": "attempt-stress-4-0",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/inspect?decision_id=concurrent-stress-4&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-4",
+        "state": "CONSUMED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389938446,
+        "consumed_at": 1784389878551,
+        "expired_at": null,
+        "execution_attempt_id": "attempt-stress-4-2",
+        "consume_lock_token": "tok_concurrent-stress-4_attempt-stress-4-2_4d94b61a-b653-4338-b18d-bdb547c3e164"
+      },
+      "receipts": [
+        {
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-4",
+          "execution_attempt_id": "attempt-stress-4-2",
+          "receipt_id": "rcpt_concurrent-stress-4_attempt-stress-4-2",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "consumed_at": 1784389878551,
+          "consume_lock_token": "tok_concurrent-stress-4_attempt-stress-4-2_4d94b61a-b653-4338-b18d-bdb547c3e164"
+        }
+      ],
+      "audits": [
+        {
+          "audit_id": "audit_concurrent-stress-4_attempt-stress-4-2",
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-4",
+          "event_type": "CONSUME_SUCCESS",
+          "execution_attempt_id": "attempt-stress-4-2",
+          "receipt_id": "rcpt_concurrent-stress-4_attempt-stress-4-2",
+          "observed_at": 1784389878551,
+          "consume_lock_token": "tok_concurrent-stress-4_attempt-stress-4-2_4d94b61a-b653-4338-b18d-bdb547c3e164"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "concurrent-stress-5"
+    },
+    "response": {
+      "id": "concurrent-stress-5",
+      "state": "AVAILABLE",
+      "expires_at": 1784389939635
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 200,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-5",
+      "execution_attempt_id": "attempt-stress-5-2",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONSUMED",
+      "receipt": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-5",
+        "execution_attempt_id": "attempt-stress-5-2",
+        "receipt_id": "rcpt_concurrent-stress-5_attempt-stress-5-2",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "consumed_at": 1784389879753,
+        "consume_lock_token": "tok_concurrent-stress-5_attempt-stress-5-2_039a355c-efd1-49eb-bde6-e9a2b50392b8"
+      }
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-5",
+      "execution_attempt_id": "attempt-stress-5-0",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-5",
+      "execution_attempt_id": "attempt-stress-5-4",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-5",
+      "execution_attempt_id": "attempt-stress-5-6",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-5",
+      "execution_attempt_id": "attempt-stress-5-1",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-5",
+      "execution_attempt_id": "attempt-stress-5-3",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-5",
+      "execution_attempt_id": "attempt-stress-5-5",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-5",
+      "execution_attempt_id": "attempt-stress-5-7",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/inspect?decision_id=concurrent-stress-5&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-5",
+        "state": "CONSUMED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389939635,
+        "consumed_at": 1784389879753,
+        "expired_at": null,
+        "execution_attempt_id": "attempt-stress-5-2",
+        "consume_lock_token": "tok_concurrent-stress-5_attempt-stress-5-2_039a355c-efd1-49eb-bde6-e9a2b50392b8"
+      },
+      "receipts": [
+        {
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-5",
+          "execution_attempt_id": "attempt-stress-5-2",
+          "receipt_id": "rcpt_concurrent-stress-5_attempt-stress-5-2",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "consumed_at": 1784389879753,
+          "consume_lock_token": "tok_concurrent-stress-5_attempt-stress-5-2_039a355c-efd1-49eb-bde6-e9a2b50392b8"
+        }
+      ],
+      "audits": [
+        {
+          "audit_id": "audit_concurrent-stress-5_attempt-stress-5-2",
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-5",
+          "event_type": "CONSUME_SUCCESS",
+          "execution_attempt_id": "attempt-stress-5-2",
+          "receipt_id": "rcpt_concurrent-stress-5_attempt-stress-5-2",
+          "observed_at": 1784389879753,
+          "consume_lock_token": "tok_concurrent-stress-5_attempt-stress-5-2_039a355c-efd1-49eb-bde6-e9a2b50392b8"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "concurrent-stress-6"
+    },
+    "response": {
+      "id": "concurrent-stress-6",
+      "state": "AVAILABLE",
+      "expires_at": 1784389940543
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 200,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-6",
+      "execution_attempt_id": "attempt-stress-6-5",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONSUMED",
+      "receipt": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-6",
+        "execution_attempt_id": "attempt-stress-6-5",
+        "receipt_id": "rcpt_concurrent-stress-6_attempt-stress-6-5",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "consumed_at": 1784389880650,
+        "consume_lock_token": "tok_concurrent-stress-6_attempt-stress-6-5_f5887e3e-ff70-4c65-a35a-adb5c89811c0"
+      }
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-6",
+      "execution_attempt_id": "attempt-stress-6-0",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-6",
+      "execution_attempt_id": "attempt-stress-6-6",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-6",
+      "execution_attempt_id": "attempt-stress-6-7",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-6",
+      "execution_attempt_id": "attempt-stress-6-4",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-6",
+      "execution_attempt_id": "attempt-stress-6-2",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-6",
+      "execution_attempt_id": "attempt-stress-6-1",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-6",
+      "execution_attempt_id": "attempt-stress-6-3",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/inspect?decision_id=concurrent-stress-6&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-6",
+        "state": "CONSUMED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389940543,
+        "consumed_at": 1784389880650,
+        "expired_at": null,
+        "execution_attempt_id": "attempt-stress-6-5",
+        "consume_lock_token": "tok_concurrent-stress-6_attempt-stress-6-5_f5887e3e-ff70-4c65-a35a-adb5c89811c0"
+      },
+      "receipts": [
+        {
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-6",
+          "execution_attempt_id": "attempt-stress-6-5",
+          "receipt_id": "rcpt_concurrent-stress-6_attempt-stress-6-5",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "consumed_at": 1784389880650,
+          "consume_lock_token": "tok_concurrent-stress-6_attempt-stress-6-5_f5887e3e-ff70-4c65-a35a-adb5c89811c0"
+        }
+      ],
+      "audits": [
+        {
+          "audit_id": "audit_concurrent-stress-6_attempt-stress-6-5",
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-6",
+          "event_type": "CONSUME_SUCCESS",
+          "execution_attempt_id": "attempt-stress-6-5",
+          "receipt_id": "rcpt_concurrent-stress-6_attempt-stress-6-5",
+          "observed_at": 1784389880650,
+          "consume_lock_token": "tok_concurrent-stress-6_attempt-stress-6-5_f5887e3e-ff70-4c65-a35a-adb5c89811c0"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "concurrent-stress-7"
+    },
+    "response": {
+      "id": "concurrent-stress-7",
+      "state": "AVAILABLE",
+      "expires_at": 1784389941477
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 200,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-7",
+      "execution_attempt_id": "attempt-stress-7-4",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONSUMED",
+      "receipt": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-7",
+        "execution_attempt_id": "attempt-stress-7-4",
+        "receipt_id": "rcpt_concurrent-stress-7_attempt-stress-7-4",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "consumed_at": 1784389881580,
+        "consume_lock_token": "tok_concurrent-stress-7_attempt-stress-7-4_9e34d453-9a2e-405d-b6ef-d1581925c797"
+      }
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-7",
+      "execution_attempt_id": "attempt-stress-7-7",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-7",
+      "execution_attempt_id": "attempt-stress-7-3",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-7",
+      "execution_attempt_id": "attempt-stress-7-2",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-7",
+      "execution_attempt_id": "attempt-stress-7-6",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-7",
+      "execution_attempt_id": "attempt-stress-7-1",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-7",
+      "execution_attempt_id": "attempt-stress-7-5",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-7",
+      "execution_attempt_id": "attempt-stress-7-0",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/inspect?decision_id=concurrent-stress-7&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-7",
+        "state": "CONSUMED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389941477,
+        "consumed_at": 1784389881580,
+        "expired_at": null,
+        "execution_attempt_id": "attempt-stress-7-4",
+        "consume_lock_token": "tok_concurrent-stress-7_attempt-stress-7-4_9e34d453-9a2e-405d-b6ef-d1581925c797"
+      },
+      "receipts": [
+        {
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-7",
+          "execution_attempt_id": "attempt-stress-7-4",
+          "receipt_id": "rcpt_concurrent-stress-7_attempt-stress-7-4",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "consumed_at": 1784389881580,
+          "consume_lock_token": "tok_concurrent-stress-7_attempt-stress-7-4_9e34d453-9a2e-405d-b6ef-d1581925c797"
+        }
+      ],
+      "audits": [
+        {
+          "audit_id": "audit_concurrent-stress-7_attempt-stress-7-4",
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-7",
+          "event_type": "CONSUME_SUCCESS",
+          "execution_attempt_id": "attempt-stress-7-4",
+          "receipt_id": "rcpt_concurrent-stress-7_attempt-stress-7-4",
+          "observed_at": 1784389881580,
+          "consume_lock_token": "tok_concurrent-stress-7_attempt-stress-7-4_9e34d453-9a2e-405d-b6ef-d1581925c797"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "concurrent-stress-8"
+    },
+    "response": {
+      "id": "concurrent-stress-8",
+      "state": "AVAILABLE",
+      "expires_at": 1784389942305
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 200,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-8",
+      "execution_attempt_id": "attempt-stress-8-2",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONSUMED",
+      "receipt": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-8",
+        "execution_attempt_id": "attempt-stress-8-2",
+        "receipt_id": "rcpt_concurrent-stress-8_attempt-stress-8-2",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "consumed_at": 1784389882401,
+        "consume_lock_token": "tok_concurrent-stress-8_attempt-stress-8-2_a9535f01-9049-4f75-ba1e-f2be6104e2eb"
+      }
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-8",
+      "execution_attempt_id": "attempt-stress-8-7",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-8",
+      "execution_attempt_id": "attempt-stress-8-4",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-8",
+      "execution_attempt_id": "attempt-stress-8-3",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-8",
+      "execution_attempt_id": "attempt-stress-8-0",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-8",
+      "execution_attempt_id": "attempt-stress-8-5",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-8",
+      "execution_attempt_id": "attempt-stress-8-1",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-8",
+      "execution_attempt_id": "attempt-stress-8-6",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/inspect?decision_id=concurrent-stress-8&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-8",
+        "state": "CONSUMED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389942305,
+        "consumed_at": 1784389882401,
+        "expired_at": null,
+        "execution_attempt_id": "attempt-stress-8-2",
+        "consume_lock_token": "tok_concurrent-stress-8_attempt-stress-8-2_a9535f01-9049-4f75-ba1e-f2be6104e2eb"
+      },
+      "receipts": [
+        {
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-8",
+          "execution_attempt_id": "attempt-stress-8-2",
+          "receipt_id": "rcpt_concurrent-stress-8_attempt-stress-8-2",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "consumed_at": 1784389882401,
+          "consume_lock_token": "tok_concurrent-stress-8_attempt-stress-8-2_a9535f01-9049-4f75-ba1e-f2be6104e2eb"
+        }
+      ],
+      "audits": [
+        {
+          "audit_id": "audit_concurrent-stress-8_attempt-stress-8-2",
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-8",
+          "event_type": "CONSUME_SUCCESS",
+          "execution_attempt_id": "attempt-stress-8-2",
+          "receipt_id": "rcpt_concurrent-stress-8_attempt-stress-8-2",
+          "observed_at": 1784389882401,
+          "consume_lock_token": "tok_concurrent-stress-8_attempt-stress-8-2_a9535f01-9049-4f75-ba1e-f2be6104e2eb"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/reset",
+    "status": 200,
+    "request": {},
+    "response": {
+      "status": "RESET"
+    }
+  },
+  {
+    "path": "/seed",
+    "status": 200,
+    "request": {
+      "decision_id": "concurrent-stress-9"
+    },
+    "response": {
+      "id": "concurrent-stress-9",
+      "state": "AVAILABLE",
+      "expires_at": 1784389943109
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 200,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-9",
+      "execution_attempt_id": "attempt-stress-9-0",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONSUMED",
+      "receipt": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-9",
+        "execution_attempt_id": "attempt-stress-9-0",
+        "receipt_id": "rcpt_concurrent-stress-9_attempt-stress-9-0",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "consumed_at": 1784389883213,
+        "consume_lock_token": "tok_concurrent-stress-9_attempt-stress-9-0_0ee0fd80-0459-4e8e-9c26-cdb11a5e94be"
+      }
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-9",
+      "execution_attempt_id": "attempt-stress-9-3",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-9",
+      "execution_attempt_id": "attempt-stress-9-2",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-9",
+      "execution_attempt_id": "attempt-stress-9-4",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-9",
+      "execution_attempt_id": "attempt-stress-9-1",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-9",
+      "execution_attempt_id": "attempt-stress-9-7",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-9",
+      "execution_attempt_id": "attempt-stress-9-6",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/consume",
+    "status": 409,
+    "request": {
+      "organization_id": "org_d1_spike",
+      "decision_id": "concurrent-stress-9",
+      "execution_attempt_id": "attempt-stress-9-5",
+      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_version": "deploy_policy_spike_v1"
+    },
+    "response": {
+      "status": "CONFLICT_DIFFERENT_ATTEMPT",
+      "receipt": null
+    }
+  },
+  {
+    "path": "/inspect?decision_id=concurrent-stress-9&organization_id=org_d1_spike",
+    "status": 200,
+    "response": {
+      "decision": {
+        "organization_id": "org_d1_spike",
+        "decision_id": "concurrent-stress-9",
+        "state": "CONSUMED",
+        "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policy_version": "deploy_policy_spike_v1",
+        "expires_at": 1784389943109,
+        "consumed_at": 1784389883213,
+        "expired_at": null,
+        "execution_attempt_id": "attempt-stress-9-0",
+        "consume_lock_token": "tok_concurrent-stress-9_attempt-stress-9-0_0ee0fd80-0459-4e8e-9c26-cdb11a5e94be"
+      },
+      "receipts": [
+        {
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-9",
+          "execution_attempt_id": "attempt-stress-9-0",
+          "receipt_id": "rcpt_concurrent-stress-9_attempt-stress-9-0",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policy_version": "deploy_policy_spike_v1",
+          "consumed_at": 1784389883213,
+          "consume_lock_token": "tok_concurrent-stress-9_attempt-stress-9-0_0ee0fd80-0459-4e8e-9c26-cdb11a5e94be"
+        }
+      ],
+      "audits": [
+        {
+          "audit_id": "audit_concurrent-stress-9_attempt-stress-9-0",
+          "organization_id": "org_d1_spike",
+          "decision_id": "concurrent-stress-9",
+          "event_type": "CONSUME_SUCCESS",
+          "execution_attempt_id": "attempt-stress-9-0",
+          "receipt_id": "rcpt_concurrent-stress-9_attempt-stress-9-0",
+          "observed_at": 1784389883213,
+          "consume_lock_token": "tok_concurrent-stress-9_attempt-stress-9-0_0ee0fd80-0459-4e8e-9c26-cdb11a5e94be"
+        }
+      ]
+    }
+  }
+]
