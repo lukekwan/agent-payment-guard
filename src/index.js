@@ -25,6 +25,12 @@ const FACILITATOR = "https://facilitator.payai.network";
 const SERVICE_ORIGIN =
   "https://base-agent-preflight.bytoken2023.workers.dev";
 const SERVICE_ICON = `${SERVICE_ORIGIN}/icon.svg`;
+const PUBLIC_BRAND_NAME = "SignGate";
+const PUBLIC_PRODUCT_POSITION = "Agent Policy & Execution Control";
+const PUBLIC_LISTING_NAME = `${PUBLIC_BRAND_NAME} - ${PUBLIC_PRODUCT_POSITION}`;
+const PUBLIC_LISTING_DESCRIPTION =
+  "SignGate is Nomos Labs' agent policy and execution control product. It evaluates authority, mandates, approval requirements, signer boundaries, and evidence before autonomous agents buy, pay, call infrastructure, or trigger money movement. x402 is a supported protocol and commerce use case, not the product category.";
+const CONTACT_EMAIL = "nomolabs2026@gmail.com";
 const STATIC_FACILITATOR_SUPPORT = {
   kinds: [{ x402Version: 2, scheme: "exact", network: BASE_MAINNET }],
   extensions: [
@@ -11705,14 +11711,12 @@ function openApi(origin) {
   const document = {
     openapi: "3.1.0",
       info: {
-        title:
-          "SignGate Agentic Commerce Preflight | Economic Policy Decision Layer",
+        title: PUBLIC_LISTING_NAME,
         version: "2.0.0",
-        description:
-        "SignGate is the policy decision layer between autonomous agents and systems that move money. Before an AI agent pays, buys an API, triggers a signer, or commits to an economically consequential action, SignGate evaluates authority, mandate, merchant evidence, risk signals, policy, and signer requirements.",
+        description: PUBLIC_LISTING_DESCRIPTION,
         contact: { email: "hello@signgate.dev" },
         "x-guidance":
-          "Use /v1/agentic-commerce/preflight for the unified decision contract. Treat wallet-risk, RPC, chain-data, and buyer-identity endpoints as evidence providers and application-specific x402 products.",
+          "Use /v1/agentic-commerce/preflight for the unified decision contract. Treat x402, wallet-risk, RPC, chain-data, and buyer-identity endpoints as supported evidence providers and commerce surfaces, not as the whole SignGate product identity.",
     },
     servers: [{ url: origin }],
     paths: {},
@@ -12052,9 +12056,8 @@ function agentCard(origin) {
     ),
   ];
   return {
-    name: "SignGate Agentic Commerce Preflight",
-    description:
-      "Economic policy decisions between autonomous agents and systems that move money: evaluate agent authority, mandate, merchant evidence, risk signals, and signer requirements before payment or signing.",
+    name: PUBLIC_LISTING_NAME,
+    description: PUBLIC_LISTING_DESCRIPTION,
     url: origin,
     version: "2.0.0",
     documentationUrl: `${origin}/openapi.json`,
@@ -12113,9 +12116,8 @@ function serviceManifest(origin) {
   ];
   return {
     schema_version: "1.0",
-    name: "SignGate Agentic Commerce Preflight",
-    description:
-      "Policy decision layer between autonomous agents and systems that move money. Includes a hosted Agentic Commerce Preflight API, embedded policy kit, signer directive, audit reasons, and x402 evidence providers.",
+    name: PUBLIC_LISTING_NAME,
+    description: PUBLIC_LISTING_DESCRIPTION,
     base_url: origin,
     openapi_url: `${origin}/openapi.json`,
     agentic_commerce_preflight_url: `${origin}/agentic-commerce-preflight`,
@@ -12281,7 +12283,7 @@ function buyerCatalog(origin) {
   const workflows = recommendedWorkflows();
   return {
     schema_version: "1.0",
-    name: "Agent Buyer Identity and Commerce Safety Catalog",
+    name: "SignGate Agent Policy & Execution Control Catalog",
     description:
       "Machine-readable guide for SignGate economic policy decisions and the x402 evidence providers that support them. Paid endpoints are application-specific signals; the core abstraction is ALLOW, REQUIRE_APPROVAL, or DENY before an agent spends or triggers a signer.",
     origin,
@@ -12456,7 +12458,7 @@ function workflowCatalog(origin) {
   );
   return {
     schema_version: "1.0",
-    name: "SignGate Agent Risk Utility Workflows",
+    name: "SignGate Agent Policy & Execution Control Workflows",
     description:
       "Workflow-first bundles that tell AI agents which x402 risk utilities to buy before payment, signing, routing, or chain-data access.",
     origin,
@@ -12490,9 +12492,8 @@ function registry(origin) {
   const operations = paidDiscoveryOperations(origin);
   return {
     schema_version: "1.0",
-    name: "SignGate Agent Risk Utilities",
-    description:
-      "Evidence providers and x402 products for SignGate, the economic policy decision layer between autonomous agents and systems that move money.",
+    name: PUBLIC_LISTING_NAME,
+    description: PUBLIC_LISTING_DESCRIPTION,
     positioning:
       "Use SignGate to decide whether an autonomous agent is authorized to buy, pay, call infrastructure, or trigger a signer; use individual x402 endpoints as evidence signals.",
     origin,
@@ -12527,7 +12528,7 @@ function registry(origin) {
 
 function endpointsTxt(origin) {
   const lines = [
-    "# SignGate Agentic Commerce Preflight",
+    `# ${PUBLIC_LISTING_NAME}`,
     `origin: ${origin}`,
     `openapi: ${origin}/openapi.json`,
     `x402: ${origin}/.well-known/x402`,
@@ -12552,7 +12553,14 @@ function x402WellKnown(origin) {
   const operations = paidDiscoveryOperations(origin);
   return {
     version: 1,
-    name: "SignGate Agentic Commerce Preflight",
+    name: PUBLIC_LISTING_NAME,
+    description: PUBLIC_LISTING_DESCRIPTION,
+    brand: {
+      organization: "Nomos Labs",
+      product: PUBLIC_BRAND_NAME,
+      product_position: PUBLIC_PRODUCT_POSITION,
+    },
+    supported_protocols: ["x402"],
     operation_count: operations.length,
     resources: PRODUCTS.map(product => `${origin}${product.path}`),
     paid_operations: operations.map(operation => ({
@@ -12602,7 +12610,8 @@ async function verificationData(origin) {
   }
 
   return {
-    service: "SignGate Agent Risk Utilities",
+    service: PUBLIC_LISTING_NAME,
+    listing_name: PUBLIC_LISTING_NAME,
     deployment_url: origin,
     checked_at: new Date().toISOString(),
     openapi_url: `${origin}/openapi.json`,
@@ -12636,7 +12645,7 @@ function verificationHtml(origin) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>SignGate Agent Risk Utilities — Deployment Verification</title>
+  <title>${PUBLIC_LISTING_NAME} — Deployment Verification</title>
   <style>
     body{font:16px/1.5 system-ui,sans-serif;max-width:920px;margin:40px auto;padding:0 18px;background:#0b1020;color:#edf2ff}
     h1{font-size:28px}.ok{color:#62e6a7}.bad{color:#ff8b8b}
@@ -12645,7 +12654,7 @@ function verificationHtml(origin) {
   </style>
 </head>
 <body>
-  <h1>SignGate Agent Risk Utilities</h1>
+  <h1>${PUBLIC_LISTING_NAME}</h1>
   <p id="summary">Checking deployment and PayAI Bazaar…</p>
   <div id="products"></div>
   <p><a href="/openapi.json">OpenAPI</a> · <a href="/catalog.json">AI Buyer Catalog</a> · <a href="/.well-known/agent-card.json">Agent Card</a> · <a href="/.well-known/service.json">Service Manifest</a> · <a href="/verification.json">Raw verification JSON</a></p>
@@ -12668,10 +12677,13 @@ function verificationHtml(origin) {
 </html>`;
 }
 
-function landingHtml(origin, locale = "en") {
+function landingHtml(origin, locale = "en", formspreeEndpoint = "") {
   const signGateProduct = PRODUCTS_BY_ID["agent-payment-risk-gateway"];
   const signGateExample = productExampleUrl(origin, signGateProduct);
   const zh = locale === "zh";
+  const contactEndpoint = String(formspreeEndpoint || "").trim();
+  const contactAction = contactEndpoint || "#contact";
+  const contactEnabled = Boolean(contactEndpoint);
   const copy = {
     zh: {
       lang: "zh-Hant",
@@ -12752,6 +12764,19 @@ function landingHtml(origin, locale = "en") {
       company: "公司",
       about: "關於",
       contact: "聯絡我們",
+      contactTitle: "想試 SignGate？直接留給我",
+      contactBody:
+        `表單會透過 Formspree 寄到 ${CONTACT_EMAIL}，不需要先建後台。`,
+      contactName: "姓名",
+      contactEmail: "Email",
+      contactCompany: "公司 / 團隊",
+      contactMessage: "想驗證的場景",
+      contactSubmit: "送出",
+      contactPending: "送出中...",
+      contactSuccess: "已送出，我會從信箱收到。",
+      contactMissing:
+        "Formspree endpoint 尚未設定；建立表單後把 endpoint 填到 FORMSPREE_ENDPOINT 即可啟用。",
+      contactError: "送出失敗，請稍後再試或直接寄信。",
       productFooter: "產品",
       copyright:
         "© 2026 SignGate. 私鑰不經手，不保管資產，僅提供 preflight 決策服務。",
@@ -12837,6 +12862,19 @@ function landingHtml(origin, locale = "en") {
       company: "Company",
       about: "About",
       contact: "Contact",
+      contactTitle: "Try SignGate",
+      contactBody:
+        `This form sends inquiries through Formspree to ${CONTACT_EMAIL}. No backend required.`,
+      contactName: "Name",
+      contactEmail: "Email",
+      contactCompany: "Company / team",
+      contactMessage: "What do you want to evaluate?",
+      contactSubmit: "Send",
+      contactPending: "Sending...",
+      contactSuccess: "Sent. The inquiry will arrive by email.",
+      contactMissing:
+        "Formspree endpoint is not configured yet. Create the form, then set FORMSPREE_ENDPOINT to enable submissions.",
+      contactError: "Could not send. Please try again later or email directly.",
       productFooter: "Product",
       copyright:
         "© 2026 SignGate. No custody. No private key access. Preflight decisions only.",
@@ -12891,7 +12929,7 @@ function landingHtml(origin, locale = "en") {
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <style>
 :root{color-scheme:dark;--bg:#080D18;--bg2:#0D1424;--panel:#111B2E;--panel2:#0D1728;--line:#243149;--text:#F2F5FA;--muted:#96A5BF;--soft:#C4CEE0;--blue:#7C9CFA;--blue2:#4F6FE8;--green:#6EE7B7;--amber:#F2C94C;--red:#F2777A;--mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;--sans:Inter,"PingFang TC","Noto Sans TC",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 80% 0%,rgba(79,111,232,.18),transparent 34rem),linear-gradient(180deg,var(--bg),#090E19 45rem);color:var(--text);font-family:var(--sans);line-height:1.62}a{color:inherit;text-decoration:none}button{font:inherit}.nav{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:2rem;padding:1rem 7vw;border-bottom:1px solid rgba(36,49,73,.78);background:rgba(8,13,24,.86);backdrop-filter:blur(18px)}.brand{font-size:1.35rem;font-weight:800}.links{display:flex;align-items:center;gap:1.25rem;margin-left:auto;color:var(--soft);font-size:.95rem}.links a:hover{color:var(--text)}.nav-cta{padding:.55rem .85rem;border:1px solid var(--blue2);border-radius:.5rem;background:rgba(124,156,250,.11);color:var(--text);font-weight:700}.lang-toggle{border:0;background:transparent;color:var(--muted);font-weight:700;cursor:pointer}.wrap{max-width:1180px;margin:0 auto;padding:0 1.5rem}.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(22rem,.95fr);gap:3.5rem;align-items:center;min-height:42rem;padding:5.5rem 0 4rem}.eyebrow{color:var(--green);font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1rem}h1{max-width:11ch;margin:0 0 1.4rem;font-size:4.7rem;line-height:1.04;letter-spacing:0}h2{margin:0 0 1rem;font-size:2.15rem;line-height:1.18;letter-spacing:0}h3{margin:0 0 .65rem;font-size:1.1rem}.subtitle{max-width:48rem;color:#CBD5E7;font-size:1.18rem;margin:0}.cta-row{display:flex;gap:.85rem;flex-wrap:wrap;margin-top:2rem}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:2.9rem;border-radius:.5rem;padding:.72rem 1rem;border:1px solid var(--blue2);background:var(--blue);color:#07101E;font-weight:800}.btn.secondary{background:rgba(124,156,250,.08);color:var(--text)}.flow-card,.panel,.api-card{border:1px solid var(--line);border-radius:.65rem;background:rgba(17,27,46,.82);box-shadow:0 1.5rem 5rem rgba(0,0,0,.24)}.flow-card{padding:1.25rem}.flow-card p{margin:.2rem 0 1.1rem;color:var(--muted)}.flow-step{display:grid;grid-template-columns:2rem 1fr;gap:.85rem;align-items:start;padding:.85rem 0;border-top:1px solid var(--line)}.flow-step:first-of-type{border-top:0}.num{display:flex;align-items:center;justify-content:center;width:2rem;height:2rem;border-radius:999px;background:rgba(124,156,250,.14);border:1px solid rgba(124,156,250,.38);font-family:var(--mono);font-size:.78rem;color:var(--green)}.decision-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem;margin-top:1rem}.chip{border:1px solid var(--line);border-radius:.45rem;padding:.58rem .7rem;text-align:center;font-family:var(--mono);font-size:.8rem}.chip.allow{color:var(--green);border-color:rgba(110,231,183,.45)}.chip.review{color:var(--amber);border-color:rgba(242,201,76,.45)}.chip.deny{color:var(--red);border-color:rgba(242,119,122,.45)}.section{padding:4.2rem 0;border-top:1px solid rgba(36,49,73,.82)}.section.noline{border-top:0}.text-block{max-width:56rem}.text-block p{margin:0;color:var(--soft);font-size:1.05rem}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}.panel{padding:1.25rem}.panel p{margin:0;color:var(--muted)}.panel ul{margin:.85rem 0 0;padding:0;list-style:none;color:var(--soft)}.panel li{padding:.38rem 0;border-top:1px solid rgba(36,49,73,.6)}.panel li:first-child{border-top:0}.code{font-family:var(--mono);font-size:.85rem;color:#DCE8FA;white-space:pre;overflow:auto;margin:0;padding:1rem;background:#08101D;border:1px solid var(--line);border-radius:.5rem}.api-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.api-card{padding:1rem}.api-card h3{font-family:var(--mono);font-size:.82rem;color:var(--green);text-transform:uppercase}.note{margin:1rem 0 0;color:var(--muted)}.footer{border-top:1px solid var(--line);padding:2rem 0 3rem;color:var(--muted)}.footer-grid{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:2rem}.footer a{display:block;margin:.35rem 0;color:var(--soft)}code.inline{color:#FFD27D;font-family:var(--mono)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 80% 0%,rgba(79,111,232,.18),transparent 34rem),linear-gradient(180deg,var(--bg),#090E19 45rem);color:var(--text);font-family:var(--sans);line-height:1.62}a{color:inherit;text-decoration:none}button,input,textarea{font:inherit}.nav{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:2rem;padding:1rem 7vw;border-bottom:1px solid rgba(36,49,73,.78);background:rgba(8,13,24,.86);backdrop-filter:blur(18px)}.brand{font-size:1.35rem;font-weight:800}.links{display:flex;align-items:center;gap:1.25rem;margin-left:auto;color:var(--soft);font-size:.95rem}.links a:hover{color:var(--text)}.nav-cta{padding:.55rem .85rem;border:1px solid var(--blue2);border-radius:.5rem;background:rgba(124,156,250,.11);color:var(--text);font-weight:700}.lang-toggle{border:0;background:transparent;color:var(--muted);font-weight:700;cursor:pointer}.wrap{max-width:1180px;margin:0 auto;padding:0 1.5rem}.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(22rem,.95fr);gap:3.5rem;align-items:center;min-height:42rem;padding:5.5rem 0 4rem}.eyebrow{color:var(--green);font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1rem}h1{max-width:11ch;margin:0 0 1.4rem;font-size:4.7rem;line-height:1.04;letter-spacing:0}h2{margin:0 0 1rem;font-size:2.15rem;line-height:1.18;letter-spacing:0}h3{margin:0 0 .65rem;font-size:1.1rem}.subtitle{max-width:48rem;color:#CBD5E7;font-size:1.18rem;margin:0}.cta-row{display:flex;gap:.85rem;flex-wrap:wrap;margin-top:2rem}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:2.9rem;border-radius:.5rem;padding:.72rem 1rem;border:1px solid var(--blue2);background:var(--blue);color:#07101E;font-weight:800;cursor:pointer}.btn.secondary{background:rgba(124,156,250,.08);color:var(--text)}.flow-card,.panel,.api-card,.contact-form{border:1px solid var(--line);border-radius:.65rem;background:rgba(17,27,46,.82);box-shadow:0 1.5rem 5rem rgba(0,0,0,.24)}.flow-card{padding:1.25rem}.flow-card p{margin:.2rem 0 1.1rem;color:var(--muted)}.flow-step{display:grid;grid-template-columns:2rem 1fr;gap:.85rem;align-items:start;padding:.85rem 0;border-top:1px solid var(--line)}.flow-step:first-of-type{border-top:0}.num{display:flex;align-items:center;justify-content:center;width:2rem;height:2rem;border-radius:999px;background:rgba(124,156,250,.14);border:1px solid rgba(124,156,250,.38);font-family:var(--mono);font-size:.78rem;color:var(--green)}.decision-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem;margin-top:1rem}.chip{border:1px solid var(--line);border-radius:.45rem;padding:.58rem .7rem;text-align:center;font-family:var(--mono);font-size:.8rem}.chip.allow{color:var(--green);border-color:rgba(110,231,183,.45)}.chip.review{color:var(--amber);border-color:rgba(242,201,76,.45)}.chip.deny{color:var(--red);border-color:rgba(242,119,122,.45)}.section{padding:4.2rem 0;border-top:1px solid rgba(36,49,73,.82)}.section.noline{border-top:0}.text-block{max-width:56rem}.text-block p{margin:0;color:var(--soft);font-size:1.05rem}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}.panel{padding:1.25rem}.panel p{margin:0;color:var(--muted)}.panel ul{margin:.85rem 0 0;padding:0;list-style:none;color:var(--soft)}.panel li{padding:.38rem 0;border-top:1px solid rgba(36,49,73,.6)}.panel li:first-child{border-top:0}.code{font-family:var(--mono);font-size:.85rem;color:#DCE8FA;white-space:pre;overflow:auto;margin:0;padding:1rem;background:#08101D;border:1px solid var(--line);border-radius:.5rem}.api-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.api-card{padding:1rem}.api-card h3{font-family:var(--mono);font-size:.82rem;color:var(--green);text-transform:uppercase}.contact-form{display:grid;gap:.85rem;padding:1.25rem}.contact-form label{display:grid;gap:.35rem;color:var(--soft);font-size:.9rem;font-weight:700}.contact-form input,.contact-form textarea{width:100%;border:1px solid var(--line);border-radius:.5rem;background:#08101D;color:var(--text);padding:.72rem .8rem}.contact-form textarea{min-height:8.5rem;resize:vertical}.contact-status{min-height:1.5rem;margin:0;color:var(--muted)}.contact-status.success{color:var(--green)}.contact-status.error{color:var(--red)}.note{margin:1rem 0 0;color:var(--muted)}.footer{border-top:1px solid var(--line);padding:2rem 0 3rem;color:var(--muted)}.footer-grid{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:2rem}.footer a{display:block;margin:.35rem 0;color:var(--soft)}code.inline{color:#FFD27D;font-family:var(--mono)}
 @media (max-width:900px){.nav{position:static;align-items:flex-start;flex-direction:column;padding:1rem 1.25rem}.links{margin-left:0;flex-wrap:wrap}.hero,.grid-2,.api-grid,.footer-grid{grid-template-columns:1fr}.hero{min-height:0;padding:3.5rem 0}.grid-3{grid-template-columns:1fr}h1{font-size:3.4rem}.wrap{padding:0 1.25rem}}
 @media (max-width:560px){.links{gap:.8rem}.nav-cta{order:4}.decision-strip{grid-template-columns:1fr}h1{font-size:2.65rem}h2{font-size:1.65rem}.subtitle{font-size:1.03rem}.section{padding:3rem 0}.code{font-size:.76rem}}
 </style>
@@ -13031,13 +13069,32 @@ function landingHtml(origin, locale = "en") {
       <p class="note">${t.previewNote}</p>
     </div>
   </section>
+
+  <section class="section" id="contact">
+    <div class="grid-2">
+      <div class="text-block">
+        <h2>${t.contactTitle}</h2>
+        <p>${t.contactBody}</p>
+      </div>
+      <form class="contact-form" id="contact-form" action="${escapeHtml(contactAction)}" method="POST" data-enabled="${contactEnabled ? "true" : "false"}">
+        <input type="hidden" name="_subject" value="New SignGate inquiry">
+        <input type="hidden" name="source" value="${escapeHtml(origin)}/signgate">
+        <label>${t.contactName}<input name="name" autocomplete="name" required></label>
+        <label>${t.contactEmail}<input name="email" type="email" autocomplete="email" required></label>
+        <label>${t.contactCompany}<input name="company" autocomplete="organization"></label>
+        <label>${t.contactMessage}<textarea name="message" required></textarea></label>
+        <button class="btn" type="submit">${t.contactSubmit}</button>
+        <p class="contact-status" id="contact-status">${contactEnabled ? "" : t.contactMissing}</p>
+      </form>
+    </div>
+  </section>
 </main>
 <footer class="footer">
   <div class="wrap footer-grid">
     <div><strong>SignGate</strong><p>${t.footerText}</p></div>
     <div><strong>${t.productFooter}</strong><a href="#policy-engine">Policy Engine</a><a href="#risk-checks">Risk Checks</a><a href="#signer-isolation">Signer Isolation</a><a href="#use-cases">Use Cases</a></div>
     <div><strong>${t.developer}</strong><a href="/openapi.json">${t.apiDocs}</a><a href="/openapi.json">OpenAPI</a><a href="/catalog.json">Catalog</a><a href="/.well-known/agent-card.json">Agent Card</a><a href="/verify">Verify</a></div>
-    <div><strong>${t.company}</strong><a href="/">${t.about}</a><a href="#security">${t.security}</a><a href="mailto:hello@signgate.dev">${t.contact}</a></div>
+    <div><strong>${t.company}</strong><a href="/">${t.about}</a><a href="#security">${t.security}</a><a href="#contact">${t.contact}</a></div>
   </div>
   <div class="wrap"><p class="note">${t.copyright}</p></div>
 </footer>
@@ -13046,6 +13103,40 @@ document.getElementById("lang-toggle").addEventListener("click", event => {
   event.preventDefault();
   const current = document.querySelector("main").dataset.locale;
   window.location.href = current === "zh" ? "/en/signgate" : "/zh/signgate";
+});
+const contactForm = document.getElementById("contact-form");
+const contactStatus = document.getElementById("contact-status");
+contactForm.addEventListener("submit", async event => {
+  if (contactForm.dataset.enabled !== "true") {
+    event.preventDefault();
+    contactStatus.className = "contact-status error";
+    contactStatus.textContent = "${escapeHtml(t.contactMissing)}";
+    return;
+  }
+  event.preventDefault();
+  const button = contactForm.querySelector("button[type='submit']");
+  const defaultText = button.textContent;
+  button.disabled = true;
+  button.textContent = "${escapeHtml(t.contactPending)}";
+  contactStatus.className = "contact-status";
+  contactStatus.textContent = "";
+  try {
+    const response = await fetch(contactForm.action, {
+      method: "POST",
+      body: new FormData(contactForm),
+      headers: { accept: "application/json" },
+    });
+    if (!response.ok) throw new Error("Formspree request failed");
+    contactForm.reset();
+    contactStatus.className = "contact-status success";
+    contactStatus.textContent = "${escapeHtml(t.contactSuccess)}";
+  } catch (error) {
+    contactStatus.className = "contact-status error";
+    contactStatus.textContent = "${escapeHtml(t.contactError)}";
+  } finally {
+    button.disabled = false;
+    button.textContent = defaultText;
+  }
 });
 </script>
 </body>
@@ -13088,10 +13179,10 @@ function createPaidApp() {
           : product.id === "agent-payment-guard"
           ? "Agent Payment Guard"
           : product.id.startsWith("public-wallet-risk-")
-          ? "Public Wallet Risk Intelligence"
+          ? "SignGate Wallet Risk Intelligence"
           : product.id.startsWith("bcs-")
           ? "BlockchainSecurity Atlantis"
-          : "SignGate Agent Risk Utilities",
+          : PUBLIC_LISTING_NAME,
       tags:
         [
           "base-alpha-risk-context",
@@ -15724,7 +15815,7 @@ function agenticCommercePreflightHtml(origin) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SignGate Agentic Commerce Preflight</title>
+<title>SignGate - Agent Policy & Execution Control</title>
 <meta name="description" content="Policy decision layer between autonomous agents and the systems that move money.">
 <style>
 body{margin:0;background:#f7f8fb;color:#111827;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.55}
@@ -16013,7 +16104,7 @@ export default {
       }
     } else if (url.pathname === "/icon.svg") {
       response = new Response(
-        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><rect width="128" height="128" rx="26" fill="#0b1629"/><path d="M64 15 108 32v31c0 26-17 43-44 53C37 106 20 89 20 63V32l44-17Z" fill="#3d82f6"/><path d="M43 64 58 79l29-34" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="SignGate logo"><rect width="128" height="128" fill="#f7f7f4"/><path d="M36 22h30v10H46v36H36V22Zm26 0h30v46H82V32H62V22ZM36 60h10v36h20v10H36V60Zm46 0h10v46H62V96h20V60Z" fill="#050505"/><path d="M60 49v30H48V38l23 23H60Zm20 30V49h-12v41L45 67h11l12 12h12Z" fill="#050505"/><rect x="60" y="60" width="8" height="8" fill="#9be80f"/></svg>`,
         {
           headers: {
             "content-type": "image/svg+xml",
@@ -16115,7 +16206,7 @@ Results are public-data heuristics, not guarantees of safety.
       const locale = url.pathname === "/zh/signgate" ? "zh" : "en";
       response = request.headers.get("accept")?.includes("application/json")
         ? json(serviceManifest(origin))
-        : new Response(landingHtml(origin, locale), {
+        : new Response(landingHtml(origin, locale, env.FORMSPREE_ENDPOINT), {
             headers: {
               "content-type": "text/html; charset=utf-8",
               "cache-control": "no-cache",

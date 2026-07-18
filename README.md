@@ -1,4 +1,4 @@
-# SignGate Agentic Commerce Preflight
+# SignGate - Agent Policy & Execution Control
 
 Policy decision layer between autonomous agents and the systems that move
 money. Before an AI agent pays, buys an API, triggers a signer, or commits to
@@ -7,6 +7,22 @@ merchant evidence, risk signals, policy, and signer requirements.
 
 Production service:
 https://base-agent-preflight.bytoken2023.workers.dev/
+
+Public contact form:
+`GET /signgate#contact`
+
+The SignGate landing page can send inquiries through Formspree to
+`nomolabs2026@gmail.com`. Formspree requires a generated endpoint such as
+`https://formspree.io/f/...`; the old email-address endpoint is not supported.
+After creating the Formspree form, enable submissions with:
+
+```sh
+wrangler secret put FORMSPREE_ENDPOINT
+npm run deploy
+```
+
+If `FORMSPREE_ENDPOINT` is not set, the contact form renders but blocks
+submission with a clear setup message.
 
 AI buyer catalog:
 https://base-agent-preflight.bytoken2023.workers.dev/catalog.json
