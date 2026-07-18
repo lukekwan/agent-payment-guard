@@ -1,0 +1,520 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SignGate Decision API v0.1",
+    "version": "0.1.0-preview",
+    "description": "Preview documentation for the SignGate deploy_change decision API. Production deployment is not authorized. ALLOW is action-bound, time-limited, single-use, and is not executable until atomic consume succeeds."
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "Preview host supplied by an authorized Nomos Labs integration.",
+      "variables": {
+        "host": {
+          "default": "preview.signgate.local",
+          "description": "Preview-only API host. No production base URL is authorized in DOC-SG-001."
+        }
+      }
+    }
+  ],
+  "security": [{ "BearerAuth": [] }],
+  "paths": {
+    "/v1/decisions": {
+      "post": {
+        "summary": "Evaluate a deploy_change action",
+        "description": "Returns ALLOW, REQUIRE_APPROVAL, or DENY only after successful authentication, strict JSON/schema validation, canonical fingerprinting, policy evaluation, persistence, and audit. Every non-valid-ALLOW outcome fails closed.",
+        "operationId": "createDecision",
+        "tags": ["Decisions"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DecisionRequest" },
+              "examples": {
+                "previewAllow": { "$ref": "#/components/examples/PreviewAllowRequest" },
+                "permissionApproval": { "$ref": "#/components/examples/PermissionApprovalRequest" }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Completed policy evaluation. REQUIRE_APPROVAL and DENY do not authorize execution.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DecisionResponse" },
+                "examples": {
+                  "allow": { "$ref": "#/components/examples/AllowResponse" },
+                  "requireApproval": { "$ref": "#/components/examples/RequireApprovalResponse" },
+                  "deny": { "$ref": "#/components/examples/DenyResponse" }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/MalformedJson" },
+          "401": { "$ref": "#/components/responses/AuthenticationFailed" },
+          "403": { "$ref": "#/components/responses/AuthorizationFailed" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/SchemaInvalid" },
+          "500": { "$ref": "#/components/responses/InvariantFailure" },
+          "503": { "$ref": "#/components/responses/DependencyUnavailable" }
+        }
+      }
+    },
+    "/v1/decisions/{decision_id}/consume": {
+      "post": {
+        "summary": "Atomically consume an ALLOW decision",
+        "description": "Consumes a valid ALLOW before execution. An ALLOW is not executable until this operation succeeds. The decision must be ALLOW, AVAILABLE, unexpired, organization-bound, fingerprint-bound, policy-bound, and unused.",
+        "operationId": "consumeDecision",
+        "tags": ["Decisions"],
+        "parameters": [
+          {
+            "name": "decision_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "pattern": "^dec_[A-Za-z0-9_:-]+$" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ConsumeRequest" },
+              "examples": { "consume": { "$ref": "#/components/examples/ConsumeRequest" } }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The decision was consumed, or the same execution_attempt_id replayed the original receipt.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ConsumeResponse" },
+                "examples": { "receipt": { "$ref": "#/components/examples/ConsumeResponse" } }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/MalformedJson" },
+          "401": { "$ref": "#/components/responses/AuthenticationFailed" },
+          "403": { "$ref": "#/components/responses/AuthorizationFailed" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/SchemaInvalid" },
+          "500": { "$ref": "#/components/responses/InvariantFailure" },
+          "503": { "$ref": "#/components/responses/DependencyUnavailable" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Preview API key. Raw keys are never stored or logged by SignGate."
+      }
+    },
+    "schemas": {
+      "Decision": { "type": "string", "enum": ["ALLOW", "REQUIRE_APPROVAL", "DENY"] },
+      "ExecutionDirectiveAction": { "type": "string", "enum": ["EXECUTE", "DO_NOT_EXECUTE"] },
+      "DecisionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["contract_version", "request_id", "organization_id", "agent", "action", "mandate", "evidence"],
+        "properties": {
+          "contract_version": { "const": "0.1" },
+          "request_id": { "type": "string", "description": "Organization-scoped idempotency key." },
+          "organization_id": { "type": "string", "description": "Must exactly match the authenticated API credential organization." },
+          "agent": { "$ref": "#/components/schemas/Agent" },
+          "action": { "$ref": "#/components/schemas/DeployChangeAction" },
+          "intent": { "type": "string", "maxLength": 1024, "description": "Descriptive only; never overrides policy." },
+          "mandate": { "$ref": "#/components/schemas/Mandate" },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 128,
+            "items": { "$ref": "#/components/schemas/Evidence" }
+          },
+          "context": { "$ref": "#/components/schemas/RequestContext" }
+        }
+      },
+      "Agent": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "authenticated_by"],
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string", "enum": ["coding_agent"] },
+          "authenticated_by": { "type": "string" }
+        }
+      },
+      "DeployChangeAction": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "target", "parameters"],
+        "properties": {
+          "type": { "const": "deploy_change" },
+          "target": { "$ref": "#/components/schemas/DeployTarget" },
+          "parameters": { "$ref": "#/components/schemas/DeployParameters" }
+        }
+      },
+      "DeployTarget": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["environment", "service", "repository"],
+        "properties": {
+          "environment": { "type": "string", "description": "preview is the executable scope in DOC-SG-001. production never receives executable ALLOW before Founder Gate 4." },
+          "service": { "type": "string" },
+          "project": { "type": "string" },
+          "repository": { "$ref": "#/components/schemas/RepositoryIdentity" }
+        }
+      },
+      "RepositoryIdentity": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["host", "owner", "repo", "remote_url"],
+        "properties": {
+          "host": { "type": "string" },
+          "owner": { "type": "string" },
+          "repo": { "type": "string" },
+          "remote_url": { "type": "string" }
+        }
+      },
+      "DeployParameters": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["git_commit", "changed_paths", "changed_routes", "touches_secrets", "touches_dns", "touches_permissions", "deployment_strategy", "deployment_command_id", "configuration_fingerprint", "ci_evidence"],
+        "properties": {
+          "git_commit": { "type": "string" },
+          "artifact_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+          "diff_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+          "changed_paths": {
+            "type": "array",
+            "maxItems": 128,
+            "items": { "type": "string", "maxLength": 512 },
+            "description": "Set semantics: members are validated, exact duplicates removed, sorted deterministically, and case-distinct values preserved before fingerprinting."
+          },
+          "changed_routes": {
+            "type": "array",
+            "maxItems": 128,
+            "items": { "type": "string", "maxLength": 512 },
+            "description": "Set semantics matching changed_paths."
+          },
+          "touches_secrets": { "type": "boolean" },
+          "touches_dns": { "type": "boolean" },
+          "touches_permissions": { "type": "boolean" },
+          "touches_credentials": { "type": "boolean" },
+          "deployment_strategy": { "type": "string" },
+          "deployment_command_id": { "type": "string" },
+          "configuration_fingerprint": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+          "ci_evidence": { "$ref": "#/components/schemas/CiEvidence" }
+        },
+        "anyOf": [{ "required": ["artifact_digest"] }, { "required": ["diff_digest"] }]
+      },
+      "CiEvidence": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["run_id", "commit", "status", "checks"],
+        "properties": {
+          "provider": { "type": "string" },
+          "run_id": { "type": "string" },
+          "commit": { "type": "string" },
+          "status": { "type": "string", "enum": ["passed", "failed"] },
+          "checks": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Order is semantically significant for CI evidence."
+          }
+        }
+      },
+      "Mandate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "scope", "issued_by", "expires_at"],
+        "properties": {
+          "id": { "type": "string" },
+          "scope": { "type": "array", "items": { "type": "string" } },
+          "issued_by": { "type": "string" },
+          "expires_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Evidence": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "source", "status", "observed_at"],
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string" },
+          "source": { "type": "string" },
+          "status": { "type": "string" },
+          "observed_at": { "type": "string", "format": "date-time" },
+          "subject_fingerprint": { "type": "string" },
+          "original_decision_id": { "type": "string" },
+          "action_fingerprint": { "type": "string" },
+          "policy_version": { "type": "string" },
+          "expires_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RequestContext": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": { "requested_at": { "type": "string", "format": "date-time" } }
+      },
+      "DecisionResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["contract_version", "api_status", "decision", "decision_id", "request_id", "organization_id", "action_fingerprint", "bound_action", "policy_version", "issued_at", "expires_at", "reason_codes", "required_checks", "approval", "execution_directive", "audit_id"],
+        "properties": {
+          "contract_version": { "const": "0.1" },
+          "api_status": { "const": "preview" },
+          "decision": { "$ref": "#/components/schemas/Decision" },
+          "decision_id": { "type": "string" },
+          "request_id": { "type": "string" },
+          "organization_id": { "type": "string" },
+          "action_fingerprint": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+          "bound_action": { "$ref": "#/components/schemas/DeployChangeAction" },
+          "policy_version": { "type": "string" },
+          "issued_at": { "type": "string", "format": "date-time" },
+          "expires_at": { "type": "string", "format": "date-time" },
+          "reason_codes": { "type": "array", "items": { "type": "string" } },
+          "required_checks": { "type": "array", "items": { "type": "string" } },
+          "approval": { "$ref": "#/components/schemas/ApprovalRequirement" },
+          "execution_directive": { "$ref": "#/components/schemas/ExecutionDirective" },
+          "audit_id": { "type": "string" }
+        }
+      },
+      "ApprovalRequirement": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["required"],
+        "properties": {
+          "required": { "type": "boolean" },
+          "role": { "type": "string" },
+          "grant_binding_required": { "type": "boolean" }
+        }
+      },
+      "ExecutionDirective": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action", "max_uses", "replay_protection"],
+        "properties": {
+          "action": { "$ref": "#/components/schemas/ExecutionDirectiveAction" },
+          "max_uses": { "type": "integer", "minimum": 0, "maximum": 1 },
+          "replay_protection": { "type": "string" }
+        }
+      },
+      "ConsumeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["contract_version", "organization_id", "action_fingerprint", "policy_version", "execution_attempt_id"],
+        "properties": {
+          "contract_version": { "const": "0.1" },
+          "organization_id": { "type": "string" },
+          "action_fingerprint": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+          "policy_version": { "type": "string" },
+          "execution_attempt_id": { "type": "string" }
+        }
+      },
+      "ConsumeResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["contract_version", "api_status", "receipt"],
+        "properties": {
+          "contract_version": { "const": "0.1" },
+          "api_status": { "const": "preview" },
+          "receipt": { "$ref": "#/components/schemas/ConsumeReceipt" }
+        }
+      },
+      "ConsumeReceipt": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["consume_receipt_id", "organization_id", "decision_id", "execution_attempt_id", "action_fingerprint", "policy_version", "executor_principal_id", "consumed_at"],
+        "properties": {
+          "consume_receipt_id": { "type": "string" },
+          "organization_id": { "type": "string" },
+          "decision_id": { "type": "string" },
+          "execution_attempt_id": { "type": "string" },
+          "action_fingerprint": { "type": "string" },
+          "policy_version": { "type": "string" },
+          "executor_principal_id": { "type": "string" },
+          "consumed_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["contract_version", "error", "reason_codes", "enforcement_effect"],
+        "properties": {
+          "contract_version": { "const": "0.1" },
+          "error": { "type": "string" },
+          "reason_codes": { "type": "array", "items": { "type": "string" } },
+          "request_id": { "type": "string" },
+          "enforcement_effect": { "const": "DENY" },
+          "audit_id": { "type": "string" }
+        },
+        "not": { "required": ["decision"] }
+      }
+    },
+    "responses": {
+      "MalformedJson": { "description": "Malformed JSON or invalid UTF-8. No policy decision enum is returned.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "AuthenticationFailed": { "description": "Authentication failed. Cross-tenant details are not enumerated.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "AuthorizationFailed": { "description": "Authorization failure, wrong scope, or organization mismatch.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "Conflict": { "description": "Request ID reuse mismatch, grant reuse mismatch, or consume conflict.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "SchemaInvalid": { "description": "Strict schema or contract validation failed before fingerprinting.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "InvariantFailure": { "description": "Unexpected invariant or persistence failure. No policy decision enum is returned and no ALLOW is minted.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "DependencyUnavailable": { "description": "Policy or dependency unavailable. No policy decision enum is returned and no ALLOW is minted.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+    },
+    "examples": {
+      "PreviewAllowRequest": {
+        "summary": "Valid preview deployment request",
+        "value": {
+          "contract_version": "0.1",
+          "request_id": "req_doc_preview_001",
+          "organization_id": "org_nomos_labs",
+          "agent": { "id": "codex_dev_01", "type": "coding_agent", "authenticated_by": "internal_service_identity" },
+          "action": {
+            "type": "deploy_change",
+            "target": {
+              "environment": "preview",
+              "service": "signgate-worker",
+              "project": "base-agent-preflight",
+              "repository": { "host": "github.com", "owner": "lukekwan", "repo": "agent-payment-guard", "remote_url": "https://github.com/lukekwan/agent-payment-guard" }
+            },
+            "parameters": {
+              "git_commit": "901080e5315bdef8deb81eb69ed44853f17ce680",
+              "artifact_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "diff_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "changed_paths": ["migrations/0008_signgate_deploy_change_decisions.sql", "src/index.js"],
+              "changed_routes": ["/v1/decisions", "/v1/decisions/{decision_id}/consume"],
+              "touches_secrets": false,
+              "touches_dns": false,
+              "touches_permissions": false,
+              "touches_credentials": false,
+              "deployment_strategy": "worker_preview",
+              "deployment_command_id": "deploy:preview",
+              "configuration_fingerprint": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+              "ci_evidence": { "provider": "github_actions", "run_id": "run_doc_001", "commit": "901080e5315bdef8deb81eb69ed44853f17ce680", "status": "passed", "checks": ["lint", "unit", "contract"] }
+            }
+          },
+          "intent": "Deploy approved SignGate preview changes",
+          "mandate": { "id": "mandate_doc_001", "scope": ["deploy:preview"], "issued_by": "founder", "expires_at": "2026-07-20T12:00:00Z" },
+          "evidence": [{ "id": "ev_ci_doc_001", "type": "test_result", "source": "ci", "status": "passed", "observed_at": "2026-07-19T12:00:00Z", "subject_fingerprint": "sha256:4444444444444444444444444444444444444444444444444444444444444444" }],
+          "context": { "requested_at": "2026-07-19T12:01:00Z" }
+        }
+      },
+      "PermissionApprovalRequest": {
+        "summary": "Preview deployment requiring Founder approval",
+        "value": {
+          "contract_version": "0.1",
+          "request_id": "req_doc_permission_001",
+          "organization_id": "org_nomos_labs",
+          "agent": { "id": "codex_dev_01", "type": "coding_agent", "authenticated_by": "internal_service_identity" },
+          "action": {
+            "type": "deploy_change",
+            "target": { "environment": "preview", "service": "signgate-worker", "repository": { "host": "github.com", "owner": "lukekwan", "repo": "agent-payment-guard", "remote_url": "https://github.com/lukekwan/agent-payment-guard" } },
+            "parameters": {
+              "git_commit": "901080e5315bdef8deb81eb69ed44853f17ce680",
+              "diff_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "changed_paths": ["src/index.js"],
+              "changed_routes": ["/v1/decisions"],
+              "touches_secrets": false,
+              "touches_dns": false,
+              "touches_permissions": true,
+              "touches_credentials": false,
+              "deployment_strategy": "worker_preview",
+              "deployment_command_id": "deploy:preview",
+              "configuration_fingerprint": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+              "ci_evidence": { "run_id": "run_doc_002", "commit": "901080e5315bdef8deb81eb69ed44853f17ce680", "status": "passed", "checks": ["lint", "unit", "contract"] }
+            }
+          },
+          "mandate": { "id": "mandate_doc_002", "scope": ["deploy:preview"], "issued_by": "founder", "expires_at": "2026-07-20T12:00:00Z" },
+          "evidence": [{ "id": "ev_ci_doc_002", "type": "test_result", "source": "ci", "status": "passed", "observed_at": "2026-07-19T12:00:00Z" }]
+        }
+      },
+      "AllowResponse": {
+        "value": {
+          "contract_version": "0.1",
+          "api_status": "preview",
+          "decision": "ALLOW",
+          "decision_id": "dec_doc_001",
+          "request_id": "req_doc_preview_001",
+          "organization_id": "org_nomos_labs",
+          "action_fingerprint": "sha256:9532edbd25e8a81cd35fbc207b7d5a980bdc971aa47f797cf8ead50bbed129ff",
+          "bound_action": { "$ref": "#/components/examples/PreviewAllowRequest/value/action" },
+          "policy_version": "deploy_policy_2026_07_18_01",
+          "issued_at": "2026-07-19T12:01:00Z",
+          "expires_at": "2026-07-19T12:16:00Z",
+          "reason_codes": ["PREVIEW_DEPLOY_POLICY_PASSED"],
+          "required_checks": [],
+          "approval": { "required": false },
+          "execution_directive": { "action": "EXECUTE", "max_uses": 1, "replay_protection": "SERVICE_CONSUME_REQUIRED" },
+          "audit_id": "audit_doc_001"
+        }
+      },
+      "RequireApprovalResponse": {
+        "value": {
+          "contract_version": "0.1",
+          "api_status": "preview",
+          "decision": "REQUIRE_APPROVAL",
+          "decision_id": "dec_doc_approval_001",
+          "request_id": "req_doc_permission_001",
+          "organization_id": "org_nomos_labs",
+          "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "bound_action": { "$ref": "#/components/examples/PermissionApprovalRequest/value/action" },
+          "policy_version": "deploy_policy_2026_07_18_01",
+          "issued_at": "2026-07-19T12:01:00Z",
+          "expires_at": "2026-07-19T12:16:00Z",
+          "reason_codes": ["PERMISSION_CHANGE_REQUIRES_APPROVAL"],
+          "required_checks": ["FOUNDATION_APPROVAL_GRANT"],
+          "approval": { "required": true, "role": "founder", "grant_binding_required": true },
+          "execution_directive": { "action": "DO_NOT_EXECUTE", "max_uses": 0, "replay_protection": "SERVICE_CONSUME_REQUIRED" },
+          "audit_id": "audit_doc_approval_001"
+        }
+      },
+      "DenyResponse": {
+        "value": {
+          "contract_version": "0.1",
+          "api_status": "preview",
+          "decision": "DENY",
+          "decision_id": "dec_doc_deny_001",
+          "request_id": "req_doc_secret_001",
+          "organization_id": "org_nomos_labs",
+          "action_fingerprint": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "bound_action": { "$ref": "#/components/examples/PreviewAllowRequest/value/action" },
+          "policy_version": "deploy_policy_2026_07_18_01",
+          "issued_at": "2026-07-19T12:01:00Z",
+          "expires_at": "2026-07-19T12:16:00Z",
+          "reason_codes": ["SECRET_CHANGE_NOT_SUPPORTED_V0_1"],
+          "required_checks": [],
+          "approval": { "required": false },
+          "execution_directive": { "action": "DO_NOT_EXECUTE", "max_uses": 0, "replay_protection": "SERVICE_CONSUME_REQUIRED" },
+          "audit_id": "audit_doc_deny_001"
+        }
+      },
+      "ConsumeRequest": {
+        "value": {
+          "contract_version": "0.1",
+          "organization_id": "org_nomos_labs",
+          "action_fingerprint": "sha256:9532edbd25e8a81cd35fbc207b7d5a980bdc971aa47f797cf8ead50bbed129ff",
+          "policy_version": "deploy_policy_2026_07_18_01",
+          "execution_attempt_id": "exec_doc_001"
+        }
+      },
+      "ConsumeResponse": {
+        "value": {
+          "contract_version": "0.1",
+          "api_status": "preview",
+          "receipt": {
+            "consume_receipt_id": "rcpt_doc_001",
+            "organization_id": "org_nomos_labs",
+            "decision_id": "dec_doc_001",
+            "execution_attempt_id": "exec_doc_001",
+            "action_fingerprint": "sha256:9532edbd25e8a81cd35fbc207b7d5a980bdc971aa47f797cf8ead50bbed129ff",
+            "policy_version": "deploy_policy_2026_07_18_01",
+            "executor_principal_id": "executor_preview_01",
+            "consumed_at": "2026-07-19T12:02:00Z"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,203 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SignGate Internal API v0.1",
+    "version": "0.1.0-preview",
+    "description": "Internal preview specification for DOC-SG-001. Includes the public decision and consume endpoints plus the internal Founder dogfood approval-grant endpoint. Production deployment is not authorized."
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "Internal or preview-protected host supplied by Nomos Labs.",
+      "variables": {
+        "host": { "default": "preview.signgate.local" }
+      }
+    }
+  ],
+  "security": [{ "BearerAuth": [] }],
+  "paths": {
+    "/v1/decisions": {
+      "post": {
+        "summary": "Evaluate a deploy_change action",
+        "operationId": "createDecision",
+        "tags": ["Decisions"],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "signgate-public-v0.1.openapi.json#/components/schemas/DecisionRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Completed policy evaluation.",
+            "content": { "application/json": { "schema": { "$ref": "signgate-public-v0.1.openapi.json#/components/schemas/DecisionResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/Error" },
+          "401": { "$ref": "#/components/responses/Error" },
+          "403": { "$ref": "#/components/responses/Error" },
+          "409": { "$ref": "#/components/responses/Error" },
+          "422": { "$ref": "#/components/responses/Error" },
+          "500": { "$ref": "#/components/responses/Error" },
+          "503": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/v1/decisions/{decision_id}/consume": {
+      "post": {
+        "summary": "Atomically consume an ALLOW decision",
+        "operationId": "consumeDecision",
+        "tags": ["Decisions"],
+        "parameters": [
+          {
+            "name": "decision_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "signgate-public-v0.1.openapi.json#/components/schemas/ConsumeRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Consume receipt.",
+            "content": { "application/json": { "schema": { "$ref": "signgate-public-v0.1.openapi.json#/components/schemas/ConsumeResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/Error" },
+          "401": { "$ref": "#/components/responses/Error" },
+          "403": { "$ref": "#/components/responses/Error" },
+          "409": { "$ref": "#/components/responses/Error" },
+          "422": { "$ref": "#/components/responses/Error" },
+          "500": { "$ref": "#/components/responses/Error" },
+          "503": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/internal/dogfood/founder-approval-grants": {
+      "post": {
+        "summary": "Issue an internal Founder dogfood approval grant",
+        "description": "Internal preview-protected endpoint. This is not a public product API and does not create a customer approval inbox. Grants bind organization, original decision, action fingerprint, policy version, approver identity, role, approval time, and expiry.",
+        "operationId": "createFounderApprovalGrant",
+        "tags": ["Internal Founder Dogfood"],
+        "x-internal": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/FounderApprovalGrantRequest" },
+              "examples": {
+                "grant": {
+                  "value": {
+                    "contract_version": "0.1",
+                    "organization_id": "org_nomos_labs",
+                    "original_decision_id": "dec_doc_approval_001",
+                    "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "policy_version": "deploy_policy_2026_07_18_01",
+                    "approval_reason": "Founder approved preview permission change for dogfood.",
+                    "expires_at": "2026-07-19T12:10:00Z"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Approval grant created or exact retry returned.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FounderApprovalGrantResponse" },
+                "examples": {
+                  "grant": {
+                    "value": {
+                      "contract_version": "0.1",
+                      "api_status": "preview",
+                      "approval_grant_id": "grant_doc_001",
+                      "organization_id": "org_nomos_labs",
+                      "original_decision_id": "dec_doc_approval_001",
+                      "action_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                      "policy_version": "deploy_policy_2026_07_18_01",
+                      "approved_by": "founder_01",
+                      "approved_at": "2026-07-19T12:03:00Z",
+                      "expires_at": "2026-07-19T12:10:00Z",
+                      "audit_id": "audit_doc_grant_001"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/Error" },
+          "401": { "$ref": "#/components/responses/Error" },
+          "403": { "$ref": "#/components/responses/Error" },
+          "409": { "$ref": "#/components/responses/Error" },
+          "422": { "$ref": "#/components/responses/Error" },
+          "500": { "$ref": "#/components/responses/Error" },
+          "503": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Preview credential. Founder grant requires approval:founder:deploy_change and founder_approver principal type."
+      }
+    },
+    "schemas": {
+      "FounderApprovalGrantRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["contract_version", "organization_id", "original_decision_id", "action_fingerprint", "policy_version"],
+        "properties": {
+          "contract_version": { "const": "0.1" },
+          "organization_id": { "type": "string" },
+          "original_decision_id": { "type": "string" },
+          "action_fingerprint": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+          "policy_version": { "type": "string" },
+          "approval_reason": { "type": "string" },
+          "expires_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "FounderApprovalGrantResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["contract_version", "api_status", "approval_grant_id", "organization_id", "original_decision_id", "action_fingerprint", "policy_version", "approved_by", "approved_at", "expires_at", "audit_id"],
+        "properties": {
+          "contract_version": { "const": "0.1" },
+          "api_status": { "const": "preview" },
+          "approval_grant_id": { "type": "string" },
+          "organization_id": { "type": "string" },
+          "original_decision_id": { "type": "string" },
+          "action_fingerprint": { "type": "string" },
+          "policy_version": { "type": "string" },
+          "approved_by": { "type": "string" },
+          "approved_at": { "type": "string", "format": "date-time" },
+          "expires_at": { "type": "string", "format": "date-time" },
+          "audit_id": { "type": "string" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["contract_version", "error", "reason_codes", "enforcement_effect"],
+        "properties": {
+          "contract_version": { "const": "0.1" },
+          "error": { "type": "string" },
+          "reason_codes": { "type": "array", "items": { "type": "string" } },
+          "request_id": { "type": "string" },
+          "enforcement_effect": { "const": "DENY" },
+          "audit_id": { "type": "string" }
+        },
+        "not": { "required": ["decision"] }
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Fail-closed error response without a policy decision enum.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      }
+    }
+  }
+}
