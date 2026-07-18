@@ -1,0 +1,14 @@
+
+ ⛅️ wrangler 4.112.0
+────────────────────
+Successfully deleted signgate-dev-sg-001c-atomic-correction-20260719
+
+ ⛅️ wrangler 4.112.0
+────────────────────
+Resource location: remote 
+
+About to delete remote database DB 'signgate-dev-sg-001c-atomic-correction-20260719-0017' (4b090521-222d-4aff-afed-421b70385ad1).
+This action is irreversible and will permanently delete all data in the database.
+
+Deleting...
+Deleted 'signgate-dev-sg-001c-atomic-correction-20260719-0017' successfully.

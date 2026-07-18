@@ -1,10 +1,12 @@
 DROP TABLE IF EXISTS decision_audit_events;
+DROP TABLE IF EXISTS execution_results;
 DROP TABLE IF EXISTS consume_receipts;
 DROP TABLE IF EXISTS decisions;
 
 CREATE TABLE decisions (
   organization_id TEXT NOT NULL,
   decision_id TEXT NOT NULL,
+  decision TEXT NOT NULL CHECK (decision IN ('ALLOW', 'REQUIRE_APPROVAL', 'DENY')),
   state TEXT NOT NULL CHECK (state IN ('AVAILABLE', 'CONSUMED', 'EXPIRED', 'DENIED')),
   action_fingerprint TEXT NOT NULL,
   policy_version TEXT NOT NULL,
@@ -31,12 +33,25 @@ CREATE TABLE consume_receipts (
     REFERENCES decisions (organization_id, decision_id)
 );
 
+CREATE TABLE execution_results (
+  execution_result_id TEXT NOT NULL PRIMARY KEY,
+  organization_id TEXT NOT NULL,
+  decision_id TEXT NOT NULL,
+  execution_attempt_id TEXT NOT NULL,
+  receipt_id TEXT NOT NULL,
+  result TEXT NOT NULL CHECK (result IN ('FAILED')),
+  error_code TEXT NOT NULL,
+  recorded_at INTEGER NOT NULL,
+  FOREIGN KEY (organization_id, decision_id)
+    REFERENCES decisions (organization_id, decision_id)
+);
+
 CREATE TABLE decision_audit_events (
   audit_id TEXT NOT NULL PRIMARY KEY,
   organization_id TEXT NOT NULL,
   decision_id TEXT NOT NULL,
   event_type TEXT NOT NULL CHECK (
-    event_type IN ('CONSUME_SUCCESS', 'CONSUME_CONFLICT', 'EXPIRED_OBSERVED')
+    event_type IN ('CONSUME_SUCCESS', 'CONSUME_CONFLICT', 'EXPIRED_OBSERVED', 'DOWNSTREAM_EXECUTION_FAILED')
   ),
   execution_attempt_id TEXT,
   receipt_id TEXT,
@@ -54,3 +69,6 @@ CREATE INDEX idx_receipts_attempt
 
 CREATE INDEX idx_audit_decision_type
   ON decision_audit_events (organization_id, decision_id, event_type);
+
+CREATE INDEX idx_execution_results_decision
+  ON execution_results (organization_id, decision_id, execution_attempt_id);

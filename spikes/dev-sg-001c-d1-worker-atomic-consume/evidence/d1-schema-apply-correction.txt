@@ -1,0 +1,49 @@
+
+ ⛅️ wrangler 4.112.0
+────────────────────
+Resource location: remote 
+
+🌀 Executing on remote database signgate-dev-sg-001c-atomic-correction-20260719-0017 (4b090521-222d-4aff-afed-421b70385ad1):
+🌀 To execute on your local development database, remove the --remote flag from your wrangler command.
+Note: if the execution fails to complete, your DB will return to its original state and you can safely retry.
+├ Checking if file needs uploading
+│
+├ 🌀 Uploading 4b090521-222d-4aff-afed-421b70385ad1.cda2d19cd2a2efe4.sql
+│ 🌀 Uploading complete.
+│
+🌀 Starting import...
+🌀 Processed 12 queries.
+🚣 Executed 12 queries in 3.16ms (12 rows read, 18 rows written)
+   Database is currently at bookmark 00000000-0000000c-000050ac-d831e9b2c458eb9143e52243387d7e3b.
+[
+  {
+    "results": [
+      {
+        "Total queries executed": 12,
+        "Rows read": 12,
+        "Rows written": 18,
+        "Database size (MB)": "0.07"
+      }
+    ],
+    "success": true,
+    "finalBookmark": "00000000-0000000c-000050ac-d831e9b2c458eb9143e52243387d7e3b",
+    "meta": {
+      "served_by": "v3-prod",
+      "served_by_region": "APAC",
+      "served_by_colo": "SIN",
+      "served_by_primary": true,
+      "timings": {
+        "sql_duration_ms": 3.1557
+      },
+      "duration": 3.1557,
+      "changes": 1,
+      "last_row_id": 0,
+      "changed_db": true,
+      "size_after": 69632,
+      "rows_read": 12,
+      "rows_written": 18,
+      "num_tables": 4,
+      "total_attempts": 1
+    }
+  }
+]

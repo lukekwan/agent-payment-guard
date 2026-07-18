@@ -31,12 +31,13 @@ async function seed(env, id, options = {}) {
   const state = options.state ?? "AVAILABLE";
   await env.DB.prepare(
     `INSERT INTO decisions (
-      organization_id, decision_id, state, action_fingerprint, policy_version,
+      organization_id, decision_id, decision, state, action_fingerprint, policy_version,
       expires_at
-    ) VALUES (?, ?, ?, ?, ?, ?)`
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     options.organization_id ?? ORG,
     id,
+    options.decision ?? "ALLOW",
     state,
     options.action_fingerprint ?? FINGERPRINT,
     options.policy_version ?? POLICY,
@@ -48,6 +49,7 @@ async function seed(env, id, options = {}) {
 async function reset(env) {
   await env.DB.batch([
     env.DB.prepare("DELETE FROM decision_audit_events"),
+    env.DB.prepare("DELETE FROM execution_results"),
     env.DB.prepare("DELETE FROM consume_receipts"),
     env.DB.prepare("DELETE FROM decisions")
   ]);
@@ -63,10 +65,14 @@ async function inspect(env, id, org = ORG) {
   const audits = await env.DB.prepare(
     "SELECT * FROM decision_audit_events WHERE organization_id = ? AND decision_id = ? ORDER BY audit_id"
   ).bind(org, id).all();
+  const executionResults = await env.DB.prepare(
+    "SELECT * FROM execution_results WHERE organization_id = ? AND decision_id = ? ORDER BY execution_result_id"
+  ).bind(org, id).all();
   return {
     decision,
     receipts: receipts.results ?? [],
-    audits: audits.results ?? []
+    audits: audits.results ?? [],
+    execution_results: executionResults.results ?? []
   };
 }
 
@@ -163,6 +169,7 @@ async function consume(env, request) {
            consume_lock_token = ?
        WHERE organization_id = ?
          AND decision_id = ?
+         AND decision = 'ALLOW'
          AND state = 'AVAILABLE'
          AND action_fingerprint = ?
          AND policy_version = ?
@@ -255,6 +262,58 @@ async function consume(env, request) {
   return json({ status: "NO_OWNERSHIP", observed: after }, 409);
 }
 
+async function recordDownstreamFailure(env, request) {
+  const serverNow = nowFromRequest(request);
+  const body = await readJson(request);
+  const input = {
+    organization_id: body.organization_id ?? ORG,
+    decision_id: body.decision_id,
+    execution_attempt_id: body.execution_attempt_id,
+    error_code: body.error_code ?? "SIMULATED_DEPLOYMENT_FAILURE"
+  };
+  const receipt = await env.DB.prepare(
+    `SELECT * FROM consume_receipts
+     WHERE organization_id = ?
+       AND decision_id = ?
+       AND execution_attempt_id = ?`
+  ).bind(input.organization_id, input.decision_id, input.execution_attempt_id).first();
+  if (!receipt) {
+    return json({ status: "NO_RECEIPT_FOR_EXECUTION_RESULT" }, 409);
+  }
+  const resultId = `execfail_${input.decision_id}_${input.execution_attempt_id}_${serverNow}`;
+  await env.DB.batch([
+    env.DB.prepare(
+      `INSERT INTO execution_results (
+        execution_result_id, organization_id, decision_id, execution_attempt_id,
+        receipt_id, result, error_code, recorded_at
+      ) VALUES (?, ?, ?, ?, ?, 'FAILED', ?, ?)`
+    ).bind(
+      resultId,
+      input.organization_id,
+      input.decision_id,
+      input.execution_attempt_id,
+      receipt.receipt_id,
+      input.error_code,
+      serverNow
+    ),
+    env.DB.prepare(
+      `INSERT INTO decision_audit_events (
+        audit_id, organization_id, decision_id, event_type,
+        execution_attempt_id, receipt_id, observed_at, consume_lock_token
+      ) VALUES (?, ?, ?, 'DOWNSTREAM_EXECUTION_FAILED', ?, ?, ?, ?)`
+    ).bind(
+      `audit_${resultId}`,
+      input.organization_id,
+      input.decision_id,
+      input.execution_attempt_id,
+      receipt.receipt_id,
+      serverNow,
+      receipt.consume_lock_token
+    )
+  ]);
+  return json({ status: "DOWNSTREAM_FAILURE_RECORDED", observed: await inspect(env, input.decision_id, input.organization_id) });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -269,6 +328,9 @@ export default {
       }
       if (url.pathname === "/consume") {
         return consume(env, request);
+      }
+      if (url.pathname === "/record-downstream-failure") {
+        return recordDownstreamFailure(env, request);
       }
       if (url.pathname === "/inspect") {
         return json(await inspect(env, url.searchParams.get("decision_id"), url.searchParams.get("organization_id") ?? ORG));

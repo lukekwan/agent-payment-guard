@@ -144,3 +144,77 @@ DEV_SG_001C_D1_ATOMICITY_SPIKE=PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT
 FULL_APPLICATION_IMPLEMENTATION_STATUS=BLOCKED
 
 PRODUCTION_DEPLOYMENT=NOT_AUTHORIZED
+
+## Final Evidence Correction
+
+Correction status: PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT
+
+Recorded at: 2026-07-19T00:16:39+08:00
+
+Corrected disposable resources:
+
+- D1 database name: `signgate-dev-sg-001c-atomic-correction-20260719-0017`
+- D1 database ID: `4b090521-222d-4aff-afed-421b70385ad1`
+- Worker name: `signgate-dev-sg-001c-atomic-correction-20260719`
+- Worker URL during test:
+  `https://signgate-dev-sg-001c-atomic-correction-20260719.bytoken2023.workers.dev`
+- Worker version ID: `9dd93c23-334f-475c-a05e-6e7187fc6256`
+
+Cleanup:
+
+- Disposable Worker deleted.
+- Disposable D1 deleted.
+- Cleanup evidence: `evidence/cleanup-correction.txt`.
+
+Corrections added:
+
+- Separate `decision TEXT NOT NULL CHECK decision IN ('ALLOW',
+  'REQUIRE_APPROVAL', 'DENY')` column.
+- Ownership acquisition requires both `decision='ALLOW'` and
+  `state='AVAILABLE'`.
+- Explicit DENY refusal test.
+- Explicit REQUIRE_APPROVAL refusal test.
+- Both decision-refusal cases create no receipt, no success audit, do not reveal
+  cross-tenant data, and leave the decision unchanged.
+- Explicit downstream execution failure endpoint records an
+  `execution_results` row and `DOWNSTREAM_EXECUTION_FAILED` audit after a
+  successful consume.
+- Downstream failure evidence verifies state remains `CONSUMED`, original
+  receipt remains unchanged, no second consume succeeds, and `AVAILABLE` is not
+  restored.
+- Caller-controlled `now` is documented in result JSON as
+  `TEST_HARNESS_ONLY`, not part of the product contract, and not production
+  implementation authorization.
+- Ten complete-suite stress cycles were executed, not a concurrency-only loop.
+
+Correction results:
+
+- Full-suite stress cycles: 10.
+- Full-suite stress pass count: 10.
+- Per-invariant pass count: 10/10 for every invariant.
+- HTTP status counts: 200=385, 404=33, 409=209, 500=44.
+- Complete request/response log entries: 880.
+
+Corrected evidence:
+
+- `evidence/d1-create-correction.txt`
+- `evidence/d1-schema-apply-correction.txt`
+- `evidence/worker-deploy-correction.txt`
+- `evidence/d1-spike-test-correction.txt`
+- `evidence/d1-invariant-results-correction.json`
+- `evidence/request-response-log-correction.json`
+- `evidence/versions-and-hashes-correction.txt`
+- `evidence/cleanup-correction.txt`
+
+Decision enum results:
+
+- DENY consume result: PASS.
+- REQUIRE_APPROVAL consume result: PASS.
+
+Downstream failure result:
+
+- PASS.
+
+D1_RUNTIME_ATOMICITY=PROPOSED_PROVEN_PENDING_PM_ACKNOWLEDGEMENT
+
+DEV_SG_001C_D1_ATOMICITY_SPIKE=PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT

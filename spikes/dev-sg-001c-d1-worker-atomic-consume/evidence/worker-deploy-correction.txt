@@ -1,0 +1,12 @@
+
+ ⛅️ wrangler 4.112.0
+────────────────────
+Total Upload: 11.43 KiB / gzip: 2.50 KiB
+Your Worker has access to the following bindings:
+Binding                                                            Resource         
+env.DB (signgate-dev-sg-001c-atomic-correction-20260719-0017)      D1 Database      
+
+Uploaded signgate-dev-sg-001c-atomic-correction-20260719 (2.15 sec)
+Deployed signgate-dev-sg-001c-atomic-correction-20260719 triggers (1.23 sec)
+  https://signgate-dev-sg-001c-atomic-correction-20260719.bytoken2023.workers.dev
+Current Version ID: 9dd93c23-334f-475c-a05e-6e7187fc6256

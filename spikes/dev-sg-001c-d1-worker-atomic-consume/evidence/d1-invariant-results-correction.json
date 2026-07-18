@@ -1,0 +1,76 @@
+{
+  "status": "PASS",
+  "d1_runtime_atomicity": "PROPOSED_PROVEN_PENDING_PM_ACKNOWLEDGEMENT",
+  "dev_sg_001c_d1_atomicity_spike": "PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT",
+  "versions": {
+    "node": "v24.15.0",
+    "wrangler": "4.112.0",
+    "compatibility_date": "2026-07-18",
+    "worker_url": "https://signgate-dev-sg-001c-atomic-correction-20260719.bytoken2023.workers.dev",
+    "d1_database_name": "signgate-dev-sg-001c-atomic-correction-20260719-0017",
+    "d1_database_id": "4b090521-222d-4aff-afed-421b70385ad1",
+    "test_time_hook_boundary": {
+      "caller_controlled_now": "TEST_HARNESS_ONLY",
+      "product_contract_status": "NOT_PART_OF_PRODUCT_CONTRACT",
+      "production_authorization": "NO_PRODUCTION_IMPLEMENTATION_AUTHORIZATION_DERIVED"
+    }
+  },
+  "invariant_results": {
+    "01_zero_row_no_receipt": "PASS",
+    "02_zero_row_no_success_audit": "PASS",
+    "03_receipt_failure_rolls_back": "PASS",
+    "04_audit_failure_rolls_back": "PASS",
+    "05_concurrent_different_attempts": {
+      "status": "PASS",
+      "success_count": 1,
+      "conflict_count": 11
+    },
+    "06_losing_attempts_conflict": "PASS",
+    "07_same_attempt_returns_original_receipt": "PASS",
+    "08_same_attempt_no_second_receipt_or_audit": "PASS",
+    "09_foreign_tenant_no_receipt_audit_no_existence_leak": "PASS",
+    "10a_deny_decision_no_receipt_audit": "PASS",
+    "10b_require_approval_decision_no_receipt_audit": "PASS",
+    "11_wrong_state_no_receipt_audit": "PASS",
+    "12_wrong_fingerprint_no_receipt_audit": "PASS_VIA_01",
+    "13_wrong_policy_no_receipt_audit": "PASS",
+    "14_expired_no_consume_receipt_success_audit": "PASS",
+    "15_first_observed_expiry_persists": "PASS_VIA_14",
+    "16_backward_clock_cannot_revive": "PASS_VIA_14",
+    "17_success_exposes_consumed_receipt_audit_together": "PASS_VIA_05",
+    "18_no_consumed_missing_receipt": "PASS",
+    "19_external_failure_after_consume_permanent": "PASS",
+    "20_repeated_full_suite_stress_runs_preserve_invariants": "PASS"
+  },
+  "stress_cycle_count": 10,
+  "full_suite_stress_pass_count": 10,
+  "per_invariant_pass_counts": {
+    "01_zero_row_no_receipt": 10,
+    "02_zero_row_no_success_audit": 10,
+    "03_receipt_failure_rolls_back": 10,
+    "04_audit_failure_rolls_back": 10,
+    "05_concurrent_different_attempts": 10,
+    "06_losing_attempts_conflict": 10,
+    "07_same_attempt_returns_original_receipt": 10,
+    "08_same_attempt_no_second_receipt_or_audit": 10,
+    "09_foreign_tenant_no_receipt_audit_no_existence_leak": 10,
+    "10a_deny_decision_no_receipt_audit": 10,
+    "10b_require_approval_decision_no_receipt_audit": 10,
+    "11_wrong_state_no_receipt_audit": 10,
+    "12_wrong_fingerprint_no_receipt_audit": 10,
+    "13_wrong_policy_no_receipt_audit": 10,
+    "14_expired_no_consume_receipt_success_audit": 10,
+    "15_first_observed_expiry_persists": 10,
+    "16_backward_clock_cannot_revive": 10,
+    "17_success_exposes_consumed_receipt_audit_together": 10,
+    "18_no_consumed_missing_receipt": 10,
+    "19_external_failure_after_consume_permanent": 10
+  },
+  "http_status_counts": {
+    "200": 385,
+    "404": 33,
+    "409": 209,
+    "500": 44
+  },
+  "request_log_count": 880
+}
