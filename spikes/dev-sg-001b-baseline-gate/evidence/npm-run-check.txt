@@ -1,0 +1,76 @@
+command=npm run check
+started_at=2026-07-18T23:04:00+0800
+
+> base-agent-preflight@0.1.0 check
+> node --check src/index.js && node --test
+
+✔ starter policy defines five buyer roles (1.588125ms)
+✔ starter policy exposes product categories (0.124417ms)
+✔ role and product category fit returns expected decisions (1.289708ms)
+✔ unknown, inactive, restricted, and over-limit buyers are controlled (0.13725ms)
+✔ agentic commerce preflight allows a scoped checkout mandate (0.448791ms)
+✔ agentic commerce preflight denies missing mandate (0.643667ms)
+✔ agentic commerce preflight denies mandate role mismatch (0.102167ms)
+✔ agentic commerce preflight denies merchant wallet mismatch (0.085458ms)
+✔ agentic commerce payment execution requires out-of-agent signer (0.126333ms)
+✔ Sumsub evidence catalog productizes eight sandbox capabilities (0.1385ms)
+✔ Sumsub evidence manifest maps enabled entitlements to service states (0.205459ms)
+✔ Sumsub evidence manifest fails closed for missing entitlements (0.093375ms)
+✔ validates memory entries with required evidence (0.95075ms)
+✔ promotes valid episode memory candidates (0.109625ms)
+✔ scores matching memories above unrelated memories (0.177875ms)
+✔ builds bounded memory context with citations (1.03625ms)
+✔ evaluate sends profile credentials through paid transport (31.532958ms)
+✔ guarded fetch blocks non-ALLOW decisions (0.946708ms)
+unknown format "uri" ignored in schema at path "#/properties/input/properties/body/properties/url"
+unknown format "uri" ignored in schema at path "#/properties/input/properties/body/properties/url"
+unknown format "uri" ignored in schema at path "#/properties/input/properties/body/properties/webhook_url"
+unknown format "uri" ignored in schema at path "#/properties/input/properties/body/properties/webhook_url"
+✔ buildAddressPreflight flags an unverified contract (0.834292ms)
+✔ buildAddressPreflight elevates scam metadata (372.448583ms)
+✔ worker exposes discovery documents (14.146083ms)
+✔ agent buyer identity preflight maps five roles to purchase fit (0.143292ms)
+✔ agentic commerce preflight returns unified decision contract (0.297541ms)
+✔ purchase event logging ignores probes and requires payment evidence (0.065208ms)
+✔ bcsGatewayRequest wraps BlockchainSecurity responses without exposing API key (0.421625ms)
+✔ buildX402ServerTrust scores x402 marketplace adoption and concentration (0.285208ms)
+✔ x402 meta and router builders produce buyer-ready decisions (0.452875ms)
+✔ buildAlphaRiskContext summarizes bot-ready wallet and token signals (0.267458ms)
+✔ Base trading bot intelligence builders return machine-readable decisions (0.422833ms)
+✔ four additional product builders return machine-readable results (0.431959ms)
+✔ five new product builders return machine-readable results (0.473375ms)
+✔ five execution and market-data builders return machine-readable results (0.394125ms)
+✔ five software and web builders return machine-readable results (6.457458ms)
+✔ five agent, intent, domain, and package builders return machine-readable results (1.010625ms)
+✔ payment guard combines policy, budget, replay, and evidence into one decision (0.629875ms)
+✔ payment guard decision tokens are signed, verified, and expire (2.279375ms)
+✔ verifiable intent normalizes stablecoin payment context (0.256042ms)
+✔ agent payment authorization allows safe intents and signs only directives (0.598666ms)
+✔ agent payment authorization denies blocked or high-risk recipients (0.135042ms)
+✔ agent payment authorization reviews medium risk or review-threshold intents (0.087292ms)
+✔ payment guard enforces mandates and simulates Base transactions (0.570208ms)
+✔ buildSumsubEvidenceServiceResponse returns fail-closed evidence contract (0.3105ms)
+✔ paid routes advertise their exact Base USDC prices (1604.569666ms)
+✔ payment guard POST routes advertise bazaar input and output schemas (1.342125ms)
+✔ maps evaluate_payment input to existing SignGate preflight contract (0.952667ms)
+✔ normal ALLOW returns signer directive and permits only mock continuation (25.621ms)
+✔ ALLOW with agent_may_directly_sign=false stops automatic signer continuation (0.26775ms)
+✔ ALLOW with required signer stops automatic signer continuation (0.206166ms)
+✔ ALLOW with signer isolation required stops automatic signer continuation (0.205875ms)
+✔ ALLOW with missing agent_may_directly_sign fails closed (0.9135ms)
+✔ ALLOW with malformed signer directive fails closed (0.266125ms)
+✔ REQUIRE_APPROVAL fail-stops automatic signer continuation (0.218084ms)
+✔ DENY fail-stops automatic signer continuation (0.216334ms)
+✔ timeout returns fail-closed DENY through MCP helper (12.887959ms)
+✔ malformed upstream response returns fail-closed DENY (0.310875ms)
+✔ missing credential rejects before any production call (0.31425ms)
+ℹ tests 56
+ℹ suites 0
+ℹ pass 56
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2251.71925
+exit_code=0
+finished_at=2026-07-18T23:04:03+0800

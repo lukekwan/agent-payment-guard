@@ -1,0 +1,13 @@
+DEV-SG-001B baseline gate evidence
+captured_at=2026-07-18T23:03:23+0800
+--- git status before baseline ---
+## dev/sg-001-deploy-change-decision...origin/dev/sg-001-deploy-change-decision
+?? spikes/
+--- HEAD ---
+ceaaca15cc3fb07d2da6a588c567bdc27e87608f
+--- node version ---
+v24.15.0
+--- npm version ---
+11.12.1
+--- package-lock sha256 before npm ci ---
+96fae27766f9c1c86b2282158005fc6feaa5a9cefa38346f3666460a45c5e243  package-lock.json
