@@ -1,0 +1,16 @@
+{
+  "name": "dev-sg-001b-worker-compatibility",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test-runner.mjs"
+  },
+  "dependencies": {
+    "@humanwhocodes/momoa": "3.3.10",
+    "canonicalize": "3.0.0",
+    "esbuild": "0.28.1",
+    "miniflare": "4.20260714.0",
+    "wrangler": "4.112.0"
+  }
+}

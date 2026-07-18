@@ -1,0 +1,17 @@
+NODE_VERSION=v24.15.0
+NPM_VERSION=11.12.1
+WRANGLER_VERSION=4.112.0
+MINIFLARE_VERSION=4.20260714.0
+dev-sg-001b-worker-compatibility@0.0.0 /Users/0xkwan/.openclaw/worktrees/dev-sg-001/spikes/dev-sg-001b-worker-compatibility
+├── @humanwhocodes/momoa@3.3.10
+├── canonicalize@3.0.0
+├── esbuild@0.28.1
+├── miniflare@4.20260714.0
+└── wrangler@4.112.0
+
+32d356730708688b7a47242d9c182fefd26fe276cca20346eba4051144a56266  package.json
+18752feded5ea6b2653448415d56ccf24f79a8cbf18573eaa558ca5e01a0d72f  package-lock.json
+9fc3068562aa20c1bbe010cc4d45e751582a8bc1deea6b659156d5b01143cd91  worker.mjs
+f2d3035c9325c9ef49144d9adaf717458dee29194b037d21bc99733691a2760b  test-runner.mjs
+0d2ccd9f2fc96ac72a0f828e445f98768bd08a6f1e1a53becc17de3ca50d6062  dist/worker.bundle.mjs
+a12a9f39176b3478418a1587219fd11cb0ddd2ea61af1d6386fec6c6bd97c2d7  evidence/worker-compatibility-results.json

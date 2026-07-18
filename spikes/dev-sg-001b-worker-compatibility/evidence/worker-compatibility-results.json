@@ -1,0 +1,60 @@
+{
+  "harness": "DEV-SG-001B Worker Compatibility",
+  "status": "PASS",
+  "compatibility_date": "2026-07-18",
+  "results": {
+    "package_execution": "PASS",
+    "parser_options": {
+      "mode": "json",
+      "allowTrailingCommas": false
+    },
+    "limits": {
+      "maxBytes": 32768,
+      "maxDepth": 16,
+      "maxObjectMembers": 128,
+      "maxArrayLength": 128,
+      "maxStringLength": 4096,
+      "maxPathLength": 512,
+      "maxIntentLength": 1024
+    },
+    "rejections": {
+      "comments": "PASS_REJECTED_Unexpected character '/' found. (1:2)",
+      "trailing_commas": "PASS_REJECTED_Unexpected token RBrace found. (1:27)",
+      "ordinary_duplicate": "PASS_REJECTED_duplicate key: a",
+      "escaped_equivalent_duplicate": "PASS_REJECTED_duplicate key: a",
+      "nested_duplicate": "PASS_REJECTED_duplicate key: a",
+      "array_object_duplicate": "PASS_REJECTED_duplicate key: a",
+      "malformed_escape": "PASS_REJECTED_Unexpected character 'Z' found. (1:8)",
+      "unsupported_number": "PASS_REJECTED_Unexpected character '1' found. (1:6)",
+      "unknown_field": "PASS_REJECTED_unknown field $.unknown",
+      "schema_null": "PASS_REJECTED_schema-invalid organization_id",
+      "resource_bounds": "PASS_REJECTED_resource bound: max intent length exceeded"
+    },
+    "canonicalize_golden": "PASS",
+    "webcrypto_sha256": "PASS",
+    "base_fingerprint": "sha256:f6aeebb558acd47b669cc2bc9ca94190816aa54cd989456695c775481b77dab5",
+    "fingerprint_participation": {
+      "action.target.environment": "PASS",
+      "action.target.service": "PASS",
+      "action.target.project": "PASS",
+      "action.target.repository.host": "PASS",
+      "action.target.repository.owner": "PASS",
+      "action.target.repository.repo": "PASS",
+      "action.target.repository.remote_url": "PASS",
+      "action.parameters.git_commit": "PASS",
+      "action.parameters.artifact_digest": "PASS",
+      "action.parameters.diff_digest": "PASS",
+      "action.parameters.changed_paths": "PASS",
+      "action.parameters.changed_routes": "PASS",
+      "action.parameters.touches_secrets": "PASS",
+      "action.parameters.touches_dns": "PASS",
+      "action.parameters.touches_permissions": "PASS",
+      "action.parameters.touches_credentials": "PASS",
+      "action.parameters.deployment_strategy": "PASS",
+      "action.parameters.deployment_command_id": "PASS",
+      "action.parameters.configuration_fingerprint": "PASS",
+      "action.parameters.ci_evidence": "PASS"
+    },
+    "unicode_arrays_omission_null_case_vectors": "PASS"
+  }
+}
