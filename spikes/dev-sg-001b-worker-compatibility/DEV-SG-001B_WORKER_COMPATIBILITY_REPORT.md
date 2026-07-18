@@ -86,3 +86,44 @@ DEV_SG_001B_BASELINE_GATE=PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT
 FULL_APPLICATION_IMPLEMENTATION_STATUS=BLOCKED
 
 PRODUCTION_DEPLOYMENT=NOT_AUTHORIZED
+
+## Final Evidence Correction
+
+Correction status: PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT
+
+Recorded at: 2026-07-19T00:16:39+08:00
+
+Corrected evidence:
+
+- `evidence/npm-test-correction.txt`
+- `evidence/worker-compatibility-results-correction.json`
+- `evidence/versions-and-hashes-correction.txt`
+
+Corrections added:
+
+- UTF-8 byte-length enforcement for all byte-declared limits.
+- Boundary tests at limit - 1, exact limit, and limit + 1 for raw bytes,
+  nesting depth, object members, array length, generic string bytes,
+  changed-path item bytes, and intent bytes.
+- Multibyte UTF-8 cases where code-unit length differs from byte length.
+- RFC 8785 canonical-byte and SHA-256 vectors for numeric boundaries,
+  integer/decimal normalization, exponent formatting, negative zero, Unicode
+  escaping, control characters, non-ASCII Unicode, key ordering, and the full
+  SignGate `deploy_change` fingerprint envelope.
+- Fingerprint semantics for Unicode mutation, semantically significant array
+  ordering, set-normalized changed paths/routes, omitted optional field versus
+  present field, schema-invalid null rejection, explicit no-null policy, enum
+  case sensitivity, identifier case sensitivity, changed-path normalization,
+  changed-route normalization, and every execution-relevant field mutation.
+
+Correction result:
+
+RESOURCE_BOUND_RESULTS=PASS
+
+RFC8785_VECTOR_RESULTS=PASS
+
+FINGERPRINT_SEMANTIC_RESULTS=PASS
+
+WORKER_COMPATIBILITY_HARNESS=PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT
+
+DEV_SG_001B_BASELINE_GATE=PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT

@@ -26,6 +26,23 @@ function assert(condition, message) {
   }
 }
 
+function assertDeepPass(value, path) {
+  if (typeof value === "string") {
+    assert(value.startsWith("PASS"), `${path} must pass, got ${value}`);
+    return;
+  }
+  if (value && typeof value === "object") {
+    for (const [key, child] of Object.entries(value)) {
+      if (key === "canonical_bytes" || key === "sha256") {
+        continue;
+      }
+      assertDeepPass(child, `${path}.${key}`);
+    }
+    return;
+  }
+  throw new Error(`${path} has unsupported result ${value}`);
+}
+
 async function main() {
   await bundleWorker();
 
@@ -51,8 +68,10 @@ async function main() {
   assert(results.rejections.unsupported_number.startsWith("PASS"), "unsupported numeric forms must reject");
   assert(results.rejections.resource_bounds.startsWith("PASS"), "resource bounds must reject");
   assert(results.rejections.unknown_field.startsWith("PASS"), "unknown fields must reject");
-  assert(results.canonicalize_golden === "PASS", "canonicalize golden bytes must match");
+  assertDeepPass(results.resource_bound_results, "resource_bound_results");
+  assertDeepPass(results.rfc8785_vector_results, "rfc8785_vector_results");
   assert(results.webcrypto_sha256 === "PASS", "Web Crypto SHA-256 must match golden digest");
+  assertDeepPass(results.fingerprint_semantic_results, "fingerprint_semantic_results");
   assert(results.unicode_arrays_omission_null_case_vectors === "PASS", "unicode/array/omission/case vectors must pass");
 
   for (const [field, status] of Object.entries(results.fingerprint_participation)) {

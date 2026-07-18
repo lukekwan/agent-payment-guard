@@ -1,3 +1,7 @@
+
+> dev-sg-001b-worker-compatibility@0.0.0 test
+> node test-runner.mjs
+
 {
   "harness": "DEV-SG-001B Worker Compatibility",
   "status": "PASS",

@@ -1517,6 +1517,9 @@ var LIMITS = Object.freeze({
   maxPathLength: 512,
   maxIntentLength: 1024
 });
+function utf8ByteLength(value) {
+  return new TextEncoder().encode(value).byteLength;
+}
 var ALLOWED_TOP_LEVEL = /* @__PURE__ */ new Set([
   "contract_version",
   "request_id",
@@ -1595,7 +1598,7 @@ function detectDuplicatesAndBounds(node, depth = 0) {
     const names = /* @__PURE__ */ new Set();
     for (const member of node.members) {
       const name = member.name.value;
-      if (typeof name === "string" && name.length > LIMITS.maxStringLength) {
+      if (typeof name === "string" && utf8ByteLength(name) > LIMITS.maxStringLength) {
         throw new Error("resource bound: max string length exceeded");
       }
       if (names.has(name)) {
@@ -1615,7 +1618,7 @@ function detectDuplicatesAndBounds(node, depth = 0) {
     }
     return;
   }
-  if (node.type === "String" && node.value.length > LIMITS.maxStringLength) {
+  if (node.type === "String" && utf8ByteLength(node.value) > LIMITS.maxStringLength) {
     throw new Error("resource bound: max string length exceeded");
   }
 }
@@ -1629,6 +1632,22 @@ function parseStrictJsonBytes(bytes) {
   const parsed = JSON.parse(text);
   validateSchema(parsed);
   return parsed;
+}
+function parseResourceProbe(text) {
+  const bytes = new TextEncoder().encode(text);
+  if (bytes.byteLength > LIMITS.maxBytes) {
+    throw new Error("resource bound: max raw request bytes exceeded");
+  }
+  const ast = parse(text, { mode: "json", allowTrailingCommas: false });
+  detectDuplicatesAndBounds(ast.body, 0);
+  return true;
+}
+function checkRawByteBound(text) {
+  const bytes = new TextEncoder().encode(text);
+  if (bytes.byteLength > LIMITS.maxBytes) {
+    throw new Error("resource bound: max raw request bytes exceeded");
+  }
+  return true;
 }
 function validateSchema(parsed) {
   if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
@@ -1651,6 +1670,14 @@ function validateSchema(parsed) {
   assertAllowedKeys(parsed.action.target, ALLOWED_TARGET, "$.action.target");
   assertAllowedKeys(parsed.action.target.repository, ALLOWED_REPOSITORY, "$.action.target.repository");
   assertAllowedKeys(parsed.action.parameters, ALLOWED_PARAMETERS, "$.action.parameters");
+  if (!["local", "preview", "production"].includes(parsed.action.target.environment)) {
+    throw new Error("schema-invalid action.target.environment");
+  }
+  for (const [key, value] of Object.entries(parsed.action.parameters)) {
+    if (value === null) {
+      throw new Error(`schema-invalid null ${key}`);
+    }
+  }
   for (const field of ["touches_secrets", "touches_dns", "touches_permissions"]) {
     if (typeof parsed.action.parameters[field] !== "boolean") {
       throw new Error(`schema-invalid ${field}`);
@@ -1659,10 +1686,10 @@ function validateSchema(parsed) {
   if ("touches_credentials" in parsed.action.parameters && typeof parsed.action.parameters.touches_credentials !== "boolean") {
     throw new Error("schema-invalid touches_credentials");
   }
-  if (parsed.action.parameters.changed_paths?.some((path) => path.length > LIMITS.maxPathLength)) {
+  if (parsed.action.parameters.changed_paths?.some((path) => utf8ByteLength(path) > LIMITS.maxPathLength)) {
     throw new Error("resource bound: max changed path length exceeded");
   }
-  if (typeof parsed.intent === "string" && parsed.intent.length > LIMITS.maxIntentLength) {
+  if (typeof parsed.intent === "string" && utf8ByteLength(parsed.intent) > LIMITS.maxIntentLength) {
     throw new Error("resource bound: max intent length exceeded");
   }
 }
@@ -1684,11 +1711,18 @@ async function sha256Hex(text) {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 function fingerprintEnvelope(request) {
+  const action = structuredClone(request.action);
+  if (Array.isArray(action.parameters.changed_paths)) {
+    action.parameters.changed_paths = [...action.parameters.changed_paths].sort();
+  }
+  if (Array.isArray(action.parameters.changed_routes)) {
+    action.parameters.changed_routes = [...action.parameters.changed_routes].sort();
+  }
   return {
     contract_version: request.contract_version,
     organization_id: request.organization_id,
     agent_id: request.agent.id,
-    action: request.action
+    action
   };
 }
 async function fingerprint(request) {
@@ -1734,7 +1768,8 @@ function baseDeployRequest() {
           provider: "local",
           run_id: "run_compat_01",
           commit: "0123456789abcdef0123456789abcdef01234567",
-          status: "passed"
+          status: "passed",
+          checks: ["lint", "test"]
         }
       }
     },
@@ -1758,6 +1793,154 @@ function baseDeployRequest() {
     context: {
       requested_at: "2026-07-18T12:00:00Z"
     }
+  };
+}
+function expectAccept(name, fn) {
+  try {
+    fn();
+    return `PASS_ACCEPT_${name}`;
+  } catch (error) {
+    return `FAIL_REJECTED_${name}_${error.message}`;
+  }
+}
+function expectReject(name, fn) {
+  try {
+    fn();
+    return `FAIL_ACCEPTED_${name}`;
+  } catch (error) {
+    return `PASS_REJECT_${name}_${error.message}`;
+  }
+}
+function nestedJson(depth) {
+  let value = "0";
+  for (let i = 0; i < depth; i += 1) {
+    value = `{"k":${value}}`;
+  }
+  return value;
+}
+function objectMembersJson(count) {
+  const members = Array.from({ length: count }, (_, i) => `"k${i}":${i}`);
+  return `{${members.join(",")}}`;
+}
+function arrayJson(count) {
+  return `[${Array.from({ length: count }, (_, i) => i).join(",")}]`;
+}
+function stringJson(byteCount, char = "x") {
+  return JSON.stringify(char.repeat(byteCount / utf8ByteLength(char)));
+}
+function rawByteJson(byteCount) {
+  if (byteCount < 2) {
+    throw new Error("raw byte count too small for JSON string");
+  }
+  return `"${"x".repeat(byteCount - 2)}"`;
+}
+function runResourceBoundTests() {
+  const exactGeneric = "x".repeat(LIMITS.maxStringLength);
+  const multiByteGeneric = "\xE9".repeat(Math.floor(LIMITS.maxStringLength / 2));
+  const overMultiByteGeneric = `${multiByteGeneric}\xE9`;
+  const base = baseDeployRequest();
+  const pathAtLimit = "\xE9".repeat(LIMITS.maxPathLength / 2);
+  const intentAtLimit = "\xE9".repeat(LIMITS.maxIntentLength / 2);
+  const withPath = (length) => {
+    const request = baseDeployRequest();
+    request.action.parameters.changed_paths = ["x".repeat(length)];
+    return request;
+  };
+  const withIntent = (intent) => ({ ...baseDeployRequest(), intent });
+  return {
+    max_raw_request_bytes: {
+      limit_minus_1: expectAccept("raw_limit_minus_1", () => checkRawByteBound(rawByteJson(LIMITS.maxBytes - 1))),
+      exact_limit: expectAccept("raw_exact_limit", () => checkRawByteBound(rawByteJson(LIMITS.maxBytes))),
+      limit_plus_1: expectReject("raw_limit_plus_1", () => checkRawByteBound(rawByteJson(LIMITS.maxBytes + 1))),
+      multibyte_utf8: expectAccept("raw_multibyte", () => checkRawByteBound(`"${"\xE9".repeat(10)}"`))
+    },
+    max_json_depth: {
+      limit_minus_1: expectAccept("depth_limit_minus_1", () => parseResourceProbe(nestedJson(LIMITS.maxDepth - 1))),
+      exact_limit: expectAccept("depth_exact_limit", () => parseResourceProbe(nestedJson(LIMITS.maxDepth))),
+      limit_plus_1: expectReject("depth_limit_plus_1", () => parseResourceProbe(nestedJson(LIMITS.maxDepth + 1))),
+      multibyte_utf8: expectAccept("depth_multibyte", () => parseResourceProbe(`{"\xE9":${nestedJson(2)}}`))
+    },
+    max_object_members: {
+      limit_minus_1: expectAccept("members_limit_minus_1", () => parseResourceProbe(objectMembersJson(LIMITS.maxObjectMembers - 1))),
+      exact_limit: expectAccept("members_exact_limit", () => parseResourceProbe(objectMembersJson(LIMITS.maxObjectMembers))),
+      limit_plus_1: expectReject("members_limit_plus_1", () => parseResourceProbe(objectMembersJson(LIMITS.maxObjectMembers + 1))),
+      multibyte_utf8: expectAccept("members_multibyte", () => parseResourceProbe('{"\xE9":1,"\xE8":2}'))
+    },
+    max_array_length: {
+      limit_minus_1: expectAccept("array_limit_minus_1", () => parseResourceProbe(arrayJson(LIMITS.maxArrayLength - 1))),
+      exact_limit: expectAccept("array_exact_limit", () => parseResourceProbe(arrayJson(LIMITS.maxArrayLength))),
+      limit_plus_1: expectReject("array_limit_plus_1", () => parseResourceProbe(arrayJson(LIMITS.maxArrayLength + 1))),
+      multibyte_utf8: expectAccept("array_multibyte", () => parseResourceProbe('["\xE9","\xE8"]'))
+    },
+    max_generic_string_bytes: {
+      limit_minus_1: expectAccept("string_limit_minus_1", () => parseResourceProbe(stringJson(LIMITS.maxStringLength - 1))),
+      exact_limit: expectAccept("string_exact_limit", () => parseResourceProbe(JSON.stringify(exactGeneric))),
+      limit_plus_1: expectReject("string_limit_plus_1", () => parseResourceProbe(JSON.stringify(`${exactGeneric}x`))),
+      multibyte_utf8_over_code_unit: expectReject("string_multibyte_over", () => parseResourceProbe(JSON.stringify(overMultiByteGeneric)))
+    },
+    max_changed_paths_item_bytes: {
+      limit_minus_1: expectAccept("path_limit_minus_1", () => parseStrictJsonBytes(new TextEncoder().encode(JSON.stringify(withPath(LIMITS.maxPathLength - 1))))),
+      exact_limit: expectAccept("path_exact_limit", () => parseStrictJsonBytes(new TextEncoder().encode(JSON.stringify({ ...base, action: { ...base.action, parameters: { ...base.action.parameters, changed_paths: [pathAtLimit] } } })))),
+      limit_plus_1: expectReject("path_limit_plus_1", () => parseStrictJsonBytes(new TextEncoder().encode(JSON.stringify(withPath(LIMITS.maxPathLength + 1))))),
+      multibyte_utf8_over_code_unit: expectReject("path_multibyte_over", () => parseStrictJsonBytes(new TextEncoder().encode(JSON.stringify({ ...base, action: { ...base.action, parameters: { ...base.action.parameters, changed_paths: [`${pathAtLimit}\xE9`] } } }))))
+    },
+    max_intent_bytes: {
+      limit_minus_1: expectAccept("intent_limit_minus_1", () => parseStrictJsonBytes(new TextEncoder().encode(JSON.stringify(withIntent("x".repeat(LIMITS.maxIntentLength - 1)))))),
+      exact_limit: expectAccept("intent_exact_limit", () => parseStrictJsonBytes(new TextEncoder().encode(JSON.stringify(withIntent(intentAtLimit))))),
+      limit_plus_1: expectReject("intent_limit_plus_1", () => parseStrictJsonBytes(new TextEncoder().encode(JSON.stringify(withIntent("x".repeat(LIMITS.maxIntentLength + 1)))))),
+      multibyte_utf8_over_code_unit: expectReject("intent_multibyte_over", () => parseStrictJsonBytes(new TextEncoder().encode(JSON.stringify(withIntent(`${intentAtLimit}\xE9`)))))
+    }
+  };
+}
+async function runCanonicalVectorTests(request) {
+  const vectors = [
+    ["numeric_boundaries", { small: 5e-324, max: 17976931348623157e292, min: -17976931348623157e292 }, '{"max":1.7976931348623157e+308,"min":-1.7976931348623157e+308,"small":5e-324}'],
+    ["integer_decimal", { i: 3333333333333333e-7, n: 1e30, z: 0 }, '{"i":333333333.3333333,"n":1e+30,"z":0}'],
+    ["exponent_formatting", { a: 1e-27, b: 1e21, c: 1e-6 }, '{"a":1e-27,"b":1e+21,"c":0.000001}'],
+    ["negative_zero", { z: -0 }, '{"z":0}'],
+    ["unicode_escaping", { newline: "\n", quote: '"', backslash: "\\", nul: "\0" }, '{"backslash":"\\\\","newline":"\\n","nul":"\\u0000","quote":"\\""}'],
+    ["non_ascii_unicode", { "\u20AC": "Euro", "\u{1D11E}": "music", "\xE9": "e-acute" }, '{"\xE9":"e-acute","\u20AC":"Euro","\u{1D11E}":"music"}'],
+    ["key_ordering", { b: 2, a: 1, aa: 3, "\xE4": 4 }, '{"a":1,"aa":3,"b":2,"\xE4":4}'],
+    ["complete_signgate_envelope", fingerprintEnvelope(request), canonicalize(fingerprintEnvelope(request))]
+  ];
+  const results = {};
+  for (const [name, value, expected] of vectors) {
+    const actual = canonicalize(value);
+    results[name] = {
+      canonical_bytes: actual,
+      sha256: await sha256Hex(actual),
+      result: actual === expected ? "PASS" : `FAIL_EXPECTED_${expected}`
+    };
+  }
+  return results;
+}
+async function runFingerprintSemanticTests(request, baseFingerprint) {
+  const unicodeMutation = setAtPath(request, ["action", "target", "service"], "signgate-worker-\xE9");
+  const orderedArrayMutation = setAtPath(request, ["action", "parameters", "ci_evidence"], {
+    ...request.action.parameters.ci_evidence,
+    checks: ["test", "lint"]
+  });
+  const changedPathsReordered = setAtPath(request, ["action", "parameters", "changed_paths"], [...request.action.parameters.changed_paths].reverse());
+  const changedRoutesReordered = setAtPath(request, ["action", "parameters", "changed_routes"], ["/z", "/a"]);
+  const changedRoutesSorted = setAtPath(request, ["action", "parameters", "changed_routes"], ["/a", "/z"]);
+  const omittedArtifact = structuredClone(request);
+  delete omittedArtifact.action.parameters.artifact_digest;
+  const presentUndefinedArtifact = structuredClone(request);
+  presentUndefinedArtifact.action.parameters.artifact_digest = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+  const enumCase = setAtPath(request, ["action", "target", "environment"], "Preview");
+  const identifierCase = setAtPath(request, ["action", "target", "service"], "SignGate-Worker");
+  return {
+    unicode_value_mutation_changes_fingerprint: await fingerprint(unicodeMutation) !== baseFingerprint ? "PASS" : "FAIL",
+    semantically_significant_array_order_changes_fingerprint: await fingerprint(orderedArrayMutation) !== baseFingerprint ? "PASS" : "FAIL",
+    changed_paths_set_normalized_order: await fingerprint(changedPathsReordered) === baseFingerprint ? "PASS" : "FAIL",
+    changed_routes_set_normalized_order: await fingerprint(changedRoutesReordered) === await fingerprint(changedRoutesSorted) ? "PASS" : "FAIL",
+    omitted_optional_field_changes_fingerprint: await fingerprint(omittedArtifact) !== await fingerprint(presentUndefinedArtifact) ? "PASS" : "FAIL",
+    schema_invalid_null_rejected_before_fingerprint: expectReject("null_artifact_digest", () => parseStrictJsonBytes(new TextEncoder().encode(JSON.stringify({ ...baseDeployRequest(), action: { ...baseDeployRequest().action, parameters: { ...baseDeployRequest().action.parameters, artifact_digest: null } } })))),
+    allowed_null_semantics: "PASS_NO_ALLOWED_NULL_FIELDS_IN_DEPLOY_CHANGE_V0_1",
+    enum_case_sensitivity: expectReject("enum_case", () => parseStrictJsonBytes(new TextEncoder().encode(JSON.stringify(enumCase)))),
+    identifier_case_sensitivity: await fingerprint(identifierCase) !== baseFingerprint ? "PASS" : "FAIL",
+    changed_paths_normalization: await fingerprint(changedPathsReordered) === baseFingerprint ? "PASS" : "FAIL",
+    changed_routes_normalization: await fingerprint(changedRoutesReordered) === await fingerprint(changedRoutesSorted) ? "PASS" : "FAIL"
   };
 }
 async function runSelfTest() {
@@ -1784,11 +1967,12 @@ async function runSelfTest() {
     }
   }
   const request = parseStrictJsonBytes(new TextEncoder().encode(JSON.stringify(baseDeployRequest())));
-  const canonicalGolden = canonicalize({ b: 2, a: 1 });
-  const canonicalGoldenPass = canonicalGolden === '{"a":1,"b":2}';
+  const resourceBoundResults = runResourceBoundTests();
+  const rfc8785VectorResults = await runCanonicalVectorTests(request);
   const shaGolden = await sha256Hex("abc");
   const shaGoldenPass = shaGolden === "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
   const baseFingerprint = await fingerprint(request);
+  const fingerprintSemanticResults = await runFingerprintSemanticTests(request, baseFingerprint);
   const fingerprintParticipation = {};
   for (const path of DEPLOY_FIELDS) {
     const current = getAtPath(request, path);
@@ -1813,9 +1997,11 @@ async function runSelfTest() {
     parser_options: { mode: "json", allowTrailingCommas: false },
     limits: LIMITS,
     rejections,
-    canonicalize_golden: canonicalGoldenPass ? "PASS" : `FAIL_${canonicalGolden}`,
+    resource_bound_results: resourceBoundResults,
+    rfc8785_vector_results: rfc8785VectorResults,
     webcrypto_sha256: shaGoldenPass ? "PASS" : `FAIL_${shaGolden}`,
     base_fingerprint: `sha256:${baseFingerprint}`,
+    fingerprint_semantic_results: fingerprintSemanticResults,
     fingerprint_participation: fingerprintParticipation,
     unicode_arrays_omission_null_case_vectors: unicodeCaseRequest.action.parameters.changed_paths.length === 2 && !("artifact_digest" in unicodeCaseRequest.action.parameters) ? "PASS" : "FAIL"
   };
