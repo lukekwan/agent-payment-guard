@@ -8,7 +8,7 @@ SignGate v0.1 is a policy decision point for the `deploy_change` action. It eval
 - `REQUIRE_APPROVAL`: execution is not authorized. A trusted Founder approval grant must be obtained and submitted in a fresh decision request.
 - `DENY`: execution is not authorized.
 
-Every non-valid-`ALLOW` outcome fails closed. A decision response alone is not enough to execute. `ALLOW` is action-bound, time-limited to at most 15 minutes, single-use, and non-executable until `POST /v1/decisions/{decision_id}/consume` succeeds.
+Every non-valid-`ALLOW` outcome fails closed. A decision response alone is not enough to execute. ALLOW is not executable until atomic consume succeeds. `ALLOW` is action-bound, time-limited to at most 15 minutes, single-use, and non-executable until `POST /v1/decisions/{decision_id}/consume` succeeds.
 
 ## Public Preview Endpoints
 

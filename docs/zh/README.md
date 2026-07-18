@@ -8,7 +8,7 @@ SignGate v0.1 是 `deploy_change` action 的 policy decision point。它會評�
 - `REQUIRE_APPROVAL`：不授權執行。必須取得受信任的 Founder approval grant，並用新的 decision request 重新送審。
 - `DENY`：不授權執行。
 
-所有非有效 `ALLOW` 結果都必須 fail closed。只有 decision response 不足以執行。`ALLOW` 是 action-bound、time-limited、single-use，而且在 `POST /v1/decisions/{decision_id}/consume` 成功前不可執行。
+所有非有效 `ALLOW` 結果都必須 fail closed。只有 decision response 不足以執行。ALLOW is not executable until atomic consume succeeds。`ALLOW` 是 action-bound、time-limited、single-use，而且在 `POST /v1/decisions/{decision_id}/consume` 成功前不可執行。
 
 ## Public Preview Endpoints
 
