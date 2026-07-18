@@ -1,5 +1,19 @@
-Changed files from base 5ac67be4fe17b5c1b773bcc584080cad704f4959 to 901080e5315bdef8deb81eb69ed44853f17ce680:
+Application implementation files introduced from base 5ac67be4fe17b5c1b773bcc584080cad704f4959 through c09da133d79769525bd6a66dda05cb95eb3cee17:
 A	DEV-SG-001_IMPLEMENTATION_MAPPING.md
+A	migrations/0008_signgate_deploy_change_decisions.sql
+M	package-lock.json
+M	package.json
+M	src/index.js
+A	src/signgate-decision.js
+A	test/signgate-decision.test.js
+
+Superseding source correction in 901080e5315bdef8deb81eb69ed44853f17ce680:
+M	package.json
+
+Supersession reason:
+c09da133d79769525bd6a66dda05cb95eb3cee17 passed DEV-SG-001 product tests but its npm test script excluded package-level baseline tests. 901080e5315bdef8deb81eb69ed44853f17ce680 restores package-level baseline tests while still excluding preimplementation spike harnesses.
+
+Evidence files committed after implementation:
 A	DEV-SG-001_IMPLEMENTATION_REPORT.md
 A	evidence/dev-sg-001-implementation/changed-files.txt
 A	evidence/dev-sg-001-implementation/consume-results.json
@@ -18,11 +32,3 @@ A	evidence/dev-sg-001-implementation/test-results.json
 A	evidence/dev-sg-001-implementation/test-results.tap
 A	evidence/dev-sg-001-implementation/versions-and-hashes.txt
 A	evidence/dev-sg-001-implementation/wrapper-results.json
-A	migrations/0008_signgate_deploy_change_decisions.sql
-M	package-lock.json
-M	package.json
-M	src/index.js
-A	src/signgate-decision.js
-A	test/signgate-decision.test.js
-
-Supersedes earlier frozen implementation commit c09da133d79769525bd6a66dda05cb95eb3cee17 because its npm test script excluded package-level baseline tests.

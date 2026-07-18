@@ -1,28 +1,14 @@
-Forbidden scope check from base to HEAD:
+Forbidden scope check for application implementation files:
 DEV-SG-001_IMPLEMENTATION_MAPPING.md
-DEV-SG-001_IMPLEMENTATION_REPORT.md
-evidence/dev-sg-001-implementation/changed-files.txt
-evidence/dev-sg-001-implementation/consume-results.json
-evidence/dev-sg-001-implementation/contract-results.json
-evidence/dev-sg-001-implementation/d1-tables-and-migrations.txt
-evidence/dev-sg-001-implementation/df-scenario-results.json
-evidence/dev-sg-001-implementation/fingerprint-results.json
-evidence/dev-sg-001-implementation/forbidden-scope-check.txt
-evidence/dev-sg-001-implementation/git-status-before-evidence-commit.txt
-evidence/dev-sg-001-implementation/npm-ci.txt
-evidence/dev-sg-001-implementation/npm-run-check.txt
-evidence/dev-sg-001-implementation/policy-results.json
-evidence/dev-sg-001-implementation/route-list.txt
-evidence/dev-sg-001-implementation/secret-review.txt
-evidence/dev-sg-001-implementation/test-results.json
-evidence/dev-sg-001-implementation/test-results.tap
-evidence/dev-sg-001-implementation/versions-and-hashes.txt
-evidence/dev-sg-001-implementation/wrapper-results.json
 migrations/0008_signgate_deploy_change_decisions.sql
 package-lock.json
 package.json
 src/index.js
 src/signgate-decision.js
 test/signgate-decision.test.js
+
+Evidence/report files were committed separately under:
+DEV-SG-001_IMPLEMENTATION_REPORT.md
+evidence/dev-sg-001-implementation/
 
 No main merge, production deploy, production D1, production credentials, payment/x402 enforcement, send_external_message, dashboard, SSO, general IAM, QA dispatch, Independent Reviewer dispatch, release, or Founder Gate 4 claim was performed.
