@@ -1,0 +1,53 @@
+{
+  "generated_at": "2026-07-18T18:52:15.235Z",
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "required deliverable files exist",
+      "status": "PASS"
+    },
+    {
+      "name": "openapi json parses",
+      "status": "PASS"
+    },
+    {
+      "name": "public openapi excludes internal founder endpoint",
+      "status": "PASS"
+    },
+    {
+      "name": "internal openapi includes founder endpoint",
+      "status": "PASS"
+    },
+    {
+      "name": "required public wording present",
+      "status": "PASS"
+    },
+    {
+      "name": "example syntax validates",
+      "status": "PASS"
+    },
+    {
+      "name": "examples use environment variables for credentials",
+      "status": "PASS"
+    },
+    {
+      "name": "forbidden paths are not changed on documentation branch",
+      "status": "PASS"
+    }
+  ],
+  "file_hashes": {
+    "docs/openapi/signgate-public-v0.1.openapi.json": "bca2ad780051c8621c7ede7d13eda07b5d99a0361f647f3a10b68a02d6f40934",
+    "docs/openapi/signgate-internal-v0.1.openapi.json": "ccad21fb8e6b2d9142791186b2c6bd5129e939391140b9e52b0ff4fc7f70c8e1",
+    "docs/en/README.md": "9a55b3710c50052880fd4fe876def35f819677541f461c6c72c88b8b626a63d3",
+    "docs/zh/README.md": "351e10d5deb82c1d71175b5135e5b6d0411c733be8dd70c6e65406372f00344b",
+    "docs/examples/curl/create-decision.sh": "4dbd394918c8c0ddef6b203ffaff9aa062732c65ca4b26bf294c81ec3f791aa1",
+    "docs/examples/curl/consume-decision.sh": "f8bce88d2cf87a9ef04324d9b26df6e3c84ffa3bc998a51df45c99d2f83a9e74",
+    "docs/examples/javascript/create-decision.mjs": "14756b20fc16f7a1593211a227a30868bae067c9c22ff83a84d91b71096e2143",
+    "docs/examples/python/create_decision.py": "b2cd0c8b089430cd50d8cf2ab1ce06db0a80e8af4da87fd4aa02ff6df611f467",
+    "tools/gitbook-sync/README.md": "6444d5cac304e9f971512925781e1ae3ee76ac3b2afc205bb602a0b4d7da6532",
+    "tools/gitbook-sync/validate-docs.mjs": "765b9ee7415c6ac7c356494887fce91596d9407e29186fe8f8fe4b66e211a236",
+    "tools/gitbook-sync/dry-run.mjs": "0bccf09f3062b9c6cc6be881e956dc6981fcb6e17f63280f9eed5d1d8db2b4fa"
+  },
+  "public_internal_boundary": "PASS",
+  "gitbook_publication": "NOT_PERFORMED_DRY_RUN_ONLY"
+}

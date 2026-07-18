@@ -1,0 +1,30 @@
+{
+  "generated_at": "2026-07-18T18:52:15.295Z",
+  "status": "DRY_RUN_ONLY",
+  "publication_performed": false,
+  "network_calls_performed": false,
+  "gitbook_token_required": false,
+  "target": "GitBook draft/change-request automation only when separately authorized",
+  "files": [
+    "docs/openapi/signgate-internal-v0.1.openapi.json",
+    "docs/openapi/signgate-public-v0.1.openapi.json",
+    "docs/en/README.md",
+    "docs/zh/README.md",
+    "docs/examples/curl/consume-decision.sh",
+    "docs/examples/curl/create-decision.sh",
+    "docs/examples/javascript/create-decision.mjs",
+    "docs/examples/python/create_decision.py",
+    "docs/examples/validation/curl-syntax.txt",
+    "docs/examples/validation/doc-validation-results.json",
+    "docs/examples/validation/doc-validation.txt",
+    "docs/examples/validation/gitbook-dry-run-results.json",
+    "docs/examples/validation/gitbook-dry-run.txt",
+    "docs/examples/validation/javascript-syntax.txt",
+    "docs/examples/validation/openapi-json-parse.txt",
+    "docs/examples/validation/python-syntax.txt",
+    "tools/gitbook-sync/README.md",
+    "tools/gitbook-sync/dry-run.mjs",
+    "tools/gitbook-sync/validate-docs.mjs",
+    "DOC-SG-001_API_DOCUMENTATION_REPORT.md"
+  ]
+}
