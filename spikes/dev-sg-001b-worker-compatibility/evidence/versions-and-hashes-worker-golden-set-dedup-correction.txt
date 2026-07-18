@@ -1,0 +1,29 @@
+Recorded at: 2026-07-19T01:17:22+08:00
+
+Node: v24.15.0
+npm: 11.12.1
+Wrangler: 4.112.0
+
+Package versions:
+dev-sg-001b-worker-compatibility@0.0.0 /Users/0xkwan/.openclaw/worktrees/dev-sg-001/spikes/dev-sg-001b-worker-compatibility
+├── @humanwhocodes/momoa@3.3.10
+├── canonicalize@3.0.0
+├── esbuild@0.28.1
+├── miniflare@4.20260714.0
+└── wrangler@4.112.0
+
+
+SHA-256 hashes:
+32d356730708688b7a47242d9c182fefd26fe276cca20346eba4051144a56266  package.json
+18752feded5ea6b2653448415d56ccf24f79a8cbf18573eaa558ca5e01a0d72f  package-lock.json
+4ac030c89fc82c7b359f2276fb77352605f0777d2b0494f10a12abef22c37e50  worker.mjs
+334b8322947d852569482bf22cfe08abb3cd1a79d235e5239d5dbedaa2ba36a6  test-runner.mjs
+185195a5ccfdb9e35dc0a82a80ecb28d8e4cb0712936e14061f99f54679a58c0  fixtures/deploy-change-envelope-golden.json
+90061420d3a763f75edc91ed99e36a4f6b0550e22154b477d9a771db9244a3da  dist/worker.bundle.mjs
+df5fb9b5dcdbe84dd47c9bd1eb61b037594ee190ea8851d09cbbea9efb6069b3  DEV-SG-001B_WORKER_COMPATIBILITY_REPORT.md
+49dc37b7ddaf7d4038ba02064459e3b57e9b38fca6ae358569aa869b38ff7a78  evidence/worker-compatibility-results-worker-golden-set-dedup-correction.json
+e804c8720f6d37e277e6f325a99ae1f097967691029432f169840734d7e32aa8  evidence/npm-test-worker-golden-set-dedup-correction.txt
+fbbe11c121048234a8a0ee57501ac09615f96ee50234d747164c7ac54e4f9d83  evidence/test-counts-worker-golden-set-dedup-correction.txt
+830b7402f56ed6338e76b25c0baf3935304f28afe36e34fc621c6d2e89e8739f  evidence/git-status-before-commit-worker-golden-set-dedup-correction.txt
+6e6706c860e2a059ee0d94eaa005b57b8482346e284972d9fe46b7717104b253  evidence/git-status-after-commit-worker-golden-set-dedup-correction.txt
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  evidence/forbidden-path-comparison-worker-golden-set-dedup-correction.txt

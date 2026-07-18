@@ -1772,8 +1772,18 @@ function validateSchema(parsed) {
   if ("touches_credentials" in parsed.action.parameters && typeof parsed.action.parameters.touches_credentials !== "boolean") {
     throw new Error("schema-invalid touches_credentials");
   }
-  if (parsed.action.parameters.changed_paths?.some((path) => utf8ByteLength(path) > LIMITS.maxPathLength)) {
-    throw new Error("resource bound: max changed path length exceeded");
+  for (const field of ["changed_paths", "changed_routes"]) {
+    if (!Array.isArray(parsed.action.parameters[field])) {
+      throw new Error(`schema-invalid ${field}`);
+    }
+    for (const value of parsed.action.parameters[field]) {
+      if (typeof value !== "string") {
+        throw new Error(`schema-invalid ${field} member`);
+      }
+      if (utf8ByteLength(value) > LIMITS.maxPathLength) {
+        throw new Error(`resource bound: max ${field} item length exceeded`);
+      }
+    }
   }
   if (typeof parsed.intent === "string" && utf8ByteLength(parsed.intent) > LIMITS.maxIntentLength) {
     throw new Error("resource bound: max intent length exceeded");
@@ -1796,13 +1806,33 @@ async function sha256Hex(text) {
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
+function normalizeSortedUniqueStrings(values, fieldName) {
+  if (!Array.isArray(values)) {
+    throw new Error(`schema-invalid ${fieldName}`);
+  }
+  for (const value of values) {
+    if (typeof value !== "string") {
+      throw new Error(`schema-invalid ${fieldName} member`);
+    }
+    if (utf8ByteLength(value) > LIMITS.maxPathLength) {
+      throw new Error(`resource bound: max ${fieldName} item length exceeded`);
+    }
+  }
+  return [...new Set(values)].sort();
+}
 function fingerprintEnvelope(request) {
   const action = structuredClone(request.action);
   if (Array.isArray(action.parameters.changed_paths)) {
-    action.parameters.changed_paths = [...new Set(action.parameters.changed_paths)].sort();
+    action.parameters.changed_paths = normalizeSortedUniqueStrings(
+      action.parameters.changed_paths,
+      "changed_paths"
+    );
   }
   if (Array.isArray(action.parameters.changed_routes)) {
-    action.parameters.changed_routes = [...new Set(action.parameters.changed_routes)].sort();
+    action.parameters.changed_routes = normalizeSortedUniqueStrings(
+      action.parameters.changed_routes,
+      "changed_routes"
+    );
   }
   return {
     contract_version: request.contract_version,
@@ -2014,6 +2044,74 @@ async function runLiteralCompleteEnvelopeGoldenTest() {
     actual_sha256: actualDigest
   };
 }
+async function runSetNormalizationTests(request) {
+  const variant = (field, values) => setAtPath(request, ["action", "parameters", field], values);
+  const fieldResult = async (field, aValues, bValues, cValues, newUniqueValue) => {
+    const a = variant(field, aValues);
+    const b = variant(field, bValues);
+    const c = variant(field, cValues);
+    const withNewUnique = variant(field, [...bValues, newUniqueValue]);
+    const withCaseDistinct = variant(field, ["/A", "/a", "/a"]);
+    const aBefore = JSON.stringify(a.action.parameters[field]);
+    const normalizedA = fingerprintEnvelope(a).action.parameters[field];
+    const normalizedB = fingerprintEnvelope(b).action.parameters[field];
+    const normalizedC = fingerprintEnvelope(c).action.parameters[field];
+    const normalizedCaseDistinct = fingerprintEnvelope(withCaseDistinct).action.parameters[field];
+    const normalizedTwice = normalizeSortedUniqueStrings(normalizedA, field);
+    const canonicalA = canonicalize(fingerprintEnvelope(a));
+    const canonicalB = canonicalize(fingerprintEnvelope(b));
+    const canonicalC = canonicalize(fingerprintEnvelope(c));
+    const fingerprintA = await fingerprint(a);
+    const fingerprintB = await fingerprint(b);
+    const fingerprintC = await fingerprint(c);
+    const fingerprintWithNewUnique = await fingerprint(withNewUnique);
+    return {
+      normalized_a: normalizedA,
+      normalized_b: normalizedB,
+      normalized_c: normalizedC,
+      canonical_a: canonicalA,
+      canonical_b: canonicalB,
+      canonical_c: canonicalC,
+      fingerprint_a: fingerprintA,
+      fingerprint_b: fingerprintB,
+      fingerprint_c: fingerprintC,
+      dedup: new Set(normalizedA).size === normalizedA.length && normalizedA.length === normalizedB.length ? "PASS" : "FAIL",
+      permutation_equivalence: JSON.stringify(normalizedA) === JSON.stringify(normalizedB) && JSON.stringify(normalizedB) === JSON.stringify(normalizedC) && canonicalA === canonicalB && canonicalB === canonicalC && fingerprintA === fingerprintB && fingerprintB === fingerprintC ? "PASS" : "FAIL",
+      unique_value_mutation_changes_fingerprint: fingerprintWithNewUnique !== fingerprintB ? "PASS" : "FAIL",
+      case_distinct_values_remain_distinct: normalizedCaseDistinct.includes("/A") && normalizedCaseDistinct.includes("/a") && normalizedCaseDistinct.length === 2 ? "PASS" : "FAIL",
+      duplicates_do_not_survive_canonical_envelope: new Set(normalizedA).size === normalizedA.length ? "PASS" : "FAIL",
+      idempotence: JSON.stringify(normalizedTwice) === JSON.stringify(normalizedA) ? "PASS" : "FAIL",
+      no_input_mutation: JSON.stringify(a.action.parameters[field]) === aBefore ? "PASS" : "FAIL"
+    };
+  };
+  const changedPaths = await fieldResult(
+    "changed_paths",
+    ["/z", "/a", "/a"],
+    ["/a", "/z"],
+    ["/z", "/a"],
+    "/new-path"
+  );
+  const changedRoutes = await fieldResult(
+    "changed_routes",
+    ["/route-z", "/route-a", "/route-a"],
+    ["/route-a", "/route-z"],
+    ["/route-z", "/route-a"],
+    "/route-new"
+  );
+  return {
+    details: {
+      changed_paths: changedPaths,
+      changed_routes: changedRoutes
+    },
+    CHANGED_PATHS_DEDUP: changedPaths.dedup,
+    CHANGED_PATHS_PERMUTATION_EQUIVALENCE: changedPaths.permutation_equivalence,
+    CHANGED_ROUTES_DEDUP: changedRoutes.dedup,
+    CHANGED_ROUTES_PERMUTATION_EQUIVALENCE: changedRoutes.permutation_equivalence,
+    SET_NORMALIZATION_IDEMPOTENCE: changedPaths.idempotence === "PASS" && changedRoutes.idempotence === "PASS" ? "PASS" : "FAIL",
+    SET_NORMALIZATION_NO_INPUT_MUTATION: changedPaths.no_input_mutation === "PASS" && changedRoutes.no_input_mutation === "PASS" ? "PASS" : "FAIL",
+    SET_UNIQUE_VALUE_MUTATION_CHANGES_FINGERPRINT: changedPaths.unique_value_mutation_changes_fingerprint === "PASS" && changedRoutes.unique_value_mutation_changes_fingerprint === "PASS" ? "PASS" : "FAIL"
+  };
+}
 async function runFingerprintSemanticTests(request, baseFingerprint) {
   const unicodeMutation = setAtPath(request, ["action", "target", "service"], "signgate-worker-\xE9");
   const orderedArrayMutation = setAtPath(request, ["action", "parameters", "ci_evidence"], {
@@ -2074,6 +2172,7 @@ async function runSelfTest() {
   const resourceBoundResults = runResourceBoundTests();
   const rfc8785VectorResults = await runCanonicalVectorTests(request);
   const completeEnvelopeLiteralGolden = await runLiteralCompleteEnvelopeGoldenTest();
+  const setNormalizationResults = await runSetNormalizationTests(request);
   const shaGolden = await sha256Hex("abc");
   const shaGoldenPass = shaGolden === "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
   const baseFingerprint = await fingerprint(request);
@@ -2105,6 +2204,7 @@ async function runSelfTest() {
     resource_bound_results: resourceBoundResults,
     rfc8785_vector_results: rfc8785VectorResults,
     complete_envelope_literal_golden: completeEnvelopeLiteralGolden,
+    set_normalization_results: setNormalizationResults,
     webcrypto_sha256: shaGoldenPass ? "PASS" : `FAIL_${shaGolden}`,
     base_fingerprint: `sha256:${baseFingerprint}`,
     fingerprint_semantic_results: fingerprintSemanticResults,

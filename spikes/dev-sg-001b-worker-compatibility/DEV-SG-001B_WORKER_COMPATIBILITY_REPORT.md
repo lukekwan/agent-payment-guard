@@ -87,6 +87,88 @@ FULL_APPLICATION_IMPLEMENTATION_STATUS=BLOCKED
 
 PRODUCTION_DEPLOYMENT=NOT_AUTHORIZED
 
+## Worker Golden And Set Dedup Named-Assertion Correction
+
+Correction status: PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT
+
+Recorded at: 2026-07-19T01:21:00+08:00
+
+PM final correction acknowledgement:
+
+- Repository: `lukekwan/openclaw-workspace`
+- Branch: `handoff/signgate-dev-sg-001-final-correction-ack`
+- Exact review commit: `e4025fe0c24a0c046754488e875e2ae918305dab`
+- Review document SHA-256:
+  `c93528c2d48721bab85082f38f2b717fc183e73e5aa3fb90c4896bdb759c55bf`
+
+Corrected evidence:
+
+- `fixtures/deploy-change-envelope-golden.json`
+- `evidence/npm-test-worker-golden-set-dedup-correction.txt`
+- `evidence/worker-compatibility-results-worker-golden-set-dedup-correction.json`
+- `evidence/test-counts-worker-golden-set-dedup-correction.txt`
+- `evidence/versions-and-hashes-worker-golden-set-dedup-correction.txt`
+- `evidence/git-status-before-commit-worker-golden-set-dedup-correction.txt`
+- `evidence/git-status-after-commit-worker-golden-set-dedup-correction.txt`
+- `evidence/forbidden-path-comparison-worker-golden-set-dedup-correction.txt`
+- `dist/worker.bundle.mjs`
+
+Complete-envelope literal golden:
+
+- Expected literal canonical UTF-8 byte length: `1168`
+- Actual canonical UTF-8 byte length: `1168`
+- Expected lowercase SHA-256:
+  `9260871e5133d451793b807a34b0782a562dc04807e4f8e4443b5397ff42eda2`
+- `COMPLETE_ENVELOPE_LITERAL_CANONICAL_BYTES=PASS`
+- `COMPLETE_ENVELOPE_LITERAL_SHA256=PASS`
+
+Set normalization implementation:
+
+- Shared helper: `normalizeSortedUniqueStrings(values, fieldName)`
+- Validates every member before normalization.
+- Deduplicates exact string values.
+- Sorts deterministically.
+- Does not lowercase values.
+- Keeps case-distinct values distinct.
+- Does not mutate the original parsed request object.
+- Fingerprints only the normalized copy.
+
+Required named assertions:
+
+CHANGED_PATHS_DEDUP=PASS
+
+CHANGED_PATHS_PERMUTATION_EQUIVALENCE=PASS
+
+CHANGED_ROUTES_DEDUP=PASS
+
+CHANGED_ROUTES_PERMUTATION_EQUIVALENCE=PASS
+
+SET_NORMALIZATION_IDEMPOTENCE=PASS
+
+SET_NORMALIZATION_NO_INPUT_MUTATION=PASS
+
+SET_UNIQUE_VALUE_MUTATION_CHANGES_FINGERPRINT=PASS
+
+Final correction result:
+
+RESOURCE_BOUND_RESULTS=PASS
+
+RFC8785_VECTOR_RESULTS=PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT
+
+FINGERPRINT_SEMANTIC_RESULTS=PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT
+
+WORKER_COMPATIBILITY_HARNESS=PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT
+
+DEV_SG_001B_BASELINE_GATE=PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT
+
+D1_RUNTIME_ATOMICITY=PROVEN
+
+DEV_SG_001C_D1_ATOMICITY_SPIKE=PASS
+
+FULL_APPLICATION_IMPLEMENTATION_STATUS=BLOCKED
+
+PRODUCTION_DEPLOYMENT=NOT_AUTHORIZED
+
 ## Final Evidence Correction
 
 Correction status: PROPOSED_PASS_PENDING_PM_ACKNOWLEDGEMENT

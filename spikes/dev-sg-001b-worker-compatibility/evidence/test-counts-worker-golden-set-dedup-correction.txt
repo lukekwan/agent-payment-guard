@@ -1,0 +1,4 @@
+TEST_COUNT=105
+PASS_COUNT=105
+FAIL_COUNT=0
+COUNTING_RULE=recursive PASS/FAIL status strings, excluding canonical byte and digest evidence fields

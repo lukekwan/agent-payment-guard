@@ -78,6 +78,28 @@ async function main() {
     results.complete_envelope_literal_golden.complete_envelope_literal_sha256 === "PASS",
     "complete envelope literal SHA-256 must match committed fixture"
   );
+  assert(results.set_normalization_results.CHANGED_PATHS_DEDUP === "PASS", "changed_paths dedup must pass");
+  assert(
+    results.set_normalization_results.CHANGED_PATHS_PERMUTATION_EQUIVALENCE === "PASS",
+    "changed_paths permutation equivalence must pass"
+  );
+  assert(results.set_normalization_results.CHANGED_ROUTES_DEDUP === "PASS", "changed_routes dedup must pass");
+  assert(
+    results.set_normalization_results.CHANGED_ROUTES_PERMUTATION_EQUIVALENCE === "PASS",
+    "changed_routes permutation equivalence must pass"
+  );
+  assert(
+    results.set_normalization_results.SET_NORMALIZATION_IDEMPOTENCE === "PASS",
+    "set normalization idempotence must pass"
+  );
+  assert(
+    results.set_normalization_results.SET_NORMALIZATION_NO_INPUT_MUTATION === "PASS",
+    "set normalization must not mutate input"
+  );
+  assert(
+    results.set_normalization_results.SET_UNIQUE_VALUE_MUTATION_CHANGES_FINGERPRINT === "PASS",
+    "new unique path/route values must change fingerprint"
+  );
   assert(results.webcrypto_sha256 === "PASS", "Web Crypto SHA-256 must match golden digest");
   assertDeepPass(results.fingerprint_semantic_results, "fingerprint_semantic_results");
   assert(results.unicode_arrays_omission_null_case_vectors === "PASS", "unicode/array/omission/case vectors must pass");

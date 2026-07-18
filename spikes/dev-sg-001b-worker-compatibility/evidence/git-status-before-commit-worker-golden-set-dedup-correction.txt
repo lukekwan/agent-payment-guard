@@ -1,0 +1,7 @@
+ M spikes/dev-sg-001b-worker-compatibility/dist/worker.bundle.mjs
+ M spikes/dev-sg-001b-worker-compatibility/evidence/worker-compatibility-results.json
+ M spikes/dev-sg-001b-worker-compatibility/test-runner.mjs
+ M spikes/dev-sg-001b-worker-compatibility/worker.mjs
+?? spikes/dev-sg-001b-worker-compatibility/evidence/forbidden-path-comparison-worker-golden-set-dedup-correction.txt
+?? spikes/dev-sg-001b-worker-compatibility/evidence/git-status-before-commit-worker-golden-set-dedup-correction.txt
+?? spikes/dev-sg-001b-worker-compatibility/evidence/npm-test-worker-golden-set-dedup-correction.txt
