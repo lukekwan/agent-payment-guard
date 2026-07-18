@@ -196,18 +196,23 @@ Stop and report a documentation-contract conflict when:
 - GitBook automation would require publishing
 - application files would need modification
 
-After creating the file:
+## Receiving agent startup protocol
 
-1. Commit it separately.
-2. Push the branch.
-3. Return:
+The receiving Documentation Builder must:
 
-HANDOFF_BRANCH=
-HANDOFF_FILE=
-HANDOFF_COMMIT_SHA=
-HANDOFF_FILE_SHA256=
-APPLICATION_FILES_CHANGED=NO
-WORKTREE_STATUS=
-PUSH_STATUS=
+1. Verify this handoff file at the exact handoff commit supplied in its task.
+2. Verify the frozen implementation and evidence commits listed above.
+3. Create its own documentation working branch from this handoff branch.
+4. Read all required implementation files before generating documentation.
+5. Produce documentation and GitBook automation only within the authorized paths.
+6. Run validation and dry-run checks.
+7. Commit and push documentation deliverables without publishing GitBook.
+8. Return exact documentation and automation commit SHAs.
+9. Stop pending documentation review and publication authorization.
 
-Then stop.
+Do not begin when:
+
+- this handoff file cannot be verified
+- an authoritative commit cannot be fetched
+- the source and contract materially disagree
+- public/internal endpoint classification is unresolved
