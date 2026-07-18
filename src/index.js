@@ -9,6 +9,11 @@ import { paymentMiddlewareFromHTTPServer } from "@x402/hono";
 import { Hono } from "hono";
 import { parse as parseYaml } from "yaml";
 import {
+  handleConsumeDecisionRequest,
+  handleFounderApprovalGrantRequest,
+  handleSignGateDecisionRequest,
+} from "./signgate-decision.js";
+import {
   buildSumsubEvidenceManifest,
   evaluateAgenticCommercePreflight as evaluateAgenticCommercePolicy,
   listSumsubEvidenceServices,
@@ -12033,6 +12038,62 @@ function openApi(origin) {
       },
     },
   };
+  document.paths["/v1/decisions"] = {
+    post: {
+      operationId: "createSignGateDecision",
+      summary:
+        "Create a preview DEV-SG-001 deploy_change policy decision using the frozen SignGate decision contract.",
+      security: [{ bearerAuth: [] }],
+      responses: {
+        200: { description: "Completed ALLOW, REQUIRE_APPROVAL, or DENY policy evaluation" },
+        400: { description: "Malformed JSON" },
+        401: { description: "Authentication failed" },
+        403: { description: "Authorization or tenant mismatch" },
+        409: { description: "Request idempotency conflict" },
+        422: { description: "Contract validation failed" },
+        503: { description: "Policy dependency unavailable" },
+      },
+    },
+  };
+  document.paths["/v1/decisions/{decision_id}/consume"] = {
+    post: {
+      operationId: "consumeSignGateDecision",
+      summary:
+        "Atomically consume a single-use preview ALLOW decision before non-production execution.",
+      security: [{ bearerAuth: [] }],
+      parameters: [
+        {
+          name: "decision_id",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+        },
+      ],
+      responses: {
+        200: { description: "Consume receipt" },
+        401: { description: "Authentication failed" },
+        403: { description: "Authorization or tenant mismatch" },
+        409: { description: "Replay, mismatch, or expired decision" },
+        422: { description: "Contract validation failed" },
+        503: { description: "Policy dependency unavailable" },
+      },
+    },
+  };
+  document.paths["/internal/dogfood/founder-approval-grants"] = {
+    post: {
+      operationId: "createFounderApprovalGrant",
+      summary:
+        "Preview-protected internal dogfood operation for Founder approval grants; not a general approval product API.",
+      security: [{ bearerAuth: [] }],
+      responses: {
+        200: { description: "Bound Founder approval grant" },
+        401: { description: "Authentication failed" },
+        403: { description: "Founder approval scope required" },
+        409: { description: "Original decision or grant binding invalid" },
+        422: { description: "Contract validation failed" },
+      },
+    },
+  };
   for (const path of MARKETPLACE_HIDDEN_OPENAPI_PATHS) {
     delete document.paths[path];
   }
@@ -15937,6 +15998,25 @@ export default {
           400,
         );
       }
+    }
+    if (request.method === "POST" && url.pathname === "/v1/decisions") {
+      return handleSignGateDecisionRequest(request, env);
+    }
+    if (
+      request.method === "POST" &&
+      url.pathname === "/internal/dogfood/founder-approval-grants"
+    ) {
+      return handleFounderApprovalGrantRequest(request, env);
+    }
+    const consumeMatch = /^\/v1\/decisions\/([^/]+)\/consume$/.exec(
+      url.pathname,
+    );
+    if (request.method === "POST" && consumeMatch) {
+      return handleConsumeDecisionRequest(
+        request,
+        env,
+        decodeURIComponent(consumeMatch[1]),
+      );
     }
     if (!["GET", "HEAD"].includes(request.method)) {
       return json({ error: "method_not_allowed" }, 405, {

@@ -7,18 +7,20 @@
     "ws": "8.21.0"
   },
   "scripts": {
-    "check": "node --check src/index.js && node --test",
+    "check": "node --check src/index.js && node --test test/*.test.js",
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
     "mcp": "node mcp/server.js",
-    "test": "node --test"
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
+    "@humanwhocodes/momoa": "3.3.10",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@x402/core": "^2.16.0",
     "@x402/evm": "^2.16.0",
     "@x402/extensions": "^2.16.0",
     "@x402/hono": "^2.16.0",
+    "canonicalize": "3.0.0",
     "hono": "^4.12.26",
     "yaml": "^2.9.0"
   },
