@@ -7,11 +7,11 @@
     "ws": "8.21.0"
   },
   "scripts": {
-    "check": "node --check src/index.js && node --test test/*.test.js",
+    "check": "node --check src/index.js && node --test test/*.test.js packages/*/test/*.test.js",
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
     "mcp": "node mcp/server.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js packages/*/test/*.test.js"
   },
   "dependencies": {
     "@humanwhocodes/momoa": "3.3.10",
