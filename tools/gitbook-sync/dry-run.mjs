@@ -7,6 +7,9 @@ const validationDir = join(root, "docs", "examples", "validation");
 mkdirSync(validationDir, { recursive: true });
 
 const roots = [
+  ".gitbook.yaml",
+  "docs/README.md",
+  "docs/SUMMARY.md",
   "docs/openapi",
   "docs/en",
   "docs/zh",

@@ -2,6 +2,8 @@
 
 This directory contains isolated validation and dry-run tooling for DOC-SG-001.
 
+The GitBook entrypoint is `.gitbook.yaml`, which selects `docs/` as the content root, `docs/README.md` as the landing page, and `docs/SUMMARY.md` as the bilingual public navigation.
+
 Rules:
 
 - Git repository and OpenAPI files are the source of truth.
@@ -17,6 +19,6 @@ node tools/gitbook-sync/validate-docs.mjs
 node tools/gitbook-sync/dry-run.mjs
 ```
 
-`validate-docs.mjs` checks the public/internal OpenAPI boundary, required preview/fail-closed wording, examples, syntax, and forbidden-path isolation.
+`validate-docs.mjs` checks GitBook configuration and navigation links, the public/internal OpenAPI boundary, required preview/fail-closed wording, examples, syntax, and forbidden-path isolation.
 
 `dry-run.mjs` prints the files that would be staged for a GitBook draft/change request. It performs no network calls and creates no publication.

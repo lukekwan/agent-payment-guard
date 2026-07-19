@@ -2,6 +2,8 @@
 
 Status: preview. Production deployment is not authorized.
 
+Start with [Authentication](authentication.md), review the [Decision lifecycle](decision-lifecycle.md), or open the [API reference](api-reference/README.md).
+
 SignGate v0.1 is a policy decision point for the `deploy_change` action. It evaluates a structured action request and returns one of three decision values:
 
 - `ALLOW`: the exact bound action may proceed only after atomic consume succeeds.
@@ -106,3 +108,5 @@ Only HTTP 200 responses contain a policy decision enum. Errors do not contain `d
 ## Commerce/x402 Status
 
 Commerce/x402 enforcement is not live in DOC-SG-001. Existing commerce preflight surfaces remain a documented non-live compatibility stub. Payment enforcement, x402 purchase execution, signer integration, and a separate commerce policy engine are out of scope.
+
+Next: [Authentication](authentication.md)

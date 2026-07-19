@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-18T18:52:15.235Z",
+  "generated_at": "2026-07-19T06:19:51.976Z",
   "status": "PASS",
   "checks": [
     {
@@ -8,6 +8,22 @@
     },
     {
       "name": "openapi json parses",
+      "status": "PASS"
+    },
+    {
+      "name": "gitbook configuration targets docs navigation",
+      "status": "PASS"
+    },
+    {
+      "name": "gitbook summary links resolve",
+      "status": "PASS"
+    },
+    {
+      "name": "gitbook page links resolve",
+      "status": "PASS"
+    },
+    {
+      "name": "public gitbook navigation excludes internal API",
       "status": "PASS"
     },
     {
@@ -36,17 +52,34 @@
     }
   ],
   "file_hashes": {
+    ".gitbook.yaml": "1001605382c0ad341e21c75c6e2d62333fc098fbe844734b0c13f4bf936d283b",
+    "docs/README.md": "e592eef0b472cc1469762fc334321b762fa67d0779d56e0f331f2002b6b0e947",
+    "docs/SUMMARY.md": "efe93d112fa9605d385a512ae53f0995e8e86233e94ab42fcbeceb6f07c29adf",
     "docs/openapi/signgate-public-v0.1.openapi.json": "bca2ad780051c8621c7ede7d13eda07b5d99a0361f647f3a10b68a02d6f40934",
     "docs/openapi/signgate-internal-v0.1.openapi.json": "ccad21fb8e6b2d9142791186b2c6bd5129e939391140b9e52b0ff4fc7f70c8e1",
-    "docs/en/README.md": "9a55b3710c50052880fd4fe876def35f819677541f461c6c72c88b8b626a63d3",
-    "docs/zh/README.md": "351e10d5deb82c1d71175b5135e5b6d0411c733be8dd70c6e65406372f00344b",
+    "docs/en/README.md": "79f8cc8d9ccf6fed871e9850643bfaf29f51b27e6cd41751c9f12cbad1f06a77",
+    "docs/en/authentication.md": "eaad384c1a7a6a2452ae53e98e8152175c712bf926590d38e3f202ce06f70a5e",
+    "docs/en/decision-lifecycle.md": "f9622093c5507de73bcd250cca732fc5ac2b1e74166fe5f880d97923c13d719c",
+    "docs/en/errors.md": "67da22d1edd79a96b0c4060a7f36c143feabb4917cbc36d5b0cefaaa887c4b58",
+    "docs/en/api-reference/README.md": "64963bc9c94d1ad8e66ba10d5221bbd67e323d8fa2a94662250a5d0aaeebc6f4",
+    "docs/en/api-reference/create-decision.md": "a2a455598f7db7af6b04b7ebb7263ba1a852f926ea3495acdd4f29ebaad9ca1d",
+    "docs/en/api-reference/consume-decision.md": "40f97075941fa32f0dbb9141c4dff050ace2d144395ed0afd5fa47f8ee48423a",
+    "docs/en/examples.md": "a79e65703a6197a433ff3e8a2115404d0d8fe4efd4d32166b78b38468643775d",
+    "docs/zh/README.md": "bf61555319aa705d99c2a89b27b0cbfae7bfee126dde1c85ddb1196f925270b2",
+    "docs/zh/authentication.md": "0f79d1b550fc4809fb464ed96d737f958b8313a68da9c5194536ff861ad36ec5",
+    "docs/zh/decision-lifecycle.md": "06f9a6d712e4feb7e1dcc1522b3f4a48bd052fbc40e6084ff3309f03a514393d",
+    "docs/zh/errors.md": "d1f2f033f0df2f98051052d17ceee4665a95abb3dfe04f2e662f00d969a4975d",
+    "docs/zh/api-reference/README.md": "5168b560367885a92e2dd9e7406c858baa86e2d53cf8f5213b847a35b5091760",
+    "docs/zh/api-reference/create-decision.md": "505f638bae9b187fe4076c8ba63809930c7ac3d3df872b62b4dcc696d656fd21",
+    "docs/zh/api-reference/consume-decision.md": "b945b2c66eb775922a6793665e9decd4b41dcfd1312848396c19feb46c6607a9",
+    "docs/zh/examples.md": "f635816fe19717f39c84f2313030dd33f8428c0062144ada985b660f75d175f5",
     "docs/examples/curl/create-decision.sh": "4dbd394918c8c0ddef6b203ffaff9aa062732c65ca4b26bf294c81ec3f791aa1",
     "docs/examples/curl/consume-decision.sh": "f8bce88d2cf87a9ef04324d9b26df6e3c84ffa3bc998a51df45c99d2f83a9e74",
     "docs/examples/javascript/create-decision.mjs": "14756b20fc16f7a1593211a227a30868bae067c9c22ff83a84d91b71096e2143",
     "docs/examples/python/create_decision.py": "b2cd0c8b089430cd50d8cf2ab1ce06db0a80e8af4da87fd4aa02ff6df611f467",
-    "tools/gitbook-sync/README.md": "6444d5cac304e9f971512925781e1ae3ee76ac3b2afc205bb602a0b4d7da6532",
-    "tools/gitbook-sync/validate-docs.mjs": "765b9ee7415c6ac7c356494887fce91596d9407e29186fe8f8fe4b66e211a236",
-    "tools/gitbook-sync/dry-run.mjs": "0bccf09f3062b9c6cc6be881e956dc6981fcb6e17f63280f9eed5d1d8db2b4fa"
+    "tools/gitbook-sync/README.md": "e4f5b034676967985c2a9254f93b9d615ea122832254b7e2c919c65a4481f2e1",
+    "tools/gitbook-sync/validate-docs.mjs": "a8da225762d0a2edeec1a91113620ad21feaf382d12d96b3a636e9078ca686cd",
+    "tools/gitbook-sync/dry-run.mjs": "fd5f82708a09e36702e3cc6a6d54e05060fae900bb0bda8c10c36a8bdb33d72a"
   },
   "public_internal_boundary": "PASS",
   "gitbook_publication": "NOT_PERFORMED_DRY_RUN_ONLY"

@@ -9,10 +9,27 @@ const validationDir = join(root, "docs", "examples", "validation");
 mkdirSync(validationDir, { recursive: true });
 
 const requiredFiles = [
+  ".gitbook.yaml",
+  "docs/README.md",
+  "docs/SUMMARY.md",
   "docs/openapi/signgate-public-v0.1.openapi.json",
   "docs/openapi/signgate-internal-v0.1.openapi.json",
   "docs/en/README.md",
+  "docs/en/authentication.md",
+  "docs/en/decision-lifecycle.md",
+  "docs/en/errors.md",
+  "docs/en/api-reference/README.md",
+  "docs/en/api-reference/create-decision.md",
+  "docs/en/api-reference/consume-decision.md",
+  "docs/en/examples.md",
   "docs/zh/README.md",
+  "docs/zh/authentication.md",
+  "docs/zh/decision-lifecycle.md",
+  "docs/zh/errors.md",
+  "docs/zh/api-reference/README.md",
+  "docs/zh/api-reference/create-decision.md",
+  "docs/zh/api-reference/consume-decision.md",
+  "docs/zh/examples.md",
   "docs/examples/curl/create-decision.sh",
   "docs/examples/curl/consume-decision.sh",
   "docs/examples/javascript/create-decision.mjs",
@@ -53,8 +70,12 @@ function assert(condition, message) {
   }
 }
 
-function command(commandName, args) {
-  execFileSync(commandName, args, { cwd: root, stdio: "pipe" });
+function command(commandName, args, options = {}) {
+  execFileSync(commandName, args, {
+    cwd: root,
+    stdio: "pipe",
+    env: { ...process.env, ...options.env }
+  });
 }
 
 const checks = [];
@@ -72,6 +93,43 @@ check("required deliverable files exist", () => {
 check("openapi json parses", () => {
   parseJson("docs/openapi/signgate-public-v0.1.openapi.json");
   parseJson("docs/openapi/signgate-internal-v0.1.openapi.json");
+});
+
+check("gitbook configuration targets docs navigation", () => {
+  const config = read(".gitbook.yaml");
+  assert(/^root:\s*\.\/docs\/?\s*$/m.test(config), ".gitbook.yaml must use ./docs/ as root");
+  assert(/^\s*readme:\s*README\.md\s*$/m.test(config), ".gitbook.yaml must select docs/README.md");
+  assert(/^\s*summary:\s*SUMMARY\.md\s*$/m.test(config), ".gitbook.yaml must select docs/SUMMARY.md");
+});
+
+check("gitbook summary links resolve", () => {
+  const summary = read("docs/SUMMARY.md");
+  const links = [...summary.matchAll(/\]\(([^)]+)\)/g)].map((match) => match[1]);
+  assert(links.length > 0, "docs/SUMMARY.md contains no navigation links");
+  for (const link of links) {
+    if (/^(?:https?:|#)/.test(link)) continue;
+    const path = link.split("#", 1)[0];
+    assert(existsSync(join(root, "docs", path)), `broken GitBook summary link: ${link}`);
+  }
+});
+
+check("gitbook page links resolve", () => {
+  const pages = requiredFiles.filter((file) => file.startsWith("docs/") && file.endsWith(".md"));
+  for (const page of pages) {
+    const links = [...read(page).matchAll(/\]\(([^)]+)\)/g)].map((match) => match[1]);
+    for (const link of links) {
+      if (/^(?:https?:|mailto:|#)/.test(link)) continue;
+      const target = decodeURI(link.split("#", 1)[0]);
+      assert(existsSync(join(root, dirname(page), target)), `broken link in ${page}: ${link}`);
+    }
+  }
+});
+
+check("public gitbook navigation excludes internal API", () => {
+  const summary = read("docs/SUMMARY.md");
+  assert(!summary.includes("/internal/"), "public GitBook navigation exposes an internal path");
+  assert(!summary.includes("signgate-internal"), "public GitBook navigation links the internal OpenAPI specification");
+  assert(!summary.includes("founder-approval-grants"), "public GitBook navigation exposes the Founder dogfood endpoint");
 });
 
 check("public openapi excludes internal founder endpoint", () => {
@@ -107,7 +165,9 @@ check("example syntax validates", () => {
   command("sh", ["-n", "docs/examples/curl/create-decision.sh"]);
   command("sh", ["-n", "docs/examples/curl/consume-decision.sh"]);
   command("node", ["--check", "docs/examples/javascript/create-decision.mjs"]);
-  command("python3", ["-m", "py_compile", "docs/examples/python/create_decision.py"]);
+  command("python3", ["-m", "py_compile", "docs/examples/python/create_decision.py"], {
+    env: { PYTHONPYCACHEPREFIX: join(process.env.TMPDIR || "/tmp", "signgate-doc-pycache") }
+  });
 });
 
 check("examples use environment variables for credentials", () => {
