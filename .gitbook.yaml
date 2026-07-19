@@ -1,0 +1,5 @@
+root: ./docs/gitbook/public/
+
+structure:
+  readme: en/README.md
+  summary: SUMMARY.md

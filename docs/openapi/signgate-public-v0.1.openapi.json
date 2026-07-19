@@ -3,18 +3,24 @@
   "info": {
     "title": "SignGate Decision API v0.1",
     "version": "0.1.0-preview",
-    "description": "Preview documentation for the SignGate deploy_change decision API. Production deployment is not authorized. ALLOW is action-bound, time-limited, single-use, and is not executable until atomic consume succeeds."
+    "description": "SignGate is the policy and execution control layer for autonomous agents. This Preview execution API evaluates deploy_change actions and returns ALLOW, REQUIRE_APPROVAL, or DENY. ALLOW is action-bound, time-limited, single-use, and is not executable until atomic consume succeeds. Production execution is not currently available in this preview."
   },
   "servers": [
     {
       "url": "https://{host}",
-      "description": "Preview host supplied by an authorized Nomos Labs integration.",
+      "description": "Preview execution environment supplied by an authorized Nomos Labs integration.",
       "variables": {
         "host": {
           "default": "preview.signgate.local",
-          "description": "Preview-only API host. No production base URL is authorized in DOC-SG-001."
+          "description": "Authorized Preview execution environment host. Production execution is not currently available in this preview."
         }
       }
+    }
+  ],
+  "tags": [
+    {
+      "name": "Decisions",
+      "description": "Evaluate an exact action, then atomically consume a verified ALLOW immediately before execution."
     }
   ],
   "security": [{ "BearerAuth": [] }],
@@ -25,6 +31,20 @@
         "description": "Returns ALLOW, REQUIRE_APPROVAL, or DENY only after successful authentication, strict JSON/schema validation, canonical fingerprinting, policy evaluation, persistence, and audit. Every non-valid-ALLOW outcome fails closed.",
         "operationId": "createDecision",
         "tags": ["Decisions"],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl --fail-with-body --silent --show-error \\\n  \"$SIGNGATE_BASE_URL/v1/decisions\" \\\n  -H \"Authorization: Bearer $SIGNGATE_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  --data-binary @decision-request.json"
+          },
+          {
+            "lang": "JavaScript",
+            "source": "const response = await fetch(process.env.SIGNGATE_BASE_URL + '/v1/decisions', { method: 'POST', headers: { authorization: 'Bearer ' + process.env.SIGNGATE_API_KEY, 'content-type': 'application/json' }, body: JSON.stringify(request) });\nif (!response.ok) throw new Error('Execution stopped');"
+          },
+          {
+            "lang": "Python",
+            "source": "request = urllib.request.Request(os.environ['SIGNGATE_BASE_URL'] + '/v1/decisions', data=json.dumps(body).encode(), headers={'Authorization': 'Bearer ' + os.environ['SIGNGATE_API_KEY'], 'Content-Type': 'application/json'}, method='POST')"
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -67,6 +87,20 @@
         "description": "Consumes a valid ALLOW before execution. An ALLOW is not executable until this operation succeeds. The decision must be ALLOW, AVAILABLE, unexpired, organization-bound, fingerprint-bound, policy-bound, and unused.",
         "operationId": "consumeDecision",
         "tags": ["Decisions"],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl --fail-with-body --silent --show-error \\\n  \"$SIGNGATE_BASE_URL/v1/decisions/$DECISION_ID/consume\" \\\n  -H \"Authorization: Bearer $SIGNGATE_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  --data-binary @consume-request.json"
+          },
+          {
+            "lang": "JavaScript",
+            "source": "const response = await fetch(process.env.SIGNGATE_BASE_URL + '/v1/decisions/' + decisionId + '/consume', { method: 'POST', headers: { authorization: 'Bearer ' + process.env.SIGNGATE_API_KEY, 'content-type': 'application/json' }, body: JSON.stringify(request) });\nif (!response.ok) throw new Error('Execution stopped');"
+          },
+          {
+            "lang": "Python",
+            "source": "path = '/v1/decisions/' + decision_id + '/consume'\nrequest = urllib.request.Request(os.environ['SIGNGATE_BASE_URL'] + path, data=json.dumps(body).encode(), headers={'Authorization': 'Bearer ' + os.environ['SIGNGATE_API_KEY'], 'Content-Type': 'application/json'}, method='POST')"
+          }
+        ],
         "parameters": [
           {
             "name": "decision_id",
@@ -162,7 +196,7 @@
         "additionalProperties": false,
         "required": ["environment", "service", "repository"],
         "properties": {
-          "environment": { "type": "string", "description": "preview is the executable scope in DOC-SG-001. production never receives executable ALLOW before Founder Gate 4." },
+          "environment": { "type": "string", "description": "The Preview execution environment is the currently documented executable scope. Production execution is not currently available in this preview." },
           "service": { "type": "string" },
           "project": { "type": "string" },
           "repository": { "$ref": "#/components/schemas/RepositoryIdentity" }
@@ -380,7 +414,7 @@
               "repository": { "host": "github.com", "owner": "lukekwan", "repo": "agent-payment-guard", "remote_url": "https://github.com/lukekwan/agent-payment-guard" }
             },
             "parameters": {
-              "git_commit": "901080e5315bdef8deb81eb69ed44853f17ce680",
+              "git_commit": "0000000000000000000000000000000000000000",
               "artifact_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
               "diff_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
               "changed_paths": ["migrations/0008_signgate_deploy_change_decisions.sql", "src/index.js"],
@@ -392,17 +426,17 @@
               "deployment_strategy": "worker_preview",
               "deployment_command_id": "deploy:preview",
               "configuration_fingerprint": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
-              "ci_evidence": { "provider": "github_actions", "run_id": "run_doc_001", "commit": "901080e5315bdef8deb81eb69ed44853f17ce680", "status": "passed", "checks": ["lint", "unit", "contract"] }
+              "ci_evidence": { "provider": "github_actions", "run_id": "run_doc_001", "commit": "0000000000000000000000000000000000000000", "status": "passed", "checks": ["lint", "unit", "contract"] }
             }
           },
           "intent": "Deploy approved SignGate preview changes",
-          "mandate": { "id": "mandate_doc_001", "scope": ["deploy:preview"], "issued_by": "founder", "expires_at": "2026-07-20T12:00:00Z" },
+          "mandate": { "id": "mandate_doc_001", "scope": ["deploy:preview"], "issued_by": "authorized_issuer", "expires_at": "2030-01-01T12:30:00Z" },
           "evidence": [{ "id": "ev_ci_doc_001", "type": "test_result", "source": "ci", "status": "passed", "observed_at": "2026-07-19T12:00:00Z", "subject_fingerprint": "sha256:4444444444444444444444444444444444444444444444444444444444444444" }],
           "context": { "requested_at": "2026-07-19T12:01:00Z" }
         }
       },
       "PermissionApprovalRequest": {
-        "summary": "Preview deployment requiring Founder approval",
+        "summary": "Preview deployment requiring authorized approval",
         "value": {
           "contract_version": "0.1",
           "request_id": "req_doc_permission_001",
@@ -412,7 +446,7 @@
             "type": "deploy_change",
             "target": { "environment": "preview", "service": "signgate-worker", "repository": { "host": "github.com", "owner": "lukekwan", "repo": "agent-payment-guard", "remote_url": "https://github.com/lukekwan/agent-payment-guard" } },
             "parameters": {
-              "git_commit": "901080e5315bdef8deb81eb69ed44853f17ce680",
+              "git_commit": "0000000000000000000000000000000000000000",
               "diff_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
               "changed_paths": ["src/index.js"],
               "changed_routes": ["/v1/decisions"],
@@ -423,10 +457,10 @@
               "deployment_strategy": "worker_preview",
               "deployment_command_id": "deploy:preview",
               "configuration_fingerprint": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
-              "ci_evidence": { "run_id": "run_doc_002", "commit": "901080e5315bdef8deb81eb69ed44853f17ce680", "status": "passed", "checks": ["lint", "unit", "contract"] }
+              "ci_evidence": { "run_id": "run_doc_002", "commit": "0000000000000000000000000000000000000000", "status": "passed", "checks": ["lint", "unit", "contract"] }
             }
           },
-          "mandate": { "id": "mandate_doc_002", "scope": ["deploy:preview"], "issued_by": "founder", "expires_at": "2026-07-20T12:00:00Z" },
+          "mandate": { "id": "mandate_doc_002", "scope": ["deploy:preview"], "issued_by": "authorized_issuer", "expires_at": "2030-01-01T12:30:00Z" },
           "evidence": [{ "id": "ev_ci_doc_002", "type": "test_result", "source": "ci", "status": "passed", "observed_at": "2026-07-19T12:00:00Z" }]
         }
       },
@@ -464,8 +498,8 @@
           "issued_at": "2026-07-19T12:01:00Z",
           "expires_at": "2026-07-19T12:16:00Z",
           "reason_codes": ["PERMISSION_CHANGE_REQUIRES_APPROVAL"],
-          "required_checks": ["FOUNDATION_APPROVAL_GRANT"],
-          "approval": { "required": true, "role": "founder", "grant_binding_required": true },
+          "required_checks": ["AUTHORIZED_APPROVAL"],
+          "approval": { "required": true, "role": "authorized_approver", "grant_binding_required": true },
           "execution_directive": { "action": "DO_NOT_EXECUTE", "max_uses": 0, "replay_protection": "SERVICE_CONSUME_REQUIRED" },
           "audit_id": "audit_doc_approval_001"
         }
