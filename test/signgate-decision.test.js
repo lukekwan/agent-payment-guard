@@ -23,6 +23,7 @@ import {
 
 const NOW = Date.parse("2026-07-19T00:00:00.000Z");
 const FUTURE = "2026-07-19T00:30:00.000Z";
+const GRANT_FUTURE = "2026-07-19T00:10:00.000Z";
 const ORG = "org_nomos_labs";
 const AGENT_KEY = "sg_agent_abcdefghijklmnopqrstuvwxyz123456";
 const EXECUTOR_KEY = "sg_exec_abcdefghijklmnopqrstuvwxyz123456";
@@ -41,7 +42,7 @@ async function testEnv(overrides = {}) {
     organizationId: ORG,
     principalId: "codex_dev_01",
     principalType: "agent",
-    scopes: ["decision:create"],
+    scopes: ["decision:create:deploy_change"],
     nowMs: NOW,
     pepper: env.SIGNGATE_API_KEY_PEPPER,
   });
@@ -51,7 +52,7 @@ async function testEnv(overrides = {}) {
     organizationId: ORG,
     principalId: "preview_executor_01",
     principalType: "executor",
-    scopes: ["decision:consume"],
+    scopes: ["decision:consume:deploy_change"],
     nowMs: NOW,
     pepper: env.SIGNGATE_API_KEY_PEPPER,
   });
@@ -64,6 +65,30 @@ async function testEnv(overrides = {}) {
     scopes: ["approval:founder:deploy_change"],
     nowMs: NOW,
     pepper: env.SIGNGATE_API_KEY_PEPPER,
+  });
+  const createdAt = new Date(NOW).toISOString();
+  await store.createMandate({
+    organization_id: ORG,
+    mandate_id: "mandate_preview_001",
+    issuer: "founder_01",
+    scope_json: JSON.stringify(["deploy:preview", "deploy:production", "deploy:local"]),
+    status: "active",
+    issued_at: createdAt,
+    expires_at: FUTURE,
+    delete_after: "2026-08-19T00:00:00.000Z",
+    created_at: createdAt,
+  });
+  await store.createTrustedEvidence({
+    organization_id: ORG,
+    evidence_id: "evidence_tests_001",
+    provider: "github_actions",
+    status: "passed",
+    commit: "5ac67be4fe17b5c1b773bcc584080cad704f4959",
+    subject_fingerprint: "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    action_fingerprint: null,
+    observed_at: "2026-07-18T23:59:00.000Z",
+    delete_after: "2026-08-19T00:00:00.000Z",
+    created_at: createdAt,
   });
   return env;
 }
@@ -96,14 +121,14 @@ function baseRequest(overrides = {}) {
         git_commit: "5ac67be4fe17b5c1b773bcc584080cad704f4959",
         artifact_digest: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         diff_digest: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        changed_paths: ["/src/index.js", "/migrations/0008_signgate_deploy_change_decisions.sql"],
+        changed_paths: ["src/index.js", "migrations/0008_signgate_deploy_change_decisions.sql"],
         changed_routes: ["/v1/decisions", "/v1/decisions/{decision_id}/consume"],
         touches_secrets: false,
         touches_dns: false,
         touches_permissions: false,
         touches_credentials: false,
         deployment_strategy: "worker_preview",
-        deployment_command_id: "deploy:preview",
+        deployment_command_id: "wrangler_preview",
         configuration_fingerprint: "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
         ci_evidence: {
           provider: "github_actions",
@@ -219,6 +244,17 @@ test("DEV-SG-001 auth and tenant binding fail closed", async () => {
   assert.equal(wrongScope.status, 403);
   const wrongOrg = await postDecision(baseRequest({ organization_id: "org_other" }), env);
   assert.equal(wrongOrg.status, 403);
+
+  const agentCredential = env.SIGNGATE_TEST_STORE.credentials.get(AGENT_KEY.slice(0, 12));
+  agentCredential.status = "revoked";
+  assert.equal((await postDecision(baseRequest({ request_id: "req_revoked_key" }), env)).status, 401);
+  agentCredential.status = "rotating";
+  agentCredential.rotation_expires_at = "2026-07-19T00:05:00.000Z";
+  assert.equal((await postDecision(baseRequest({ request_id: "req_rotating_key" }), env)).status, 200);
+  agentCredential.rotation_expires_at = "2026-07-18T23:59:59.000Z";
+  assert.equal((await postDecision(baseRequest({ request_id: "req_expired_rotating_key" }), env)).status, 401);
+  agentCredential.status = "active";
+  agentCredential.rotation_expires_at = null;
 });
 
 test("DEV-SG-001 policy matrix implements frozen deploy_change outcomes", async () => {
@@ -269,11 +305,21 @@ test("DEV-SG-001 policy matrix implements frozen deploy_change outcomes", async 
   assert.equal(production.decision, "REQUIRE_APPROVAL");
   assert.deepEqual(production.reason_codes, ["PRODUCTION_GATE_4_REQUIRED"]);
 
-  const expiredMandate = await (await postDecision(baseRequest({ request_id: "req_expired", mandate: { expires_at: "2026-07-18T23:59:59.000Z" } }), env)).json();
-  assert.equal(expiredMandate.decision, "DENY");
+  const callerExpiredMandateClaim = await (await postDecision(baseRequest({ request_id: "req_caller_expired", mandate: { expires_at: "2026-07-18T23:59:59.000Z" } }), env)).json();
+  assert.equal(callerExpiredMandateClaim.decision, "ALLOW");
 
-  const unknownTarget = await (await postDecision(baseRequest({ request_id: "req_unknown_target", action: { target: { environment: "staging" } } }), env)).json();
-  assert.equal(unknownTarget.decision, "DENY");
+  env.SIGNGATE_TEST_STORE.mandates.get(`${ORG}:mandate_preview_001`).status = "revoked";
+  const revokedMandate = await (await postDecision(baseRequest({ request_id: "req_revoked_mandate" }), env)).json();
+  assert.equal(revokedMandate.decision, "DENY");
+  env.SIGNGATE_TEST_STORE.mandates.get(`${ORG}:mandate_preview_001`).status = "active";
+
+  const unknownTarget = await postDecision(baseRequest({ request_id: "req_unknown_target", action: { target: { environment: "staging" } } }), env);
+  assert.equal(unknownTarget.status, 422);
+
+  for (const changed_paths of [["/absolute"], ["src/../secret"], ["src//index.js"], ["src\\index.js"], ["src/%2e%2e/secret"]]) {
+    const unsafePath = await postDecision(baseRequest({ request_id: `req_unsafe_${changed_paths[0]}`, action: { parameters: { changed_paths } } }), env);
+    assert.equal(unsafePath.status, 422);
+  }
 });
 
 test("DEV-SG-001 idempotency and Founder grant lifecycle match frozen dogfood flow", async () => {
@@ -282,7 +328,7 @@ test("DEV-SG-001 idempotency and Founder grant lifecycle match frozen dogfood fl
   const first = await (await postDecision(request, env)).json();
   const retry = await (await postDecision(request, env)).json();
   assert.equal(retry.decision_id, first.decision_id);
-  const mismatch = await postDecision(baseRequest({ request_id: "req_idempotent", intent: "changed" }), env);
+  const mismatch = await postDecision(baseRequest({ request_id: "req_idempotent", action: { parameters: { changed_routes: ["/v1/decisions", "/changed"] } } }), env);
   assert.equal(mismatch.status, 409);
 
   const reviewRequest = baseRequest({
@@ -301,8 +347,8 @@ test("DEV-SG-001 idempotency and Founder grant lifecycle match frozen dogfood fl
         original_decision_id: review.decision_id,
         action_fingerprint: review.action_fingerprint,
         policy_version: SIGNGATE_POLICY_VERSION,
-        approval_reason: "Founder dogfood preview permission approval",
-        expires_at: FUTURE,
+        approval_reason: "FOUNDER_APPROVED_PREVIEW_PERMISSION_CHANGE",
+        expires_at: GRANT_FUTURE,
       }),
     }),
     env,
@@ -319,9 +365,10 @@ test("DEV-SG-001 idempotency and Founder grant lifecycle match frozen dogfood fl
         type: "approval_grant",
         source: "founder",
         status: "approved",
+        original_decision_id: review.decision_id,
         action_fingerprint: review.action_fingerprint,
         policy_version: SIGNGATE_POLICY_VERSION,
-        expires_at: FUTURE,
+        expires_at: GRANT_FUTURE,
       },
     ],
   }, env)).json();
@@ -333,7 +380,7 @@ test("DEV-SG-001 idempotency and Founder grant lifecycle match frozen dogfood fl
     intent: "changed after grant",
     evidence: [
       ...reviewRequest.evidence,
-      { id: grant.approval_grant_id, type: "approval_grant", source: "founder", status: "approved" },
+      { id: grant.approval_grant_id, type: "approval_grant", source: "founder", status: "approved", original_decision_id: review.decision_id },
     ],
   }, env);
   assert.equal(grantReplayMismatch.status, 409);
@@ -405,18 +452,18 @@ test("DEV-SG-001 fingerprint contract uses literal golden and sorted-unique set 
   const env = await testEnv();
   const authenticated = { organization_id: ORG, principal_id: "codex_dev_01" };
   const input = baseRequest({ request_id: "req_golden" });
-  const expectedCanonical = "{\"action\":{\"parameters\":{\"artifact_digest\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"changed_paths\":[\"/migrations/0008_signgate_deploy_change_decisions.sql\",\"/src/index.js\"],\"changed_routes\":[\"/v1/decisions\",\"/v1/decisions/{decision_id}/consume\"],\"ci_evidence\":{\"checks\":[\"lint\",\"unit\",\"contract\"],\"commit\":\"5ac67be4fe17b5c1b773bcc584080cad704f4959\",\"provider\":\"github_actions\",\"run_id\":\"run_123\",\"status\":\"passed\"},\"configuration_fingerprint\":\"sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"deployment_command_id\":\"deploy:preview\",\"deployment_strategy\":\"worker_preview\",\"diff_digest\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"git_commit\":\"5ac67be4fe17b5c1b773bcc584080cad704f4959\",\"touches_credentials\":false,\"touches_dns\":false,\"touches_permissions\":false,\"touches_secrets\":false},\"target\":{\"environment\":\"preview\",\"project\":\"base-agent-preflight\",\"repository\":{\"host\":\"github.com\",\"owner\":\"lukekwan\",\"remote_url\":\"https://github.com/lukekwan/agent-payment-guard\",\"repo\":\"agent-payment-guard\"},\"service\":\"signgate-worker\"},\"type\":\"deploy_change\"},\"agent_id\":\"codex_dev_01\",\"contract_version\":\"0.1\",\"organization_id\":\"org_nomos_labs\"}";
+  const expectedCanonical = "{\"action\":{\"parameters\":{\"artifact_digest\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"changed_paths\":[\"migrations/0008_signgate_deploy_change_decisions.sql\",\"src/index.js\"],\"changed_routes\":[\"/v1/decisions\",\"/v1/decisions/{decision_id}/consume\"],\"ci_evidence\":{\"checks\":[\"lint\",\"unit\",\"contract\"],\"commit\":\"5ac67be4fe17b5c1b773bcc584080cad704f4959\",\"provider\":\"github_actions\",\"run_id\":\"run_123\",\"status\":\"passed\"},\"configuration_fingerprint\":\"sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"deployment_command_id\":\"wrangler_preview\",\"deployment_strategy\":\"worker_preview\",\"diff_digest\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"git_commit\":\"5ac67be4fe17b5c1b773bcc584080cad704f4959\",\"touches_credentials\":false,\"touches_dns\":false,\"touches_permissions\":false,\"touches_secrets\":false},\"target\":{\"environment\":\"preview\",\"project\":\"base-agent-preflight\",\"repository\":{\"host\":\"github.com\",\"owner\":\"lukekwan\",\"remote_url\":\"https://github.com/lukekwan/agent-payment-guard\",\"repo\":\"agent-payment-guard\"},\"service\":\"signgate-worker\"},\"type\":\"deploy_change\"},\"agent_id\":\"codex_dev_01\",\"contract_version\":\"0.1\",\"organization_id\":\"org_nomos_labs\"}";
   const actualCanonical = canonicalize(fingerprintEnvelope(input, authenticated));
   assert.equal(actualCanonical, expectedCanonical);
   assert.equal(
     await sha256Hex(actualCanonical),
-    "9532edbd25e8a81cd35fbc207b7d5a980bdc971aa47f797cf8ead50bbed129ff",
+    "a0e40fbb2a232bb6ee3c3c4a9b80dc2bb02640d1982669fb3bc18f090fbf4c20",
   );
 
-  const pathA = baseRequest({ request_id: "req_path_a", action: { parameters: { changed_paths: ["/z", "/a", "/a"] } } });
-  const pathB = baseRequest({ request_id: "req_path_b", action: { parameters: { changed_paths: ["/a", "/z"] } } });
-  const pathC = baseRequest({ request_id: "req_path_c", action: { parameters: { changed_paths: ["/z", "/a"] } } });
-  assert.deepEqual(normalizeDeployChangeAction(pathA.action).parameters.changed_paths, ["/a", "/z"]);
+  const pathA = baseRequest({ request_id: "req_path_a", action: { parameters: { changed_paths: ["z", "a", "a"] } } });
+  const pathB = baseRequest({ request_id: "req_path_b", action: { parameters: { changed_paths: ["a", "z"] } } });
+  const pathC = baseRequest({ request_id: "req_path_c", action: { parameters: { changed_paths: ["z", "a"] } } });
+  assert.deepEqual(normalizeDeployChangeAction(pathA.action).parameters.changed_paths, ["a", "z"]);
   assert.equal(canonicalize(fingerprintEnvelope(pathA, authenticated)), canonicalize(fingerprintEnvelope(pathB, authenticated)));
   assert.equal(await fingerprintDeployChange(pathA, authenticated), await fingerprintDeployChange(pathC, authenticated));
 
@@ -424,18 +471,18 @@ test("DEV-SG-001 fingerprint contract uses literal golden and sorted-unique set 
   const routeB = baseRequest({ request_id: "req_route_b", action: { parameters: { changed_routes: ["/a", "/z"] } } });
   assert.deepEqual(normalizeDeployChangeAction(routeA.action).parameters.changed_routes, ["/a", "/z"]);
   assert.equal(await fingerprintDeployChange(routeA, authenticated), await fingerprintDeployChange(routeB, authenticated));
-  assert.deepEqual(normalizeSortedUniqueStrings(["/b", "/a", "/b"], "changed_paths"), ["/a", "/b"]);
-  assert.deepEqual(normalizeSortedUniqueStrings(["/a", "/b"], "changed_paths"), normalizeSortedUniqueStrings(normalizeSortedUniqueStrings(["/b", "/a", "/b"], "changed_paths"), "changed_paths"));
+  assert.deepEqual(normalizeSortedUniqueStrings(["b", "a", "b"], "changed_paths"), ["a", "b"]);
+  assert.deepEqual(normalizeSortedUniqueStrings(["a", "b"], "changed_paths"), normalizeSortedUniqueStrings(normalizeSortedUniqueStrings(["b", "a", "b"], "changed_paths"), "changed_paths"));
 
-  const originalPaths = ["/z", "/a", "/a"];
+  const originalPaths = ["z", "a", "a"];
   const noMutation = baseRequest({ request_id: "req_no_mutation", action: { parameters: { changed_paths: originalPaths } } });
   normalizeDeployChangeAction(noMutation.action);
   assert.deepEqual(noMutation.action.parameters.changed_paths, originalPaths);
 
-  const caseDistinct = baseRequest({ request_id: "req_case", action: { parameters: { changed_paths: ["/A", "/a", "/A"] } } });
-  assert.deepEqual(normalizeDeployChangeAction(caseDistinct.action).parameters.changed_paths, ["/A", "/a"]);
+  const caseDistinct = baseRequest({ request_id: "req_case", action: { parameters: { changed_paths: ["A", "a", "A"] } } });
+  assert.deepEqual(normalizeDeployChangeAction(caseDistinct.action).parameters.changed_paths, ["A", "a"]);
 
-  const uniquePath = baseRequest({ request_id: "req_unique_path", action: { parameters: { changed_paths: ["/a", "/z", "/new"] } } });
+  const uniquePath = baseRequest({ request_id: "req_unique_path", action: { parameters: { changed_paths: ["a", "z", "new"] } } });
   const uniqueRoute = baseRequest({ request_id: "req_unique_route", action: { parameters: { changed_routes: ["/a", "/z", "/new"] } } });
   assert.notEqual(await fingerprintDeployChange(pathA, authenticated), await fingerprintDeployChange(uniquePath, authenticated));
   assert.notEqual(await fingerprintDeployChange(routeA, authenticated), await fingerprintDeployChange(uniqueRoute, authenticated));
@@ -445,7 +492,20 @@ test("DEV-SG-001 fingerprint contract uses literal golden and sorted-unique set 
     const current = getAtPath(mutated, path);
     const parent = getAtPath(mutated, path.slice(0, -1));
     const key = path.at(-1);
-    parent[key] = Array.isArray(current) ? [...current, "__new_unique__"] : typeof current === "boolean" ? !current : `${current}_changed`;
+    const pathName = path.join(".");
+    const validReplacement = {
+      "action.target.environment": "local",
+      "action.parameters.deployment_strategy": "local_simulation",
+      "action.parameters.deployment_command_id": "wrangler_dev_preview",
+      "action.parameters.git_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "action.parameters.artifact_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "action.parameters.diff_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "action.parameters.configuration_fingerprint": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+    }[pathName];
+    if (pathName === "action.target.repository.host") continue;
+    parent[key] = validReplacement ?? (Array.isArray(current)
+      ? [...current, pathName === "action.parameters.changed_routes" ? "/__new_unique__" : "__new_unique__"]
+      : typeof current === "boolean" ? !current : `${current}_changed`);
     assert.notEqual(await fingerprintDeployChange(input, authenticated), await fingerprintDeployChange(mutated, authenticated), path.join("."));
   }
   assert.equal(env.SIGNGATE_TEST_STORE.decisions.size, 0);
@@ -475,7 +535,8 @@ test("DEV-SG-001 wrapper fail-closed behavior covers DF-01 through DF-07", async
         original_decision_id: review.decision_id,
         action_fingerprint: review.action_fingerprint,
         policy_version: SIGNGATE_POLICY_VERSION,
-        expires_at: FUTURE,
+        approval_reason: "FOUNDER_APPROVED_PREVIEW_PERMISSION_CHANGE",
+        expires_at: GRANT_FUTURE,
       }),
     }),
     env,
@@ -489,7 +550,7 @@ test("DEV-SG-001 wrapper fail-closed behavior covers DF-01 through DF-07", async
       request_id: "df_02_approved",
       evidence: [
         ...reviewRequest.evidence,
-        { id: grant.approval_grant_id, type: "approval_grant", source: "founder", status: "approved" },
+        { id: grant.approval_grant_id, type: "approval_grant", source: "founder", status: "approved", original_decision_id: review.decision_id },
       ],
     },
     executionAttemptId: "df_02_attempt",
@@ -520,8 +581,9 @@ test("DEV-SG-001 wrapper fail-closed behavior covers DF-01 through DF-07", async
   assert.equal(mutatedConsume.status, 409);
 
   const expiredEnv = await testEnv({ nowMs: NOW });
+  expiredEnv.SIGNGATE_TEST_STORE.mandates.get(`${ORG}:mandate_preview_001`).expires_at = "2026-07-18T23:59:59.000Z";
   const expiring = await runDeployChangePreviewWrapper({
-    env: { ...expiredEnv, SIGNGATE_TEST_NOW_MS: NOW + 16 * 60 * 1000 },
+    env: expiredEnv,
     agentKey: AGENT_KEY,
     executorKey: EXECUTOR_KEY,
     request: baseRequest({

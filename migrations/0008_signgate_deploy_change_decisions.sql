@@ -5,10 +5,11 @@ CREATE TABLE IF NOT EXISTS signgate_api_credentials (
   principal_type TEXT NOT NULL CHECK (principal_type IN ('agent', 'executor', 'founder_approver')),
   key_prefix TEXT NOT NULL UNIQUE,
   key_digest TEXT NOT NULL,
-  digest_version TEXT NOT NULL DEFAULT 'sha256:v1',
+  digest_version TEXT NOT NULL DEFAULT 'sg_key_digest_v1',
   scopes_json TEXT NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('active', 'revoked', 'rotated')),
+  status TEXT NOT NULL CHECK (status IN ('active', 'rotating', 'revoked')),
   rotated_from_credential_id TEXT,
+  rotation_expires_at TEXT,
   revoked_at TEXT,
   last_used_at TEXT,
   delete_after TEXT NOT NULL,
@@ -21,6 +22,39 @@ CREATE INDEX IF NOT EXISTS idx_signgate_api_credentials_lookup
 
 CREATE INDEX IF NOT EXISTS idx_signgate_api_credentials_retention
   ON signgate_api_credentials (organization_id, delete_after, principal_id);
+
+CREATE TABLE IF NOT EXISTS signgate_mandates (
+  organization_id TEXT NOT NULL,
+  mandate_id TEXT NOT NULL,
+  issuer TEXT NOT NULL,
+  scope_json TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('active', 'revoked', 'expired')),
+  issued_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  delete_after TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (organization_id, mandate_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_signgate_mandates_retention
+  ON signgate_mandates (organization_id, delete_after);
+
+CREATE TABLE IF NOT EXISTS signgate_trusted_evidence (
+  organization_id TEXT NOT NULL,
+  evidence_id TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('passed', 'failed', 'revoked')),
+  commit_sha TEXT NOT NULL,
+  action_fingerprint TEXT,
+  subject_fingerprint TEXT,
+  observed_at TEXT NOT NULL,
+  delete_after TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (organization_id, evidence_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_signgate_trusted_evidence_retention
+  ON signgate_trusted_evidence (organization_id, delete_after);
 
 CREATE TABLE IF NOT EXISTS signgate_decisions (
   decision_id TEXT PRIMARY KEY,
@@ -41,6 +75,7 @@ CREATE TABLE IF NOT EXISTS signgate_decisions (
   expired_at TEXT,
   consumed_at TEXT,
   consume_lock_token TEXT UNIQUE,
+  expiry_lock_token TEXT UNIQUE,
   delete_after TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
@@ -74,11 +109,14 @@ CREATE TABLE IF NOT EXISTS signgate_approval_grants (
   policy_version TEXT NOT NULL,
   approver_principal_id TEXT NOT NULL,
   approver_role TEXT NOT NULL,
+  approval_reason TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('AVAILABLE', 'USED', 'REVOKED', 'EXPIRED')),
   used_by_decision_id TEXT,
   used_request_id TEXT,
   approved_at TEXT NOT NULL,
   expires_at TEXT NOT NULL,
+  original_decision_expires_at TEXT NOT NULL,
+  audit_id TEXT,
   delete_after TEXT NOT NULL,
   created_at TEXT NOT NULL
 );

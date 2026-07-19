@@ -12079,21 +12079,6 @@ function openApi(origin) {
       },
     },
   };
-  document.paths["/internal/dogfood/founder-approval-grants"] = {
-    post: {
-      operationId: "createFounderApprovalGrant",
-      summary:
-        "Preview-protected internal dogfood operation for Founder approval grants; not a general approval product API.",
-      security: [{ bearerAuth: [] }],
-      responses: {
-        200: { description: "Bound Founder approval grant" },
-        401: { description: "Authentication failed" },
-        403: { description: "Founder approval scope required" },
-        409: { description: "Original decision or grant binding invalid" },
-        422: { description: "Contract validation failed" },
-      },
-    },
-  };
   for (const path of MARKETPLACE_HIDDEN_OPENAPI_PATHS) {
     delete document.paths[path];
   }

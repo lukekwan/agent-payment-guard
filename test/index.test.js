@@ -1780,3 +1780,15 @@ test("payment guard POST routes advertise bazaar input and output schemas", asyn
     assert.ok(bazaar.schema.properties.output);
   }
 });
+
+test("public OpenAPI excludes internal Founder approval route", async () => {
+  const response = await worker.fetch(
+    new Request("https://example.test/openapi.json"),
+    {},
+  );
+  assert.equal(response.status, 200);
+  const spec = await response.json();
+  assert.ok(spec.paths["/v1/decisions"]);
+  assert.ok(spec.paths["/v1/decisions/{decision_id}/consume"]);
+  assert.equal(spec.paths["/internal/dogfood/founder-approval-grants"], undefined);
+});
