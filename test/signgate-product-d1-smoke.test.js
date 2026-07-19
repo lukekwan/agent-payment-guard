@@ -149,6 +149,31 @@ test("DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approva
     assert.equal((await consume(decision, env, "attempt_2"))[0], 409);
     assert.equal((await db.prepare("SELECT COUNT(*) AS count FROM signgate_consume_receipts WHERE decision_id = ?").bind(decision.decision_id).first()).count, 1);
 
+    const [, concurrent] = await postDecision(request("d1_concurrent_consume"), env);
+    const consumeStatuses = await Promise.all(
+      Array.from({ length: 8 }, (_, index) => consume(concurrent, env, `concurrent_${index}`).then(([status]) => status)),
+    );
+    assert.equal(consumeStatuses.filter(status => status === 200).length, 1);
+    assert.equal(consumeStatuses.filter(status => status === 409).length, 7);
+    assert.equal((await db.prepare("SELECT COUNT(*) AS count FROM signgate_consume_receipts WHERE decision_id = ?").bind(concurrent.decision_id).first()).count, 1);
+
+    const [, rollback] = await postDecision(request("d1_consume_rollback"), env);
+    const rollbackResponse = await handleConsumeDecisionRequest(new Request(`https://signgate.test/v1/decisions/${rollback.decision_id}/consume`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${EXECUTOR_KEY}` },
+      body: JSON.stringify({
+        contract_version: SIGNGATE_CONTRACT_VERSION,
+        organization_id: ORG,
+        action_fingerprint: "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        policy_version: rollback.policy_version,
+        execution_attempt_id: "rollback_wrong_fingerprint",
+      }),
+    }), env, rollback.decision_id);
+    assert.equal(rollbackResponse.status, 409);
+    assert.equal((await db.prepare("SELECT state FROM signgate_decisions WHERE decision_id = ?").bind(rollback.decision_id).first()).state, "AVAILABLE");
+    assert.equal((await db.prepare("SELECT COUNT(*) AS count FROM signgate_consume_receipts WHERE decision_id = ?").bind(rollback.decision_id).first()).count, 0);
+    assert.equal((await db.prepare("SELECT COUNT(*) AS count FROM signgate_audit_events WHERE decision_id = ? AND event_type = 'decision.consumed'").bind(rollback.decision_id).first()).count, 0);
+
     const [, expiring] = await postDecision(request("d1_expiry"), env);
     env.SIGNGATE_TEST_NOW_MS = NOW + 16 * 60 * 1000;
     const expiryStatuses = await Promise.all([consume(expiring, env, "expired_a"), consume(expiring, env, "expired_b")]);
@@ -178,6 +203,14 @@ test("DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approva
     ]), env);
     assert.equal(approved.decision, "ALLOW");
     assert.equal((await db.prepare("SELECT status FROM signgate_approval_grants WHERE approval_grant_id = ?").bind(grant.approval_grant_id).first()).status, "USED");
+    const approvalReplayStatuses = [];
+    for (const requestId of ["d1_approved_replay_a", "d1_approved_replay_b"]) {
+      approvalReplayStatuses.push(await postDecision(request(requestId, { touches_permissions: true }, [
+        { id: grant.approval_grant_id, type: "approval_grant", source: "founder", status: "approved", original_decision_id: review.decision_id },
+      ]), env));
+    }
+    assert.deepEqual(approvalReplayStatuses.map(([status]) => status), [409, 409]);
+    assert.equal((await db.prepare("SELECT COUNT(*) AS count FROM signgate_decisions WHERE approval_grant_id = ?").bind(grant.approval_grant_id).first()).count, 1);
 
     const cleanupBefore = await cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: NOW, batchSize: 10 });
     assert.equal(cleanupBefore.decisions, 0);
