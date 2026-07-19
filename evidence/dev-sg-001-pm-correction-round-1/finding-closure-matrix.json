@@ -1,0 +1,302 @@
+{
+  "status": "PASS",
+  "superseding_application_commit": "e6612f4023de7552ab1a4135b88fc70e306a99b7",
+  "findings": [
+    {
+      "id": "P0-01",
+      "title": "trusted mandate/evidence authorization",
+      "status": "CLOSED",
+      "corrected_files": [
+        "src/signgate-decision.js",
+        "migrations/0008_signgate_deploy_change_decisions.sql",
+        "test/signgate-decision.test.js",
+        "test/signgate-product-d1-smoke.test.js"
+      ],
+      "corrected_functions": [
+        "resolveTrustedMandate",
+        "resolveTrustedEvidence",
+        "semanticRequestFingerprint",
+        "evaluateDeployChange"
+      ],
+      "tests": [
+        "DEV-SG-001 policy matrix implements frozen deploy_change outcomes",
+        "DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approval, and retention"
+      ],
+      "evidence": [
+        "trusted-mandate-results.json",
+        "trusted-evidence-results.json",
+        "idempotency-results.json"
+      ],
+      "residual_limitation": "Trusted authorities are seeded in isolated fixtures/product D1 for preview; no public administration route added."
+    },
+    {
+      "id": "P0-02",
+      "title": "approval reason secret persistence",
+      "status": "CLOSED",
+      "corrected_files": [
+        "src/signgate-decision.js",
+        "migrations/0008_signgate_deploy_change_decisions.sql",
+        "test/signgate-decision.test.js"
+      ],
+      "corrected_functions": [
+        "validateGrantSchema",
+        "handleFounderApprovalGrantRequest",
+        "rejectSecretMaterial"
+      ],
+      "tests": [
+        "DEV-SG-001 idempotency and Founder grant lifecycle match frozen dogfood flow"
+      ],
+      "evidence": [
+        "approval-results.json",
+        "secret-scan.txt"
+      ],
+      "residual_limitation": "Closed reason code only; optional descriptive approval text intentionally not implemented."
+    },
+    {
+      "id": "P1-01",
+      "title": "closed deploy_change schema",
+      "status": "CLOSED",
+      "corrected_files": [
+        "src/signgate-decision.js",
+        "test/signgate-decision.test.js"
+      ],
+      "corrected_functions": [
+        "validateDecisionRequestSchema",
+        "validateSafePath",
+        "normalizeDeployChangeAction"
+      ],
+      "tests": [
+        "DEV-SG-001 strict JSON intake rejects malformed input before evaluation",
+        "DEV-SG-001 policy matrix implements frozen deploy_change outcomes",
+        "DEV-SG-001 fingerprint contract uses literal golden and sorted-unique set semantics"
+      ],
+      "evidence": [
+        "schema-negative-results.json"
+      ],
+      "residual_limitation": "Repository host allowlist is intentionally narrow for DEV-SG-001."
+    },
+    {
+      "id": "P1-02",
+      "title": "credential digest lifecycle and principal separation",
+      "status": "CLOSED",
+      "corrected_files": [
+        "src/signgate-decision.js",
+        "migrations/0008_signgate_deploy_change_decisions.sql",
+        "test/signgate-decision.test.js"
+      ],
+      "corrected_functions": [
+        "credentialDigest",
+        "authenticate",
+        "createPreviewCredential"
+      ],
+      "tests": [
+        "DEV-SG-001 auth and tenant binding fail closed"
+      ],
+      "evidence": [
+        "credential-results.json"
+      ],
+      "residual_limitation": "Rotation is bounded to active/rotating/revoked preview states."
+    },
+    {
+      "id": "P1-03",
+      "title": "agent identity and semantic idempotency",
+      "status": "CLOSED",
+      "corrected_files": [
+        "src/signgate-decision.js",
+        "test/signgate-decision.test.js"
+      ],
+      "corrected_functions": [
+        "evaluateAndPersistDecision",
+        "semanticRequestFingerprint",
+        "fingerprintDeployChange"
+      ],
+      "tests": [
+        "DEV-SG-001 auth and tenant binding fail closed",
+        "DEV-SG-001 idempotency and Founder grant lifecycle match frozen dogfood flow"
+      ],
+      "evidence": [
+        "identity-results.json",
+        "idempotency-results.json"
+      ],
+      "residual_limitation": "Idempotency includes trusted preview authority records."
+    },
+    {
+      "id": "P1-04",
+      "title": "approval lifecycle and atomic use predicates",
+      "status": "CLOSED",
+      "corrected_files": [
+        "src/signgate-decision.js",
+        "migrations/0008_signgate_deploy_change_decisions.sql",
+        "test/signgate-decision.test.js",
+        "test/signgate-product-d1-smoke.test.js"
+      ],
+      "corrected_functions": [
+        "handleFounderApprovalGrantRequest",
+        "createDecision",
+        "findApprovalGrantByBinding",
+        "D1SignGateStore.createDecision"
+      ],
+      "tests": [
+        "DEV-SG-001 idempotency and Founder grant lifecycle match frozen dogfood flow",
+        "DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approval, and retention"
+      ],
+      "evidence": [
+        "approval-results.json",
+        "product-d1-smoke-results.json"
+      ],
+      "residual_limitation": "Internal Founder route remains runtime-protected and absent from public OpenAPI."
+    },
+    {
+      "id": "P1-05",
+      "title": "product D1 atomicity and expiry",
+      "status": "CLOSED",
+      "corrected_files": [
+        "src/signgate-decision.js",
+        "migrations/0008_signgate_deploy_change_decisions.sql",
+        "test/signgate-product-d1-smoke.test.js"
+      ],
+      "corrected_functions": [
+        "D1SignGateStore.consumeDecision",
+        "D1SignGateStore.cleanupPreviewRetention"
+      ],
+      "tests": [
+        "DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approval, and retention"
+      ],
+      "evidence": [
+        "consume-results.json",
+        "expiry-results.json",
+        "product-d1-smoke-results.json",
+        "retention-results.json"
+      ],
+      "residual_limitation": "Smoke uses Miniflare local D1 binding, not production D1."
+    },
+    {
+      "id": "P1-06",
+      "title": "standard enforcement wrapper fail closed",
+      "status": "CLOSED",
+      "corrected_files": [
+        "src/signgate-decision.js",
+        "test/signgate-decision.test.js"
+      ],
+      "corrected_functions": [
+        "runDeployChangePreviewWrapper",
+        "fingerprintDeployChange",
+        "handleConsumeDecisionRequest"
+      ],
+      "tests": [
+        "DEV-SG-001 wrapper fail-closed behavior covers DF-01 through DF-07"
+      ],
+      "evidence": [
+        "wrapper-results.json",
+        "dogfood-exact-results.json"
+      ],
+      "residual_limitation": "Wrapper still simulates non-production execution only."
+    },
+    {
+      "id": "P1-07",
+      "title": "public OpenAPI boundary",
+      "status": "CLOSED",
+      "corrected_files": [
+        "src/index.js",
+        "test/index.test.js"
+      ],
+      "corrected_functions": [
+        "openApi"
+      ],
+      "tests": [
+        "public OpenAPI excludes internal Founder approval route"
+      ],
+      "evidence": [
+        "public-openapi-boundary-results.json"
+      ],
+      "residual_limitation": "Internal runtime route remains protected dogfood surface."
+    },
+    {
+      "id": "P1-08",
+      "title": "canonical D1 dependency errors",
+      "status": "CLOSED",
+      "corrected_files": [
+        "src/signgate-decision.js",
+        "test/signgate-decision.test.js"
+      ],
+      "corrected_functions": [
+        "handleSignGateDecisionRequest",
+        "handleConsumeDecisionRequest",
+        "handleFounderApprovalGrantRequest",
+        "getSignGateStore"
+      ],
+      "tests": [
+        "DEV-SG-001 auth and tenant binding fail closed"
+      ],
+      "evidence": [
+        "error-results.json"
+      ],
+      "residual_limitation": "Durable audit is best effort only when storage is available; missing D1 returns structured 503."
+    },
+    {
+      "id": "P2-01",
+      "title": "rejection and system audit evidence",
+      "status": "CLOSED",
+      "corrected_files": [
+        "src/signgate-decision.js",
+        "test/signgate-decision.test.js"
+      ],
+      "corrected_functions": [
+        "safeAuditFailure",
+        "recordAuditEvent"
+      ],
+      "tests": [
+        "DEV-SG-001 auth and tenant binding fail closed",
+        "DEV-SG-001 policy matrix implements frozen deploy_change outcomes"
+      ],
+      "evidence": [
+        "audit-results.json",
+        "error-results.json"
+      ],
+      "residual_limitation": "Pre-auth failures cannot include organization/principal audit fields."
+    },
+    {
+      "id": "P2-02",
+      "title": "exact dogfood evidence",
+      "status": "CLOSED",
+      "corrected_files": [
+        "test/signgate-decision.test.js"
+      ],
+      "corrected_functions": [
+        "runDeployChangePreviewWrapper",
+        "handleSignGateDecisionRequest",
+        "handleConsumeDecisionRequest"
+      ],
+      "tests": [
+        "DEV-SG-001 wrapper fail-closed behavior covers DF-01 through DF-07"
+      ],
+      "evidence": [
+        "dogfood-exact-results.json"
+      ],
+      "residual_limitation": "Local preview/simulation only; no QA acceptance claimed."
+    },
+    {
+      "id": "P2-03",
+      "title": "retention cleanup mechanism",
+      "status": "CLOSED",
+      "corrected_files": [
+        "src/signgate-decision.js",
+        "migrations/0008_signgate_deploy_change_decisions.sql",
+        "test/signgate-product-d1-smoke.test.js"
+      ],
+      "corrected_functions": [
+        "cleanupSignGatePreviewRetention",
+        "MemorySignGateStore.cleanupPreviewRetention",
+        "D1SignGateStore.cleanupPreviewRetention"
+      ],
+      "tests": [
+        "DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approval, and retention"
+      ],
+      "evidence": [
+        "retention-results.json",
+        "product-d1-smoke-results.json"
+      ],
+      "residual_limitation": "No live cron/scheduler/deployment configuration added."
+    }
+  ]
+}

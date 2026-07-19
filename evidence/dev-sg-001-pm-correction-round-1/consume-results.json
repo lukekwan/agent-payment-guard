@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "store_tested": "D1SignGateStore",
+  "covers": [
+    "consume success",
+    "rollback/wrong fingerprint",
+    "same-attempt retry",
+    "different-attempt conflict",
+    "concurrent consume single winner",
+    "no partial receipt",
+    "no partial audit"
+  ]
+}

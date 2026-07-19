@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "redacted": true,
+  "no_raw_key": true,
+  "durable_when_available": true
+}

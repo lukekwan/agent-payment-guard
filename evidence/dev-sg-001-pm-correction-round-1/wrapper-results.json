@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "fail_closed_on": [
+    "non-ALLOW",
+    "non-200",
+    "fingerprint mismatch",
+    "bound-action mismatch",
+    "expired",
+    "consume failure",
+    "production execution"
+  ]
+}

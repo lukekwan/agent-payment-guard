@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "command": "npm run check",
+  "test_total": 64,
+  "test_passed": 64,
+  "test_failed": 0,
+  "source": "npm-run-check.txt"
+}

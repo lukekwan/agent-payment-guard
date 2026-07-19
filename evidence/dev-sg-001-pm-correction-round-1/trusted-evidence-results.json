@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "caller_claims_authoritative": false,
+  "trusted_store": "signgate_trusted_evidence",
+  "checks": [
+    "provider",
+    "status",
+    "commit",
+    "subject/action binding",
+    "freshness"
+  ]
+}

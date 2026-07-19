@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "coverage": [
+    "unknown fields",
+    "unsupported environment",
+    "unsafe paths",
+    "digest/commit/provider/command enums",
+    "set normalization before fingerprint"
+  ],
+  "source": "npm-run-check.txt"
+}

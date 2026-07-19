@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "authenticated_principal_authoritative": true,
+  "request_agent_match_required": true
+}

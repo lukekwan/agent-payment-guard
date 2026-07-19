@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "excludes": [
+    "/internal/dogfood/founder-approval-grants"
+  ]
+}

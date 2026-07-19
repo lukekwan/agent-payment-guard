@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "semantic_hash": [
+    "organization",
+    "principal",
+    "principal_type",
+    "normalized action",
+    "policy",
+    "mandate",
+    "trusted evidence",
+    "grant",
+    "contract"
+  ]
+}

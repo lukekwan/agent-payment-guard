@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "bounded_batch": true,
+  "delete_after": true,
+  "no_live_cron": true
+}

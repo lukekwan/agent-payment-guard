@@ -1,0 +1,2 @@
+Preparing worktree (detached HEAD e6612f4)
+HEAD is now at e6612f4 test: complete DEV-SG-001 product D1 smoke coverage

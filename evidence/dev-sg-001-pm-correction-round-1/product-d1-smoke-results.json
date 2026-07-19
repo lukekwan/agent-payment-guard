@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "store_tested": "D1SignGateStore",
+  "runtime": "Miniflare local D1 binding",
+  "isolated_database_identifier": "signgate-smoke",
+  "covers": [
+    "decision persistence",
+    "consume success",
+    "consume rollback",
+    "same-attempt idempotency",
+    "different-attempt conflict",
+    "concurrent consume single winner",
+    "expiry transition single winner",
+    "expiry audit single winner",
+    "approval grant single use",
+    "approval grant replay/concurrent-use protection",
+    "no partial receipt",
+    "no partial audit",
+    "no partial fresh decision",
+    "retention cleanup"
+  ],
+  "source": "product-d1-smoke.txt"
+}

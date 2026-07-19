@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "store_tested": "D1SignGateStore",
+  "covers": [
+    "expiry transition single winner",
+    "expiry audit single winner"
+  ]
+}

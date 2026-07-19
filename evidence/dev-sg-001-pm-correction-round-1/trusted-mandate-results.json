@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "caller_claims_authoritative": false,
+  "trusted_store": "signgate_mandates"
+}

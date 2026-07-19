@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "closed_reason_code": true,
+  "idempotent_creation": true,
+  "response_fields": [
+    "approver_role",
+    "status"
+  ],
+  "atomic_use_predicates": true
+}
