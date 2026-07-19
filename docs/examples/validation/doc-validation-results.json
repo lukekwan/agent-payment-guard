@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-19T06:19:51.976Z",
+  "generated_at": "2026-07-19T14:57:29.512Z",
   "status": "PASS",
   "checks": [
     {
@@ -53,11 +53,15 @@
   ],
   "file_hashes": {
     ".gitbook.yaml": "1001605382c0ad341e21c75c6e2d62333fc098fbe844734b0c13f4bf936d283b",
-    "docs/README.md": "e592eef0b472cc1469762fc334321b762fa67d0779d56e0f331f2002b6b0e947",
-    "docs/SUMMARY.md": "efe93d112fa9605d385a512ae53f0995e8e86233e94ab42fcbeceb6f07c29adf",
-    "docs/openapi/signgate-public-v0.1.openapi.json": "bca2ad780051c8621c7ede7d13eda07b5d99a0361f647f3a10b68a02d6f40934",
+    "docs/README.md": "605e9dae0292066dfc50511c4c790941d7f814a15d3cef8814a4ff988a8c17b6",
+    "docs/SUMMARY.md": "07f5bb452649bc08461e8c3b32b33d97010e40ee7de32d3e77632b8b89f2e656",
+    "docs/changelog.md": "ce20071e73220ef0d2ffa47384026d5cf3905d4847c8f4c127099ead99eeb45e",
+    "docs/help-center.md": "136d9a46ad0bab5c68a8f8691ac7f11247959a1c49b7bfabd529b9a82fcbe40c",
+    "docs/openapi/signgate-public-v0.1.openapi.json": "e071fc177d21211b9995d467d59dad686730d518c280811d6d9917b67b1b02b2",
     "docs/openapi/signgate-internal-v0.1.openapi.json": "ccad21fb8e6b2d9142791186b2c6bd5129e939391140b9e52b0ff4fc7f70c8e1",
+    "docs/openapi/README.md": "f879737fe38a8dacedb567feb838177f669e294467f9542306f9d793f9729aef",
     "docs/en/README.md": "79f8cc8d9ccf6fed871e9850643bfaf29f51b27e6cd41751c9f12cbad1f06a77",
+    "docs/en/quickstart.md": "1a02b61904c93f346dc3cc576215625abab2e5e27357999862d4aae0c84cec0f",
     "docs/en/authentication.md": "eaad384c1a7a6a2452ae53e98e8152175c712bf926590d38e3f202ce06f70a5e",
     "docs/en/decision-lifecycle.md": "f9622093c5507de73bcd250cca732fc5ac2b1e74166fe5f880d97923c13d719c",
     "docs/en/errors.md": "67da22d1edd79a96b0c4060a7f36c143feabb4917cbc36d5b0cefaaa887c4b58",
@@ -66,6 +70,7 @@
     "docs/en/api-reference/consume-decision.md": "40f97075941fa32f0dbb9141c4dff050ace2d144395ed0afd5fa47f8ee48423a",
     "docs/en/examples.md": "a79e65703a6197a433ff3e8a2115404d0d8fe4efd4d32166b78b38468643775d",
     "docs/zh/README.md": "bf61555319aa705d99c2a89b27b0cbfae7bfee126dde1c85ddb1196f925270b2",
+    "docs/zh/quickstart.md": "7762bf0879615c85b3b1722ce8badb49ab3c39eb6cffc049d40e0cf3e3157d4f",
     "docs/zh/authentication.md": "0f79d1b550fc4809fb464ed96d737f958b8313a68da9c5194536ff861ad36ec5",
     "docs/zh/decision-lifecycle.md": "06f9a6d712e4feb7e1dcc1522b3f4a48bd052fbc40e6084ff3309f03a514393d",
     "docs/zh/errors.md": "d1f2f033f0df2f98051052d17ceee4665a95abb3dfe04f2e662f00d969a4975d",
@@ -78,7 +83,7 @@
     "docs/examples/javascript/create-decision.mjs": "14756b20fc16f7a1593211a227a30868bae067c9c22ff83a84d91b71096e2143",
     "docs/examples/python/create_decision.py": "b2cd0c8b089430cd50d8cf2ab1ce06db0a80e8af4da87fd4aa02ff6df611f467",
     "tools/gitbook-sync/README.md": "e4f5b034676967985c2a9254f93b9d615ea122832254b7e2c919c65a4481f2e1",
-    "tools/gitbook-sync/validate-docs.mjs": "a8da225762d0a2edeec1a91113620ad21feaf382d12d96b3a636e9078ca686cd",
+    "tools/gitbook-sync/validate-docs.mjs": "aa78250b1ad6462fdc9284307178c436a8964741e766ad13a8706719ae7253ea",
     "tools/gitbook-sync/dry-run.mjs": "fd5f82708a09e36702e3cc6a6d54e05060fae900bb0bda8c10c36a8bdb33d72a"
   },
   "public_internal_boundary": "PASS",

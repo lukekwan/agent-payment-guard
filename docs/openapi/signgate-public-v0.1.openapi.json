@@ -18,6 +18,13 @@
     }
   ],
   "security": [{ "BearerAuth": [] }],
+  "tags": [
+    {
+      "name": "Decisions",
+      "x-page-title": "Decision API",
+      "x-page-description": "Evaluate a deploy_change action, verify the bound result, and atomically consume an executable ALLOW."
+    }
+  ],
   "paths": {
     "/v1/decisions": {
       "post": {
@@ -25,6 +32,23 @@
         "description": "Returns ALLOW, REQUIRE_APPROVAL, or DENY only after successful authentication, strict JSON/schema validation, canonical fingerprinting, policy evaluation, persistence, and audit. Every non-valid-ALLOW outcome fails closed.",
         "operationId": "createDecision",
         "tags": ["Decisions"],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "label": "cURL",
+            "source": "curl -sS \"$SIGNGATE_BASE_URL/v1/decisions\" \\\n  -H \"Authorization: Bearer $SIGNGATE_AGENT_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  --data-binary @decision-request.json"
+          },
+          {
+            "lang": "JavaScript",
+            "label": "JavaScript",
+            "source": "const response = await fetch(`${process.env.SIGNGATE_BASE_URL}/v1/decisions`, {\n  method: 'POST',\n  headers: {\n    authorization: `Bearer ${process.env.SIGNGATE_AGENT_KEY}`,\n    'content-type': 'application/json'\n  },\n  body: JSON.stringify(decisionRequest)\n});\n\nif (!response.ok) throw new Error(`SignGate ${response.status}`);\nconst result = await response.json();"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "import os\nimport requests\n\nresponse = requests.post(\n    f\"{os.environ['SIGNGATE_BASE_URL']}/v1/decisions\",\n    headers={\"Authorization\": f\"Bearer {os.environ['SIGNGATE_AGENT_KEY']}\"},\n    json=decision_request,\n    timeout=30,\n)\nresponse.raise_for_status()\nresult = response.json()"
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -67,6 +91,23 @@
         "description": "Consumes a valid ALLOW before execution. An ALLOW is not executable until this operation succeeds. The decision must be ALLOW, AVAILABLE, unexpired, organization-bound, fingerprint-bound, policy-bound, and unused.",
         "operationId": "consumeDecision",
         "tags": ["Decisions"],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "label": "cURL",
+            "source": "curl -sS \"$SIGNGATE_BASE_URL/v1/decisions/$SIGNGATE_DECISION_ID/consume\" \\\n  -H \"Authorization: Bearer $SIGNGATE_EXECUTOR_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  --data-binary @consume-request.json"
+          },
+          {
+            "lang": "JavaScript",
+            "label": "JavaScript",
+            "source": "const response = await fetch(\n  `${process.env.SIGNGATE_BASE_URL}/v1/decisions/${decisionId}/consume`,\n  {\n    method: 'POST',\n    headers: {\n      authorization: `Bearer ${process.env.SIGNGATE_EXECUTOR_KEY}`,\n      'content-type': 'application/json'\n    },\n    body: JSON.stringify(consumeRequest)\n  }\n);\nif (!response.ok) throw new Error(`Consume ${response.status}`);"
+          },
+          {
+            "lang": "Python",
+            "label": "Python",
+            "source": "import os\nimport requests\n\nresponse = requests.post(\n    f\"{os.environ['SIGNGATE_BASE_URL']}/v1/decisions/{decision_id}/consume\",\n    headers={\"Authorization\": f\"Bearer {os.environ['SIGNGATE_EXECUTOR_KEY']}\"},\n    json=consume_request,\n    timeout=30,\n)\nresponse.raise_for_status()"
+          }
+        ],
         "parameters": [
           {
             "name": "decision_id",
