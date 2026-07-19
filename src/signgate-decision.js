@@ -94,6 +94,7 @@ const ALLOWED_DEPLOYMENT_COMMANDS = new Set([
 ]);
 const ALLOWED_REPOSITORY_HOSTS = new Set(["github.com"]);
 const ALLOWED_CI_PROVIDERS = new Set(["github_actions", "local"]);
+const CREDENTIAL_ROTATION_MAX_SECONDS = 24 * 60 * 60;
 const ALLOWED_APPROVAL_REASON_CODES = new Set([
   "FOUNDER_APPROVED_PREVIEW_PERMISSION_CHANGE",
   "FOUNDER_APPROVED_PREVIEW_DNS_CHANGE",
@@ -313,6 +314,20 @@ function validateStringArray(values, field) {
   }
 }
 
+function canonicalRepositoryRemoteUrl(repository) {
+  return `https://${repository.host}/${repository.owner}/${repository.repo}`;
+}
+
+function jsonList(value, fallback) {
+  if (!value) return fallback;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function validateDecisionRequestSchema(parsed) {
   assertAllowedKeys(parsed, ALLOWED_TOP_LEVEL, "$");
   if (parsed.contract_version !== SIGNGATE_CONTRACT_VERSION) {
@@ -337,6 +352,10 @@ function validateDecisionRequestSchema(parsed) {
   requireEnum(parsed.action.target.repository.host, ALLOWED_REPOSITORY_HOSTS, "REPOSITORY_HOST_INVALID");
   requirePattern(parsed.action.target.repository.owner, /^[A-Za-z0-9_.-]{1,100}$/, "REPOSITORY_OWNER_INVALID");
   requirePattern(parsed.action.target.repository.repo, /^[A-Za-z0-9_.-]{1,100}$/, "REPOSITORY_NAME_INVALID");
+  requireString(parsed.action.target.repository.remote_url, "REPOSITORY_REMOTE_URL_REQUIRED");
+  if (canonicalRepositoryRemoteUrl(parsed.action.target.repository) !== parsed.action.target.repository.remote_url) {
+    throw new SignGateInputError(422, "REQUEST_SCHEMA_INVALID", ["REPOSITORY_REMOTE_URL_MISMATCH"]);
+  }
   assertAllowedKeys(parsed.action.parameters, ALLOWED_PARAMETERS, "$.action.parameters");
   requirePattern(parsed.action.parameters.git_commit, /^[a-f0-9]{40}$/i, "GIT_COMMIT_INVALID");
   requireEnum(parsed.action.parameters.deployment_strategy, ALLOWED_DEPLOYMENT_STRATEGIES, "DEPLOYMENT_STRATEGY_INVALID");
@@ -470,8 +489,18 @@ async function authenticate(env, requiredScope, requiredPrincipalType) {
   ) {
     throw new SignGateInputError(401, "AUTHENTICATION_FAILED", ["AUTHENTICATION_FAILED"]);
   }
-  if (credential.status === "rotating" && credential.rotation_expires_at && Date.parse(credential.rotation_expires_at) <= env.nowMs) {
-    throw new SignGateInputError(401, "AUTHENTICATION_FAILED", ["AUTHENTICATION_FAILED"]);
+  if (credential.status === "rotating") {
+    const rotationExpiresMs = Date.parse(credential.rotation_expires_at || "");
+    const rotationStartMs = Date.parse(credential.updated_at || credential.created_at || "");
+    if (
+      !credential.rotated_from_credential_id ||
+      !Number.isFinite(rotationExpiresMs) ||
+      !Number.isFinite(rotationStartMs) ||
+      rotationExpiresMs <= env.nowMs ||
+      rotationExpiresMs - rotationStartMs > CREDENTIAL_ROTATION_MAX_SECONDS * 1000
+    ) {
+      throw new SignGateInputError(401, "AUTHENTICATION_FAILED", ["AUTHENTICATION_FAILED"]);
+    }
   }
   if (requiredPrincipalType && credential.principal_type !== requiredPrincipalType) {
     throw new SignGateInputError(403, "AUTHORIZATION_FAILED", ["PRINCIPAL_TYPE_NOT_ALLOWED"]);
@@ -482,6 +511,17 @@ async function authenticate(env, requiredScope, requiredPrincipalType) {
   }
   await env.store.recordCredentialUse(credential.credential_id, nowIso(env.nowMs));
   return credential;
+}
+
+function credentialAllowsAction(authenticated, input) {
+  const environments = jsonList(authenticated.allowed_environments_json, ["local", "preview", "production"]);
+  const actionTypes = jsonList(authenticated.allowed_action_types_json, ["deploy_change"]);
+  const services = jsonList(authenticated.allowed_services_json, ["signgate-worker"]);
+  if (!environments.includes(input.action.target.environment)) return false;
+  if (!actionTypes.includes(input.action.type)) return false;
+  if (!services.includes(input.action.target.service)) return false;
+  if (authenticated.allowed_agent_id && authenticated.allowed_agent_id !== authenticated.principal_id) return false;
+  return true;
 }
 
 function errorBody(error, requestId = null, auditId = null) {
@@ -529,6 +569,16 @@ async function resolveTrustedMandate(input, authenticated, env) {
   return { ok: true, mandate: { ...mandate, scope: scopes } };
 }
 
+async function resolveAuthorizedTarget(input, authenticated, env) {
+  if (!credentialAllowsAction(authenticated, input)) return { ok: false, reason: "CREDENTIAL_TARGET_NOT_ALLOWED" };
+  const target = await env.store.findAuthorizedTarget(authenticated.organization_id, input.action);
+  if (!target) return { ok: false, reason: "TARGET_NOT_AUTHORIZED" };
+  if (target.status !== "active") return { ok: false, reason: "TARGET_NOT_AUTHORIZED" };
+  if (target.valid_from && Date.parse(target.valid_from) > env.nowMs) return { ok: false, reason: "TARGET_NOT_AUTHORIZED" };
+  if (target.valid_until && Date.parse(target.valid_until) <= env.nowMs) return { ok: false, reason: "TARGET_NOT_AUTHORIZED" };
+  return { ok: true, target };
+}
+
 async function resolveTrustedEvidence(input, authenticated, env, actionFingerprint) {
   if (!hasPassingTests(input)) return { ok: false, reason: "TESTS_FAILED" };
   const ci = input.action.parameters.ci_evidence;
@@ -540,14 +590,7 @@ async function resolveTrustedEvidence(input, authenticated, env, actionFingerpri
   if (trusted.commit?.toLowerCase() !== input.action.parameters.git_commit.toLowerCase()) {
     return { ok: false, reason: "EVIDENCE_COMMIT_MISMATCH" };
   }
-  if (trusted.subject_fingerprint && trusted.subject_fingerprint !== testEvidence?.subject_fingerprint) {
-    return { ok: false, reason: "EVIDENCE_SUBJECT_MISMATCH" };
-  }
-  if (
-    trusted.action_fingerprint &&
-    trusted.action_fingerprint !== actionFingerprint &&
-    trusted.subject_fingerprint !== actionFingerprint
-  ) {
+  if (!trusted.action_fingerprint || trusted.action_fingerprint !== actionFingerprint) {
     return { ok: false, reason: "EVIDENCE_SUBJECT_MISMATCH" };
   }
   if (Date.parse(trusted.observed_at) > env.nowMs) return { ok: false, reason: "EVIDENCE_OBSERVED_IN_FUTURE" };
@@ -560,6 +603,8 @@ async function evaluateDeployChange(input, authenticated, env, actionFingerprint
   const target = input.action.target;
   const mandate = await resolveTrustedMandate(input, authenticated, env);
   if (!mandate.ok) return ["DENY", [mandate.reason]];
+  const targetAuthorization = await resolveAuthorizedTarget(input, authenticated, env);
+  if (!targetAuthorization.ok) return ["DENY", [targetAuthorization.reason]];
   if (p.touches_secrets) return ["DENY", ["SECRET_CHANGE_NOT_SUPPORTED_V0_1"]];
   const evidence = await resolveTrustedEvidence(input, authenticated, env, actionFingerprint);
   if (!evidence.ok) return ["DENY", [evidence.reason]];
@@ -687,6 +732,7 @@ async function semanticRequestFingerprint(input, authenticated, env, actionFinge
       issuer: mandate.issuer,
       expires_at: mandate.expires_at,
     } : { id: input.mandate.id, status: "missing" },
+    target_authorization: await env.store.findAuthorizedTarget(authenticated.organization_id, input.action) || null,
     evidence: trustedEvidence ? {
       id: trustedEvidence.evidence_id,
       provider: trustedEvidence.provider,
@@ -706,6 +752,18 @@ async function semanticRequestFingerprint(input, authenticated, env, actionFinge
       approver_role: grant.approver_role,
       expires_at: grant.expires_at,
     } : null,
+  }))}`;
+}
+
+async function approvalBindingFingerprint(input, authenticated) {
+  return `sha256:${await sha256Hex(canonicalize({
+    contract_version: SIGNGATE_CONTRACT_VERSION,
+    organization_id: input.organization_id,
+    original_decision_id: input.original_decision_id,
+    action_fingerprint: input.action_fingerprint,
+    policy_version: input.policy_version,
+    approver_principal_id: authenticated.principal_id,
+    approval_reason: input.approval_reason,
   }))}`;
 }
 
@@ -750,9 +808,11 @@ export async function handleSignGateDecisionRequest(request, env = {}) {
     return signGateJsonResponse(await evaluateAndPersistDecision(input, authenticated, { store, nowMs }));
   } catch (error) {
     const status = error instanceof SignGateInputError ? error.status : 500;
-    await safeAuditFailure(store, authenticated, "decision.rejected", error, nowMs);
+    const auditId = await safeAuditFailure(store, authenticated, "decision.rejected", error, nowMs);
     const body = errorBody(
       error instanceof SignGateInputError ? error : new SignGateInputError(500, "INTERNAL_INVARIANT_FAILED"),
+      null,
+      auditId,
     );
     return signGateJsonResponse(body, status);
   }
@@ -792,6 +852,7 @@ export async function handleFounderApprovalGrantRequest(request, env = {}) {
     }
     const approvedAt = nowIso(nowMs);
     const deleteAfter = deleteAfterIso(approvedAt);
+    const bindingFingerprint = await approvalBindingFingerprint(input, authenticated);
     const existing = await store.findApprovalGrantByBinding({
       organization_id: input.organization_id,
       original_decision_id: input.original_decision_id,
@@ -799,6 +860,7 @@ export async function handleFounderApprovalGrantRequest(request, env = {}) {
       policy_version: input.policy_version,
       approver_principal_id: authenticated.principal_id,
       approval_reason: input.approval_reason,
+      binding_fingerprint: bindingFingerprint,
     });
     if (existing) {
       return signGateJsonResponse({
@@ -841,6 +903,7 @@ export async function handleFounderApprovalGrantRequest(request, env = {}) {
       approver_principal_id: authenticated.principal_id,
       approver_role: "founder",
       approval_reason: input.approval_reason,
+      binding_fingerprint: bindingFingerprint,
       original_decision_expires_at: original.expires_at,
       status: "AVAILABLE",
       approved_at: approvedAt,
@@ -858,12 +921,34 @@ export async function handleFounderApprovalGrantRequest(request, env = {}) {
         delete_after: deleteAfter,
       },
     });
-    return signGateJsonResponse(response);
+    const created = await store.findApprovalGrantByBinding({
+      organization_id: input.organization_id,
+      original_decision_id: input.original_decision_id,
+      action_fingerprint: input.action_fingerprint,
+      policy_version: input.policy_version,
+      approver_principal_id: authenticated.principal_id,
+      approval_reason: input.approval_reason,
+      binding_fingerprint: bindingFingerprint,
+    });
+    return signGateJsonResponse(created ? {
+      approval_grant_id: created.approval_grant_id,
+      organization_id: created.organization_id,
+      original_decision_id: created.original_decision_id,
+      action_fingerprint: created.action_fingerprint,
+      policy_version: created.policy_version,
+      approved_by: created.approver_principal_id,
+      approver_role: created.approver_role,
+      status: created.status,
+      approval_reason: created.approval_reason,
+      approved_at: created.approved_at,
+      expires_at: created.expires_at,
+      audit_id: created.audit_id || null,
+    } : response);
   } catch (error) {
     const status = error instanceof SignGateInputError ? error.status : 500;
-    await safeAuditFailure(store, authenticated, "approval_grant.rejected", error, nowMs);
+    const auditId = await safeAuditFailure(store, authenticated, "approval_grant.rejected", error, nowMs);
     return signGateJsonResponse(
-      errorBody(error instanceof SignGateInputError ? error : new SignGateInputError(500, "INTERNAL_INVARIANT_FAILED")),
+      errorBody(error instanceof SignGateInputError ? error : new SignGateInputError(500, "INTERNAL_INVARIANT_FAILED"), null, auditId),
       status,
     );
   }
@@ -923,9 +1008,9 @@ export async function handleConsumeDecisionRequest(request, env = {}, decisionId
     return signGateJsonResponse(receipt);
   } catch (error) {
     const status = error instanceof SignGateInputError ? error.status : 500;
-    await safeAuditFailure(store, authenticated, "decision.consume_rejected", error, nowMs, { decision_id: decisionId });
+    const auditId = await safeAuditFailure(store, authenticated, "decision.consume_rejected", error, nowMs, { decision_id: decisionId });
     return signGateJsonResponse(
-      errorBody(error instanceof SignGateInputError ? error : new SignGateInputError(500, "INTERNAL_INVARIANT_FAILED")),
+      errorBody(error instanceof SignGateInputError ? error : new SignGateInputError(500, "INTERNAL_INVARIANT_FAILED"), null, auditId),
       status,
     );
   }
@@ -949,6 +1034,24 @@ export async function runDeployChangePreviewWrapper({
   );
   if (decisionResponse.status !== 200) return { status: "REFUSED", reason: `decision_http_${decisionResponse.status}` };
   const decision = await decisionResponse.json();
+  return enforceDeployChangePreviewDecision({
+    env,
+    executorKey,
+    request,
+    decision,
+    executionAttemptId,
+    simulateFailure,
+  });
+}
+
+export async function enforceDeployChangePreviewDecision({
+  env,
+  executorKey,
+  request,
+  decision,
+  executionAttemptId,
+  simulateFailure = false,
+}) {
   if (
     decision.decision !== "ALLOW" ||
     decision.execution_directive?.action !== "EXECUTE" ||
@@ -1030,6 +1133,10 @@ export async function createPreviewCredential({ store, rawKey, organizationId, p
     digest_version: DIGEST_VERSION,
     scopes_json: JSON.stringify(scopes),
     status: "active",
+    allowed_environments_json: JSON.stringify(["local", "preview", "production"]),
+    allowed_action_types_json: JSON.stringify(["deploy_change"]),
+    allowed_services_json: JSON.stringify(["signgate-worker"]),
+    allowed_agent_id: principalType === "agent" ? principalId : null,
     rotation_expires_at: null,
     delete_after: deleteAfterIso(createdAt),
     created_at: createdAt,
@@ -1060,6 +1167,7 @@ export class MemorySignGateStore {
     this.decisions = new Map();
     this.grants = new Map();
     this.mandates = new Map();
+    this.authorizedTargets = new Map();
     this.trustedEvidence = new Map();
     this.receipts = new Map();
     this.auditEvents = [];
@@ -1078,6 +1186,22 @@ export class MemorySignGateStore {
   async getIdempotency(org, requestId) { return this.idempotency.get(this.key(org, requestId)) || null; }
   async createMandate(mandate) { this.mandates.set(this.key(mandate.organization_id, mandate.mandate_id), mandate); }
   async getMandate(org, mandateId) { return this.mandates.get(this.key(org, mandateId)) || null; }
+  async createAuthorizedTarget(target) { this.authorizedTargets.set(this.key(target.organization_id, target.target_id), target); }
+  async findAuthorizedTarget(org, action) {
+    const repo = action.target.repository;
+    const remoteUrl = canonicalRepositoryRemoteUrl(repo);
+    return [...this.authorizedTargets.values()].find(target =>
+      target.organization_id === org &&
+      target.environment === action.target.environment &&
+      target.service === action.target.service &&
+      target.project === action.target.project &&
+      target.repository_host === repo.host &&
+      target.repository_owner === repo.owner &&
+      target.repository_name === repo.repo &&
+      target.canonical_remote_url === remoteUrl &&
+      target.action_type === action.type,
+    ) || null;
+  }
   async createTrustedEvidence(evidence) { this.trustedEvidence.set(this.key(evidence.organization_id, evidence.evidence_id), evidence); }
   async getTrustedEvidence(org, evidenceId) { return this.trustedEvidence.get(this.key(org, evidenceId)) || null; }
   async recordAuditEvent(audit) { this.auditEvents.push(audit); }
@@ -1094,11 +1218,14 @@ export class MemorySignGateStore {
       ) {
         throw new SignGateInputError(409, "APPROVAL_GRANT_REUSE_MISMATCH", ["APPROVAL_GRANT_INVALID"]);
       }
+    }
+    if (this.failAudit) throw new Error("injected audit failure");
+    if (record.approval_grant_id && record.decision === "ALLOW") {
+      const grant = this.grants.get(this.key(record.organization_id, record.approval_grant_id));
       grant.status = "USED";
       grant.used_by_decision_id = record.decision_id;
       grant.used_request_id = record.request_id;
     }
-    if (this.failAudit) throw new Error("injected audit failure");
     this.decisions.set(this.key(record.organization_id, record.decision_id), record);
     this.idempotency.set(this.key(record.organization_id, record.request_id), {
       organization_id: record.organization_id,
@@ -1113,8 +1240,11 @@ export class MemorySignGateStore {
   async getDecision(org, decisionId) { return this.decisions.get(this.key(org, decisionId)) || null; }
   async createApprovalGrant(record) {
     if (this.failAudit) throw new Error("injected audit failure");
+    const existing = await this.findApprovalGrantByBinding(record);
+    if (existing) return existing;
     this.grants.set(this.key(record.organization_id, record.approval_grant_id), record);
     this.auditEvents.push(record.audit);
+    return record;
   }
   async getApprovalGrant(org, grantId) { return this.grants.get(this.key(org, grantId)) || null; }
   async findApprovalGrantByBinding(binding) {
@@ -1125,7 +1255,9 @@ export class MemorySignGateStore {
         grant.action_fingerprint === binding.action_fingerprint &&
         grant.policy_version === binding.policy_version &&
         grant.approver_principal_id === binding.approver_principal_id &&
-        grant.approval_reason === binding.approval_reason,
+        (binding.binding_fingerprint
+          ? grant.binding_fingerprint === binding.binding_fingerprint
+          : grant.approval_reason === binding.approval_reason),
     ) || null;
   }
   async markApprovalGrantUsed(org, grantId, decisionId, requestId) {
@@ -1200,7 +1332,7 @@ export class MemorySignGateStore {
   async recordExecutionResult(result) { this.executionResults.push(result); }
   async cleanupPreviewRetention({ organization_id, now_iso, batch_size = 100 }) {
     const now = Date.parse(now_iso);
-    const deleted = { decisions: 0, idempotency: 0, grants: 0, receipts: 0, audit_events: 0, execution_results: 0 };
+    const deleted = { credentials: 0, mandates: 0, authorized_targets: 0, trusted_evidence: 0, decisions: 0, idempotency: 0, grants: 0, receipts: 0, audit_events: 0, execution_results: 0 };
     const deleteFromMap = (map, counter, predicate) => {
       for (const [key, value] of [...map.entries()]) {
         if (deleted[counter] >= batch_size) break;
@@ -1214,6 +1346,10 @@ export class MemorySignGateStore {
     deleteFromMap(this.idempotency, "idempotency", () => true);
     deleteFromMap(this.grants, "grants", grant => grant.status !== "AVAILABLE" || Date.parse(grant.expires_at) <= now);
     deleteFromMap(this.decisions, "decisions", decision => decision.state !== "AVAILABLE" || Date.parse(decision.expires_at) <= now);
+    deleteFromMap(this.credentials, "credentials", credential => credential.status === "revoked" || (credential.rotation_expires_at && Date.parse(credential.rotation_expires_at) <= now));
+    deleteFromMap(this.mandates, "mandates", mandate => mandate.status !== "active" || Date.parse(mandate.expires_at) <= now);
+    deleteFromMap(this.authorizedTargets, "authorized_targets", target => target.status !== "active" || (target.valid_until && Date.parse(target.valid_until) <= now));
+    deleteFromMap(this.trustedEvidence, "trusted_evidence", () => true);
     this.auditEvents = this.auditEvents.filter(event => {
       if (deleted.audit_events >= batch_size) return true;
       if (event.organization_id === organization_id && Date.parse(event.delete_after) <= now) {
@@ -1255,6 +1391,32 @@ export class D1SignGateStore {
   async getMandate(org, mandateId) {
     return this.db.prepare("SELECT * FROM signgate_mandates WHERE organization_id = ? AND mandate_id = ?").bind(org, mandateId).first();
   }
+  async createAuthorizedTarget(target) {
+    await this.db.prepare(
+      `INSERT INTO signgate_authorized_targets
+      (target_id, organization_id, environment, service, project, repository_host, repository_owner, repository_name,
+       canonical_remote_url, action_type, status, valid_from, valid_until, revision, delete_after, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).bind(
+      target.target_id, target.organization_id, target.environment, target.service, target.project,
+      target.repository_host, target.repository_owner, target.repository_name, target.canonical_remote_url,
+      target.action_type, target.status, target.valid_from, target.valid_until, target.revision,
+      target.delete_after, target.created_at, target.updated_at,
+    ).run();
+  }
+  async findAuthorizedTarget(org, action) {
+    const repo = action.target.repository;
+    return this.db.prepare(
+      `SELECT * FROM signgate_authorized_targets
+       WHERE organization_id = ? AND environment = ? AND service = ? AND project = ?
+         AND repository_host = ? AND repository_owner = ? AND repository_name = ?
+         AND canonical_remote_url = ? AND action_type = ?
+       ORDER BY revision DESC LIMIT 1`,
+    ).bind(
+      org, action.target.environment, action.target.service, action.target.project,
+      repo.host, repo.owner, repo.repo, canonicalRepositoryRemoteUrl(repo), action.type,
+    ).first();
+  }
   async createTrustedEvidence(evidence) {
     await this.db.prepare(
       `INSERT INTO signgate_trusted_evidence
@@ -1276,12 +1438,16 @@ export class D1SignGateStore {
   async createCredential(credential) {
     await this.db.prepare(
       `INSERT INTO signgate_api_credentials
-      (credential_id, organization_id, principal_id, principal_type, key_prefix, key_digest, digest_version, scopes_json, status, rotation_expires_at, delete_after, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (credential_id, organization_id, principal_id, principal_type, key_prefix, key_digest, digest_version, scopes_json, status,
+       rotated_from_credential_id, rotation_expires_at, allowed_environments_json, allowed_action_types_json, allowed_services_json,
+       allowed_agent_id, delete_after, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(
       credential.credential_id, credential.organization_id, credential.principal_id, credential.principal_type,
       credential.key_prefix, credential.key_digest, credential.digest_version, credential.scopes_json, credential.status,
-      credential.rotation_expires_at, credential.delete_after, credential.created_at, credential.updated_at,
+      credential.rotated_from_credential_id || null, credential.rotation_expires_at, credential.allowed_environments_json,
+      credential.allowed_action_types_json, credential.allowed_services_json, credential.allowed_agent_id,
+      credential.delete_after, credential.created_at, credential.updated_at,
     ).run();
   }
   async createDecision(record) {
@@ -1365,16 +1531,17 @@ export class D1SignGateStore {
   async createApprovalGrant(record) {
     await this.db.batch([
       this.db.prepare(
-        `INSERT INTO signgate_approval_grants
+        `INSERT OR IGNORE INTO signgate_approval_grants
         (approval_grant_id, organization_id, original_decision_id, action_fingerprint, policy_version, approver_principal_id,
-         approver_role, approval_reason, status, approved_at, expires_at, original_decision_expires_at, delete_after, created_at, audit_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      ).bind(record.approval_grant_id, record.organization_id, record.original_decision_id, record.action_fingerprint, record.policy_version, record.approver_principal_id, record.approver_role, record.approval_reason, record.status, record.approved_at, record.expires_at, record.original_decision_expires_at, record.delete_after, record.approved_at, record.audit.audit_id),
+         approver_role, approval_reason, binding_fingerprint, status, approved_at, expires_at, original_decision_expires_at, delete_after, created_at, audit_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).bind(record.approval_grant_id, record.organization_id, record.original_decision_id, record.action_fingerprint, record.policy_version, record.approver_principal_id, record.approver_role, record.approval_reason, record.binding_fingerprint, record.status, record.approved_at, record.expires_at, record.original_decision_expires_at, record.delete_after, record.approved_at, record.audit.audit_id),
       this.db.prepare(
         `INSERT INTO signgate_audit_events
         (audit_id, organization_id, event_type, principal_id, decision_id, action_fingerprint, policy_version, metadata_json, occurred_at, delete_after)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      ).bind(record.audit.audit_id, record.organization_id, record.audit.event_type, record.audit.principal_id, record.audit.decision_id, record.audit.action_fingerprint, record.audit.policy_version, record.audit.metadata_json, record.audit.occurred_at, record.audit.delete_after),
+        SELECT ?, organization_id, ?, ?, original_decision_id, action_fingerprint, policy_version, ?, ?, ?
+        FROM signgate_approval_grants WHERE organization_id = ? AND binding_fingerprint = ? AND audit_id = ?`,
+      ).bind(record.audit.audit_id, record.audit.event_type, record.audit.principal_id, record.audit.metadata_json, record.audit.occurred_at, record.audit.delete_after, record.organization_id, record.binding_fingerprint, record.audit.audit_id),
     ]);
   }
   async getApprovalGrant(org, grantId) {
@@ -1384,7 +1551,7 @@ export class D1SignGateStore {
     return this.db.prepare(
       `SELECT * FROM signgate_approval_grants
        WHERE organization_id = ? AND original_decision_id = ? AND action_fingerprint = ?
-         AND policy_version = ? AND approver_principal_id = ? AND approval_reason = ?
+         AND policy_version = ? AND approver_principal_id = ? AND binding_fingerprint = ?
        ORDER BY created_at ASC LIMIT 1`,
     ).bind(
       binding.organization_id,
@@ -1392,7 +1559,7 @@ export class D1SignGateStore {
       binding.action_fingerprint,
       binding.policy_version,
       binding.approver_principal_id,
-      binding.approval_reason,
+      binding.binding_fingerprint,
     ).first();
   }
   async markApprovalGrantUsed(org, grantId, decisionId, requestId) {
@@ -1471,20 +1638,24 @@ export class D1SignGateStore {
       ["signgate_execution_results", "execution_results"],
       ["signgate_consume_receipts", "receipts"],
       ["signgate_request_idempotency", "idempotency"],
-      ["signgate_approval_grants", "grants"],
-      ["signgate_decisions", "decisions"],
+      ["signgate_approval_grants", "grants", "AND (status != 'AVAILABLE' OR expires_at <= ?)"],
+      ["signgate_decisions", "decisions", "AND (state != 'AVAILABLE' OR expires_at <= ?)"],
       ["signgate_audit_events", "audit_events"],
+      ["signgate_api_credentials", "credentials", "AND (status = 'revoked' OR rotation_expires_at <= ?)"],
+      ["signgate_mandates", "mandates", "AND (status != 'active' OR expires_at <= ?)"],
+      ["signgate_authorized_targets", "authorized_targets", "AND (status != 'active' OR valid_until <= ?)"],
+      ["signgate_trusted_evidence", "trusted_evidence"],
     ];
     const deleted = {};
-    for (const [table, key] of tables) {
+    for (const [table, key, predicate = ""] of tables) {
       const result = await this.db.prepare(
         `DELETE FROM ${table}
          WHERE rowid IN (
            SELECT rowid FROM ${table}
-           WHERE organization_id = ? AND delete_after <= ?
+           WHERE organization_id = ? AND delete_after <= ? ${predicate}
            LIMIT ?
          )`,
-      ).bind(organization_id, now_iso, batch_size).run();
+      ).bind(...(predicate ? [organization_id, now_iso, now_iso, batch_size] : [organization_id, now_iso, batch_size])).run();
       deleted[key] = result.meta?.changes ?? 0;
     }
     return deleted;

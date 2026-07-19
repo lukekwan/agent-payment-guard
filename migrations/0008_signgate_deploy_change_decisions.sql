@@ -10,6 +10,10 @@ CREATE TABLE IF NOT EXISTS signgate_api_credentials (
   status TEXT NOT NULL CHECK (status IN ('active', 'rotating', 'revoked')),
   rotated_from_credential_id TEXT,
   rotation_expires_at TEXT,
+  allowed_environments_json TEXT NOT NULL DEFAULT '["local","preview","production"]',
+  allowed_action_types_json TEXT NOT NULL DEFAULT '["deploy_change"]',
+  allowed_services_json TEXT NOT NULL DEFAULT '["signgate-worker"]',
+  allowed_agent_id TEXT,
   revoked_at TEXT,
   last_used_at TEXT,
   delete_after TEXT NOT NULL,
@@ -38,6 +42,33 @@ CREATE TABLE IF NOT EXISTS signgate_mandates (
 
 CREATE INDEX IF NOT EXISTS idx_signgate_mandates_retention
   ON signgate_mandates (organization_id, delete_after);
+
+CREATE TABLE IF NOT EXISTS signgate_authorized_targets (
+  target_id TEXT PRIMARY KEY,
+  organization_id TEXT NOT NULL,
+  environment TEXT NOT NULL CHECK (environment IN ('local', 'preview', 'production')),
+  service TEXT NOT NULL,
+  project TEXT NOT NULL,
+  repository_host TEXT NOT NULL,
+  repository_owner TEXT NOT NULL,
+  repository_name TEXT NOT NULL,
+  canonical_remote_url TEXT NOT NULL,
+  action_type TEXT NOT NULL CHECK (action_type IN ('deploy_change')),
+  status TEXT NOT NULL CHECK (status IN ('active', 'revoked')),
+  valid_from TEXT NOT NULL,
+  valid_until TEXT,
+  revision INTEGER NOT NULL DEFAULT 1,
+  delete_after TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE (organization_id, environment, service, project, repository_host, repository_owner, repository_name, canonical_remote_url, action_type, revision)
+);
+
+CREATE INDEX IF NOT EXISTS idx_signgate_authorized_targets_lookup
+  ON signgate_authorized_targets (organization_id, environment, service, project, repository_host, repository_owner, repository_name, action_type, status);
+
+CREATE INDEX IF NOT EXISTS idx_signgate_authorized_targets_retention
+  ON signgate_authorized_targets (organization_id, delete_after);
 
 CREATE TABLE IF NOT EXISTS signgate_trusted_evidence (
   organization_id TEXT NOT NULL,
@@ -110,6 +141,7 @@ CREATE TABLE IF NOT EXISTS signgate_approval_grants (
   approver_principal_id TEXT NOT NULL,
   approver_role TEXT NOT NULL,
   approval_reason TEXT NOT NULL,
+  binding_fingerprint TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('AVAILABLE', 'USED', 'REVOKED', 'EXPIRED')),
   used_by_decision_id TEXT,
   used_request_id TEXT,
@@ -126,6 +158,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_signgate_approval_grants_org_grant
 
 CREATE INDEX IF NOT EXISTS idx_signgate_approval_grants_retention
   ON signgate_approval_grants (organization_id, delete_after);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_signgate_approval_grants_binding
+  ON signgate_approval_grants (organization_id, binding_fingerprint);
 
 CREATE TABLE IF NOT EXISTS signgate_consume_receipts (
   consume_receipt_id TEXT PRIMARY KEY,

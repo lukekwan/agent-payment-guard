@@ -9,6 +9,7 @@ import {
   D1SignGateStore,
   cleanupSignGatePreviewRetention,
   createPreviewCredential,
+  fingerprintDeployChange,
   handleConsumeDecisionRequest,
   handleFounderApprovalGrantRequest,
   handleSignGateDecisionRequest,
@@ -56,6 +57,31 @@ async function d1Env() {
     delete_after: "2026-08-19T00:00:00.000Z",
     created_at: createdAt,
   });
+  for (const environment of ["preview"]) {
+    await store.createAuthorizedTarget({
+      target_id: `target_${environment}`,
+      organization_id: ORG,
+      environment,
+      service: "signgate-worker",
+      project: "base-agent-preflight",
+      repository_host: "github.com",
+      repository_owner: "lukekwan",
+      repository_name: "agent-payment-guard",
+      canonical_remote_url: "https://github.com/lukekwan/agent-payment-guard",
+      action_type: "deploy_change",
+      status: "active",
+      valid_from: createdAt,
+      valid_until: "2026-07-20T00:00:00.000Z",
+      revision: 1,
+      delete_after: "2026-08-19T00:00:00.000Z",
+      created_at: createdAt,
+      updated_at: createdAt,
+    });
+  }
+  const actionFingerprint = await fingerprintDeployChange(request("seed"), {
+    organization_id: ORG,
+    principal_id: "codex_dev_01",
+  });
   await store.createTrustedEvidence({
     organization_id: ORG,
     evidence_id: "evidence_tests_001",
@@ -63,7 +89,7 @@ async function d1Env() {
     status: "passed",
     commit: "5ac67be4fe17b5c1b773bcc584080cad704f4959",
     subject_fingerprint: "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
-    action_fingerprint: null,
+    action_fingerprint: actionFingerprint,
     observed_at: "2026-07-18T23:59:00.000Z",
     delete_after: "2026-08-19T00:00:00.000Z",
     created_at: createdAt,
@@ -119,6 +145,17 @@ async function postDecision(input, env) {
     body: JSON.stringify(input),
   }), env);
   return [response.status, await response.json()];
+}
+
+async function bindTrustedEvidence(db, input) {
+  const actionFingerprint = await fingerprintDeployChange(input, {
+    organization_id: ORG,
+    principal_id: "codex_dev_01",
+  });
+  await db.prepare("UPDATE signgate_trusted_evidence SET action_fingerprint = ? WHERE organization_id = ? AND evidence_id = ?")
+    .bind(actionFingerprint, ORG, "evidence_tests_001")
+    .run();
+  return input;
 }
 
 async function consume(decision, env, attempt) {
@@ -181,7 +218,8 @@ test("DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approva
     assert.equal((await db.prepare("SELECT COUNT(*) AS count FROM signgate_audit_events WHERE decision_id = ? AND event_type = 'decision.expired'").bind(expiring.decision_id).first()).count, 1);
     env.SIGNGATE_TEST_NOW_MS = NOW;
 
-    const [, review] = await postDecision(request("d1_review", { touches_permissions: true }), env);
+    const reviewRequest = await bindTrustedEvidence(db, request("d1_review", { touches_permissions: true }));
+    const [, review] = await postDecision(reviewRequest, env);
     assert.equal(review.decision, "REQUIRE_APPROVAL");
     const grantResponse = await handleFounderApprovalGrantRequest(new Request("https://signgate.test/internal/dogfood/founder-approval-grants", {
       method: "POST",
@@ -198,6 +236,22 @@ test("DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approva
     }), env);
     assert.equal(grantResponse.status, 200);
     const grant = await grantResponse.json();
+    const duplicateGrantResponses = await Promise.all(Array.from({ length: 3 }, () => handleFounderApprovalGrantRequest(new Request("https://signgate.test/internal/dogfood/founder-approval-grants", {
+      method: "POST",
+      headers: { authorization: `Bearer ${FOUNDER_KEY}` },
+      body: JSON.stringify({
+        contract_version: SIGNGATE_CONTRACT_VERSION,
+        organization_id: ORG,
+        original_decision_id: review.decision_id,
+        action_fingerprint: review.action_fingerprint,
+        policy_version: SIGNGATE_POLICY_VERSION,
+        approval_reason: "FOUNDER_APPROVED_PREVIEW_PERMISSION_CHANGE",
+        expires_at: GRANT_FUTURE,
+      }),
+    }), env).then(async response => [response.status, await response.json()])));
+    assert.deepEqual(duplicateGrantResponses.map(([status]) => status), [200, 200, 200]);
+    assert.equal(new Set(duplicateGrantResponses.map(([, body]) => body.approval_grant_id)).size, 1);
+    assert.equal((await db.prepare("SELECT COUNT(*) AS count FROM signgate_approval_grants WHERE original_decision_id = ?").bind(review.decision_id).first()).count, 1);
     const [, approved] = await postDecision(request("d1_approved", { touches_permissions: true }, [
       { id: grant.approval_grant_id, type: "approval_grant", source: "founder", status: "approved", original_decision_id: review.decision_id },
     ]), env);
@@ -214,8 +268,18 @@ test("DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approva
 
     const cleanupBefore = await cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: NOW, batchSize: 10 });
     assert.equal(cleanupBefore.decisions, 0);
+    assert.equal(cleanupBefore.credentials, 0);
+    assert.equal(cleanupBefore.mandates, 0);
+    assert.equal(cleanupBefore.authorized_targets, 0);
     const cleanupAfter = await cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: Date.parse("2026-08-20T00:00:00.000Z"), batchSize: 100 });
     assert.ok(cleanupAfter.audit_events >= 1);
+    assert.ok(cleanupAfter.trusted_evidence >= 1);
+    assert.equal(cleanupAfter.mandates, 1);
+    assert.equal(cleanupAfter.authorized_targets, 1);
+    assert.equal(cleanupAfter.credentials, 0);
+    await db.prepare("UPDATE signgate_api_credentials SET status = 'revoked', delete_after = ? WHERE principal_type = 'agent'").bind("2026-08-19T00:00:00.000Z").run();
+    const cleanupCredentials = await cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: Date.parse("2026-08-20T00:00:00.000Z"), batchSize: 1 });
+    assert.equal(cleanupCredentials.credentials, 1);
   } finally {
     await mf.dispose();
   }
