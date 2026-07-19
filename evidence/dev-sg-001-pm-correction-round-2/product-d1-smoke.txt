@@ -1,4 +1,4 @@
-✔ DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approval, and retention (5115.888584ms)
+✔ DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approval, and retention (5658.023292ms)
 ℹ tests 1
 ℹ suites 0
 ℹ pass 1
@@ -6,4 +6,4 @@
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 5342.185208
+ℹ duration_ms 5887.279417

@@ -8,7 +8,7 @@ Lineage:
 - Round 1 application commit: `e6612f4023de7552ab1a4135b88fc70e306a99b7`
 - Round 1 evidence head: `7d10104da8600a5e7f68b75396f510e4679dd287`
 - Round 2 branch: `fix/dev-sg-001-pm-review-round-2`
-- Round 2 superseding application commit: `0d66748f3176e3edffaaedd9e6d4eaa181fd16d2`
+- Round 2 superseding application commit: `7a72343157d87c94d64504801e9e320671db1c94`
 
 Corrections:
 

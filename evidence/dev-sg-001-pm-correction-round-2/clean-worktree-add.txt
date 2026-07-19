@@ -1,2 +1,2 @@
-Preparing worktree (detached HEAD 0d66748)
-HEAD is now at 0d66748 fix: close DEV-SG-001 PM delta review gaps
+Preparing worktree (detached HEAD 7a72343)
+HEAD is now at 7a72343 fix: complete DEV-SG-001 PM round 2 grant target constraints

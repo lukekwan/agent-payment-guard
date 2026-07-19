@@ -20,7 +20,9 @@
     "no partial receipt",
     "no partial audit",
     "no partial fresh decision",
-    "retention cleanup across retained preview tables"
+    "retention cleanup across retained preview tables",
+    "eight-way concurrent Founder grant creation single artifact",
+    "changed grant expiry under same authority returns conflict"
   ],
   "evidence": "product-d1-smoke.txt"
 }
