@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const navigation = JSON.parse(readFileSync(join(root, "docs/gitbook/public/navigation.json"), "utf8"));
-const output = join(root, "docs/reviews/gitbook-redesign/gitbook-dry-run-results.json");
+const output = join(root, "docs/reviews/gitbook-redesign/evidence/gitbook-dry-run-results.json");
 const files = [
   ".gitbook.yaml",
   "docs/gitbook/public/SUMMARY.md",

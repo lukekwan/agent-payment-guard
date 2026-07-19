@@ -16,9 +16,17 @@ Do not begin execution before consume succeeds.
 POST /v1/decisions/{decision_id}/consume
 ```
 
+## Interactive API
+
+{% openapi src="https://raw.githubusercontent.com/lukekwan/agent-payment-guard/ef29cbffe06703a64a8c095b30b0e0bd188930ae/docs/openapi/signgate-public-v0.1.openapi.json" path="/v1/decisions/{decision_id}/consume" method="post" %}
+
+{% hint style="info" %}
+The Test it panel is for an authorized preview environment only. Replace the placeholder host and provide a preview credential; production execution is unavailable.
+{% endhint %}
+
 ## Authentication
 
-Bearer API key。Required scope: `decision:consume`.
+Bearer API key. Required scope: `decision:consume`.
 
 ## Path parameter
 

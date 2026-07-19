@@ -16,6 +16,14 @@ Consume 成功前不得開始 execution。
 POST /v1/decisions/{decision_id}/consume
 ```
 
+## 互動式 API
+
+{% openapi src="https://raw.githubusercontent.com/lukekwan/agent-payment-guard/ef29cbffe06703a64a8c095b30b0e0bd188930ae/docs/openapi/signgate-public-v0.1.openapi.json" path="/v1/decisions/{decision_id}/consume" method="post" %}
+
+{% hint style="info" %}
+Test it 面板只限授權的 preview environment。請替換 placeholder host 並提供 preview credential；目前不提供 production execution。
+{% endhint %}
+
 ## Authentication
 
 Bearer API key。必要 scope: `decision:consume`.

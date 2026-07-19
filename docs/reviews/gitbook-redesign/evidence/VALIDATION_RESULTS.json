@@ -1,0 +1,58 @@
+{
+  "generated_at": "2026-07-22T05:35:55.068Z",
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "required roots and manifests exist",
+      "status": "PASS"
+    },
+    {
+      "name": "navigation resolves and locale hierarchy is symmetric",
+      "status": "PASS"
+    },
+    {
+      "name": "all local Markdown links resolve",
+      "status": "PASS"
+    },
+    {
+      "name": "public wording and product boundary are explicit",
+      "status": "PASS"
+    },
+    {
+      "name": "public surface contains no internal identifiers",
+      "status": "PASS"
+    },
+    {
+      "name": "public OpenAPI is parseable and public-only",
+      "status": "PASS"
+    },
+    {
+      "name": "GitBook endpoint pages embed safe OpenAPI operations",
+      "status": "PASS"
+    },
+    {
+      "name": "executable examples parse and fail closed",
+      "status": "PASS"
+    },
+    {
+      "name": "sync is dry-run by default and public-only",
+      "status": "PASS"
+    },
+    {
+      "name": "documentation branch does not change implementation",
+      "status": "PASS"
+    }
+  ],
+  "counts": {
+    "markdown_pages": 97,
+    "english_pages": 48,
+    "traditional_chinese_pages": 48,
+    "navigation_sections": 7
+  },
+  "hashes": {
+    "navigation": "2de07f28281ff49887e9375bc053c520f57000ac67c5b8836d866ba276cf478b",
+    "public_openapi": "44bf1a1335c0e4aa8ba7783730103250fd910aed3e804bec0a8d483ea8db37fa"
+  },
+  "public_internal_boundary": "PASS",
+  "gitbook_publication": "NOT_PERFORMED"
+}

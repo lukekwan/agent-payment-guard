@@ -7,8 +7,8 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const publicRoot = join(root, "docs/gitbook/public");
 const reviewDir = join(root, "docs/reviews/gitbook-redesign");
-const output = join(reviewDir, "VALIDATION_RESULTS.json");
-mkdirSync(reviewDir, { recursive: true });
+const output = join(reviewDir, "evidence", "VALIDATION_RESULTS.json");
+mkdirSync(dirname(output), { recursive: true });
 
 function read(relativePath) {
   return readFileSync(join(root, relativePath), "utf8");
@@ -114,6 +114,21 @@ check("public OpenAPI is parseable and public-only", () => {
   assert(Object.keys(spec.paths).length === 2, "unexpected public paths");
   assert(spec.paths["/v1/decisions"].post["x-codeSamples"]?.length === 3, "create code samples missing");
   assert(spec.paths["/v1/decisions/{decision_id}/consume"].post["x-codeSamples"]?.length === 3, "consume code samples missing");
+});
+
+check("GitBook endpoint pages embed safe OpenAPI operations", () => {
+  const expected = [
+    ["en/api-reference/create-decision.md", "/v1/decisions"],
+    ["en/api-reference/consume-decision.md", "/v1/decisions/{decision_id}/consume"],
+    ["zh-TW/api-reference/create-decision.md", "/v1/decisions"],
+    ["zh-TW/api-reference/consume-decision.md", "/v1/decisions/{decision_id}/consume"]
+  ];
+  for (const [file, path] of expected) {
+    const text = read(`docs/gitbook/public/${file}`);
+    assert(text.includes('{% openapi src="https://raw.githubusercontent.com/lukekwan/agent-payment-guard/ef29cbffe06703a64a8c095b30b0e0bd188930ae/docs/openapi/signgate-public-v0.1.openapi.json"'), `${file} OpenAPI block missing`);
+    assert(text.includes(`path="${path}" method="post" %}`), `${file} operation selector mismatch`);
+    assert(text.includes("preview credential"), `${file} Test it safety boundary missing`);
+  }
 });
 
 check("executable examples parse and fail closed", () => {
