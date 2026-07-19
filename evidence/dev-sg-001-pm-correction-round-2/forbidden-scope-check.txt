@@ -1,0 +1,1 @@
+forbidden_scope_findings=       0

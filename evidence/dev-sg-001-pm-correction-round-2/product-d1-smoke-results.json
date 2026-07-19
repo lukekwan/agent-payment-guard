@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "store_tested": "D1SignGateStore",
+  "command": "node --test test/signgate-product-d1-smoke.test.js",
+  "runtime": "Miniflare local D1 binding",
+  "test_total": 1,
+  "test_passed": 1,
+  "test_failed": 0,
+  "covers": [
+    "decision persistence",
+    "consume success",
+    "same-attempt retry",
+    "different-attempt conflict",
+    "concurrent consume single winner",
+    "expiry state single winner",
+    "expiry audit single winner",
+    "concurrent Founder grant creation single semantic artifact",
+    "approval grant single use",
+    "approval grant replay/concurrent-use protection",
+    "no partial receipt",
+    "no partial audit",
+    "no partial fresh decision",
+    "retention cleanup across retained preview tables"
+  ],
+  "evidence": "product-d1-smoke.txt"
+}

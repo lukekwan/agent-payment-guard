@@ -1,0 +1,1 @@
+{"status":"PASS","tests":["DEV-SG-001 policy matrix implements frozen deploy_change outcomes"],"assertions":["canonical remote URL must match repository host/owner/repo","syntactically valid unauthorized service is DENY","syntactically valid unauthorized repository is DENY","server-side target table is tenant scoped"]}

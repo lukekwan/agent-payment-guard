@@ -1,0 +1,2 @@
+Preparing worktree (detached HEAD 0d66748)
+HEAD is now at 0d66748 fix: close DEV-SG-001 PM delta review gaps

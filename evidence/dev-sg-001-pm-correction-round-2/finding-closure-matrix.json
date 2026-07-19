@@ -1,0 +1,77 @@
+{
+  "status": "ready_for_pm_delta_review",
+  "pm_delta_review_commit": "327bb794337f7e3bd48e8997cba8dd27cd955278",
+  "round_2_application_commit": "0d66748f3176e3edffaaedd9e6d4eaa181fd16d2",
+  "groups": [
+    {
+      "id": "A",
+      "finding": "P0-01 exact trusted evidence action binding",
+      "corrected_files": ["src/signgate-decision.js", "test/signgate-decision.test.js", "test/signgate-product-d1-smoke.test.js"],
+      "corrected_functions": ["resolveTrustedEvidence", "testEnv", "d1Env"],
+      "tests": ["DEV-SG-001 trusted evidence requires exact server action binding"],
+      "evidence": ["npm-run-check.txt", "product-d1-smoke.txt", "trusted-evidence-results.json"],
+      "status": "closed_by_developer_evidence_pending_pm_review",
+      "residual_limitation": "Local preview evidence only; no production CI authority or production deployment was exercised."
+    },
+    {
+      "id": "B",
+      "finding": "P1-01 server-authoritative target boundary",
+      "corrected_files": ["src/signgate-decision.js", "migrations/0008_signgate_deploy_change_decisions.sql", "test/signgate-decision.test.js", "test/signgate-product-d1-smoke.test.js"],
+      "corrected_functions": ["resolveAuthorizedTarget", "canonicalRepositoryRemoteUrl", "MemorySignGateStore.findAuthorizedTarget", "D1SignGateStore.findAuthorizedTarget"],
+      "tests": ["DEV-SG-001 policy matrix implements frozen deploy_change outcomes", "DEV-SG-001 trusted evidence requires exact server action binding"],
+      "evidence": ["target-boundary-results.json", "npm-run-check.txt"],
+      "status": "closed_by_developer_evidence_pending_pm_review",
+      "residual_limitation": "Preview allowlist is seedable test/local state; no public administration route was added."
+    },
+    {
+      "id": "C",
+      "finding": "P1-02 bounded credential rotation and credential action binding",
+      "corrected_files": ["src/signgate-decision.js", "migrations/0008_signgate_deploy_change_decisions.sql", "test/signgate-decision.test.js"],
+      "corrected_functions": ["authenticate", "credentialAllowsAction", "createPreviewCredential"],
+      "tests": ["DEV-SG-001 auth and tenant binding fail closed"],
+      "evidence": ["credential-rotation-results.json", "npm-run-check.txt"],
+      "status": "closed_by_developer_evidence_pending_pm_review",
+      "residual_limitation": "Preview lifecycle constraints are local store/D1 constraints; no production key rotation workflow was added."
+    },
+    {
+      "id": "D",
+      "finding": "P1-04 concurrent-idempotent Founder grant creation and Memory rollback parity",
+      "corrected_files": ["src/signgate-decision.js", "migrations/0008_signgate_deploy_change_decisions.sql", "test/signgate-decision.test.js", "test/signgate-product-d1-smoke.test.js"],
+      "corrected_functions": ["approvalBindingFingerprint", "handleFounderApprovalGrantRequest", "MemorySignGateStore.createDecision", "D1SignGateStore.createApprovalGrant"],
+      "tests": ["DEV-SG-001 idempotency and Founder grant lifecycle match frozen dogfood flow", "DEV-SG-001 Memory approval grant use rolls back on audit failure", "DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approval, and retention"],
+      "evidence": ["approval-grant-results.json", "product-d1-smoke.txt"],
+      "status": "closed_by_developer_evidence_pending_pm_review",
+      "residual_limitation": "Internal Founder route remains preview-protected dogfood surface only."
+    },
+    {
+      "id": "E",
+      "finding": "P2-01 correlatable redacted rejection/system audit",
+      "corrected_files": ["src/signgate-decision.js", "test/signgate-decision.test.js"],
+      "corrected_functions": ["handleSignGateDecisionRequest", "handleFounderApprovalGrantRequest", "handleConsumeDecisionRequest", "safeAuditFailure"],
+      "tests": ["DEV-SG-001 rejection responses carry redacted durable audit correlation when available"],
+      "evidence": ["audit-correlation-results.json", "npm-run-check.txt"],
+      "status": "closed_by_developer_evidence_pending_pm_review",
+      "residual_limitation": "Pre-auth and missing-D1 paths intentionally return audit_id null because no safe durable tenant store is available."
+    },
+    {
+      "id": "F",
+      "finding": "P2-02 exact DF-01 through DF-07 evidence",
+      "corrected_files": ["src/signgate-decision.js", "test/signgate-decision.test.js"],
+      "corrected_functions": ["runDeployChangePreviewWrapper", "enforceDeployChangePreviewDecision"],
+      "tests": ["DF-01 exact preview ALLOW executes once through wrapper", "DF-02 exact Founder approval grant produces one fresh ALLOW then consumes", "DF-03 exact unsupported secret change is denied with no execution", "DF-04 exact missing trusted evidence is denied with audit and no execution", "DF-05 exact post-decision action mutation is refused before consume", "DF-06 exact previously valid ALLOW expires before consume with single audit", "DF-07 exact idempotent decision replays same artifact and consume remains single use"],
+      "evidence": ["dogfood-exact-results.json", "npm-run-check.txt"],
+      "status": "closed_by_developer_evidence_pending_pm_review",
+      "residual_limitation": "Scenarios are exact local preview tests; no production executor was introduced."
+    },
+    {
+      "id": "G",
+      "finding": "P2-03 complete bounded retention cleanup",
+      "corrected_files": ["src/signgate-decision.js", "migrations/0008_signgate_deploy_change_decisions.sql", "test/signgate-product-d1-smoke.test.js"],
+      "corrected_functions": ["MemorySignGateStore.cleanupPreviewRetention", "D1SignGateStore.cleanupPreviewRetention"],
+      "tests": ["DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approval, and retention"],
+      "evidence": ["retention-results.json", "product-d1-smoke.txt"],
+      "status": "closed_by_developer_evidence_pending_pm_review",
+      "residual_limitation": "No live cron or production scheduler was added."
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+ .../0008_signgate_deploy_change_decisions.sql      |  35 ++
+ src/signgate-decision.js                           | 241 +++++++++++--
+ test/signgate-decision.test.js                     | 383 ++++++++++++++++++++-
+ test/signgate-product-d1-smoke.test.js             |  68 +++-
+ 4 files changed, 677 insertions(+), 50 deletions(-)

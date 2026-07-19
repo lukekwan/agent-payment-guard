@@ -1,0 +1,1 @@
+{"status":"PASS","tests":["public OpenAPI excludes internal Founder approval route"],"assertions":["/internal/dogfood/founder-approval-grants absent from public OpenAPI","runtime internal route unchanged as protected dogfood surface"]}

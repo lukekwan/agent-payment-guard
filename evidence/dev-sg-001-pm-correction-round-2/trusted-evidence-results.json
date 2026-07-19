@@ -1,0 +1,1 @@
+{"status":"PASS","tests":["DEV-SG-001 trusted evidence requires exact server action binding"],"assertions":["exact matching action succeeds","one-character action-fingerprint mismatch fails","null action fingerprint fails","caller subject spoofing fails","replay-negative matrix fails closed for service/project/repository/path/route/flag/strategy/config/digest changes"]}
