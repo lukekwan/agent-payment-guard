@@ -763,6 +763,21 @@ async function approvalBindingFingerprint(input, authenticated) {
     action_fingerprint: input.action_fingerprint,
     policy_version: input.policy_version,
     approver_principal_id: authenticated.principal_id,
+    approver_role: "founder",
+    approval_reason: input.approval_reason,
+    expires_at: new Date(Date.parse(input.expires_at)).toISOString(),
+  }))}`;
+}
+
+async function approvalAuthorityFingerprint(input, authenticated) {
+  return `sha256:${await sha256Hex(canonicalize({
+    contract_version: SIGNGATE_CONTRACT_VERSION,
+    organization_id: input.organization_id,
+    original_decision_id: input.original_decision_id,
+    action_fingerprint: input.action_fingerprint,
+    policy_version: input.policy_version,
+    approver_principal_id: authenticated.principal_id,
+    approver_role: "founder",
     approval_reason: input.approval_reason,
   }))}`;
 }
@@ -843,6 +858,7 @@ export async function handleFounderApprovalGrantRequest(request, env = {}) {
       original.decision !== "REQUIRE_APPROVAL" ||
       original.action_fingerprint !== input.action_fingerprint ||
       original.policy_version !== input.policy_version ||
+      !Number.isFinite(requestedExpiryMs) ||
       Date.parse(original.expires_at) <= nowMs ||
       requestedExpiryMs <= nowMs ||
       requestedExpiryMs > Date.parse(original.expires_at) ||
@@ -853,7 +869,12 @@ export async function handleFounderApprovalGrantRequest(request, env = {}) {
     const approvedAt = nowIso(nowMs);
     const deleteAfter = deleteAfterIso(approvedAt);
     const bindingFingerprint = await approvalBindingFingerprint(input, authenticated);
-    const existing = await store.findApprovalGrantByBinding({
+    const authorityFingerprint = await approvalAuthorityFingerprint(input, authenticated);
+    const existingAuthority = await store.findApprovalGrantByAuthority(authorityFingerprint);
+    if (existingAuthority && existingAuthority.binding_fingerprint !== bindingFingerprint) {
+      throw new SignGateInputError(409, "APPROVAL_GRANT_IDEMPOTENCY_MISMATCH", ["APPROVAL_GRANT_IDEMPOTENCY_MISMATCH"]);
+    }
+    const existing = existingAuthority || await store.findApprovalGrantByBinding({
       organization_id: input.organization_id,
       original_decision_id: input.original_decision_id,
       action_fingerprint: input.action_fingerprint,
@@ -904,6 +925,7 @@ export async function handleFounderApprovalGrantRequest(request, env = {}) {
       approver_role: "founder",
       approval_reason: input.approval_reason,
       binding_fingerprint: bindingFingerprint,
+      authority_fingerprint: authorityFingerprint,
       original_decision_expires_at: original.expires_at,
       status: "AVAILABLE",
       approved_at: approvedAt,
@@ -1247,6 +1269,9 @@ export class MemorySignGateStore {
     return record;
   }
   async getApprovalGrant(org, grantId) { return this.grants.get(this.key(org, grantId)) || null; }
+  async findApprovalGrantByAuthority(authorityFingerprint) {
+    return [...this.grants.values()].find(grant => grant.authority_fingerprint === authorityFingerprint) || null;
+  }
   async findApprovalGrantByBinding(binding) {
     return [...this.grants.values()].find(
       grant =>
@@ -1533,9 +1558,9 @@ export class D1SignGateStore {
       this.db.prepare(
         `INSERT OR IGNORE INTO signgate_approval_grants
         (approval_grant_id, organization_id, original_decision_id, action_fingerprint, policy_version, approver_principal_id,
-         approver_role, approval_reason, binding_fingerprint, status, approved_at, expires_at, original_decision_expires_at, delete_after, created_at, audit_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      ).bind(record.approval_grant_id, record.organization_id, record.original_decision_id, record.action_fingerprint, record.policy_version, record.approver_principal_id, record.approver_role, record.approval_reason, record.binding_fingerprint, record.status, record.approved_at, record.expires_at, record.original_decision_expires_at, record.delete_after, record.approved_at, record.audit.audit_id),
+         approver_role, approval_reason, binding_fingerprint, authority_fingerprint, status, approved_at, expires_at, original_decision_expires_at, delete_after, created_at, audit_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).bind(record.approval_grant_id, record.organization_id, record.original_decision_id, record.action_fingerprint, record.policy_version, record.approver_principal_id, record.approver_role, record.approval_reason, record.binding_fingerprint, record.authority_fingerprint, record.status, record.approved_at, record.expires_at, record.original_decision_expires_at, record.delete_after, record.approved_at, record.audit.audit_id),
       this.db.prepare(
         `INSERT INTO signgate_audit_events
         (audit_id, organization_id, event_type, principal_id, decision_id, action_fingerprint, policy_version, metadata_json, occurred_at, delete_after)
@@ -1546,6 +1571,11 @@ export class D1SignGateStore {
   }
   async getApprovalGrant(org, grantId) {
     return this.db.prepare("SELECT * FROM signgate_approval_grants WHERE organization_id = ? AND approval_grant_id = ?").bind(org, grantId).first();
+  }
+  async findApprovalGrantByAuthority(authorityFingerprint) {
+    return this.db.prepare(
+      "SELECT * FROM signgate_approval_grants WHERE authority_fingerprint = ? ORDER BY created_at ASC LIMIT 1",
+    ).bind(authorityFingerprint).first();
   }
   async findApprovalGrantByBinding(binding) {
     return this.db.prepare(

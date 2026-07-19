@@ -279,8 +279,11 @@ test("DEV-SG-001 auth and tenant binding fail closed", async () => {
   assert.equal(wrongScope.status, 403);
   const wrongOrg = await postDecision(baseRequest({ organization_id: "org_other" }), env);
   assert.equal(wrongOrg.status, 403);
+  const wrongAgent = await postDecision(baseRequest({ request_id: "req_wrong_agent", agent: { id: "codex_dev_02" } }), env);
+  assert.equal(wrongAgent.status, 403);
 
   const agentCredential = env.SIGNGATE_TEST_STORE.credentials.get(AGENT_KEY.slice(0, 12));
+  assert.equal((await postDecision(baseRequest({ request_id: "req_active_key" }), env)).status, 200);
   agentCredential.status = "revoked";
   assert.equal((await postDecision(baseRequest({ request_id: "req_revoked_key" }), env)).status, 401);
   agentCredential.status = "rotating";
@@ -301,6 +304,11 @@ test("DEV-SG-001 auth and tenant binding fail closed", async () => {
   assert.equal(envDenied.decision, "DENY");
   assert.deepEqual(envDenied.reason_codes, ["CREDENTIAL_TARGET_NOT_ALLOWED"]);
   agentCredential.allowed_environments_json = JSON.stringify(["local", "preview", "production"]);
+  agentCredential.allowed_action_types_json = JSON.stringify(["other_action"]);
+  const actionDenied = await (await postDecision(baseRequest({ request_id: "req_credential_action_denied" }), env)).json();
+  assert.equal(actionDenied.decision, "DENY");
+  assert.deepEqual(actionDenied.reason_codes, ["CREDENTIAL_TARGET_NOT_ALLOWED"]);
+  agentCredential.allowed_action_types_json = JSON.stringify(["deploy_change"]);
 });
 
 test("DEV-SG-001 policy matrix implements frozen deploy_change outcomes", async () => {
@@ -367,17 +375,47 @@ test("DEV-SG-001 policy matrix implements frozen deploy_change outcomes", async 
   assert.equal(unauthorizedService.decision, "DENY");
   assert.deepEqual(unauthorizedService.reason_codes, ["TARGET_NOT_AUTHORIZED"]);
   targetCredential.allowed_services_json = JSON.stringify(["signgate-worker"]);
+  const unauthorizedProject = await (await postDecision(baseRequest({
+    request_id: "req_unauthorized_project",
+    action: { target: { project: "other-project" } },
+  }), env)).json();
+  assert.equal(unauthorizedProject.decision, "DENY");
+  assert.deepEqual(unauthorizedProject.reason_codes, ["TARGET_NOT_AUTHORIZED"]);
   const unauthorizedRepo = await (await postDecision(baseRequest({
     request_id: "req_unauthorized_repo",
     action: { target: { repository: { owner: "lukekwan", repo: "other-repo", remote_url: "https://github.com/lukekwan/other-repo" } } },
   }), env)).json();
   assert.equal(unauthorizedRepo.decision, "DENY");
   assert.deepEqual(unauthorizedRepo.reason_codes, ["TARGET_NOT_AUTHORIZED"]);
+  const wrongOrgTarget = await (await postDecision(baseRequest({
+    request_id: "req_wrong_org_target",
+    action: { target: { repository: { owner: "nomos-other", repo: "agent-payment-guard", remote_url: "https://github.com/nomos-other/agent-payment-guard" } } },
+  }), env)).json();
+  assert.equal(wrongOrgTarget.decision, "DENY");
+  assert.deepEqual(wrongOrgTarget.reason_codes, ["TARGET_NOT_AUTHORIZED"]);
   const remoteMismatch = await postDecision(baseRequest({
     request_id: "req_remote_mismatch",
     action: { target: { repository: { remote_url: "https://github.com/lukekwan/other-repo" } } },
   }), env);
   assert.equal(remoteMismatch.status, 422);
+  const malformedRepository = await postDecision(baseRequest({
+    request_id: "req_malformed_repository",
+    action: { target: { repository: { owner: "../lukekwan" } } },
+  }), env);
+  assert.equal(malformedRepository.status, 422);
+  const malformedHost = await postDecision(baseRequest({
+    request_id: "req_malformed_host",
+    action: { target: { repository: { host: "gitlab.com", remote_url: "https://gitlab.com/lukekwan/agent-payment-guard" } } },
+  }), env);
+  assert.equal(malformedHost.status, 422);
+  const inactiveTargetRecord = env.SIGNGATE_TEST_STORE.authorizedTargets.get(`${ORG}:target_preview`);
+  inactiveTargetRecord.status = "revoked";
+  const inactiveTarget = await (await postDecision(await bindDefaultTrustedEvidence(env, baseRequest({ request_id: "req_inactive_target" })), env)).json();
+  assert.equal(inactiveTarget.decision, "DENY");
+  assert.deepEqual(inactiveTarget.reason_codes, ["TARGET_NOT_AUTHORIZED"]);
+  inactiveTargetRecord.status = "active";
+  const validAuthorizedTarget = await (await postDecision(await bindDefaultTrustedEvidence(env, baseRequest({ request_id: "req_valid_authorized_target" })), env)).json();
+  assert.equal(validAuthorizedTarget.decision, "ALLOW");
 
   for (const changed_paths of [["/absolute"], ["src/../secret"], ["src//index.js"], ["src\\index.js"], ["src/%2e%2e/secret"]]) {
     const unsafePath = await postDecision(baseRequest({ request_id: `req_unsafe_${changed_paths[0]}`, action: { parameters: { changed_paths } } }), env);
@@ -481,6 +519,23 @@ test("DEV-SG-001 idempotency and Founder grant lifecycle match frozen dogfood fl
   )).json();
   assert.equal(grantRetry.approval_grant_id, grant.approval_grant_id);
   assert.equal(env.SIGNGATE_TEST_STORE.grants.size, 1);
+  const changedGrantInput = await handleFounderApprovalGrantRequest(
+    new Request("https://signgate.test/internal/dogfood/founder-approval-grants", {
+      method: "POST",
+      headers: { authorization: `Bearer ${FOUNDER_KEY}` },
+      body: JSON.stringify({
+        contract_version: SIGNGATE_CONTRACT_VERSION,
+        organization_id: ORG,
+        original_decision_id: review.decision_id,
+        action_fingerprint: review.action_fingerprint,
+        policy_version: SIGNGATE_POLICY_VERSION,
+        approval_reason: "FOUNDER_APPROVED_PREVIEW_PERMISSION_CHANGE",
+        expires_at: "2026-07-19T00:09:00.000Z",
+      }),
+    }),
+    env,
+  );
+  assert.equal(changedGrantInput.status, 409);
   const approved = await (await postDecision({
     ...reviewRequest,
     request_id: "req_review_approved",

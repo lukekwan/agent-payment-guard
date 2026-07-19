@@ -236,7 +236,7 @@ test("DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approva
     }), env);
     assert.equal(grantResponse.status, 200);
     const grant = await grantResponse.json();
-    const duplicateGrantResponses = await Promise.all(Array.from({ length: 3 }, () => handleFounderApprovalGrantRequest(new Request("https://signgate.test/internal/dogfood/founder-approval-grants", {
+    const duplicateGrantResponses = await Promise.all(Array.from({ length: 8 }, () => handleFounderApprovalGrantRequest(new Request("https://signgate.test/internal/dogfood/founder-approval-grants", {
       method: "POST",
       headers: { authorization: `Bearer ${FOUNDER_KEY}` },
       body: JSON.stringify({
@@ -249,9 +249,39 @@ test("DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approva
         expires_at: GRANT_FUTURE,
       }),
     }), env).then(async response => [response.status, await response.json()])));
-    assert.deepEqual(duplicateGrantResponses.map(([status]) => status), [200, 200, 200]);
+    assert.deepEqual(duplicateGrantResponses.map(([status]) => status), Array(8).fill(200));
     assert.equal(new Set(duplicateGrantResponses.map(([, body]) => body.approval_grant_id)).size, 1);
     assert.equal((await db.prepare("SELECT COUNT(*) AS count FROM signgate_approval_grants WHERE original_decision_id = ?").bind(review.decision_id).first()).count, 1);
+    assert.equal((await db.prepare("SELECT COUNT(*) AS count FROM signgate_audit_events WHERE decision_id = ? AND event_type = 'approval_grant.created'").bind(review.decision_id).first()).count, 1);
+    const deterministicRetry = await handleFounderApprovalGrantRequest(new Request("https://signgate.test/internal/dogfood/founder-approval-grants", {
+      method: "POST",
+      headers: { authorization: `Bearer ${FOUNDER_KEY}` },
+      body: JSON.stringify({
+        contract_version: SIGNGATE_CONTRACT_VERSION,
+        organization_id: ORG,
+        original_decision_id: review.decision_id,
+        action_fingerprint: review.action_fingerprint,
+        policy_version: SIGNGATE_POLICY_VERSION,
+        approval_reason: "FOUNDER_APPROVED_PREVIEW_PERMISSION_CHANGE",
+        expires_at: GRANT_FUTURE,
+      }),
+    }), env);
+    assert.equal(deterministicRetry.status, 200);
+    assert.equal((await deterministicRetry.json()).approval_grant_id, grant.approval_grant_id);
+    const changedGrantInput = await handleFounderApprovalGrantRequest(new Request("https://signgate.test/internal/dogfood/founder-approval-grants", {
+      method: "POST",
+      headers: { authorization: `Bearer ${FOUNDER_KEY}` },
+      body: JSON.stringify({
+        contract_version: SIGNGATE_CONTRACT_VERSION,
+        organization_id: ORG,
+        original_decision_id: review.decision_id,
+        action_fingerprint: review.action_fingerprint,
+        policy_version: SIGNGATE_POLICY_VERSION,
+        approval_reason: "FOUNDER_APPROVED_PREVIEW_PERMISSION_CHANGE",
+        expires_at: "2026-07-19T00:09:00.000Z",
+      }),
+    }), env);
+    assert.equal(changedGrantInput.status, 409);
     const [, approved] = await postDecision(request("d1_approved", { touches_permissions: true }, [
       { id: grant.approval_grant_id, type: "approval_grant", source: "founder", status: "approved", original_decision_id: review.decision_id },
     ]), env);

@@ -142,6 +142,7 @@ CREATE TABLE IF NOT EXISTS signgate_approval_grants (
   approver_role TEXT NOT NULL,
   approval_reason TEXT NOT NULL,
   binding_fingerprint TEXT NOT NULL,
+  authority_fingerprint TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('AVAILABLE', 'USED', 'REVOKED', 'EXPIRED')),
   used_by_decision_id TEXT,
   used_request_id TEXT,
@@ -161,6 +162,9 @@ CREATE INDEX IF NOT EXISTS idx_signgate_approval_grants_retention
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_signgate_approval_grants_binding
   ON signgate_approval_grants (organization_id, binding_fingerprint);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_signgate_approval_grants_authority
+  ON signgate_approval_grants (organization_id, authority_fingerprint);
 
 CREATE TABLE IF NOT EXISTS signgate_consume_receipts (
   consume_receipt_id TEXT PRIMARY KEY,
