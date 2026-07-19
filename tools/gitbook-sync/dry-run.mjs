@@ -1,45 +1,44 @@
-import { readdirSync, statSync, writeFileSync, mkdirSync } from "node:fs";
-import { join, relative, dirname } from "node:path";
+import { createHash } from "node:crypto";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const validationDir = join(root, "docs", "examples", "validation");
-mkdirSync(validationDir, { recursive: true });
-
-const roots = [
-  "docs/openapi",
-  "docs/en",
-  "docs/zh",
-  "docs/examples",
-  "tools/gitbook-sync",
-  "DOC-SG-001_API_DOCUMENTATION_REPORT.md"
+const navigation = JSON.parse(readFileSync(join(root, "docs/gitbook/public/navigation.json"), "utf8"));
+const output = join(root, "docs/reviews/gitbook-redesign/gitbook-dry-run-results.json");
+const files = [
+  ".gitbook.yaml",
+  "docs/gitbook/public/SUMMARY.md",
+  "docs/gitbook/public/navigation.json",
+  ...navigation.locales.flatMap((locale) => [
+    `docs/gitbook/public/${locale.code}/README.md`,
+    ...navigation.sections.flatMap((section) => section.pages.map((page) => `docs/gitbook/public/${page.paths[locale.code]}`))
+  ]),
+  "docs/openapi/signgate-public-v0.1.openapi.json"
 ];
 
-function walk(path) {
-  const absolute = join(root, path);
-  try {
-    const stats = statSync(absolute);
-    if (stats.isFile()) {
-      return [path];
-    }
-    return readdirSync(absolute)
-      .flatMap((entry) => walk(relative(root, join(absolute, entry))))
-      .sort();
-  } catch {
-    return [];
-  }
-}
-
-const files = roots.flatMap(walk).filter((file) => !file.endsWith(".pyc"));
 const manifest = {
   generated_at: new Date().toISOString(),
   status: "DRY_RUN_ONLY",
   publication_performed: false,
+  merge_performed: false,
+  deletion_performed: false,
   network_calls_performed: false,
-  gitbook_token_required: false,
-  target: "GitBook draft/change-request automation only when separately authorized",
-  files
+  credentials_read: false,
+  target: "GitBook draft/change request",
+  hierarchy: {
+    default_locale: navigation.defaultLocale,
+    locales: navigation.locales.map(({ code, label }) => ({ code, label })),
+    sections: navigation.sections.map(({ id, title, pages }) => ({ id, title, pages: pages.length }))
+  },
+  files: [...new Set(files)].sort(),
+  openapi: {
+    source: "docs/openapi/signgate-public-v0.1.openapi.json",
+    sha256: createHash("sha256").update(readFileSync(join(root, "docs/openapi/signgate-public-v0.1.openapi.json"))).digest("hex")
+  },
+  excluded: ["docs/gitbook/internal", "docs/openapi/signgate-internal-v0.1.openapi.json"]
 };
 
-writeFileSync(join(validationDir, "gitbook-dry-run-results.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+mkdirSync(dirname(output), { recursive: true });
+writeFileSync(output, `${JSON.stringify(manifest, null, 2)}\n`);
 console.log(JSON.stringify(manifest, null, 2));
