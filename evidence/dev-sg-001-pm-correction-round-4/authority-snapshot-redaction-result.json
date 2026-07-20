@@ -1,0 +1,13 @@
+{
+  "application_commit_under_test": "245dac7cb969856e35f47d839c02c43f3bd2bca0",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "no_raw_api_key": true,
+  "no_key_digest_input": true,
+  "no_bearer_token": true,
+  "no_secret": true,
+  "no_raw_credential_material": true,
+  "no_unredacted_request_payload": true,
+  "pass_fail": "PASS"
+}

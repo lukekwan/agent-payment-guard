@@ -1,0 +1,6 @@
+ .../0009_signgate_round4_authority_provenance.sql  |  23 ++
+ src/signgate-decision.js                           | 169 ++++++++++--
+ test/signgate-decision.test.js                     |  30 ++
+ test/signgate-product-d1-smoke.test.js             | 100 ++++++-
+ test/signgate-round3-evidence.mjs                  | 301 ++++++++++++++++++++-
+ 5 files changed, 571 insertions(+), 52 deletions(-)

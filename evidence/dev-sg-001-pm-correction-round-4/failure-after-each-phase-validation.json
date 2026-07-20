@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "phases": [
+    "execution_results",
+    "receipts",
+    "idempotency",
+    "grants",
+    "decisions",
+    "audit_events",
+    "credentials",
+    "mandates",
+    "authorized_targets",
+    "trusted_evidence"
+  ],
+  "bad": []
+}

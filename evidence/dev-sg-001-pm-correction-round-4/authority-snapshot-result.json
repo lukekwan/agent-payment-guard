@@ -1,0 +1,20 @@
+{
+  "application_commit_under_test": "245dac7cb969856e35f47d839c02c43f3bd2bca0",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "decision_id": "dec_3108d85c309c7846968a1dd940afd638",
+  "snapshot_schema_version": "signgate_authority_snapshot_v1",
+  "exact_ids": {
+    "credential_id": "cred_e46318d687b1446e21922b48d2bfecde",
+    "mandate_id": "mandate_preview_001",
+    "authorized_target_id": "target_preview",
+    "evidence_ids": [
+      "evidence_tests_001"
+    ]
+  },
+  "fingerprint": "sha256:29bbad284fe014e42627b1a139289c0c00d011f66b9567855b1e258ea8648a93",
+  "fingerprint_verified": true,
+  "generated_from_server_resolved_state": true,
+  "pass_fail": "PASS"
+}

@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "snapshot_result": "PASS",
+  "fingerprint_verified": true,
+  "redaction": "PASS",
+  "cleanup": "PASS",
+  "snapshot_fingerprint_still_verifies": true
+}

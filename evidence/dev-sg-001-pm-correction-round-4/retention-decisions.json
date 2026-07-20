@@ -1,0 +1,13 @@
+{
+  "application_commit_under_test": "245dac7cb969856e35f47d839c02c43f3bd2bca0",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "table": "signgate_decisions",
+  "before_delete_after_deleted_count": 0,
+  "eligible_deleted_after_delete_after_count": 1,
+  "active_or_referenced_records_preserved": true,
+  "unrelated_organization_preserved": true,
+  "cleanup_output_reports_actual_bounded_count": true,
+  "pass_fail": "PASS"
+}

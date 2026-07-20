@@ -1,0 +1,55 @@
+{
+  "application_commit_under_test": "245dac7cb969856e35f47d839c02c43f3bd2bca0",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "matrix_group": "audit-matrix-422",
+  "sanitized_input": {
+    "raw_payload_omitted": true,
+    "bearer_token_omitted": true
+  },
+  "expected_result": {
+    "status": 422,
+    "error": "REQUEST_SCHEMA_INVALID",
+    "event": "decision.rejected"
+  },
+  "actual_status": 422,
+  "actual_error": "REQUEST_SCHEMA_INVALID",
+  "response_audit_id": "audit_0ef80e80f644cf3f30d694ce7cc7601f",
+  "durable_audit": {
+    "audit_id": "audit_0ef80e80f644cf3f30d694ce7cc7601f",
+    "event_type": "decision.rejected",
+    "organization_id": "org_nomos_labs",
+    "principal_id": "codex_dev_01",
+    "metadata_keys": [
+      "error",
+      "correlation_id"
+    ]
+  },
+  "additional_cases": [
+    {
+      "label": "422 mandate schema rejection",
+      "actual_status": 422,
+      "actual_error": "REQUEST_SCHEMA_INVALID",
+      "response_audit_id": "audit_064e38ecb0342cceb5ad2ba4b5867c19",
+      "durable_audit_event_type": "decision.rejected",
+      "returned_audit_id_matches_durable_row": true
+    },
+    {
+      "label": "422 evidence schema rejection",
+      "actual_status": 422,
+      "actual_error": "REQUEST_SCHEMA_INVALID",
+      "response_audit_id": "audit_3abe3223795f1093657457bb8ad70e14",
+      "durable_audit_event_type": "decision.rejected",
+      "returned_audit_id_matches_durable_row": true
+    }
+  ],
+  "redaction_assertions": {
+    "no_stack": true,
+    "no_raw_bearer_token": true,
+    "no_raw_api_key": true,
+    "no_raw_payload": true,
+    "no_secret_text": true
+  },
+  "pass_fail": "PASS"
+}

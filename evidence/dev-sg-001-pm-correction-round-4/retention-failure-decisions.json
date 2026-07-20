@@ -1,0 +1,26 @@
+{
+  "application_commit_under_test": "245dac7cb969856e35f47d839c02c43f3bd2bca0",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "phase": "decisions",
+  "partial_state": {
+    "active_decision_preserved": true,
+    "authority_snapshot_available": true,
+    "unrelated_organization_preserved": true
+  },
+  "retry_counts": {
+    "execution_results": 0,
+    "receipts": 0,
+    "idempotency": 1,
+    "grants": 1,
+    "decisions": 1,
+    "audit_events": 2,
+    "credentials": 2,
+    "mandates": 2,
+    "authorized_targets": 2,
+    "trusted_evidence": 2
+  },
+  "subsequent_rerun_noop": true,
+  "pass_fail": "PASS"
+}

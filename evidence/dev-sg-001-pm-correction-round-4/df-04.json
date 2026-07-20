@@ -1,0 +1,226 @@
+{
+  "application_commit_under_test": "245dac7cb969856e35f47d839c02c43f3bd2bca0",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "actual_http_status": 200,
+  "actual_response": {
+    "decision": "DENY",
+    "reason_codes": [
+      "TESTS_FAILED"
+    ]
+  },
+  "decision": "DENY",
+  "reason_codes": [
+    "TESTS_FAILED"
+  ],
+  "normalized_action": {
+    "type": "deploy_change",
+    "target": {
+      "environment": "preview",
+      "service": "signgate-worker",
+      "project": "base-agent-preflight",
+      "repository": {
+        "host": "github.com",
+        "owner": "lukekwan",
+        "repo": "agent-payment-guard",
+        "remote_url": "https://github.com/lukekwan/agent-payment-guard"
+      }
+    },
+    "parameters": {
+      "git_commit": "5ac67be4fe17b5c1b773bcc584080cad704f4959",
+      "artifact_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "diff_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "changed_paths": [
+        "migrations/0008_signgate_deploy_change_decisions.sql",
+        "src/index.js"
+      ],
+      "changed_routes": [
+        "/v1/decisions",
+        "/v1/decisions/{decision_id}/consume"
+      ],
+      "touches_secrets": false,
+      "touches_dns": false,
+      "touches_permissions": false,
+      "touches_credentials": false,
+      "deployment_strategy": "worker_preview",
+      "deployment_command_id": "wrangler_preview",
+      "configuration_fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "ci_evidence": {
+        "provider": "github_actions",
+        "run_id": "failed_test_run_001",
+        "commit": "5ac67be4fe17b5c1b773bcc584080cad704f4959",
+        "status": "failed",
+        "checks": [
+          "lint",
+          "unit"
+        ]
+      }
+    }
+  },
+  "bound_action": {
+    "type": "deploy_change",
+    "target": {
+      "environment": "preview",
+      "service": "signgate-worker",
+      "project": "base-agent-preflight",
+      "repository": {
+        "host": "github.com",
+        "owner": "lukekwan",
+        "repo": "agent-payment-guard",
+        "remote_url": "https://github.com/lukekwan/agent-payment-guard"
+      }
+    },
+    "parameters": {
+      "git_commit": "5ac67be4fe17b5c1b773bcc584080cad704f4959",
+      "artifact_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "diff_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "changed_paths": [
+        "migrations/0008_signgate_deploy_change_decisions.sql",
+        "src/index.js"
+      ],
+      "changed_routes": [
+        "/v1/decisions",
+        "/v1/decisions/{decision_id}/consume"
+      ],
+      "touches_secrets": false,
+      "touches_dns": false,
+      "touches_permissions": false,
+      "touches_credentials": false,
+      "deployment_strategy": "worker_preview",
+      "deployment_command_id": "wrangler_preview",
+      "configuration_fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "ci_evidence": {
+        "provider": "github_actions",
+        "run_id": "failed_test_run_001",
+        "commit": "5ac67be4fe17b5c1b773bcc584080cad704f4959",
+        "status": "failed",
+        "checks": [
+          "lint",
+          "unit"
+        ]
+      }
+    }
+  },
+  "action_fingerprint": "sha256:cccfc2f454d86c0e1f4e2fc10303ffb1f8aa0408a431c6fcc55103b5f4d97be7",
+  "approval_grant_state": null,
+  "consume_receipt": [],
+  "no_external_action_assertions": {
+    "unauthorized_external_execution": false
+  },
+  "field_level_assertions": {
+    "omitted_fields": [],
+    "not_applicable_fields_explained": true
+  },
+  "scenario_id": "DF-04",
+  "scenario_purpose": "Commit-bound failed-test evidence returns TESTS_FAILED",
+  "exact_test_name": "DF-04 exact failed tests are denied with test reference and no execution",
+  "sanitized_input": {
+    "request_id": "df04_generated",
+    "ci_status": "failed",
+    "test_reference": "failed_test_run_001"
+  },
+  "expected_result": {
+    "decision": "DENY",
+    "reason_codes": [
+      "TESTS_FAILED"
+    ]
+  },
+  "actual_status": 200,
+  "actual_decision": "DENY",
+  "actual_reason_codes": [
+    "TESTS_FAILED"
+  ],
+  "normalized_bound_action": {
+    "type": "deploy_change",
+    "target": {
+      "environment": "preview",
+      "service": "signgate-worker",
+      "project": "base-agent-preflight",
+      "repository": {
+        "host": "github.com",
+        "owner": "lukekwan",
+        "repo": "agent-payment-guard",
+        "remote_url": "https://github.com/lukekwan/agent-payment-guard"
+      }
+    },
+    "parameters": {
+      "git_commit": "5ac67be4fe17b5c1b773bcc584080cad704f4959",
+      "artifact_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "diff_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "changed_paths": [
+        "migrations/0008_signgate_deploy_change_decisions.sql",
+        "src/index.js"
+      ],
+      "changed_routes": [
+        "/v1/decisions",
+        "/v1/decisions/{decision_id}/consume"
+      ],
+      "touches_secrets": false,
+      "touches_dns": false,
+      "touches_permissions": false,
+      "touches_credentials": false,
+      "deployment_strategy": "worker_preview",
+      "deployment_command_id": "wrangler_preview",
+      "configuration_fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "ci_evidence": {
+        "provider": "github_actions",
+        "run_id": "failed_test_run_001",
+        "commit": "5ac67be4fe17b5c1b773bcc584080cad704f4959",
+        "status": "failed",
+        "checks": [
+          "lint",
+          "unit"
+        ]
+      }
+    }
+  },
+  "canonical_action_fingerprint": "sha256:cccfc2f454d86c0e1f4e2fc10303ffb1f8aa0408a431c6fcc55103b5f4d97be7",
+  "attempted_action_fingerprint": null,
+  "policy_version": "deploy_policy_2026_07_18_01",
+  "issued_at": "2026-07-19T00:00:00.000Z",
+  "expires_at": "2026-07-19T00:15:00.000Z",
+  "wrapper_pep_result": "REFUSED",
+  "decision_persistence_state": {
+    "decision_id": "dec_335b03460f9571a87ce21813aa3dac11",
+    "state": "NON_EXECUTABLE",
+    "decision": "DENY",
+    "policy_version": "deploy_policy_2026_07_18_01",
+    "credential_id": "cred_f3db4c4eb154b709c865c42500b766e3",
+    "mandate_id": "mandate_preview_001",
+    "authorized_target_id": "target_preview",
+    "evidence_ids": [],
+    "authority_snapshot_present": true
+  },
+  "idempotency_state": {
+    "row_count": 1,
+    "request_id_present": true
+  },
+  "founder_grant_state": null,
+  "consume_receipts": [],
+  "audit_events": [
+    {
+      "event_type": "decision.created",
+      "decision_id": null,
+      "action_fingerprint": null,
+      "policy_version": null
+    }
+  ],
+  "execution_result": [],
+  "no_unauthorized_external_execution": true,
+  "state_assertions": {
+    "preserved_test_reference": "failed_test_run_001"
+  },
+  "receipt_assertions": {
+    "consume_receipts": 0,
+    "execution_results": 0
+  },
+  "audit_assertions": {
+    "decision_created": 1
+  },
+  "execution_assertions": {
+    "wrapper_result": "REFUSED",
+    "unauthorized_external_execution": false
+  },
+  "pass_fail": "PASS"
+}

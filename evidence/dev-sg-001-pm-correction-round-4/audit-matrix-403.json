@@ -1,0 +1,55 @@
+{
+  "application_commit_under_test": "245dac7cb969856e35f47d839c02c43f3bd2bca0",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "matrix_group": "audit-matrix-403",
+  "sanitized_input": {
+    "raw_payload_omitted": true,
+    "bearer_token_omitted": true
+  },
+  "expected_result": {
+    "status": 403,
+    "error": "AUTHORIZATION_FAILED",
+    "event": "decision.rejected"
+  },
+  "actual_status": 403,
+  "actual_error": "AUTHORIZATION_FAILED",
+  "response_audit_id": "audit_5eaf9afa6a4f7eba10a2acf9a78e9f5a",
+  "durable_audit": {
+    "audit_id": "audit_5eaf9afa6a4f7eba10a2acf9a78e9f5a",
+    "event_type": "decision.rejected",
+    "organization_id": "org_nomos_labs",
+    "principal_id": "codex_dev_01",
+    "metadata_keys": [
+      "error",
+      "correlation_id"
+    ]
+  },
+  "additional_cases": [
+    {
+      "label": "403 wrong scope",
+      "actual_status": 403,
+      "actual_error": "AUTHORIZATION_FAILED",
+      "response_audit_id": "audit_31d8da9de7741447a2eac2e80308f826",
+      "durable_audit_event_type": "decision.rejected",
+      "returned_audit_id_matches_durable_row": true
+    },
+    {
+      "label": "403 wrong principal type",
+      "actual_status": 403,
+      "actual_error": "AUTHORIZATION_FAILED",
+      "response_audit_id": "audit_bd6b5997ff75aa1827af4aa04841517d",
+      "durable_audit_event_type": "decision.rejected",
+      "returned_audit_id_matches_durable_row": true
+    }
+  ],
+  "redaction_assertions": {
+    "no_stack": true,
+    "no_raw_bearer_token": true,
+    "no_raw_api_key": true,
+    "no_raw_payload": true,
+    "no_secret_text": true
+  },
+  "pass_fail": "PASS"
+}

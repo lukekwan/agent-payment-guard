@@ -1,0 +1,303 @@
+./src/signgate-decision.js:87:const ALLOWED_ENVIRONMENTS = new Set(["local", "preview", "production"]);
+./src/signgate-decision.js:88:const ALLOWED_DEPLOYMENT_STRATEGIES = new Set(["local_simulation", "worker_preview", "worker_production"]);
+./src/signgate-decision.js:93:  "wrangler_deploy_production",
+./src/signgate-decision.js:653:  if (target.environment === "production") {
+./src/signgate-decision.js:1234:    decision.bound_action.target.environment === "production"
+./src/signgate-decision.js:1295:    allowed_environments_json: JSON.stringify(["local", "preview", "production"]),
+./src/index.js:252:    returns: "Maintenance, release, archive, license, issue, popularity, and repository health signals.",
+./src/index.js:301:    returns: "PyPI metadata, release age, yanked status, Python requirements, dependencies, license, and OSV vulnerabilities.",
+./src/index.js:398:      "Developer kit manifest, starter policy pack, mandate checks, merchant trust checks, signer directive rules, JavaScript and Python usage, release terms, and integration checklist.",
+./src/index.js:1083:      "Score a public GitHub repository using maintenance, release, license, archive, issue, and popularity signals.",
+./src/index.js:1126:    input: { url: "https://github.com/cloudflare/workers-sdk/releases.atom" },
+./src/index.js:1239:      "Check PyPI package metadata, release age, yanked status, Python requirements, dependencies, license, and OSV vulnerabilities.",
+./src/index.js:4490:    approval_categories: ["invoice_verification", "payment_execution", "production_deploy"],
+./src/index.js:4498:    denied_categories: ["payment_execution", "production_deploy", "invoice_verification", "customer_pii"],
+./src/index.js:4505:    denied_categories: ["market_intelligence", "token_risk", "trading_alpha", "production_deploy"],
+./src/index.js:4512:    denied_categories: ["production_deploy", "code_execution"],
+./src/index.js:4518:    approval_categories: ["production_deploy", "payment_execution", "wallet_risk"],
+./src/index.js:5202:    release_terms: {
+./src/index.js:5204:      public_npm_publish: "not_yet_published",
+./src/index.js:5205:      public_pypi_publish: "not_yet_published",
+./src/index.js:5357:      "Capability support must be verified by a live probe before production reliance.",
+./src/index.js:5505:      "Live upstream behavior and terms still need owner review for production use.",
+./src/index.js:5672:      "This public wrapper does not mint a production authorization token.",
+./src/index.js:5911:        production_signing: false,
+./src/index.js:5932:      "It does not create Sumsub applicants, upload documents, trigger real KYC/KYB, move funds, or perform production signing.",
+./src/index.js:7932:  const publishedAt = packument.time?.[resolvedVersion] ?? null;
+./src/index.js:7933:  const publishAgeDays = publishedAt
+./src/index.js:7934:    ? Math.floor((Date.now() - Date.parse(publishedAt)) / 86_400_000)
+./src/index.js:7971:  if (publishAgeDays !== null && publishAgeDays > 1095) {
+./src/index.js:7975:      detail: `The selected version was published about ${publishAgeDays} days ago.`,
+./src/index.js:7998:      published_at: publishedAt,
+./src/index.js:7999:      publish_age_days: publishAgeDays,
+./src/index.js:8080:  release,
+./src/index.js:8157:      latest_release: release
+./src/index.js:8159:            tag: release.tag_name ?? null,
+./src/index.js:8160:            name: release.name ?? null,
+./src/index.js:8161:            published_at: release.published_at ?? null,
+./src/index.js:8162:            prerelease: Boolean(release.prerelease),
+./src/index.js:8163:            draft: Boolean(release.draft),
+./src/index.js:8164:            url: release.html_url ?? null,
+./src/index.js:8267:    release: null,
+./src/index.js:8282:    const [repository, release] = await Promise.all([
+./src/index.js:8284:      githubJson(`${base}/releases/latest`, token, fetchImpl, true),
+./src/index.js:8286:    return buildGithubRepositoryHealth({ owner, repo, repository, release });
+./src/index.js:8404:    const published = xmlTag(block, [
+./src/index.js:8405:      "published",
+./src/index.js:8416:    return { title, link: link || null, id: id || null, published, summary };
+./src/index.js:8424:        [item.id, item.link, item.title, item.published].join("|"),
+./src/index.js:9159:      detail: "The published RDAP expiration date is in the past.",
+./src/index.js:9166:      detail: `The published RDAP expiration date is approximately ${daysToExpiry} day(s) away.`,
+./src/index.js:9266:  const releaseTimes = files
+./src/index.js:9271:  const lastPublishedAt = releaseTimes.length
+./src/index.js:9272:    ? new Date(Math.max(...releaseTimes)).toISOString()
+./src/index.js:9290:      detail: "All published files for the resolved release are marked as yanked.",
+./src/index.js:9297:      detail: "One or more files for the resolved release are marked as yanked.",
+./src/index.js:9313:      detail: `The resolved release is approximately ${staleDays} days old.`,
+./src/index.js:9347:          ? "Do not install until vulnerability and yanked-release findings are reviewed."
+./src/index.js:9349:            ? "Review package metadata, release age, and vulnerability findings before installation."
+./src/index.js:9364:      last_published_at: lastPublishedAt,
+./src/index.js:9373:      "Package metadata is publisher-controlled and does not prove the uploaded artifacts are safe.",
+./src/index.js:10185:  "reservation.released",
+./src/index.js:11144:  if (action === "release") {
+./src/index.js:11148:         SET reservation_status = 'released'
+./src/index.js:11156:      "reservation.released",
+./src/index.js:11161:      status: "released",
+./src/index.js:11162:      released_at: new Date().toISOString(),
+./src/index.js:11916:        "Commit a reservation with a verified Base USDC transaction or release it.",
+./src/index.js:12062:        "Atomically consume a single-use preview ALLOW decision before non-production execution.",
+./src/index.js:12224:        "reservation commit and release",
+./src/index.js:14349:        "This x402 wrapper is for discoverable paid preflight; use POST /v1/payments/authorize with an authenticated signer policy before production signing.",
+./src/index.js:15941:<p>Current paid kit manifest: <a href="${escapeHtml(kitUrl)}"><code>/v1/x402/agent/buyer-policy-kit</code></a>. The policy kit is not published to npm or PyPI yet.</p>
+./package.json:11:    "deploy": "wrangler deploy",
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2_1_ADDENDUM.md:51:- Founder policy approval alone is insufficient to authorize production
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2_1_ADDENDUM.md:53:- The standard wrapper must never receive an `ALLOW` for production that it is
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2_1_ADDENDUM.md:63:- Do not issue production `ALLOW` and rely on the wrapper to reject it.
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2_1_ADDENDUM.md:64:- Do not represent production intent as a preview strategy.
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2_1_ADDENDUM.md:69:Move executable approval lifecycle dogfood away from production deployment.
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2_1_ADDENDUM.md:89:production deploy request
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2_1_ADDENDUM.md:93:-> no production execution
+./DEV-SG-001_IMPLEMENTATION_REPORT.md:11:- Wrapper: preview/local exported wrapper service only; no production deploy execution
+./DEV-SG-001_IMPLEMENTATION_REPORT.md:58:The product test command is scoped to `test/*.test.js packages/*/test/*.test.js`; preimplementation spike harnesses are retained as evidence but are not part of the production application test suite.
+./DEV-SG-001_IMPLEMENTATION_REPORT.md:84:No main merge, production deploy, production D1, production credentials, payment/x402 enforcement, `send_external_message`, dashboard, SSO, general IAM, QA dispatch, Independent Reviewer dispatch, release, or Founder Gate 4 claim was performed.
+./DEV-SG-001_PM_CORRECTION_ROUND_3_REPORT.md:27:commerce/payment/x402 enforcement, production executor, production D1,
+./DEV-SG-001_PM_CORRECTION_ROUND_3_REPORT.md:28:production credential, production resource, deployment configuration, live
+./DEV-SG-001_PM_CORRECTION_ROUND_3_REPORT.md:29:scheduler, GitBook publication, merge/release/deploy, QA dispatch, or
+./DEV-SG-001_PM_CORRECTION_ROUND_3_REPORT.md:30:independent-review dispatch was added or performed.
+./test/signgate-round3-evidence.mjs:151:    scope_json: JSON.stringify(["deploy:preview", "deploy:production", "deploy:local"]),
+./test/signgate-round3-evidence.mjs:158:  for (const environment of ["local", "preview", "production"]) {
+./test/signgate-round3-evidence.mjs:515:      allowed_environments_json: JSON.stringify(["local", "preview", "production"]),
+./test/signgate-round3-evidence.mjs:525:      allowed_environments_json: JSON.stringify(["local", "preview", "production"]),
+./test/signgate-round3-evidence.mjs:567:      allowed_environments_json: JSON.stringify(["local", "preview", "production"]),
+./test/signgate-decision.test.js:77:    scope_json: JSON.stringify(["deploy:preview", "deploy:production", "deploy:local"]),
+./test/signgate-decision.test.js:84:  for (const environment of ["local", "preview", "production"]) {
+./test/signgate-decision.test.js:367:  agentCredential.allowed_environments_json = JSON.stringify(["local", "preview", "production"]);
+./test/signgate-decision.test.js:405:  agentCredential.allowed_environments_json = JSON.stringify(["local", "preview", "production"]);
+./test/signgate-decision.test.js:442:  const production = await (await postDecision(
+./test/signgate-decision.test.js:446:        target: { environment: "production" },
+./test/signgate-decision.test.js:447:        parameters: { deployment_strategy: "worker_production", deployment_command_id: "wrangler_deploy_production" },
+./test/signgate-decision.test.js:449:      mandate: { scope: ["deploy:production"] },
+./test/signgate-decision.test.js:453:  assert.equal(production.decision, "REQUIRE_APPROVAL");
+./test/signgate-decision.test.js:454:  assert.deepEqual(production.reason_codes, ["PRODUCTION_GATE_4_REQUIRED"]);
+./test/mcp.test.js:224:test("missing credential rejects before any production call", async () => {
+./test/index.test.js:1170:    release: { tag_name: "v1.0.0", published_at: "2026-01-01T00:00:00Z" },
+./test/index.test.js:1173:  assert.equal(github.health.latest_release.tag, "v1.0.0");
+./test/index.test.js:1566:  assert.equal(result.evidence.demo_result.production_signing, false);
+./test/index.test.js:1655:      "/v1/x402/web/feed-snapshot?url=https%3A%2F%2Fgithub.com%2Fcloudflare%2Fworkers-sdk%2Freleases.atom",
+./specs/SG-MVP-003-decision-artifact-v0.md:22:- No production signing code.
+./specs/SG-MVP-003-decision-artifact-v0.md:190:- Non-goals explicitly exclude production signing and money movement.
+./specs/SG-MVP-003-decision-artifact-v0.md:213:- No production deploy unless separately approved.
+./packages/agent-buyer-policy-kit/src/index.js:161:        production_signing: false,
+./AI_BUYER_CATALOG.md:38:claims, perform production signing, or move money.
+./AI_BUYER_CATALOG.md:237:- `github-repository-health` — 0.005 USDC: repository maintenance, release,
+./packages/agent-buyer-policy-kit/policy/product-categories.json:46:    "production_deploy": {
+./packages/agent-buyer-policy-kit/policy/product-categories.json:47:      "description": "Deployment, release, production config, or infrastructure mutation tooling.",
+./packages/agent-buyer-policy-kit/policy/product-categories.json:50:      "approval_notes": "Approval-gated because it changes production state."
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD.md:60:| Consume surface | SELECTED | Preview-protected route `POST /v1/decisions/{decision_id}/consume`; not a generally available production API. |
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD.md:163:- Current production Worker exists, but this checkpoint does not authorize
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD.md:185:- Non-production dogfood enforcement wrapper.
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD.md:426:- Do not publish it as generally available production API.
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD.md:433:- It keeps enforcement outside the agent while avoiding a public production
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD.md:459:  and forbids general production positioning.
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD.md:656:  grants, action fingerprint binding, and no production deployment authority.
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD.md:828:| `environment` | required | Lowercase enum. v0.1 allows `preview` and returns `REQUIRE_APPROVAL` for `production`. Unknown environments `DENY`. |
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD.md:839:| `risk_flags.touches_dns` | required | Boolean. If true, policy returns `REQUIRE_APPROVAL` or `DENY` depending on environment; production remains not authorized. |
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD.md:928:- DEFERRED: Formal production retention/legal-hold/residency policy. Outside
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD.md:1067:- production deployment target
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2_2_ADDENDUM.md:82:- `environment`: required; enum `local`, `preview`, `production`.
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2_2_ADDENDUM.md:110:- `deployment_strategy`: required closed enum, see production model below.
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2_2_ADDENDUM.md:137:- Before separate Founder Gate 4, production intent may not receive executable
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2_2_ADDENDUM.md:140:- The standard policy enforcement point must never receive a production
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2_2_ADDENDUM.md:143:Before Founder Gate 4, production requests return either:
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2_2_ADDENDUM.md:148:The executable approval lifecycle dogfood scenario remains non-production:
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2_2_ADDENDUM.md:272:published as a product API.
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2_2_ADDENDUM.md:358:| DF-02 | Non-production approval lifecycle correction: preview deploy with `touches_permissions=true` | `REQUIRE_APPROVAL`; trusted Founder grant; fresh evaluation mints new preview-bound `ALLOW`; atomic consume; preview/local execution. |
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2_2_ADDENDUM.md:431:| V2.1 production scenario corrected production ALLOW but needed preservation. | Future implementation could still mint production ALLOW then make wrapper reject. | Production intent before Gate 4 never receives executable `ALLOW`; standard PEP never receives reject-required production ALLOW. | P1-02 remains closed. | Evaluator must return `REQUIRE_APPROVAL` or `DENY` for production before Gate 4. |
+./packages/agent-buyer-policy-kit/policy/role-product-matrix.md:11:| Role | wallet_risk | token_risk | market_intelligence | invoice_verification | payment_execution | api_security | production_deploy | customer_pii |
+./packages/agent-buyer-policy-kit/policy/role-product-matrix.md:26:- Operator agents can buy API/security checks, but production deploys need
+./LICENSE:8:to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_DECISION_CONTRACT_V0.1.md:13:- [FACT] Preview responses must carry `api_status: "preview"` until Founder authorizes production status.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_DECISION_CONTRACT_V0.1.md:26:- [FACT] No public deprecation clock or 90-day commitment may be published until production usage and migration requirements exist.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_DECISION_CONTRACT_V0.1.md:113:      "environment": "production",
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_DECISION_CONTRACT_V0.1.md:164:- [FACT] Internal v0.1 dogfood uses Founder as the only production-deploy approver, authenticated with a credential distinct from agent and executor credentials.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_DECISION_CONTRACT_V0.1.md:316:- [FACT] The consume operation is not positioned as a generally available production API in v0.1.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_DECISION_CONTRACT_V0.1.md:331:- [FACT] Non-production dogfood only is authorized after final Gate 1 approval; any real production deployment remains separately blocked behind Founder Gate 4.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_TASK_PACKAGES_V0.1.md:12:- [FACT] Gate 4 — Founder: decides any temporary/public deployment, canonical domain, announcement, outreach, pricing, or production action.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_TASK_PACKAGES_V0.1.md:20:- [FACT] Implement the frozen general decision contract and one non-production deployment-control proof without changing product semantics.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_TASK_PACKAGES_V0.1.md:37:- [FACT] Commerce-preflight documented non-live stub: preserve route/discovery surfaces, publish mapping and canonical/legacy-alias contract, add schema/contract tests, and label `PREVIEW / PLANNED / NOT DEPLOYED`; do not build full payment/x402 enforcement.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_TASK_PACKAGES_V0.1.md:52:- [FACT] Do not deploy production.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_TASK_PACKAGES_V0.1.md:56:- [FACT] Do not build Gmail, social publishing, CRM, or any external messaging/data integration.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_TASK_PACKAGES_V0.1.md:57:- [FACT] Do not position the consume operation as a generally available production API.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_TASK_PACKAGES_V0.1.md:67:- [FACT] Implementation evidence is ready for QA and Reviewer; Developer does not self-declare release candidate.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_TASK_PACKAGES_V0.1.md:127:- [FACT] P0/P1 findings must be resolved or explicitly accepted by Founder before release-candidate pass.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_TASK_PACKAGES_V0.1.md:129:## 5. PM release package — `PM-SG-002`
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_TASK_PACKAGES_V0.1.md:132:- [FACT] Update the claims matrix using the actual release candidate URL and evidence.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_TASK_PACKAGES_V0.1.md:146:| [FACT] Non-production preview deployment | R after approval | V | C | Founder |
+./packages/agent-buyer-policy-kit/policy/default-agent-buyer-policy.json:22:        "production_deploy"
+./packages/agent-buyer-policy-kit/policy/default-agent-buyer-policy.json:38:        "production_deploy",
+./packages/agent-buyer-policy-kit/policy/default-agent-buyer-policy.json:57:        "production_deploy"
+./packages/agent-buyer-policy-kit/policy/default-agent-buyer-policy.json:75:      "denied_categories": ["production_deploy", "code_execution"]
+./packages/agent-buyer-policy-kit/policy/default-agent-buyer-policy.json:89:        "production_deploy",
+./specs/signgate-pm-handoff-2026-07-18.md:60:production domain. PM should treat it as the current website demo state, not a
+./specs/signgate-pm-handoff-2026-07-18.md:61:final production launch.
+./specs/signgate-pm-handoff-2026-07-18.md:83:- `/zh/docs` currently says GitBook and production API base URL are not set.
+./specs/signgate-pm-handoff-2026-07-18.md:113:real-world consequences: email, social posting, deployment, production data,
+./specs/signgate-pm-handoff-2026-07-18.md:140:  or changes production routes.
+./specs/signgate-pm-handoff-2026-07-18.md:204:Controls production deploys, route changes, DNS changes, environment secrets,
+./specs/signgate-pm-handoff-2026-07-18.md:211:- Are secrets, DNS, or production resources touched?
+./specs/signgate-pm-handoff-2026-07-18.md:341:  - publishing X posts
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2.md:66:| Production intent was represented as preview. | Adds closed production action representation while keeping production execution refused until separate Founder Gate 4. |
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2.md:114:- Do not claim production API availability.
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2.md:676:| environment | `action.target.environment` | required | Closed enum: `preview`, `production`. |
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2.md:699:- `worker_production`
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2.md:706:- `wrangler_deploy_production`
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2.md:710:- `worker_production` and `wrangler_deploy_production` may be represented and
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2.md:711:  fingerprinted as exact requested production intent.
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2.md:713:  production execution unless a separate Founder Gate 4 later passes.
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2.md:833:- Represents production intent exactly when requested; never maps production to
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2.md:855:- production command without separate Founder Gate 4
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2.md:858:Non-production-only enforcement:
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2.md:861:  non-production command IDs until Gate 4.
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2.md:862:- It can represent production requests and prove refusal.
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2.md:863:- It cannot execute production deployment in this sprint.
+./DEV-SG-001A_IMPLEMENTATION_DECISION_RECORD_V2.md:912:   decision artifact, but wrapper still refuses actual production execution
+./README.md:92:release a reservation, and `POST /v1/payment-guard/status` with the owner token
+./README.md:120:It never exposes private keys to the agent; production signing should remain in
+./README.md:127:production authorization token.
+./README.md:134:directory is independently publishable.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_FOUNDER_DECISIONS_V0.1.md:24:- **Decision:** [FACT] Founder is the only production-deploy approver for internal v0.1 dogfood, using a credential distinct from agent and executor credentials.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_FOUNDER_DECISIONS_V0.1.md:50:- **Restrictions:** [FACT] The consume operation is internal or preview-protected in v0.1 and must not be positioned as a generally available production API.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_FOUNDER_DECISIONS_V0.1.md:86:- **Restrictions:** [FACT] Aliases cannot diverge or authorize independently; no public deprecation clock or 90-day commitment may be published before production evidence exists.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_FOUNDER_DECISIONS_V0.1.md:98:- **Restrictions:** [FACT] Applies only to preview; production retention, deletion, residency, backup, and legal-hold policy remain unresolved.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_FOUNDER_DECISIONS_V0.1.md:129:## Decision 11 — Non-production dogfood
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_FOUNDER_DECISIONS_V0.1.md:132:- **Decision:** [FACT] Approve non-production dogfood only.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_FOUNDER_DECISIONS_V0.1.md:134:- **Restrictions:** [FACT] Any real production deployment remains blocked behind separate Founder Gate 4 approval.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_FOUNDER_DECISIONS_V0.1.md:135:- **Rationale:** [FACT] Contract and enforcement behavior must be proven without exposing production systems to an unreviewed control path.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_FOUNDER_DECISIONS_V0.1.md:138:- **Superseded decision:** [FACT] Confirms and narrows the original “no production required” default.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_FOUNDER_DECISIONS_V0.1.md:139:- **Implementation consequence:** [FACT] Tests and evidence use preview or simulation; no production deployment command is authorized by Gate 1.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PM_CONTRACT_ARTIFACT_MANIFEST_V0.1.md:61:- **remaining open questions:** Temporary preview URL durability and release-candidate re-verification; no currently unimplemented capability is marked LIVE.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PM_CONTRACT_ARTIFACT_MANIFEST_V0.1.md:113:- **remaining open questions:** Only the implementation choices and production-policy items explicitly preserved as unresolved; the twelve decision semantics are authoritative.
+./packages/agent-buyer-policy-kit/README.md:167:does not create applicants, upload documents, run production compliance checks,
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PM_CONTRACT_REVIEW_PACKET_V0.1.md:23:- [RECOMMENDATION] Internal v0.1 dogfood uses Founder as the only production-deploy approver, authenticated by a principal distinct from agent and executor credentials.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PM_CONTRACT_REVIEW_PACKET_V0.1.md:90:- [FACT] No deprecation clock or 90-day promise should be published without production usage and migration evidence.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PM_CONTRACT_REVIEW_PACKET_V0.1.md:109:2. [FACT] Production deploy → `200 + REQUIRE_APPROVAL`; PEP refuses; verified Founder grant plus unchanged fresh evaluation may mint new `ALLOW`; no real production action without Gate 4.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PM_CONTRACT_REVIEW_PACKET_V0.1.md:131:- [FACT] Founder decisions were required for immutable approval, Founder-only internal approver, error separation, atomic consume/state, scoped API-key tenancy, RFC 8785 deploy-only scope, adapter aliases/deprecation, data/retention, secret hard denial, 15-minute permanent consume, non-production-only dogfood, and adapter stub scope.
+./mcp/THREAT_MODEL.md:20:- No production signer calls.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PRODUCT_BOUNDARY_V0.1.md:13:- [FACT] The live docs page says GitBook and the production API base URL are not configured.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PRODUCT_BOUNDARY_V0.1.md:64:- [FACT] A generally available production consume API; the consume surface remains internal or preview-protected.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PRODUCT_BOUNDARY_V0.1.md:75:- [ASSUMPTION] No real production deployment is required for the first dogfood proof.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PRODUCT_BOUNDARY_V0.1.md:76:- [ASSUMPTION] A preview deployment may be simulated or performed in a non-production Nomos environment.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PRODUCT_BOUNDARY_V0.1.md:77:- [FACT] Founder is the only production-deploy approver for internal v0.1 dogfood; this is not a permanent customer-product restriction.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PRODUCT_BOUNDARY_V0.1.md:86:- [FACT] No production-domain migration.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_LIVE_PREVIEW_CLAIMS_MATRIX.md:10:- [FACT] `PREVIEW` means usable for evaluation but not represented as a production service or stable public contract.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_LIVE_PREVIEW_CLAIMS_MATRIX.md:12:- [FACT] `NOT DEPLOYED` means there is no verified public production endpoint.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_LIVE_PREVIEW_CLAIMS_MATRIX.md:19:| Nomos platform narrative | LIVE | [FACT] Temporary demo displays TEST → DECIDE → MONITOR. | [FACT] “Nomos Labs covers testing, decision, and monitoring.” | [FACT] Do not imply all three products are production APIs. |
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_LIVE_PREVIEW_CLAIMS_MATRIX.md:20:| Agent Assurance | SERVICE / PILOT | [FACT] Live site labels it as service/pilot. | [FACT] “Available for pilot engagements.” | [FACT] Do not claim a self-serve production platform. |
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_LIVE_PREVIEW_CLAIMS_MATRIX.md:22:| x402scan page | PREVIEW / IN DEVELOPMENT | [FACT] Live home page carries that badge. | [FACT] “Preview / in development.” | [FACT] Do not claim continuous production monitoring for customers. |
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_LIVE_PREVIEW_CLAIMS_MATRIX.md:23:| Browser-based deterministic decision demo | PREVIEW | [FACT] Live site links to an interactive Decision Preview; supplied source implements deterministic local rules. | [FACT] “Interactive deterministic preview.” | [FACT] Do not call it the production Decision API. |
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_LIVE_PREVIEW_CLAIMS_MATRIX.md:24:| `POST /v1/decisions` | PLANNED / NOT DEPLOYED | [FACT] No production API base URL is configured. | [FACT] “Frozen v0.1 contract; preview endpoint to be implemented after approval.” | [FACT] Do not publish an “available now” badge before endpoint verification. |
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_LIVE_PREVIEW_CLAIMS_MATRIX.md:25:| `/v1/agentic-commerce/preflight` | DOCUMENTED_NON_LIVE_STUB | [FACT] Live page references the route; docs say production API is not configured; Founder limited sprint one to mapping/schema/aliases/contract tests/docs. | [FACT] “Documented compatibility stub; preview/planned/not deployed.” | [FACT] Do not describe it as a verified API or complete payment/x402 enforcement adapter. |
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_LIVE_PREVIEW_CLAIMS_MATRIX.md:27:| Production API base URL | NOT CONFIGURED | [FACT] Live docs page says it is not configured. | [FACT] “Preview access only; production base URL unavailable.” | [FACT] Do not publish curl commands against an invented production host. |
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_LIVE_PREVIEW_CLAIMS_MATRIX.md:31:| Reference deployment enforcement wrapper | PLANNED | [FACT] Required by the sprint; no verified artifact exists in the supplied source. | [FACT] “Internal dogfood target.” | [FACT] Do not claim production deployments are currently gated by SignGate. |
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_LIVE_PREVIEW_CLAIMS_MATRIX.md:32:| `POST /v1/decisions/{decision_id}/consume` | PLANNED / INTERNAL OR PREVIEW-PROTECTED | [FACT] Founder approved the contract surface with a scope limit; it is not implemented. | [FACT] “Planned internal/preview-protected enforcement surface.” | [FACT] Do not call it a generally available production API. |
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_LIVE_PREVIEW_CLAIMS_MATRIX.md:34:| Trusted approval grant flow | PLANNED / INTERNAL DOGFOOD | [FACT] Founder approved immutable approval semantics; no approval service/dashboard is deployed. | [FACT] “Planned internal dogfood approval control.” | [FACT] Do not claim a customer approval inbox or production approval service. |
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_LIVE_PREVIEW_CLAIMS_MATRIX.md:51:- [INFERENCE] Release QA must rerun the claims matrix against the actual release candidate URL immediately before `RELEASE_CANDIDATE_GATE=PASS`.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_MVP_PRD_V0.1.md:17:- [FACT] Existing public SignGate surfaces show a decision concept but no verified production general Decision API.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_MVP_PRD_V0.1.md:58:- [FACT] As a founder, I can require approval for every production deployment.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_MVP_PRD_V0.1.md:114:- [FACT] DF-02: request production action → receive `200 + REQUIRE_APPROVAL` → wrapper refuses → trusted Founder grant binds the unchanged action → fresh evaluation may mint a new `ALLOW`; no real production execution occurs without Gate 4.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_MVP_PRD_V0.1.md:141:- [FACT] Three curl examples: preview allow, production approval, failed-tests deny.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_MVP_PRD_V0.1.md:148:- [FACT] Options: deployment/production, external messaging, social posting, payment/x402, CRM/Sheets/data, other.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_MVP_PRD_V0.1.md:157:- [FACT] NFR-04: Preview docs must not invent a production host.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_MVP_PRD_V0.1.md:174:- [FACT] AC-08: Website claims match the verified release candidate.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_MVP_PRD_V0.1.md:176:- [FACT] AC-10: No real production deployment occurs without explicit Founder approval.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_MVP_PRD_V0.1.md:198:- [FACT] Fail if website copy implies production API or universal enforcement before proof.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_MVP_PRD_V0.1.md:200:- [INFERENCE] A technically correct PDP without a credible PEP integration remains commercially weak; dogfood evidence is therefore a release requirement.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_MVP_PRD_V0.1.md:206:- [FACT] Preview-protected atomic consume and transactional state are incorporated without presenting a general production API.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_MVP_PRD_V0.1.md:210:- [FACT] Secret-touching deploy hard `DENY`, 15-minute validity, single-use/permanent consume, and non-production dogfood limits are incorporated.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PM_CONTRACT_REVISION_CHANGELOG_V0.1.md:23:| 2 | [FACT] Founder-only production-deploy approver for internal dogfood; separate credentials. | [FACT] Founder-only rule is internal, not a permanent customer restriction; agent/executor/approver credentials are distinct. | [FACT] Product Boundary §§5, 7; Decision Contract §§6, 14; MVP PRD NFR-08; Task Packages constraints/tests. |
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PM_CONTRACT_REVISION_CHANGELOG_V0.1.md:28:| 7 | [FACT] Canonical responses with derived preview aliases; no published deprecation clock. | [FACT] Canonical response is authoritative; legacy aliases are derived only; 90-day assumption removed as a commitment. | [FACT] Decision Contract §2; MVP PRD P1/AC-16; Task Packages adapter-stub deliverables/tests. |
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PM_CONTRACT_REVISION_CHANGELOG_V0.1.md:29:| 8 | [FACT] Minimum-data storage, prohibited full content/secrets, allowlist logging, 30-day preview retention. | [FACT] Added accepted/prohibited data boundaries, structured logging, and preview-only retention; production policies remain open. | [FACT] Decision Contract §17; MVP PRD FR-17, NFR-09, AC-17; Task Packages deliverables/tests. |
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PM_CONTRACT_REVISION_CHANGELOG_V0.1.md:32:| 11 | [FACT] Non-production dogfood only; real production stays behind Gate 4. | [FACT] Revised artifacts explicitly preserve non-production scope and separate Founder Gate 4. | [FACT] Decision Contract §18; MVP PRD AC-10/Founder decisions; Task Packages constraints/gate sequence. |
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PM_CONTRACT_REVISION_CHANGELOG_V0.1.md:46:| `SIGNGATE_DECISION_CONTRACT_V0.1.md` | Data handling / retention | [FACT] Audit existed without explicit payload minimization or retention. | [FACT] No full diffs/messages/attachments/secrets; allowlist logs/redaction; 30-day preview retention. | FD-8, FD-9 | [OPEN] Expiry deletion/anonymization implementation; production policies unresolved. | [FACT] Developer persistence; QA leak/retention; Reviewer audit/privacy criteria affected. |
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PM_CONTRACT_REVISION_CHANGELOG_V0.1.md:107:## 6. Explicitly unresolved production policy
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PM_CONTRACT_REVISION_CHANGELOG_V0.1.md:111:- [FACT] Public consume API availability, SLA, and production authentication are unresolved.
+./docs/signgate/pm-contract-v0.1/approved/SIGNGATE_PM_CONTRACT_REVISION_CHANGELOG_V0.1.md:114:- [FACT] Canonical production domain, public launch, pricing, outreach, and any real production deployment remain Gate 4 decisions.
+./mcp/NOT_IMPLEMENTED_TOOLS.md:4:must not be presented as production-ready MCP tools.
+./packages/agent-buyer-policy-kit/docs/SUMSUB_EVIDENCE_SERVICES.md:5:These services package Sumsub sandbox entitlements as normalized SignGate evidence services. They do not create applicants, upload documents, move funds, sign transactions, or claim production compliance.
+./packages/agent-buyer-policy-kit/docs/SUMSUB_EVIDENCE_SERVICES.md:30:    "production_signing": false
+./packages/agent-buyer-policy-kit/docs/SUMSUB_EVIDENCE_SERVICES.md:152:- use production PII
+./packages/agent-buyer-policy-kit/docs/SUMSUB_EVIDENCE_SERVICES.md:155:- issue production compliance claims
+./spikes/dev-sg-001b-baseline-gate/evidence/npm-run-check.txt:66:✔ missing credential rejects before any production call (0.31425ms)
+./spikes/dev-sg-001b-baseline-gate/DEV-SG-001B_EVIDENCE_COMPLETION.md:117:- Neither spike modifies production `src/`, production migrations, Worker
+./spikes/dev-sg-001b-baseline-gate/DEV-SG-001B_EVIDENCE_COMPLETION.md:119:  production data.
+./packages/agent-buyer-policy-kit/RELEASE_CHECKLIST.md:3:Status: DRAFT - not yet publicly released
+./packages/agent-buyer-policy-kit/RELEASE_CHECKLIST.md:44:- `npm publish`
+./packages/agent-buyer-policy-kit/RELEASE_CHECKLIST.md:45:- publishing to PyPI
+./spikes/dev-sg-001c-d1-atomic-consume/DEV-SG-001C_ATOMICITY_SPIKE_REPORT.md:17:run this mechanism through the Worker/D1 API before release candidate status.
+./migrations/0008_signgate_deploy_change_decisions.sql:13:  allowed_environments_json TEXT NOT NULL DEFAULT '["local","preview","production"]',
+./migrations/0008_signgate_deploy_change_decisions.sql:49:  environment TEXT NOT NULL CHECK (environment IN ('local', 'preview', 'production')),
+./spikes/dev-sg-001c-d1-atomic-consume/README.md:8:any production application code, production migrations, Worker routes, or
+./spikes/dev-sg-001c-d1-atomic-consume/README.md:14:through the Worker/D1 API before release candidate status.
+./packages/agent-buyer-policy-kit/test/evaluator.test.js:308:    assert.equal(service.demo.production_signing, false);
+./spikes/dev-sg-001c-d1-worker-atomic-consume/DEV-SG-001C_D1_WORKER_ATOMICITY_REPORT.md:30:No production D1, production credentials, production migrations, product
+./spikes/dev-sg-001c-d1-worker-atomic-consume/DEV-SG-001C_D1_WORKER_ATOMICITY_REPORT.md:31:application source, live product routes, production deployment configuration,
+./spikes/dev-sg-001c-d1-worker-atomic-consume/DEV-SG-001C_D1_WORKER_ATOMICITY_REPORT.md:32:production data, or product secrets were used.
+./spikes/dev-sg-001c-d1-worker-atomic-consume/DEV-SG-001C_D1_WORKER_ATOMICITY_REPORT.md:186:  `TEST_HARNESS_ONLY`, not part of the product contract, and not production
+./DEV-SG-001_PM_CORRECTION_ROUND_2_REPORT.md:41:No QA dispatch, PM acceptance claim, merge, release, deployment, production D1, production credential, GitBook publication, or production resource action was performed.
+./packages/agent-buyer-policy-kit/PRICING.md:122:sandbox only until production legal/compliance review
+./packages/agent-buyer-policy-kit/PRICING.md:125:Do not publish a production compliance claim until the underlying Sumsub plan,
+./packages/agent-buyer-policy-kit/PRICING.md:156:3. Whether to publish to npm or keep distribution through x402 paid delivery.
+./packages/agent-buyer-policy-kit/python/signgate_agent_buyer_policy_kit/evaluator.py:26:                "production_deploy",
+./packages/agent-buyer-policy-kit/python/signgate_agent_buyer_policy_kit/evaluator.py:41:                "production_deploy",
+./packages/agent-buyer-policy-kit/python/signgate_agent_buyer_policy_kit/evaluator.py:59:                "production_deploy",
+./packages/agent-buyer-policy-kit/python/signgate_agent_buyer_policy_kit/evaluator.py:76:            "denied_categories": ["production_deploy", "code_execution"],
+./packages/agent-buyer-policy-kit/python/signgate_agent_buyer_policy_kit/evaluator.py:89:                "production_deploy",
+./mcp/ARCHITECTURE.md:10:- production mirror: existing Worker JSON-RPC `/mcp`
+./mcp/ARCHITECTURE.md:13:can mount it without adding a new hosted runtime. The production Worker mirror
+./mcp/ARCHITECTURE.md:62:Future production hardening should enforce the same credential at the SignGate
+./mcp/ARCHITECTURE.md:71:`verify_decision_receipt` is not mounted in v1 because signed receipt production
+./mcp/ARCHITECTURE.md:73:design draft, not a live production receipt system.
+./sdk/javascript/package.json:17:    "prepublishOnly": "npm test"
+./mcp/README.md:51:`SIGNGATE_API_KEY` is required. The MCP server refuses anonymous production
+./mcp/README.md:68:The current production Worker exposes a small JSON-RPC `/mcp` endpoint and
+./mcp/README.md:72:Recommended next production step: add a Streamable HTTP MCP deployment using
+./mcp/README.md:86:Future production auth should bind delegated agent credentials, buyer identity,
+./mcp/README.md:170:See `mcp/RUNBOOK.md` for production discovery URLs, supported JSON-RPC methods,
+./DEV-SG-001_PM_CORRECTION_ROUND_1_REPORT.md:11:Authorized files changed only in the SignGate decision module, public route/OpenAPI registration, DEV-SG-001 migration, SignGate tests, and product-D1 smoke harness. No Wrangler configuration, production resource, deploy, merge, QA dispatch, GitBook publication, dashboard, approval inbox, IAM/SSO, CRM, social, payment execution, x402 enforcement, or production executor work was performed.
+./DEV-SG-001_PM_CORRECTION_ROUND_1_REPORT.md:71:This is not PM acceptance, QA approval, independent review, merge, release, deployment, or production authorization. QA remains blocked pending PM delta review.
+./mcp/signgate-client.js:278:      "SIGNGATE_API_KEY is required; refusing anonymous production access",
+./mcp/EVIDENCE.md:114:npx wrangler deploy --dry-run
+./mcp/EVIDENCE.md:141:- `missing credential rejects before any production call`
+./mcp/RUNBOOK.md:128:     production calls fail closed; MCP credential works; tests cover 401.
+./mcp/RUNBOOK.md:140:   - Dependency: production MCP hosting decision
+./spikes/dev-sg-001b-worker-compatibility/DEV-SG-001B_WORKER_COMPATIBILITY_REPORT.md:26:`package.json`, product `package-lock.json`, production application source,
+./spikes/dev-sg-001b-worker-compatibility/DEV-SG-001B_WORKER_COMPATIBILITY_REPORT.md:27:production migrations, Worker routes, product deployment configuration,
+./spikes/dev-sg-001b-worker-compatibility/DEV-SG-001B_WORKER_COMPATIBILITY_REPORT.md:28:production secrets, or production infrastructure.
+./sdk/javascript/index.js:70:  release(decisionToken) {
+./sdk/javascript/index.js:72:      action: "release",
+./spikes/dev-sg-001c-d1-worker-atomic-consume/run-d1-spike.mjs:327:      production_authorization: "NO_PRODUCTION_IMPLEMENTATION_AUTHORIZATION_DERIVED"
+./sdk/javascript/LICENSE:8:to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+./spikes/dev-sg-001c-d1-worker-atomic-consume/evidence/d1-invariant-results-correction.json:15:      "production_authorization": "NO_PRODUCTION_IMPLEMENTATION_AUTHORIZATION_DERIVED"
+./spikes/dev-sg-001c-d1-worker-atomic-consume/evidence/d1-spike-test-correction.txt:19:      "production_authorization": "NO_PRODUCTION_IMPLEMENTATION_AUTHORIZATION_DERIVED"
+./spikes/dev-sg-001b-worker-compatibility/worker.mjs:182:  if (!["local", "preview", "production"].includes(parsed.action.target.environment)) {
+./sdk/python/LICENSE:8:to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
