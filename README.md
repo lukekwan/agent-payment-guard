@@ -28,13 +28,14 @@ AI buyer catalog:
 https://base-agent-preflight.bytoken2023.workers.dev/catalog.json
 
 Admin purchase dashboard:
-`GET /admin/purchases?token=...`
+`GET /admin/purchases` with `Authorization: Bearer ...`
 
 Admin purchase JSON:
-`GET /admin/purchases.json?token=...`
+`GET /admin/purchases.json` with `Authorization: Bearer ...`
 
-The dashboard is protected by the `ADMIN_DASHBOARD_TOKEN` Worker secret and
-returns 404 without a valid token. It records successful paid x402 route
+The dashboard is protected by the rotated `ADMIN_DASHBOARD_TOKEN_V2` Worker
+secret via the Authorization header; permanent query-string tokens are not
+accepted. It returns 401/403 without valid authorization and records successful paid x402 route
 executions in D1 table `x402_purchase_events`; unpaid 402 probes, discovery
 checks, and failed executions are not counted as purchases.
 
@@ -76,7 +77,7 @@ payment signing remain outside the SDK.
 
 ## Main product
 
-`GET /v1/x402/payment-guard/evaluate?url=https://...&session_id=...&request_id=...` — 0.01 USDC
+`GET /v1/x402/payment-guard/evaluate?url=https://...&session_id=...&request_id=...` — 0.10 USDC
 
 Stateful payment policy decision with `ALLOW`, `REVIEW`, or `BLOCK`,
 single/session/daily budgets, recipient allowlists and blocklists, replay
@@ -106,7 +107,7 @@ Luke described:
 - `POST /v1/intents/verify`
 - `POST /v1/payments/preflight`
 - `POST /v1/payments/authorize`
-- `GET /v1/x402/agent/payment-risk-gateway` — 0.005 USDC
+- `GET /v1/x402/agent/payment-risk-gateway` — 0.15 USDC
 
 These endpoints treat the agent as an untrusted spender. The agent submits a
 structured stablecoin payment intent with `agent_id`, `request_id`, `pay_to`,
@@ -329,15 +330,18 @@ BlockchainSecurity bridge/cross-chain transaction tracking.
 
 `GET /v1/x402/bcs/cross-chain?txhash=...&label=across` — 0.29 USDC
 
-`GET /v1/x402/base/address-preflight?address=0x...` — 0.02 USDC
+Pricing version for the first formal pricing experiment:
+`x402-pricing-v1-20260720`
 
-`GET /v1/x402/base/token-preflight?token=0x...` — 0.02 USDC
+`GET /v1/x402/base/address-preflight?address=0x...` — 0.075 USDC
 
-`GET /v1/x402/base/merchant-trust?address=0x...` — 0.03 USDC
+`GET /v1/x402/base/token-preflight?token=0x...` — 0.075 USDC
 
-`GET /v1/x402/base/payment-proof?tx=0x...&recipient=0x...&amount=0.02` — 0.01 USDC
+`GET /v1/x402/base/merchant-trust?address=0x...` — 0.100 USDC
 
-`GET /v1/x402/base/wallet-activity-delta?address=0x...&since=...` — 0.01 USDC
+`GET /v1/x402/base/payment-proof?tx=0x...&recipient=0x...&amount=0.02` — 0.030 USDC
+
+`GET /v1/x402/base/wallet-activity-delta?address=0x...&since=...` — 0.030 USDC
 
 `GET /v1/x402/base/approval-risk?token=0x...&owner=0x...&spender=0x...` — 0.005 USDC
 
@@ -345,7 +349,7 @@ BlockchainSecurity bridge/cross-chain transaction tracking.
 
 `GET /v1/x402/base/usdc-receipt?tx=0x...` — 0.003 USDC
 
-`GET /v1/x402/base/wallet-counterparty?address=0x...` — 0.005 USDC
+`GET /v1/x402/base/wallet-counterparty?address=0x...` — 0.020 USDC
 
 `GET /v1/x402/base/event-log-monitor?address=0x...&from_block=...` — 0.003 USDC
 
@@ -359,11 +363,11 @@ BlockchainSecurity bridge/cross-chain transaction tracking.
 
 `GET /v1/x402/prediction/market-snapshot?ticker=...` — 0.005 USDC
 
-`GET /v1/x402/web/endpoint-preflight?url=https://...` — 0.005 USDC
+`GET /v1/x402/web/endpoint-preflight?url=https://...` — 0.015 USDC
 
-`GET /v1/x402/software/npm-package-preflight?package=express&version=4.18.2` — 0.005 USDC
+`GET /v1/x402/software/npm-package-preflight?package=express&version=4.18.2` — 0.015 USDC
 
-`GET /v1/x402/software/github-repository-health?owner=cloudflare&repo=workers-sdk` — 0.005 USDC
+`GET /v1/x402/software/github-repository-health?owner=cloudflare&repo=workers-sdk` — 0.020 USDC
 
 `GET /v1/x402/web/url-change-fingerprint?url=https://...` — 0.003 USDC
 
@@ -371,11 +375,13 @@ BlockchainSecurity bridge/cross-chain transaction tracking.
 
 `GET /v1/x402/base/transaction-intent?to=0x...&data=0x...&value=0` — 0.005 USDC
 
-`GET /v1/x402/agent/a2a-card-preflight?url=https://...` — 0.005 USDC
+`GET /v1/x402/agent/a2a-card-preflight?url=https://...` — 0.020 USDC
 
-`GET /v1/x402/web/openapi-preflight?url=https://...` — 0.005 USDC
+`GET /v1/x402/web/openapi-preflight?url=https://...` — 0.015 USDC
 
-`GET /v1/x402/web/domain-trust-preflight?domain=example.com` — 0.005 USDC
+`GET /v1/x402/web/domain-trust-preflight?domain=example.com` — 0.015 USDC
+
+`GET /v1/x402/agent/capability-security-preflight?target_type=agent&identifier=...` — 0.100 USDC
 
 `GET /v1/x402/software/pypi-package-preflight?package=requests&version=latest` — 0.005 USDC
 

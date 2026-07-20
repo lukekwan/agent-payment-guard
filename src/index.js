@@ -30,6 +30,7 @@ const PUBLIC_PRODUCT_POSITION = "Agent Policy & Execution Control";
 const PUBLIC_LISTING_NAME = `${PUBLIC_BRAND_NAME} - ${PUBLIC_PRODUCT_POSITION}`;
 const PUBLIC_LISTING_DESCRIPTION =
   "SignGate is Nomos Labs' agent policy and execution control product. It evaluates authority, mandates, approval requirements, signer boundaries, and evidence before autonomous agents buy, pay, call infrastructure, or trigger money movement. x402 is a supported protocol and commerce use case, not the product category.";
+const PRICING_VERSION = "x402-pricing-v1-20260720";
 const CONTACT_EMAIL = "nomolabs2026@gmail.com";
 const STATIC_FACILITATOR_SUPPORT = {
   kinds: [{ x402Version: 2, scheme: "exact", network: BASE_MAINNET }],
@@ -708,12 +709,21 @@ const CATALOG_METADATA = {
     price_reason:
       "Premium AML evidence endpoint because sanctions or unresolved hits can directly block autonomous payments.",
   },
+  "agent-capability-security-preflight": {
+    group: "agent-api-supply-chain",
+    when_to_buy:
+      "Before installing, trusting, calling, or delegating to another agent, MCP server, API, package, repository, or capability.",
+    returns:
+      "Unified ALLOW/REVIEW/DENY decision with Agent Card, repository, package, domain, OpenAPI, and x402 endpoint checks when those underlying capabilities are available.",
+    price_reason:
+      "Bundle-priced security decision that replaces repeated separate preflight purchases for the same capability workflow.",
+  },
 };
 const PRODUCTS = [
   {
     id: "base-address-preflight",
     path: "/v1/x402/base/address-preflight",
-    price: "$0.02",
+    price: "$0.075",
     description:
       "Inspect a Base address before an autonomous payment or contract interaction.",
     input: {
@@ -733,7 +743,7 @@ const PRODUCTS = [
   {
     id: "base-token-preflight",
     path: "/v1/x402/base/token-preflight",
-    price: "$0.02",
+    price: "$0.075",
     description:
       "Inspect a Base token contract, public reputation, holder count, and DEX liquidity before trading.",
     input: { token: USDC },
@@ -751,7 +761,7 @@ const PRODUCTS = [
   {
     id: "x402-merchant-trust",
     path: "/v1/x402/base/merchant-trust",
-    price: "$0.03",
+    price: "$0.100",
     description:
       "Summarize a Base merchant's public USDC receipt history and payer concentration.",
     input: { address: PAY_TO },
@@ -769,7 +779,7 @@ const PRODUCTS = [
   {
     id: "base-payment-proof",
     path: "/v1/x402/base/payment-proof",
-    price: "$0.01",
+    price: "$0.030",
     description:
       "Verify a Base transaction contains the expected canonical USDC payment.",
     input: {
@@ -801,7 +811,7 @@ const PRODUCTS = [
   {
     id: "base-wallet-activity-delta",
     path: "/v1/x402/base/wallet-activity-delta",
-    price: "$0.01",
+    price: "$0.030",
     description:
       "Return recent Base ERC-20 activity for a wallet after a caller-supplied timestamp.",
     input: {
@@ -893,7 +903,7 @@ const PRODUCTS = [
   {
     id: "base-wallet-counterparty",
     path: "/v1/x402/base/wallet-counterparty",
-    price: "$0.005",
+    price: "$0.020",
     description:
       "Rank counterparties in a Base wallet's recent transactions and ERC-20 transfers.",
     input: { address: PAY_TO },
@@ -1027,7 +1037,7 @@ const PRODUCTS = [
   {
     id: "x402-endpoint-preflight",
     path: "/v1/x402/web/endpoint-preflight",
-    price: "$0.005",
+    price: "$0.015",
     description:
       "Inspect an unpaid x402 endpoint, decode its payment requirements, and flag unsafe or malformed commerce metadata.",
     input: {
@@ -1048,7 +1058,7 @@ const PRODUCTS = [
   {
     id: "npm-package-preflight",
     path: "/v1/x402/software/npm-package-preflight",
-    price: "$0.005",
+    price: "$0.015",
     description:
       "Check npm package metadata, maintenance signals, deprecation, license, dependencies, and OSV vulnerabilities.",
     input: { package: "express", version: "4.18.2" },
@@ -1073,7 +1083,7 @@ const PRODUCTS = [
   {
     id: "github-repository-health",
     path: "/v1/x402/software/github-repository-health",
-    price: "$0.005",
+    price: "$0.020",
     description:
       "Score a public GitHub repository using maintenance, release, license, archive, issue, and popularity signals.",
     input: { owner: "cloudflare", repo: "workers-sdk" },
@@ -1168,7 +1178,7 @@ const PRODUCTS = [
   {
     id: "a2a-agent-card-preflight",
     path: "/v1/x402/agent/a2a-card-preflight",
-    price: "$0.005",
+    price: "$0.020",
     description:
       "Discover and validate a public A2A Agent Card, its skills, provider, authentication, endpoint consistency, and unsafe URLs.",
     input: {
@@ -1189,7 +1199,7 @@ const PRODUCTS = [
   {
     id: "openapi-spec-preflight",
     path: "/v1/x402/web/openapi-preflight",
-    price: "$0.005",
+    price: "$0.015",
     description:
       "Validate a public OpenAPI JSON or YAML document, server URLs, authentication declarations, operation coverage, and content fingerprint.",
     input: {
@@ -1210,7 +1220,7 @@ const PRODUCTS = [
   {
     id: "domain-trust-preflight",
     path: "/v1/x402/web/domain-trust-preflight",
-    price: "$0.005",
+    price: "$0.015",
     description:
       "Inspect public DNS, DNSSEC, mail, CNAME resolution, RDAP registration age, expiration, and domain trust signals.",
     input: { domain: "github.com" },
@@ -2765,6 +2775,56 @@ const PRODUCTS = [
         },
       },
       required: ["applicant_id"],
+    },
+  },
+  {
+    id: "agent-capability-security-preflight",
+    path: "/v1/x402/agent/capability-security-preflight",
+    price: "$0.100",
+    description:
+      "Bundle Agent Card, repository, package, domain, OpenAPI, and x402 endpoint preflight checks before an agent installs or delegates to a capability.",
+    input: {
+      target_type: "agent",
+      identifier: SERVICE_ORIGIN,
+      agent_card_url: SERVICE_ORIGIN,
+      github_owner: "cloudflare",
+      github_repo: "workers-sdk",
+      npm_package: "express",
+      npm_version: "latest",
+      domain: "github.com",
+      openapi_url: `${SERVICE_ORIGIN}/openapi.json`,
+      x402_url: `${SERVICE_ORIGIN}/v1/x402/base/alpha-risk`,
+    },
+    inputSchema: {
+      properties: {
+        target_type: {
+          type: "string",
+          enum: ["agent", "package", "repository", "api", "capability"],
+          description: "Capability type being evaluated.",
+        },
+        identifier: {
+          type: "string",
+          minLength: 1,
+          maxLength: 512,
+          description: "Human-readable package, repository, agent, API, or capability identifier.",
+        },
+        agent_card_url: { type: "string", pattern: "^https?://", maxLength: 2048 },
+        github_owner: {
+          type: "string",
+          pattern: "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$",
+        },
+        github_repo: { type: "string", pattern: "^[A-Za-z0-9._-]{1,100}$" },
+        npm_package: { type: "string", minLength: 1, maxLength: 214 },
+        npm_version: { type: "string", minLength: 1, maxLength: 80 },
+        domain: {
+          type: "string",
+          pattern:
+            "^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]{2,63}$",
+        },
+        openapi_url: { type: "string", pattern: "^https?://", maxLength: 2048 },
+        x402_url: { type: "string", pattern: "^https?://", maxLength: 2048 },
+      },
+      required: ["target_type", "identifier"],
     },
   },
 ];
@@ -7681,6 +7741,85 @@ export function shouldRecordX402PurchaseEvent({ method, status, paymentHeader })
   return Boolean(String(paymentHeader ?? "").trim());
 }
 
+function shortHashPrefix(hash, prefix) {
+  return hash ? `${prefix}_${hash.slice(0, 24)}` : null;
+}
+
+function extractPaymentMetadata(paymentHeader) {
+  const decoded = decodePaymentRequirement(paymentHeader) ?? {};
+  const payload = decoded.payload ?? decoded;
+  const authorization = decoded.authorization ?? payload.authorization ?? {};
+  const payerAddress =
+    authorization.from ??
+    authorization.payer ??
+    authorization.address ??
+    payload.from ??
+    payload.payer ??
+    null;
+  const paymentHash =
+    decoded.paymentHash ??
+    decoded.payment_hash ??
+    payload.paymentHash ??
+    payload.payment_hash ??
+    payload.txHash ??
+    payload.transactionHash ??
+    null;
+  return {
+    payer_address:
+      typeof payerAddress === "string" && ADDRESS_PATTERN.test(payerAddress)
+        ? payerAddress
+        : null,
+    payment_hash:
+      typeof paymentHash === "string" && /^0x[a-fA-F0-9]{64}$/.test(paymentHash)
+        ? paymentHash
+        : null,
+  };
+}
+
+function classifyInternalTest(c, userAgent) {
+  const value = [
+    c.req.header("x-openclaw-test"),
+    c.req.header("x-founder-test"),
+    c.req.header("x-ci-test"),
+    c.req.header("x-monitor-check"),
+    c.req.header("x-staging-traffic"),
+  ]
+    .find(item => String(item ?? "").trim())
+    ?.toLowerCase();
+  if (value?.includes("openclaw")) return "openclaw";
+  if (value?.includes("founder")) return "founder";
+  if (value?.includes("ci")) return "ci";
+  if (value?.includes("monitor") || /health|monitor|uptime/i.test(userAgent)) {
+    return "monitor";
+  }
+  if (value?.includes("staging") || c.req.header("cf-worker")?.includes("staging")) {
+    return "staging";
+  }
+  return "unknown";
+}
+
+async function latestSequenceIdForBuyer(db, buyerIdHash, purchasedAt) {
+  if (!buyerIdHash) return null;
+  const cutoff = new Date(Date.parse(purchasedAt) - 10 * 60_000).toISOString();
+  try {
+    const row = await db
+      .prepare(
+        `SELECT sequence_id
+         FROM x402_purchase_events
+         WHERE buyer_id_hash = ?
+           AND purchased_at >= ?
+           AND sequence_id IS NOT NULL
+         ORDER BY purchased_at DESC
+         LIMIT 1`,
+      )
+      .bind(buyerIdHash, cutoff)
+      .first();
+    return row?.sequence_id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function recordX402PurchaseEvent(db, c) {
   if (!db) return;
   const url = new URL(c.req.url);
@@ -7707,8 +7846,37 @@ async function recordX402PurchaseEvent(db, c) {
   const paymentHeaderHash = paymentHeader
     ? await sha256Hex(paymentHeader.slice(0, 4096))
     : null;
-  const userAgent = (c.req.header("user-agent") ?? "").slice(0, 240);
+  const paymentMetadata = extractPaymentMetadata(paymentHeader);
+  const userAgent = (c.req.header("user-agent") ?? "").slice(0, 500);
+  const userAgentHash = userAgent ? await sha256Hex(userAgent) : null;
   const country = (c.req.header("cf-ipcountry") ?? "").slice(0, 8);
+  const purchasedAt = new Date().toISOString();
+  const requestId =
+    c.req.header("x-request-id") ??
+    c.req.header("cf-ray") ??
+    url.searchParams.get("request_id") ??
+    null;
+  const buyerSeed =
+    paymentMetadata.payer_address ??
+    c.req.header("x-api-key-id") ??
+    paymentHeaderHash ??
+    null;
+  const buyerIdHash = buyerSeed ? await sha256Hex(`buyer:v1:${buyerSeed}`) : null;
+  const sequenceId =
+    (await latestSequenceIdForBuyer(db, buyerIdHash, purchasedAt)) ??
+    shortHashPrefix(await sha256Hex(`${buyerIdHash ?? paymentHeaderHash}:${purchasedAt}`), "seq");
+  const purchaseId = shortHashPrefix(
+    await sha256Hex(
+      `${product.id}:${paymentHeaderHash}:${requestId ?? ""}:${purchasedAt}`,
+    ),
+    "pur",
+  );
+  const price = product.price.replace("$", "");
+  const responseStatus = c.res?.status ?? null;
+  const decision = c.res?.headers?.get("x-signgate-decision") ?? null;
+  const latencyMs = parseNonNegativeInteger(c.res?.headers?.get("server-timing")?.match(/dur=([0-9]+)/)?.[1]);
+  const cacheStatus = c.res?.headers?.get("cf-cache-status") ?? c.res?.headers?.get("x-cache") ?? null;
+  const internalTest = classifyInternalTest(c, userAgent);
   const campaign = (
     url.searchParams.get("campaign") ??
     url.searchParams.get("utm_campaign") ??
@@ -7731,8 +7899,12 @@ async function recordX402PurchaseEvent(db, c) {
       `INSERT INTO x402_purchase_events
        (product_id, method, path, price_usdc, pay_to, payment_header_hash,
         user_agent, country, status, campaign, referrer, query_string_hash,
-        created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        created_at, purchase_id, purchased_at, operation_id, service_name,
+        pricing_version, quoted_price, paid_amount, currency, network,
+        payment_hash, payer_address, buyer_id_hash, request_id, sequence_id,
+        user_agent_hash, response_status, decision, latency_ms, cache_status,
+        internal_test)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       product.id,
@@ -7741,13 +7913,33 @@ async function recordX402PurchaseEvent(db, c) {
       productPriceNumber(product),
       PAY_TO,
       paymentHeaderHash,
-      userAgent || null,
+      null,
       country || null,
-      c.res?.status ?? null,
+      responseStatus,
       campaign || null,
       referrer || null,
       queryStringHash,
-      new Date().toISOString(),
+      purchasedAt,
+      purchaseId,
+      purchasedAt,
+      product.id,
+      productTitle(product),
+      PRICING_VERSION,
+      price,
+      price,
+      "USDC",
+      BASE_MAINNET,
+      paymentMetadata.payment_hash ?? paymentHeaderHash,
+      paymentMetadata.payer_address,
+      buyerIdHash,
+      requestId,
+      sequenceId,
+      userAgentHash,
+      responseStatus,
+      decision,
+      latencyMs,
+      cacheStatus,
+      internalTest,
     )
     .run();
 }
@@ -9245,6 +9437,194 @@ export async function domainTrustPreflight(domain, fetchImpl = fetch) {
     dns: { A: a, AAAA: aaaa, CNAME: cname, MX: mx, DNSKEY: dnskey },
     rdap: rdapResult,
     cnameTargetDns,
+  });
+}
+
+function bundleCheckStatus(result) {
+  const riskLevel = result?.assessment?.risk_level ?? result?.decision_support;
+  if (riskLevel === "high" || riskLevel === "DENY") return "fail";
+  if (riskLevel === "medium" || riskLevel === "REQUIRE_APPROVAL") return "warn";
+  return "pass";
+}
+
+function bundleReasonCodes(result, fallback) {
+  const flags = Array.isArray(result?.assessment?.flags)
+    ? result.assessment.flags
+    : [];
+  const codes = flags.map(flag => flag.code).filter(Boolean);
+  return codes.length ? codes : [fallback];
+}
+
+function summarizeBundleEvidence(result) {
+  return {
+    product: result?.product ?? null,
+    risk_level: result?.assessment?.risk_level ?? null,
+    risk_score: result?.assessment?.risk_score ?? null,
+    fingerprint_sha256: result?.fingerprint_sha256 ?? null,
+    resolved_version: result?.resolved_version ?? null,
+    repository: result?.repository
+      ? {
+          full_name: result.repository.full_name ?? null,
+          archived: result.repository.archived ?? null,
+          pushed_at: result.repository.pushed_at ?? null,
+        }
+      : null,
+    domain: result?.domain ?? null,
+    agent: result?.agent
+      ? {
+          name: result.agent.name ?? null,
+          url: result.agent.url ?? null,
+          skill_count: result.agent.skill_count ?? null,
+        }
+      : null,
+    x402: result?.x402
+      ? {
+          version: result.x402.version ?? null,
+          accepts: (result.x402.accepts ?? []).map(accept => ({
+            scheme: accept.scheme ?? null,
+            network: accept.network ?? null,
+            amount_usdc: accept.amount_usdc ?? null,
+          })),
+        }
+      : null,
+  };
+}
+
+function bundleUnavailable(check, reasonCode, evidence = {}) {
+  return {
+    check,
+    status: "unavailable",
+    reason_codes: [reasonCode],
+    evidence,
+  };
+}
+
+export function buildAgentCapabilitySecurityPreflight({
+  target,
+  checks,
+  generatedAt = new Date().toISOString(),
+}) {
+  const normalizedChecks = checks.map(check => ({
+    check: check.check,
+    status: check.status,
+    reason_codes: check.reason_codes ?? [],
+    evidence: check.evidence ?? {},
+  }));
+  const summary = normalizedChecks.reduce(
+    (acc, check) => {
+      if (check.status === "pass") acc.passed += 1;
+      if (check.status === "warn") acc.warned += 1;
+      if (check.status === "fail") acc.failed += 1;
+      if (check.status === "unavailable") acc.unavailable += 1;
+      return acc;
+    },
+    { passed: 0, warned: 0, failed: 0, unavailable: 0 },
+  );
+  const reasonCodes = [
+    ...new Set(normalizedChecks.flatMap(check => check.reason_codes)),
+  ];
+  const decision =
+    summary.failed > 0
+      ? "DENY"
+      : summary.warned > 0 || summary.unavailable > 0
+        ? "REVIEW"
+        : "ALLOW";
+  return {
+    decision,
+    decision_id: `cap_${generatedAt.replace(/[^0-9]/g, "").slice(0, 14)}_${Math.abs(
+      JSON.stringify({ target, reasonCodes }).split("").reduce((sum, char) => sum + char.charCodeAt(0), 0),
+    ).toString(36)}`,
+    policy_version: "agent-capability-security-v1",
+    pricing_version: PRICING_VERSION,
+    target,
+    checks: normalizedChecks,
+    summary,
+    reason_codes: reasonCodes.length ? reasonCodes : ["CAPABILITY_SECURITY_CLEAR"],
+    generated_at: generatedAt,
+  };
+}
+
+async function capabilityCheck(check, runner) {
+  try {
+    const result = await runner();
+    const status = bundleCheckStatus(result);
+    return {
+      check,
+      status,
+      reason_codes: bundleReasonCodes(result, `${check.toUpperCase()}_${status.toUpperCase()}`),
+      evidence: summarizeBundleEvidence(result),
+    };
+  } catch (error) {
+    return bundleUnavailable(check, `${check.toUpperCase()}_UNAVAILABLE`, {
+      reason: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+async function agentCapabilitySecurityPreflight(input, fetchImpl = fetch) {
+  const checks = [];
+  if (input.agent_card_url) {
+    checks.push(
+      await capabilityCheck("agent_card", () =>
+        a2aAgentCardPreflight(input.agent_card_url, fetchImpl),
+      ),
+    );
+  } else {
+    checks.push(bundleUnavailable("agent_card", "AGENT_CARD_URL_MISSING"));
+  }
+  if (input.github_owner && input.github_repo) {
+    checks.push(
+      await capabilityCheck("github_repository_health", () =>
+        githubRepositoryHealth(input.github_owner, input.github_repo, undefined, fetchImpl),
+      ),
+    );
+  } else {
+    checks.push(
+      bundleUnavailable("github_repository_health", "GITHUB_REPOSITORY_INPUT_MISSING"),
+    );
+  }
+  if (input.npm_package) {
+    checks.push(
+      await capabilityCheck("npm_package_preflight", () =>
+        npmPackagePreflight(input.npm_package, input.npm_version || "latest", fetchImpl),
+      ),
+    );
+  } else {
+    checks.push(bundleUnavailable("npm_package_preflight", "NPM_PACKAGE_INPUT_MISSING"));
+  }
+  if (input.domain) {
+    checks.push(
+      await capabilityCheck("domain_trust", () =>
+        domainTrustPreflight(input.domain, fetchImpl),
+      ),
+    );
+  } else {
+    checks.push(bundleUnavailable("domain_trust", "DOMAIN_INPUT_MISSING"));
+  }
+  if (input.openapi_url) {
+    checks.push(
+      await capabilityCheck("openapi_spec", () =>
+        openApiSpecPreflight(input.openapi_url, fetchImpl),
+      ),
+    );
+  } else {
+    checks.push(bundleUnavailable("openapi_spec", "OPENAPI_URL_MISSING"));
+  }
+  if (input.x402_url) {
+    checks.push(
+      await capabilityCheck("x402_endpoint", () =>
+        x402EndpointPreflight(input.x402_url, fetchImpl),
+      ),
+    );
+  } else {
+    checks.push(bundleUnavailable("x402_endpoint", "X402_URL_MISSING"));
+  }
+  return buildAgentCapabilitySecurityPreflight({
+    target: {
+      type: input.target_type,
+      identifier: input.identifier,
+    },
+    checks,
   });
 }
 
@@ -11739,8 +12119,10 @@ function openApi(origin) {
         ),
         security: [],
         "x-payment-protocol": "x402",
+        "x-pricing-version": PRICING_VERSION,
         "x-price-usdc": product.price,
         "x-payment-info": {
+          pricing_version: PRICING_VERSION,
           price: {
             mode: "fixed",
             currency: "USD",
@@ -11770,8 +12152,10 @@ function openApi(origin) {
       },
     },
     "x-payment-protocol": "x402",
+    "x-pricing-version": PRICING_VERSION,
     "x-price-usdc": PRODUCTS[25].price,
     "x-payment-info": {
+      pricing_version: PRICING_VERSION,
       price: {
         mode: "fixed",
         currency: "USD",
@@ -11888,8 +12272,10 @@ function openApi(origin) {
         },
       },
       "x-payment-protocol": "x402",
+      "x-pricing-version": PRICING_VERSION,
       "x-price-usdc": PRODUCTS[25].price,
       "x-payment-info": {
+        pricing_version: PRICING_VERSION,
         price: {
           mode: "fixed",
           currency: "USD",
@@ -12129,6 +12515,7 @@ function serviceManifest(origin) {
     authentication: { type: "x402", network: BASE_MAINNET },
     facilitator: FACILITATOR,
     payment_recipient: PAY_TO,
+    pricing_version: PRICING_VERSION,
     main_product: {
       id: PRODUCTS_BY_ID["agent-payment-risk-gateway"].id,
       path: PRODUCTS_BY_ID["agent-payment-risk-gateway"].path,
@@ -12219,6 +12606,7 @@ function serviceManifest(origin) {
         method: "GET",
         path: product.path,
         price_usdc: product.price,
+        pricing_version: PRICING_VERSION,
         description: product.description,
       })),
   };
@@ -12251,6 +12639,7 @@ function buyerCatalogProduct(origin, product) {
     method: "GET",
     path: product.path,
     price_usdc: product.price,
+    pricing_version: PRICING_VERSION,
     ai_should_buy_when: metadata.when_to_buy,
     returns: metadata.returns,
     price_reason: metadata.price_reason,
@@ -12294,6 +12683,7 @@ function buyerCatalog(origin) {
     service_manifest_url: `${origin}/.well-known/service.json`,
     product_families: PRODUCTS.length,
     paid_operations_observed_on_x402scan: PRODUCTS.length + 2,
+    pricing_version: PRICING_VERSION,
     paid_operations_note:
       "x402scan counts paid OpenAPI operations. Product families count GET products; the extra paid operations are Payment Guard JSON evaluation and policy creation.",
     groups: CATALOG_GROUPS.map(group => ({
@@ -12414,6 +12804,7 @@ function paidDiscoveryOperations(origin) {
       path: product.path,
       url: `${origin}${product.path}`,
       price_usdc: product.price,
+      pricing_version: PRICING_VERSION,
       group: metadata.group,
       description: product.description,
       required_inputs: product.inputSchema.required ?? [],
@@ -12430,6 +12821,7 @@ function paidDiscoveryOperations(origin) {
       path: guardProduct.path,
       url: `${origin}${guardProduct.path}`,
       price_usdc: guardProduct.price,
+      pricing_version: PRICING_VERSION,
       group: "x402-payment-safety",
       description:
         "Evaluate an agent payment with a JSON request body and return an auditable ALLOW/REVIEW/BLOCK decision.",
@@ -12442,6 +12834,7 @@ function paidDiscoveryOperations(origin) {
       path: PAYMENT_GUARD_POLICY_PATH,
       url: `${origin}${PAYMENT_GUARD_POLICY_PATH}`,
       price_usdc: guardProduct.price,
+      pricing_version: PRICING_VERSION,
       group: "x402-payment-safety",
       description:
         "Create an owner-controlled Payment Guard policy profile for budget, approval, and signer controls.",
@@ -12500,6 +12893,7 @@ function registry(origin) {
     x402_network: BASE_MAINNET,
     facilitator: FACILITATOR,
     payment_recipient: PAY_TO,
+    pricing_version: PRICING_VERSION,
     counts: {
       product_families: PRODUCTS.length,
       paid_operations: operations.length,
@@ -12568,6 +12962,7 @@ function x402WellKnown(origin) {
       method: operation.method,
       resource: operation.url,
       price_usdc: operation.price_usdc,
+      pricing_version: operation.pricing_version,
       group: operation.group,
     })),
     openapi: `${origin}/openapi.json`,
@@ -13847,6 +14242,56 @@ function createPaidApp() {
         502,
       );
     }
+  });
+
+  app.get(PRODUCTS_BY_ID["agent-capability-security-preflight"].path, async c => {
+    const input = {
+      target_type: c.req.query("target_type") ?? "capability",
+      identifier: c.req.query("identifier") ?? "",
+      agent_card_url: c.req.query("agent_card_url") ?? c.req.query("agent_url") ?? "",
+      github_owner: c.req.query("github_owner") ?? "",
+      github_repo: c.req.query("github_repo") ?? "",
+      npm_package: c.req.query("npm_package") ?? "",
+      npm_version: c.req.query("npm_version") ?? "latest",
+      domain: (c.req.query("domain") ?? "").toLowerCase().replace(/\.$/, ""),
+      openapi_url: c.req.query("openapi_url") ?? "",
+      x402_url: c.req.query("x402_url") ?? "",
+    };
+    if (
+      !["agent", "package", "repository", "api", "capability"].includes(
+        input.target_type,
+      ) ||
+      !input.identifier ||
+      input.identifier.length > 512
+    ) {
+      return c.json({ error: "invalid_agent_capability_security_input" }, 400);
+    }
+    for (const urlValue of [
+      input.agent_card_url,
+      input.openapi_url,
+      input.x402_url,
+    ].filter(Boolean)) {
+      try {
+        validatePublicUrl(urlValue);
+      } catch (error) {
+        return c.json(
+          {
+            error: "invalid_agent_capability_security_url",
+            message: error instanceof Error ? error.message : String(error),
+          },
+          400,
+        );
+      }
+    }
+    if (
+      (input.github_owner && !GITHUB_OWNER_PATTERN.test(input.github_owner)) ||
+      (input.github_repo && !GITHUB_REPO_PATTERN.test(input.github_repo)) ||
+      (input.npm_package && !NPM_PACKAGE_PATTERN.test(input.npm_package)) ||
+      (input.domain && !DOMAIN_PATTERN.test(input.domain))
+    ) {
+      return c.json({ error: "invalid_agent_capability_security_target" }, 400);
+    }
+    return c.json(await agentCapabilitySecurityPreflight(input));
   });
 
   app.get(PRODUCTS[25].path, async c => {
@@ -15350,107 +15795,234 @@ function createPaidApp() {
 }
 
 function adminAuthorized(request, env) {
-  const token = env?.ADMIN_DASHBOARD_TOKEN;
+  const token = env?.ADMIN_DASHBOARD_TOKEN_V2;
   if (!token) return false;
-  const url = new URL(request.url);
   const bearer = request.headers.get("authorization") ?? "";
-  const supplied =
-    bearer.toLowerCase().startsWith("bearer ")
-      ? bearer.slice(7)
-      : url.searchParams.get("token") ?? "";
+  const supplied = bearer.toLowerCase().startsWith("bearer ")
+    ? bearer.slice(7)
+    : "";
   return supplied === token;
 }
 
-async function purchaseDashboardData(db) {
+function adminSecurityHeaders(extra = {}) {
+  return {
+    "cache-control": "no-store",
+    "content-security-policy":
+      "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+    "x-robots-tag": "noindex, nofollow",
+    "referrer-policy": "no-referrer",
+    ...extra,
+  };
+}
+
+function purchaseDashboardFilters(searchParams = new URLSearchParams()) {
+  return {
+    from: searchParams.get("from") || null,
+    to: searchParams.get("to") || null,
+    operation: searchParams.get("operation") || null,
+    pricing_version: searchParams.get("pricing_version") || null,
+    buyer: searchParams.get("buyer") || null,
+    payment_status: searchParams.get("payment_status") || null,
+    decision: searchParams.get("decision") || null,
+    internal_only: searchParams.get("internal_only") === "true",
+    external_only: searchParams.get("external_only") === "true",
+  };
+}
+
+function purchaseWhereClause(filters, baseClause) {
+  const clauses = [baseClause];
+  const binds = [];
+  if (filters.from) {
+    clauses.push("COALESCE(purchased_at, created_at) >= ?");
+    binds.push(filters.from);
+  }
+  if (filters.to) {
+    clauses.push("COALESCE(purchased_at, created_at) <= ?");
+    binds.push(filters.to);
+  }
+  if (filters.operation) {
+    clauses.push("COALESCE(operation_id, product_id) = ?");
+    binds.push(filters.operation);
+  }
+  if (filters.pricing_version) {
+    clauses.push("pricing_version = ?");
+    binds.push(filters.pricing_version);
+  }
+  if (filters.buyer) {
+    clauses.push("(buyer_id_hash = ? OR payer_address = ?)");
+    binds.push(filters.buyer, filters.buyer);
+  }
+  if (filters.payment_status) {
+    clauses.push("status = ?");
+    binds.push(Number(filters.payment_status));
+  }
+  if (filters.decision) {
+    clauses.push("decision = ?");
+    binds.push(filters.decision);
+  }
+  if (filters.internal_only) {
+    clauses.push("internal_test IS NOT NULL AND internal_test != 'unknown'");
+  }
+  if (filters.external_only) {
+    clauses.push("(internal_test IS NULL OR internal_test = 'unknown')");
+  }
+  return { where: clauses.join(" AND "), binds };
+}
+
+function bindAll(statement, values) {
+  return values.length ? statement.bind(...values) : statement;
+}
+
+async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
   if (!db) throw new Error("purchase_db_unavailable");
+  const filters = purchaseDashboardFilters(searchParams);
   const payablePurchaseWhere =
     "payment_header_hash IS NOT NULL AND method NOT IN ('HEAD', 'OPTIONS')";
   const probeWhere =
     "payment_header_hash IS NULL OR method IN ('HEAD', 'OPTIONS')";
+  const payable = purchaseWhereClause(filters, payablePurchaseWhere);
+  const probes = purchaseWhereClause(filters, probeWhere);
   const [
     totals,
     routeProbes,
-    byProduct,
-    byCampaign,
+    mostPurchased,
+    highestRevenue,
+    byPricingVersion,
+    workflows,
     recent,
     recentProbes,
     legacyAggregates,
   ] = await Promise.all([
-    db
-      .prepare(
+    bindAll(
+      db.prepare(
         `SELECT
            COUNT(*) AS purchase_count,
-           COALESCE(SUM(price_usdc), 0) AS gross_usd,
-           MAX(created_at) AS last_seen_at
+           SUM(CASE WHEN internal_test IS NULL OR internal_test = 'unknown' THEN 1 ELSE 0 END) AS external_purchase_count,
+           SUM(CASE WHEN internal_test IS NOT NULL AND internal_test != 'unknown' THEN 1 ELSE 0 END) AS internal_purchase_count,
+           COUNT(DISTINCT buyer_id_hash) AS unique_buyers,
+           COALESCE(SUM(CAST(COALESCE(paid_amount, price_usdc) AS REAL)), 0) AS gross_usd,
+           COALESCE(AVG(CAST(COALESCE(paid_amount, price_usdc) AS REAL)), 0) AS avg_purchase_usd,
+           MAX(COALESCE(purchased_at, created_at)) AS last_seen_at
          FROM x402_purchase_events
-         WHERE ${payablePurchaseWhere}`,
-      )
-      .first(),
-    db
-      .prepare(
+         WHERE ${payable.where}`,
+      ),
+      payable.binds,
+    ).first(),
+    bindAll(
+      db.prepare(
         `SELECT
            COUNT(*) AS probe_count,
            COALESCE(SUM(price_usdc), 0) AS nominal_price_usd,
-           MAX(created_at) AS last_seen_at
+           MAX(COALESCE(purchased_at, created_at)) AS last_seen_at
          FROM x402_purchase_events
-         WHERE ${probeWhere}`,
-      )
-      .first(),
-    db
-      .prepare(
+         WHERE ${probes.where}`,
+      ),
+      probes.binds,
+    ).first(),
+    bindAll(
+      db.prepare(
         `SELECT
-           product_id,
+           COALESCE(operation_id, product_id) AS operation,
            path,
-           campaign,
            COUNT(*) AS purchase_count,
-           COALESCE(SUM(price_usdc), 0) AS gross_usd,
-           MAX(created_at) AS last_seen_at
+           COUNT(DISTINCT buyer_id_hash) AS unique_buyers,
+           COALESCE(SUM(CAST(COALESCE(paid_amount, price_usdc) AS REAL)), 0) AS revenue,
+           COALESCE(AVG(CAST(COALESCE(paid_amount, price_usdc) AS REAL)), 0) AS average_paid_amount,
+           MAX(COALESCE(purchased_at, created_at)) AS latest_purchase,
+           SUM(CASE WHEN internal_test IS NOT NULL AND internal_test != 'unknown' THEN 1 ELSE 0 END) AS internal_test_count
          FROM x402_purchase_events
-         WHERE ${payablePurchaseWhere}
-         GROUP BY product_id, path, campaign
-         ORDER BY purchase_count DESC, gross_usd DESC, last_seen_at DESC
+         WHERE ${payable.where}
+         GROUP BY COALESCE(operation_id, product_id), path
+         ORDER BY purchase_count DESC, revenue DESC, latest_purchase DESC
          LIMIT 100`,
-      )
-      .all(),
-    db
-      .prepare(
+      ),
+      payable.binds,
+    ).all(),
+    bindAll(
+      db.prepare(
         `SELECT
-           COALESCE(campaign, '(none)') AS campaign,
+           COALESCE(operation_id, product_id) AS operation,
            COUNT(*) AS purchase_count,
-           COALESCE(SUM(price_usdc), 0) AS gross_usd,
-           COUNT(DISTINCT product_id) AS product_count,
-           MAX(created_at) AS last_seen_at
+           COUNT(DISTINCT buyer_id_hash) AS unique_buyers,
+           COALESCE(SUM(CAST(COALESCE(paid_amount, price_usdc) AS REAL)), 0) AS revenue,
+           COALESCE(AVG(CAST(COALESCE(paid_amount, price_usdc) AS REAL)), 0) AS average_paid_amount,
+           MAX(COALESCE(purchased_at, created_at)) AS latest_purchase,
+           SUM(CASE WHEN internal_test IS NOT NULL AND internal_test != 'unknown' THEN 1 ELSE 0 END) AS internal_test_count
          FROM x402_purchase_events
-         WHERE ${payablePurchaseWhere}
-         GROUP BY COALESCE(campaign, '(none)')
-         ORDER BY purchase_count DESC, gross_usd DESC, last_seen_at DESC
+         WHERE ${payable.where}
+         GROUP BY COALESCE(operation_id, product_id)
+         ORDER BY revenue DESC, purchase_count DESC, latest_purchase DESC
          LIMIT 50`,
-      )
-      .all(),
-    db
-      .prepare(
+      ),
+      payable.binds,
+    ).all(),
+    bindAll(
+      db.prepare(
         `SELECT
-           created_at,
-           product_id,
+           COALESCE(pricing_version, 'legacy') AS pricing_version,
+           COUNT(*) AS purchase_count,
+           COALESCE(SUM(CAST(COALESCE(paid_amount, price_usdc) AS REAL)), 0) AS revenue
+         FROM x402_purchase_events
+         WHERE ${payable.where}
+         GROUP BY COALESCE(pricing_version, 'legacy')
+         ORDER BY purchase_count DESC, revenue DESC`,
+      ),
+      payable.binds,
+    ).all(),
+    bindAll(
+      db.prepare(
+        `SELECT
+           sequence_id,
+           GROUP_CONCAT(COALESCE(operation_id, product_id), ' -> ') AS sequence,
+           COUNT(*) AS purchase_count,
+           COUNT(DISTINCT buyer_id_hash) AS unique_buyers,
+           COALESCE(SUM(CAST(COALESCE(paid_amount, price_usdc) AS REAL)), 0) AS separate_purchase_total,
+           SUM(CASE WHEN COALESCE(operation_id, product_id) = 'agent-capability-security-preflight' THEN 1 ELSE 0 END) AS bundle_purchase_count
+         FROM x402_purchase_events
+         WHERE ${payable.where} AND sequence_id IS NOT NULL
+         GROUP BY sequence_id
+         HAVING COUNT(*) > 1
+         ORDER BY purchase_count DESC, separate_purchase_total DESC
+         LIMIT 50`,
+      ),
+      payable.binds,
+    ).all(),
+    bindAll(
+      db.prepare(
+        `SELECT
+           COALESCE(purchased_at, created_at) AS purchased_at,
+           purchase_id,
+           COALESCE(operation_id, product_id) AS operation_id,
+           service_name,
            method,
            path,
-           price_usdc,
-           status,
+           COALESCE(quoted_price, price_usdc) AS quoted_price,
+           COALESCE(paid_amount, price_usdc) AS paid_amount,
+           pricing_version,
+           currency,
+           network,
+           payment_hash,
+           CASE WHEN payer_address IS NULL THEN NULL ELSE substr(payer_address, 1, 6) || '...' || substr(payer_address, -4) END AS payer_address_short,
+           buyer_id_hash,
+           response_status,
+           decision,
+           internal_test,
            country,
            campaign,
            referrer,
-           payment_header_hash
+           user_agent_hash
        FROM x402_purchase_events
-       WHERE ${payablePurchaseWhere}
-       ORDER BY created_at DESC
+       WHERE ${payable.where}
+       ORDER BY COALESCE(purchased_at, created_at) DESC
        LIMIT 100`,
-      )
-      .all(),
-    db
-      .prepare(
+      ),
+      payable.binds,
+    ).all(),
+    bindAll(
+      db.prepare(
         `SELECT
-           created_at,
-           product_id,
+           COALESCE(purchased_at, created_at) AS created_at,
+           COALESCE(operation_id, product_id) AS product_id,
            method,
            path,
            price_usdc,
@@ -15459,11 +16031,12 @@ async function purchaseDashboardData(db) {
            campaign,
            payment_header_hash
        FROM x402_purchase_events
-       WHERE ${probeWhere}
-       ORDER BY created_at DESC
+       WHERE ${probes.where}
+       ORDER BY COALESCE(purchased_at, created_at) DESC
        LIMIT 100`,
-      )
-      .all(),
+      ),
+      probes.binds,
+    ).all(),
     db
       .prepare(
         `SELECT
@@ -15484,12 +16057,28 @@ async function purchaseDashboardData(db) {
       .all(),
   ]);
   return {
-    schema_version: "1.0",
+    schema_version: "2.0",
+    pricing_version: PRICING_VERSION,
     generated_at: new Date().toISOString(),
+    filters,
     totals,
     route_probes: routeProbes,
-    by_product: byProduct.results ?? [],
-    by_campaign: byCampaign.results ?? [],
+    most_purchased_services: mostPurchased.results ?? [],
+    highest_revenue_services: highestRevenue.results ?? [],
+    revenue_by_service: highestRevenue.results ?? [],
+    purchases_by_service: mostPurchased.results ?? [],
+    purchases_by_pricing_version: byPricingVersion.results ?? [],
+    repeated_workflows: (workflows.results ?? []).map(row => ({
+      ...row,
+      bundle_replacement_count:
+        String(row.sequence ?? "").includes("a2a-agent-card-preflight") &&
+        String(row.sequence ?? "").includes("github-repository-health") &&
+        String(row.sequence ?? "").includes("npm-package-preflight")
+          ? Number(row.unique_buyers ?? 0)
+          : 0,
+      bundle_price: PRODUCTS_BY_ID["agent-capability-security-preflight"].price,
+    })),
+    bundle_conversion_rate: null,
     recent: recent.results ?? [],
     recent_probes: recentProbes.results ?? [],
     legacy_aggregates: legacyAggregates.results ?? [],
@@ -15507,6 +16096,10 @@ function escapeHtml(value) {
 function purchaseDashboardHtml(data) {
   const totalCount = Number(data.totals?.purchase_count ?? 0);
   const gross = Number(data.totals?.gross_usd ?? 0).toFixed(3);
+  const externalCount = Number(data.totals?.external_purchase_count ?? 0);
+  const internalCount = Number(data.totals?.internal_purchase_count ?? 0);
+  const uniqueBuyers = Number(data.totals?.unique_buyers ?? 0);
+  const avgRevenue = Number(data.totals?.avg_purchase_usd ?? 0).toFixed(3);
   const probeCount = Number(data.route_probes?.probe_count ?? 0);
   const probeNominal = Number(data.route_probes?.nominal_price_usd ?? 0).toFixed(3);
   const legacy30 =
@@ -15525,19 +16118,29 @@ function purchaseDashboardHtml(data) {
     legacy30?.latest_block_timestamp ??
     legacyAll?.latest_block_timestamp ??
     "none";
-  const rows = data.by_product
+  const rows = data.most_purchased_services
     .map(
-      row => `<tr><td>${escapeHtml(row.product_id)}</td><td><code>${escapeHtml(row.path)}</code></td><td>${escapeHtml(row.campaign ?? "")}</td><td>${row.purchase_count}</td><td>$${Number(row.gross_usd ?? 0).toFixed(3)}</td><td>${escapeHtml(row.last_seen_at)}</td></tr>`,
+      row => `<tr><td>${escapeHtml(row.operation)}</td><td>${row.purchase_count}</td><td>${row.unique_buyers}</td><td>$${Number(row.revenue ?? 0).toFixed(3)}</td><td>$${Number(row.average_paid_amount ?? 0).toFixed(3)}</td><td>${escapeHtml(row.latest_purchase)}</td><td>${row.internal_test_count}</td></tr>`,
+    )
+    .join("");
+  const revenueRows = data.highest_revenue_services
+    .map(
+      row => `<tr><td>${escapeHtml(row.operation)}</td><td>$${Number(row.revenue ?? 0).toFixed(3)}</td><td>${row.purchase_count}</td><td>${row.unique_buyers}</td><td>$${Number(row.average_paid_amount ?? 0).toFixed(3)}</td><td>${escapeHtml(row.latest_purchase)}</td></tr>`,
+    )
+    .join("");
+  const pricingRows = data.purchases_by_pricing_version
+    .map(
+      row => `<tr><td>${escapeHtml(row.pricing_version)}</td><td>${row.purchase_count}</td><td>$${Number(row.revenue ?? 0).toFixed(3)}</td></tr>`,
+    )
+    .join("");
+  const workflowRows = data.repeated_workflows
+    .map(
+      row => `<tr><td><code>${escapeHtml(row.sequence)}</code></td><td>${row.purchase_count}</td><td>${row.unique_buyers}</td><td>${row.bundle_replacement_count}</td><td>$${Number(row.separate_purchase_total ?? 0).toFixed(3)}</td><td>${escapeHtml(row.bundle_price)}</td></tr>`,
     )
     .join("");
   const recentRows = data.recent
     .map(
-      row => `<tr><td>${escapeHtml(row.created_at)}</td><td>${escapeHtml(row.product_id)}</td><td><code>${escapeHtml(row.path)}</code></td><td>$${Number(row.price_usdc ?? 0).toFixed(3)}</td><td>${escapeHtml(row.campaign ?? "")}</td><td>${escapeHtml(row.country)}</td><td><code>${escapeHtml(String(row.payment_header_hash ?? "").slice(0, 16))}</code></td></tr>`,
-    )
-    .join("");
-  const campaignRows = data.by_campaign
-    .map(
-      row => `<tr><td>${escapeHtml(row.campaign)}</td><td>${row.purchase_count}</td><td>${row.product_count}</td><td>$${Number(row.gross_usd ?? 0).toFixed(3)}</td><td>${escapeHtml(row.last_seen_at)}</td></tr>`,
+      row => `<tr><td>${escapeHtml(row.purchased_at)}</td><td>${escapeHtml(row.operation_id)}</td><td><code>${escapeHtml(row.path)}</code></td><td>$${Number(row.paid_amount ?? 0).toFixed(3)}</td><td>${escapeHtml(row.pricing_version ?? "legacy")}</td><td>${escapeHtml(row.payer_address_short ?? "")}</td><td><code>${escapeHtml(String(row.buyer_id_hash ?? "").slice(0, 16))}</code></td><td>${escapeHtml(row.internal_test ?? "unknown")}</td></tr>`,
     )
     .join("");
   const probeRows = data.recent_probes
@@ -15579,17 +16182,25 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
 <section class="stats">
 <div class="stat"><div class="label">Attributed Paid Calls</div><div class="value">${totalCount}</div></div>
 <div class="stat"><div class="label">Attributed Gross USD</div><div class="value">$${gross}</div></div>
+<div class="stat"><div class="label">External Purchases</div><div class="value">${externalCount}</div></div>
+<div class="stat"><div class="label">Internal/Test Purchases</div><div class="value">${internalCount}</div></div>
+<div class="stat"><div class="label">Unique Buyers</div><div class="value">${uniqueBuyers}</div></div>
+<div class="stat"><div class="label">Average Revenue</div><div class="value">$${avgRevenue}</div></div>
 <div class="stat"><div class="label">Route Probes</div><div class="value">${probeCount}</div><div class="muted">Nominal list price: $${probeNominal}</div></div>
 <div class="stat"><div class="label">x402scan 30d Txns</div><div class="value">${chainTransactions}</div></div>
 <div class="stat"><div class="label">x402scan 30d Volume</div><div class="value">$${chainVolume}</div></div>
 <div class="stat"><div class="label">Latest Chain Payment</div><div class="value" style="font-size:16px">${escapeHtml(latestChainPayment)}</div></div>
 </section>
-<h2>Attributed Paid Calls by Product</h2>
-<table><thead><tr><th>Product</th><th>Path</th><th>Campaign</th><th>Count</th><th>Gross</th><th>Last Seen</th></tr></thead><tbody>${rows || '<tr><td colspan="6">No purchases recorded yet.</td></tr>'}</tbody></table>
-<h2>Attributed Paid Calls by Campaign</h2>
-<table><thead><tr><th>Campaign</th><th>Purchases</th><th>Products</th><th>Gross</th><th>Last Seen</th></tr></thead><tbody>${campaignRows || '<tr><td colspan="5">No campaign purchases recorded yet.</td></tr>'}</tbody></table>
+<h2>Most Purchased Services</h2>
+<table><thead><tr><th>Operation</th><th>Purchases</th><th>Unique Buyers</th><th>Revenue</th><th>Average Paid</th><th>Latest Purchase</th><th>Internal/Test</th></tr></thead><tbody>${rows || '<tr><td colspan="7">No purchases recorded yet.</td></tr>'}</tbody></table>
+<h2>Highest Revenue Services</h2>
+<table><thead><tr><th>Operation</th><th>Revenue</th><th>Purchases</th><th>Unique Buyers</th><th>Average Paid</th><th>Latest Purchase</th></tr></thead><tbody>${revenueRows || '<tr><td colspan="6">No purchases recorded yet.</td></tr>'}</tbody></table>
+<h2>Purchases by Pricing Version</h2>
+<table><thead><tr><th>Pricing Version</th><th>Purchases</th><th>Revenue</th></tr></thead><tbody>${pricingRows || '<tr><td colspan="3">No purchases recorded yet.</td></tr>'}</tbody></table>
+<h2>Repeated Workflows</h2>
+<table><thead><tr><th>Sequence</th><th>Sequence Count</th><th>Unique Buyers</th><th>Bundle Replaceable</th><th>Separate Total</th><th>Bundle Price</th></tr></thead><tbody>${workflowRows || '<tr><td colspan="6">No repeated workflows recorded yet.</td></tr>'}</tbody></table>
 <h2>Recent Attributed Paid Calls</h2>
-<table><thead><tr><th>Time</th><th>Product</th><th>Path</th><th>Price</th><th>Campaign</th><th>Country</th><th>Payment Hash</th></tr></thead><tbody>${recentRows || '<tr><td colspan="7">No purchases recorded yet.</td></tr>'}</tbody></table>
+<table><thead><tr><th>Time</th><th>Operation</th><th>Path</th><th>Paid</th><th>Pricing Version</th><th>Payer</th><th>Buyer Hash</th><th>Internal/Test</th></tr></thead><tbody>${recentRows || '<tr><td colspan="8">No purchases recorded yet.</td></tr>'}</tbody></table>
 <h2>Recent Route Probes / Discovery Calls</h2>
 <p class="muted">These are successful HEAD/OPTIONS/discovery executions or calls without payment evidence. They are useful for x402scan registration and route interest, but they are not revenue.</p>
 <table><thead><tr><th>Time</th><th>Product</th><th>Method</th><th>Path</th><th>List Price</th><th>Country</th><th>Status</th></tr></thead><tbody>${probeRows || '<tr><td colspan="7">No route probes recorded yet.</td></tr>'}</tbody></table>
@@ -15951,18 +16562,21 @@ export default {
       url.pathname === "/admin/purchases.json"
     ) {
       if (!adminAuthorized(request, env)) {
-        response = json({ error: "not_found" }, 404);
+        response = json(
+          { error: "admin_unauthorized" },
+          request.headers.get("authorization") ? 403 : 401,
+          adminSecurityHeaders({ "www-authenticate": "Bearer" }),
+        );
       } else {
         try {
-          const data = await purchaseDashboardData(env.GUARD_DB);
+          const data = await purchaseDashboardData(env.GUARD_DB, url.searchParams);
           response =
             url.pathname.endsWith(".json")
-              ? json(data, 200, { "cache-control": "no-store" })
+              ? json(data, 200, adminSecurityHeaders())
               : new Response(purchaseDashboardHtml(data), {
-                  headers: {
+                  headers: adminSecurityHeaders({
                     "content-type": "text/html; charset=utf-8",
-                    "cache-control": "no-store",
-                  },
+                  }),
                 });
         } catch (error) {
           response = json(
@@ -15971,6 +16585,7 @@ export default {
               message: error instanceof Error ? error.message : String(error),
             },
             500,
+            adminSecurityHeaders(),
           );
         }
       }

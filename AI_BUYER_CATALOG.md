@@ -152,17 +152,17 @@ domains, or mismatched agent endpoints appear.
 Use these when the buyer needs to decide whether an AI agent, wallet, VASP, or
 backend should interact with a Base address, token, contract, or counterparty.
 
-- `base-address-preflight` — 0.02 USDC: first-line address risk and identity
+- `base-address-preflight` — 0.075 USDC: first-line address risk and identity
   check before payment, onboarding, allowlisting, or routing.
-- `base-token-preflight` — 0.02 USDC: token contract, reputation, holder, and
+- `base-token-preflight` — 0.075 USDC: token contract, reputation, holder, and
   DEX liquidity check before trading.
-- `base-wallet-activity-delta` — 0.01 USDC: recent wallet movement since a
+- `base-wallet-activity-delta` — 0.030 USDC: recent wallet movement since a
   known timestamp.
 - `base-approval-risk` — 0.005 USDC: live allowance check for unlimited or
   unusually large approvals.
 - `base-contract-verification` — 0.005 USDC: source verification, compiler,
   proxy, and implementation check.
-- `base-wallet-counterparty` — 0.005 USDC: ranked counterparties from recent
+- `base-wallet-counterparty` — 0.020 USDC: ranked counterparties from recent
   wallet activity.
 - `base-event-log-monitor` — 0.003 USDC: decoded event logs after a known Base
   block.
@@ -174,16 +174,16 @@ backend should interact with a Base address, token, contract, or counterparty.
 Use these when an autonomous buyer needs to verify x402 merchants, payment
 requirements, proof of payment, or seller reputation before or after spending.
 
-- `agent-buyer-identity-preflight` — 0.005 USDC: verify whether the buyer
+- `agent-buyer-identity-preflight` — 0.05 USDC: verify whether the buyer
   agent role, purpose, product category, data sensitivity, and spend amount fit
   before an x402 purchase. Use as evidence for a broader SignGate decision.
 - `agent-buyer-policy-kit` — 49.00 USDC: buy the customizable Agent Buyer
   / Agentic Commerce Policy Kit manifest, starter policy pack, mandate checks,
   merchant trust checks, signer directive rules, role-product matrix, and
   JS/Python integration guidance.
-- `agent-payment-guard` — 0.01 USDC: core ALLOW/REVIEW/BLOCK payment firewall
+- `agent-payment-guard` — 0.10 USDC: core ALLOW/REVIEW/BLOCK payment firewall
   with budget, policy, replay, simulation, evidence, and decision token.
-- `x402-endpoint-preflight` — 0.005 USDC: unpaid endpoint inspection and
+- `x402-endpoint-preflight` — 0.015 USDC: unpaid endpoint inspection and
   payment requirement decoding.
 - `x402-server-trust` — 0.01 USDC: marketplace trust score for x402 API servers
   and sellers.
@@ -194,9 +194,9 @@ requirements, proof of payment, or seller reputation before or after spending.
   price, payment metadata, risk flags, and budget fit.
 - `agent-spend-route-plan` — 0.005 USDC: route a task and budget into an
   ordered set of Agent Payment Guard resources with stop conditions.
-- `x402-merchant-trust` — 0.03 USDC: merchant USDC receipt history and payer
+- `x402-merchant-trust` — 0.100 USDC: merchant USDC receipt history and payer
   concentration.
-- `base-payment-proof` — 0.01 USDC: exact canonical Base USDC payment proof.
+- `base-payment-proof` — 0.030 USDC: exact canonical Base USDC payment proof.
 - `base-usdc-receipt` — 0.003 USDC: compact receipt extractor.
 - `base-gas-fee-quote` — 0.003 USDC: transaction cost context.
 - `base-nonce-readiness` — 0.003 USDC: pending/confirmed nonce readiness.
@@ -224,17 +224,19 @@ pools, liquidity, and copytrade decisions.
 Use these when an AI runtime needs to check tools, packages, domains, OpenAPI
 specs, feeds, or agent cards before depending on them.
 
-- `domain-trust-preflight` — 0.005 USDC: DNS, DNSSEC, mail, CNAME, RDAP age,
+- `agent-capability-security-preflight` — 0.100 USDC: bundled Agent Card,
+  repository, package, domain, OpenAPI, and x402 endpoint security preflight.
+- `domain-trust-preflight` — 0.015 USDC: DNS, DNSSEC, mail, CNAME, RDAP age,
   expiration, and domain trust.
-- `openapi-spec-preflight` — 0.005 USDC: OpenAPI validity, servers, auth,
+- `openapi-spec-preflight` — 0.015 USDC: OpenAPI validity, servers, auth,
   operation coverage, and fingerprint.
-- `a2a-agent-card-preflight` — 0.005 USDC: A2A Agent Card discovery, skills,
+- `a2a-agent-card-preflight` — 0.020 USDC: A2A Agent Card discovery, skills,
   provider, auth, endpoints, and unsafe URLs.
-- `npm-package-preflight` — 0.005 USDC: npm metadata, maintenance, deprecation,
+- `npm-package-preflight` — 0.015 USDC: npm metadata, maintenance, deprecation,
   license, dependencies, and OSV vulnerabilities.
 - `pypi-package-preflight` — 0.005 USDC: PyPI metadata, yanked status,
   requirements, dependencies, license, and OSV vulnerabilities.
-- `github-repository-health` — 0.005 USDC: repository maintenance, release,
+- `github-repository-health` — 0.020 USDC: repository maintenance, release,
   archive, license, issue, and popularity signals.
 - `url-change-fingerprint` — 0.003 USDC: redirect, metadata, cache validators,
   and SHA-256 content fingerprint.

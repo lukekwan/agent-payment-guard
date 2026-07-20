@@ -28,6 +28,7 @@ import worker, {
   buildSumsubEvidenceServiceResponse,
   sampleAgenticCommercePreflightInput,
   buildAgentPaymentAuthorization,
+  buildAgentCapabilitySecurityPreflight,
   buildStablecoinBalance,
   buildTokenPreflight,
   buildTokenExitRisk,
@@ -137,6 +138,7 @@ test("worker exposes discovery documents", async () => {
   assert.ok(document.paths["/v1/x402/web/openapi-preflight"]);
   assert.ok(document.paths["/v1/x402/web/domain-trust-preflight"]);
   assert.ok(document.paths["/v1/x402/software/pypi-package-preflight"]);
+  assert.ok(document.paths["/v1/x402/agent/capability-security-preflight"]);
   assert.ok(document.paths["/v1/x402/payment-guard/evaluate"]);
   assert.ok(document.paths["/v1/x402/base/alpha-risk"]);
   assert.ok(document.paths["/v1/x402/base/token-alpha-snapshot"]);
@@ -203,8 +205,9 @@ test("worker exposes discovery documents", async () => {
     new Request("https://example.test/catalog.json"),
   );
   const catalogDocument = await catalog.json();
-  assert.equal(catalogDocument.product_families, 73);
-  assert.equal(catalogDocument.paid_operations_observed_on_x402scan, 75);
+  assert.equal(catalogDocument.product_families, 74);
+  assert.equal(catalogDocument.paid_operations_observed_on_x402scan, 76);
+  assert.equal(catalogDocument.pricing_version, "x402-pricing-v1-20260720");
   assert.ok(
     catalogDocument.products.find(
       product => product.id === "x402-origin-due-diligence",
@@ -244,15 +247,15 @@ test("worker exposes discovery documents", async () => {
   const card = await worker.fetch(
     new Request("https://example.test/.well-known/agent-card.json"),
   );
-  assert.equal((await card.json()).skills.length, 73);
+  assert.equal((await card.json()).skills.length, 74);
 
   const x402Discovery = await worker.fetch(
     new Request("https://example.test/.well-known/x402"),
   );
   const x402DiscoveryDocument = await x402Discovery.json();
-  assert.equal(x402DiscoveryDocument.resources.length, 73);
-  assert.equal(x402DiscoveryDocument.operation_count, 75);
-  assert.equal(x402DiscoveryDocument.paid_operations.length, 75);
+  assert.equal(x402DiscoveryDocument.resources.length, 74);
+  assert.equal(x402DiscoveryDocument.operation_count, 76);
+  assert.equal(x402DiscoveryDocument.paid_operations.length, 76);
   assert.ok(
     x402DiscoveryDocument.paid_operations.find(
       operation =>
@@ -294,8 +297,9 @@ test("worker exposes discovery documents", async () => {
     new Request("https://example.test/registry.json"),
   );
   const registryDocument = await registry.json();
-  assert.equal(registryDocument.counts.product_families, 73);
-  assert.equal(registryDocument.counts.paid_operations, 75);
+  assert.equal(registryDocument.counts.product_families, 74);
+  assert.equal(registryDocument.counts.paid_operations, 76);
+  assert.equal(registryDocument.pricing_version, "x402-pricing-v1-20260720");
   assert.ok(
     registryDocument.operations.find(
       operation => operation.id === "x402-rpc-payment-guard",
@@ -1580,23 +1584,23 @@ test("paid routes advertise their exact Base USDC prices", async () => {
   const cases = [
     [
       "/v1/x402/base/address-preflight?address=0x94F751f04b98507D31b500b7Ed50bE68A1514873",
-      "20000",
+      "75000",
     ],
     [
       "/v1/x402/base/token-preflight?token=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-      "20000",
+      "75000",
     ],
     [
       "/v1/x402/base/merchant-trust?address=0x94F751f04b98507D31b500b7Ed50bE68A1514873",
-      "30000",
+      "100000",
     ],
     [
       "/v1/x402/base/payment-proof?tx=0xb2d1308a0df026083e5793106af4ed2342d4b517d42935e05c1fb2f91544707f&recipient=0x94F751f04b98507D31b500b7Ed50bE68A1514873&amount=0.02",
-      "10000",
+      "30000",
     ],
     [
       "/v1/x402/base/wallet-activity-delta?address=0x94F751f04b98507D31b500b7Ed50bE68A1514873&since=2026-06-21T00%3A00%3A00Z",
-      "10000",
+      "30000",
     ],
     [
       "/v1/x402/base/approval-risk?token=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913&owner=0x94F751f04b98507D31b500b7Ed50bE68A1514873&spender=0x94F751f04b98507D31b500b7Ed50bE68A1514873",
@@ -1612,7 +1616,7 @@ test("paid routes advertise their exact Base USDC prices", async () => {
     ],
     [
       "/v1/x402/base/wallet-counterparty?address=0x94F751f04b98507D31b500b7Ed50bE68A1514873",
-      "5000",
+      "20000",
     ],
     [
       "/v1/x402/base/event-log-monitor?address=0x4200000000000000000000000000000000000006&from_block=47600000",
@@ -1637,15 +1641,15 @@ test("paid routes advertise their exact Base USDC prices", async () => {
     ],
     [
       "/v1/x402/web/endpoint-preflight?url=https%3A%2F%2Fx402.twit.sh%2Ftweets%2Fby%2Fid%3Fid%3D1110302988",
-      "5000",
+      "15000",
     ],
     [
       "/v1/x402/software/npm-package-preflight?package=express&version=4.18.2",
-      "5000",
+      "15000",
     ],
     [
       "/v1/x402/software/github-repository-health?owner=cloudflare&repo=workers-sdk",
-      "5000",
+      "20000",
     ],
     [
       "/v1/x402/web/url-change-fingerprint?url=https%3A%2F%2Fwww.cloudflare.com%2F",
@@ -1661,15 +1665,19 @@ test("paid routes advertise their exact Base USDC prices", async () => {
     ],
     [
       "/v1/x402/agent/a2a-card-preflight?url=https%3A%2F%2Fbase-agent-preflight.bytoken2023.workers.dev",
-      "5000",
+      "20000",
     ],
     [
       "/v1/x402/web/openapi-preflight?url=https%3A%2F%2Fbase-agent-preflight.bytoken2023.workers.dev%2Fopenapi.json",
-      "5000",
+      "15000",
     ],
     [
       "/v1/x402/web/domain-trust-preflight?domain=github.com",
-      "5000",
+      "15000",
+    ],
+    [
+      "/v1/x402/agent/capability-security-preflight?target_type=agent&identifier=demo&agent_card_url=https%3A%2F%2Fbase-agent-preflight.bytoken2023.workers.dev&github_owner=cloudflare&github_repo=workers-sdk&npm_package=express&domain=github.com&openapi_url=https%3A%2F%2Fbase-agent-preflight.bytoken2023.workers.dev%2Fopenapi.json&x402_url=https%3A%2F%2Fbase-agent-preflight.bytoken2023.workers.dev%2Fv1%2Fx402%2Fbase%2Falpha-risk",
+      "100000",
     ],
     [
       "/v1/x402/software/pypi-package-preflight?package=requests&version=latest",
@@ -1779,4 +1787,71 @@ test("payment guard POST routes advertise bazaar input and output schemas", asyn
     assert.ok(bazaar.schema.properties.input);
     assert.ok(bazaar.schema.properties.output);
   }
+});
+
+test("agent capability security bundle keeps pass warn fail and unavailable evidence explicit", () => {
+  const allow = buildAgentCapabilitySecurityPreflight({
+    target: { type: "agent", identifier: "agent-ok" },
+    generatedAt: "2026-07-20T00:00:00.000Z",
+    checks: [
+      { check: "agent_card", status: "pass", reason_codes: ["AGENT_CARD_OK"] },
+      { check: "github_repository_health", status: "pass", reason_codes: ["REPO_OK"] },
+      { check: "npm_package_preflight", status: "pass", reason_codes: ["NPM_OK"] },
+      { check: "domain_trust", status: "pass", reason_codes: ["DOMAIN_OK"] },
+      { check: "openapi_spec", status: "pass", reason_codes: ["OPENAPI_OK"] },
+      { check: "x402_endpoint", status: "pass", reason_codes: ["X402_OK"] },
+    ],
+  });
+  assert.equal(allow.decision, "ALLOW");
+  assert.equal(allow.pricing_version, "x402-pricing-v1-20260720");
+  assert.equal(allow.summary.passed, 6);
+
+  const review = buildAgentCapabilitySecurityPreflight({
+    target: { type: "api", identifier: "api-review" },
+    checks: [
+      { check: "agent_card", status: "pass", reason_codes: ["AGENT_CARD_OK"] },
+      {
+        check: "github_repository_health",
+        status: "warn",
+        reason_codes: ["STALE_REPOSITORY"],
+        evidence: { risk_level: "medium" },
+      },
+      {
+        check: "openapi_spec",
+        status: "unavailable",
+        reason_codes: ["OPENAPI_URL_MISSING"],
+      },
+    ],
+  });
+  assert.equal(review.decision, "REVIEW");
+  assert.equal(review.summary.warned, 1);
+  assert.equal(review.summary.unavailable, 1);
+  assert.ok(review.reason_codes.includes("OPENAPI_URL_MISSING"));
+
+  const deny = buildAgentCapabilitySecurityPreflight({
+    target: { type: "package", identifier: "bad-package" },
+    checks: [
+      {
+        check: "npm_package_preflight",
+        status: "fail",
+        reason_codes: ["KNOWN_OSV_VULNERABILITIES"],
+        evidence: { risk_level: "high", secret: undefined },
+      },
+    ],
+  });
+  assert.equal(deny.decision, "DENY");
+  assert.equal(deny.summary.failed, 1);
+  assert.equal(JSON.stringify(deny), JSON.stringify(deny).replace(/bearer|api[_-]?key|authorization/i, ""));
+});
+
+test("admin purchases rejects query tokens and returns no-store security headers", async () => {
+  const response = await worker.fetch(
+    new Request("https://example.test/admin/purchases?token=legacy-secret"),
+    { ADMIN_DASHBOARD_TOKEN: "legacy-secret" },
+  );
+  assert.equal(response.status, 401);
+  assert.equal((await response.json()).error, "admin_unauthorized");
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.match(response.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/);
+  assert.match(response.headers.get("x-robots-tag") ?? "", /noindex/);
 });
