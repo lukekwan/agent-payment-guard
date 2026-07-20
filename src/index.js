@@ -15794,14 +15794,62 @@ function createPaidApp() {
   return app;
 }
 
-function adminAuthorized(request, env) {
+const ADMIN_SESSION_COOKIE = "__Host-signgate_admin";
+const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 8;
+
+function cookieValue(request, name) {
+  const cookies = request.headers.get("cookie") ?? "";
+  for (const item of cookies.split(";")) {
+    const [key, ...parts] = item.trim().split("=");
+    if (key === name) return parts.join("=");
+  }
+  return "";
+}
+
+async function signAdminSession(secret, now = new Date()) {
+  const payload = {
+    aud: "signgate-admin",
+    iat: now.toISOString(),
+    exp: new Date(now.getTime() + ADMIN_SESSION_TTL_SECONDS * 1000).toISOString(),
+  };
+  const encodedPayload = base64UrlEncode(JSON.stringify(payload));
+  const signature = base64UrlEncode(await hmacSha256(encodedPayload, secret));
+  return `${encodedPayload}.${signature}`;
+}
+
+async function verifyAdminSession(value, secret) {
+  if (!secret || !value?.includes(".")) return false;
+  const [encodedPayload, encodedSignature] = value.split(".");
+  const expected = await hmacSha256(encodedPayload, secret);
+  const supplied = base64UrlDecode(encodedSignature);
+  if (
+    expected.length !== supplied.length ||
+    !expected.every((byte, index) => byte === supplied[index])
+  ) {
+    return false;
+  }
+  try {
+    const payload = JSON.parse(
+      new TextDecoder().decode(base64UrlDecode(encodedPayload)),
+    );
+    return (
+      payload.aud === "signgate-admin" &&
+      Date.parse(payload.exp) > Date.now()
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function adminAuthorized(request, env) {
   const token = env?.ADMIN_DASHBOARD_TOKEN_V2;
   if (!token) return false;
   const bearer = request.headers.get("authorization") ?? "";
   const supplied = bearer.toLowerCase().startsWith("bearer ")
     ? bearer.slice(7)
     : "";
-  return supplied === token;
+  if (supplied === token) return true;
+  return verifyAdminSession(cookieValue(request, ADMIN_SESSION_COOKIE), token);
 }
 
 function adminSecurityHeaders(extra = {}) {
@@ -15813,6 +15861,69 @@ function adminSecurityHeaders(extra = {}) {
     "referrer-policy": "no-referrer",
     ...extra,
   };
+}
+
+function adminLoginHtml(error = "") {
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SignGate Admin Login</title>
+<style>
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;background:#f7f7f5;color:#171717}
+main{max-width:420px;margin:12vh auto;padding:0 20px}
+form{background:#fff;border:1px solid #ddd;border-radius:8px;padding:20px}
+label{display:block;font-size:13px;font-weight:650;margin-bottom:8px}
+input{width:100%;box-sizing:border-box;border:1px solid #bbb;border-radius:6px;padding:10px;font:inherit}
+button{margin-top:14px;border:0;border-radius:6px;background:#171717;color:#fff;padding:10px 14px;font:inherit;cursor:pointer}
+.error{color:#a40000;font-size:13px;margin:0 0 12px}
+.muted{color:#666;font-size:13px}
+</style>
+</head>
+<body><main>
+<form method="post" action="/admin/login" autocomplete="off">
+<h1>SignGate Admin</h1>
+${error ? `<p class="error">${escapeHtml(error)}</p>` : ""}
+<label for="token">Admin token</label>
+<input id="token" name="token" type="password" required autofocus>
+<button type="submit">Sign in</button>
+<p class="muted">Token is submitted in the request body and exchanged for a short-lived HttpOnly session cookie.</p>
+</form>
+</main></body></html>`;
+}
+
+async function adminLoginResponse(request, env) {
+  const token = env?.ADMIN_DASHBOARD_TOKEN_V2;
+  if (!token) {
+    return json({ error: "admin_token_not_configured" }, 503, adminSecurityHeaders());
+  }
+  let supplied = "";
+  const contentType = request.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    try {
+      supplied = String((await request.json()).token ?? "");
+    } catch {
+      supplied = "";
+    }
+  } else {
+    const form = await request.formData();
+    supplied = String(form.get("token") ?? "");
+  }
+  if (supplied !== token) {
+    return new Response(adminLoginHtml("Invalid admin token."), {
+      status: 403,
+      headers: adminSecurityHeaders({ "content-type": "text/html; charset=utf-8" }),
+    });
+  }
+  const session = await signAdminSession(token);
+  return new Response(null, {
+    status: 303,
+    headers: adminSecurityHeaders({
+      location: "/admin/purchases",
+      "set-cookie": `${ADMIN_SESSION_COOKIE}=${session}; Max-Age=${ADMIN_SESSION_TTL_SECONDS}; Path=/; HttpOnly; Secure; SameSite=Strict`,
+    }),
+  });
 }
 
 function purchaseDashboardFilters(searchParams = new URLSearchParams()) {
@@ -16549,6 +16660,19 @@ export default {
         );
       }
     }
+    if (url.pathname === "/admin/login") {
+      if (request.method === "GET" || request.method === "HEAD") {
+        const login = new Response(adminLoginHtml(), {
+          headers: adminSecurityHeaders({
+            "content-type": "text/html; charset=utf-8",
+          }),
+        });
+        return request.method === "HEAD"
+          ? new Response(null, { status: login.status, headers: login.headers })
+          : login;
+      }
+      if (request.method === "POST") return adminLoginResponse(request, env);
+    }
     if (!["GET", "HEAD"].includes(request.method)) {
       return json({ error: "method_not_allowed" }, 405, {
         allow: "GET, HEAD, POST",
@@ -16561,7 +16685,7 @@ export default {
       url.pathname === "/admin/purchases" ||
       url.pathname === "/admin/purchases.json"
     ) {
-      if (!adminAuthorized(request, env)) {
+      if (!(await adminAuthorized(request, env))) {
         response = json(
           { error: "admin_unauthorized" },
           request.headers.get("authorization") ? 403 : 401,
