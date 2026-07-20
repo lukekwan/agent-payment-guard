@@ -15796,6 +15796,7 @@ function createPaidApp() {
 
 const ADMIN_SESSION_COOKIE = "__Host-signgate_admin";
 const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 8;
+const ADMIN_LINK_TTL_SECONDS = 60 * 5;
 
 function cookieValue(request, name) {
   const cookies = request.headers.get("cookie") ?? "";
@@ -15815,6 +15816,46 @@ async function signAdminSession(secret, now = new Date()) {
   const encodedPayload = base64UrlEncode(JSON.stringify(payload));
   const signature = base64UrlEncode(await hmacSha256(encodedPayload, secret));
   return `${encodedPayload}.${signature}`;
+}
+
+async function signAdminLoginLink(exp, nonce, secret) {
+  return base64UrlEncode(
+    await hmacSha256(`signgate-admin-link.${exp}.${nonce}`, secret),
+  );
+}
+
+async function adminLoginLinkResponse(request, env) {
+  const token = env?.ADMIN_DASHBOARD_TOKEN_V2;
+  if (!token) {
+    return json({ error: "admin_token_not_configured" }, 503, adminSecurityHeaders());
+  }
+  const url = new URL(request.url);
+  const exp = url.searchParams.get("exp") ?? "";
+  const nonce = url.searchParams.get("nonce") ?? "";
+  const signature = url.searchParams.get("sig") ?? "";
+  const expiresAt = Number(exp);
+  const now = Math.floor(Date.now() / 1000);
+  if (
+    !Number.isInteger(expiresAt) ||
+    expiresAt <= now ||
+    expiresAt > now + ADMIN_LINK_TTL_SECONDS ||
+    !/^[a-zA-Z0-9_-]{16,128}$/.test(nonce) ||
+    !signature
+  ) {
+    return json({ error: "admin_link_invalid_or_expired" }, 401, adminSecurityHeaders());
+  }
+  const expected = await signAdminLoginLink(exp, nonce, token);
+  if (signature !== expected) {
+    return json({ error: "admin_link_invalid_or_expired" }, 401, adminSecurityHeaders());
+  }
+  const session = await signAdminSession(token);
+  return new Response(null, {
+    status: 303,
+    headers: adminSecurityHeaders({
+      location: "/admin/purchases",
+      "set-cookie": `${ADMIN_SESSION_COOKIE}=${session}; Max-Age=${ADMIN_SESSION_TTL_SECONDS}; Path=/; HttpOnly; Secure; SameSite=Strict`,
+    }),
+  });
 }
 
 async function verifyAdminSession(value, secret) {
@@ -16672,6 +16713,9 @@ export default {
           : login;
       }
       if (request.method === "POST") return adminLoginResponse(request, env);
+    }
+    if (url.pathname === "/admin/session" && request.method === "GET") {
+      return adminLoginLinkResponse(request, env);
     }
     if (!["GET", "HEAD"].includes(request.method)) {
       return json({ error: "method_not_allowed" }, 405, {
