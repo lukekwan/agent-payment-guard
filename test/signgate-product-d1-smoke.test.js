@@ -173,6 +173,10 @@ async function consume(decision, env, attempt) {
   return [response.status, await response.json()];
 }
 
+async function tableCount(db, table, where = "1 = 1", bindings = []) {
+  return (await db.prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE ${where}`).bind(...bindings).first()).count;
+}
+
 test("DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approval, and retention", async () => {
   const { env, db, store, mf } = await d1Env();
   try {
@@ -310,6 +314,121 @@ test("DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approva
     await db.prepare("UPDATE signgate_api_credentials SET status = 'revoked', delete_after = ? WHERE principal_type = 'agent'").bind("2026-08-19T00:00:00.000Z").run();
     const cleanupCredentials = await cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: Date.parse("2026-08-20T00:00:00.000Z"), batchSize: 1 });
     assert.equal(cleanupCredentials.credentials, 1);
+  } finally {
+    await mf.dispose();
+  }
+});
+
+test("DEV-SG-001 product D1 retention covers every table with preservation batching and retry", async () => {
+  const { env, db, store, mf } = await d1Env();
+  try {
+    const old = "2026-07-01T00:00:00.000Z";
+    const due = "2026-07-10T00:00:00.000Z";
+    const future = "2026-08-30T00:00:00.000Z";
+    const cleanupNow = Date.parse("2026-08-20T00:00:00.000Z");
+    await db.prepare(
+      `INSERT INTO signgate_decisions
+      (decision_id, organization_id, request_id, request_fingerprint, action_type, action_fingerprint, decision, state,
+       bound_action_json, response_json, policy_version, reason_codes_json, issued_at, expires_at, delete_after, created_at)
+       VALUES (?, ?, ?, ?, 'deploy_change', ?, 'ALLOW', ?, '{}', '{}', ?, '[]', ?, ?, ?, ?)`,
+    ).bind("ret_dec_eligible", ORG, "ret_req_eligible", "fp_eligible", "sha256:reteligible", "CONSUMED", SIGNGATE_POLICY_VERSION, old, old, due, old).run();
+    await db.prepare(
+      `INSERT INTO signgate_decisions
+      (decision_id, organization_id, request_id, request_fingerprint, action_type, action_fingerprint, decision, state,
+       bound_action_json, response_json, policy_version, reason_codes_json, issued_at, expires_at, delete_after, created_at)
+       VALUES (?, ?, ?, ?, 'deploy_change', ?, 'ALLOW', 'AVAILABLE', '{}', '{}', ?, '[]', ?, ?, ?, ?)`,
+    ).bind("ret_dec_active", ORG, "ret_req_active", "fp_active", "sha256:retactive", SIGNGATE_POLICY_VERSION, old, future, due, old).run();
+    await db.prepare(
+      "INSERT INTO signgate_request_idempotency (organization_id, request_id, request_fingerprint, decision_id, response_json, policy_version, delete_after, created_at) VALUES (?, ?, ?, ?, '{}', ?, ?, ?), (?, ?, ?, ?, '{}', ?, ?, ?)",
+    ).bind(ORG, "ret_idem_eligible", "fp_eligible", "ret_dec_eligible", SIGNGATE_POLICY_VERSION, due, old, ORG, "ret_idem_active", "fp_active", "ret_dec_active", SIGNGATE_POLICY_VERSION, due, old).run();
+    await db.prepare(
+      `INSERT INTO signgate_approval_grants
+      (approval_grant_id, organization_id, original_decision_id, action_fingerprint, policy_version, approver_principal_id,
+       approver_role, approval_reason, binding_fingerprint, authority_fingerprint, status, approved_at, expires_at,
+       original_decision_expires_at, delete_after, created_at)
+       VALUES (?, ?, ?, ?, ?, 'founder_01', 'founder', 'FOUNDER_APPROVED_PREVIEW_PERMISSION_CHANGE', ?, ?, ?, ?, ?, ?, ?, ?),
+              (?, ?, ?, ?, ?, 'founder_01', 'founder', 'FOUNDER_APPROVED_PREVIEW_PERMISSION_CHANGE', ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).bind(
+      "ret_grant_used", ORG, "ret_dec_eligible", "sha256:reteligible", SIGNGATE_POLICY_VERSION, "bind_used", "auth_used", "USED", old, old, old, due, old,
+      "ret_grant_active", ORG, "ret_dec_active", "sha256:retactive", SIGNGATE_POLICY_VERSION, "bind_active", "auth_active", "AVAILABLE", old, future, future, due, old,
+    ).run();
+    await db.prepare(
+      `INSERT INTO signgate_consume_receipts
+      (consume_receipt_id, organization_id, decision_id, execution_attempt_id, action_fingerprint, policy_version, executor_principal_id, consumed_at, receipt_json, delete_after, created_at)
+      VALUES ('ret_receipt_eligible', ?, 'ret_dec_eligible', 'ret_attempt', 'sha256:reteligible', ?, 'preview_executor_01', ?, '{}', ?, ?)`,
+    ).bind(ORG, SIGNGATE_POLICY_VERSION, old, due, old).run();
+    await db.prepare(
+      "INSERT INTO signgate_audit_events (audit_id, organization_id, event_type, principal_id, decision_id, metadata_json, occurred_at, delete_after) VALUES (?, ?, 'decision.consumed', 'preview_executor_01', ?, '{}', ?, ?), (?, ?, 'decision.created', 'codex_dev_01', ?, '{}', ?, ?)",
+    ).bind("ret_audit_eligible", ORG, "ret_dec_eligible", old, due, "ret_audit_active", ORG, "ret_dec_active", old, due).run();
+    await db.prepare(
+      `INSERT INTO signgate_execution_results
+      (execution_result_id, organization_id, decision_id, consume_receipt_id, execution_attempt_id, status, error_code, occurred_at, delete_after)
+      VALUES ('ret_exec_eligible', ?, 'ret_dec_eligible', 'ret_receipt_eligible', 'ret_attempt', 'success', NULL, ?, ?)`,
+    ).bind(ORG, old, due).run();
+    await db.prepare(
+      `INSERT INTO signgate_api_credentials
+      (credential_id, organization_id, principal_id, principal_type, key_prefix, key_digest, digest_version, scopes_json, status,
+       rotated_from_credential_id, rotation_expires_at, allowed_environments_json, allowed_action_types_json, allowed_services_json, delete_after, created_at, updated_at)
+      VALUES ('ret_cred_revoked', ?, 'codex_dev_old', 'agent', 'ret_prefix_1', 'digest', 'sg_key_digest_v1', '["decision:create:deploy_change"]', 'revoked', NULL, NULL, '["preview"]', '["deploy_change"]', '["signgate-worker"]', ?, ?, ?),
+             ('ret_cred_active', ?, 'codex_dev_active', 'agent', 'ret_prefix_2', 'digest2', 'sg_key_digest_v1', '["decision:create:deploy_change"]', 'active', NULL, NULL, '["preview"]', '["deploy_change"]', '["signgate-worker"]', ?, ?, ?)`,
+    ).bind(ORG, due, old, old, ORG, due, old, old).run();
+    await db.prepare(
+      "INSERT INTO signgate_mandates (organization_id, mandate_id, issuer, scope_json, status, issued_at, expires_at, delete_after, created_at) VALUES (?, 'ret_mandate_expired', 'founder_01', '[\"deploy:preview\"]', 'expired', ?, ?, ?, ?), (?, 'ret_mandate_active', 'founder_01', '[\"deploy:preview\"]', 'active', ?, ?, ?, ?)",
+    ).bind(ORG, old, old, due, old, ORG, old, future, due, old).run();
+    await db.prepare(
+      `INSERT INTO signgate_authorized_targets
+      (target_id, organization_id, environment, service, project, repository_host, repository_owner, repository_name, canonical_remote_url, action_type, status, valid_from, valid_until, revision, delete_after, created_at, updated_at)
+      VALUES ('ret_target_revoked', ?, 'preview', 'ret-worker', 'ret-project', 'github.com', 'lukekwan', 'agent-payment-guard', 'https://github.com/lukekwan/agent-payment-guard', 'deploy_change', 'revoked', ?, ?, 10, ?, ?, ?),
+             ('ret_target_active', ?, 'preview', 'ret-worker-active', 'ret-project', 'github.com', 'lukekwan', 'agent-payment-guard', 'https://github.com/lukekwan/agent-payment-guard', 'deploy_change', 'active', ?, ?, 11, ?, ?, ?)`,
+    ).bind(ORG, old, old, due, old, old, ORG, old, future, due, old, old).run();
+    await db.prepare(
+      "INSERT INTO signgate_trusted_evidence (organization_id, evidence_id, provider, status, commit_sha, action_fingerprint, subject_fingerprint, observed_at, delete_after, created_at) VALUES (?, 'ret_evidence_eligible', 'github_actions', 'passed', '5ac67be4fe17b5c1b773bcc584080cad704f4959', 'sha256:reteligible', 'sha256:s', ?, ?, ?)",
+    ).bind(ORG, old, due, old).run();
+
+    const before = await cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: Date.parse("2026-07-05T00:00:00.000Z"), batchSize: 100 });
+    assert.deepEqual(Object.values(before).filter(Boolean), []);
+
+    const firstPass = await cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: cleanupNow, batchSize: 1 });
+    assert.equal(firstPass.execution_results, 1);
+    assert.equal(firstPass.receipts, 1);
+    assert.equal(firstPass.idempotency, 1);
+    assert.equal(firstPass.grants, 1);
+    assert.equal(firstPass.decisions, 1);
+    assert.equal(firstPass.audit_events, 1);
+    assert.equal(firstPass.credentials, 1);
+    assert.equal(firstPass.mandates, 1);
+    assert.equal(firstPass.authorized_targets, 1);
+    assert.equal(firstPass.trusted_evidence, 0);
+    assert.equal(await tableCount(db, "signgate_decisions", "decision_id = 'ret_dec_active'"), 1);
+    assert.equal(await tableCount(db, "signgate_request_idempotency", "request_id = 'ret_idem_active'"), 1);
+    assert.equal(await tableCount(db, "signgate_audit_events", "audit_id = 'ret_audit_active'"), 1);
+    assert.equal(await tableCount(db, "signgate_api_credentials", "credential_id = 'ret_cred_active'"), 1);
+    assert.equal(await tableCount(db, "signgate_approval_grants", "approval_grant_id = 'ret_grant_active'"), 1);
+    assert.equal(await tableCount(db, "signgate_mandates", "mandate_id = 'ret_mandate_active'"), 1);
+    assert.equal(await tableCount(db, "signgate_authorized_targets", "target_id = 'ret_target_active'"), 1);
+    assert.equal(await tableCount(db, "signgate_trusted_evidence", "evidence_id = 'ret_evidence_eligible'"), 1);
+
+    await assert.rejects(
+      cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: cleanupNow, batchSize: 100, failAfterTable: "grants" }),
+      /injected retention cleanup failure/,
+    );
+    assert.equal(await tableCount(db, "signgate_decisions", "decision_id = 'ret_dec_active'"), 1);
+    await db.prepare("UPDATE signgate_decisions SET state = 'EXPIRED', expires_at = ? WHERE decision_id = 'ret_dec_active'").bind(old).run();
+    await db.prepare("UPDATE signgate_approval_grants SET status = 'EXPIRED', expires_at = ? WHERE approval_grant_id = 'ret_grant_active'").bind(old).run();
+    await db.prepare("UPDATE signgate_api_credentials SET status = 'revoked' WHERE credential_id = 'ret_cred_active'").run();
+    await db.prepare("UPDATE signgate_mandates SET status = 'expired', expires_at = ? WHERE mandate_id = 'ret_mandate_active'").bind(old).run();
+    await db.prepare("UPDATE signgate_authorized_targets SET status = 'revoked', valid_until = ? WHERE target_id = 'ret_target_active'").bind(old).run();
+    const retry = await cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: cleanupNow, batchSize: 100 });
+    assert.ok(retry.decisions >= 1);
+    assert.ok(retry.idempotency >= 1);
+    assert.ok(retry.grants >= 1);
+    assert.ok(retry.audit_events >= 1);
+    assert.ok(retry.credentials >= 1);
+    assert.ok(retry.mandates >= 1);
+    assert.ok(retry.authorized_targets >= 1);
+    assert.ok(retry.trusted_evidence >= 1);
+    const repeated = await cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: cleanupNow, batchSize: 100 });
+    assert.ok(Object.values(repeated).every(value => value === 0));
   } finally {
     await mf.dispose();
   }

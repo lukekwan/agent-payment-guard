@@ -218,12 +218,13 @@ function detectDuplicatesAndBounds(node, depth = 0) {
 }
 
 export class SignGateInputError extends Error {
-  constructor(status, code, reasonCodes = [], detail = "") {
+  constructor(status, code, reasonCodes = [], detail = "", authenticatedCredential = null) {
     super(detail || code);
     this.status = status;
     this.code = code;
     this.reasonCodes = reasonCodes;
     this.detail = detail;
+    this.authenticatedCredential = authenticatedCredential;
   }
 }
 
@@ -318,13 +319,16 @@ function canonicalRepositoryRemoteUrl(repository) {
   return `https://${repository.host}/${repository.owner}/${repository.repo}`;
 }
 
-function jsonList(value, fallback) {
-  if (!value) return fallback;
+function credentialJsonList(value, fallback, fieldName) {
+  if (value === null || value === undefined || value === "") return fallback;
   try {
     const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : fallback;
+    if (!Array.isArray(parsed) || parsed.some(item => typeof item !== "string" || item.length === 0)) {
+      throw new Error("not a string array");
+    }
+    return parsed;
   } catch {
-    return fallback;
+    throw new SignGateInputError(403, "AUTHORIZATION_FAILED", [`${fieldName}_MALFORMED`]);
   }
 }
 
@@ -492,8 +496,25 @@ async function authenticate(env, requiredScope, requiredPrincipalType) {
   if (credential.status === "rotating") {
     const rotationExpiresMs = Date.parse(credential.rotation_expires_at || "");
     const rotationStartMs = Date.parse(credential.updated_at || credential.created_at || "");
+    const predecessor = credential.rotated_from_credential_id && typeof env.store.getCredentialById === "function"
+      ? await env.store.getCredentialById(credential.organization_id, credential.rotated_from_credential_id)
+      : null;
     if (
       !credential.rotated_from_credential_id ||
+      credential.rotated_from_credential_id === credential.credential_id ||
+      !predecessor ||
+      predecessor.organization_id !== credential.organization_id ||
+      predecessor.principal_id !== credential.principal_id ||
+      predecessor.principal_type !== credential.principal_type ||
+      predecessor.credential_id === credential.credential_id ||
+      predecessor.rotated_from_credential_id === credential.credential_id ||
+      !["active", "rotating"].includes(predecessor.status) ||
+      predecessor.digest_version !== credential.digest_version ||
+      predecessor.allowed_agent_id !== credential.allowed_agent_id ||
+      predecessor.scopes_json !== credential.scopes_json ||
+      predecessor.allowed_environments_json !== credential.allowed_environments_json ||
+      predecessor.allowed_action_types_json !== credential.allowed_action_types_json ||
+      predecessor.allowed_services_json !== credential.allowed_services_json ||
       !Number.isFinite(rotationExpiresMs) ||
       !Number.isFinite(rotationStartMs) ||
       rotationExpiresMs <= env.nowMs ||
@@ -503,20 +524,20 @@ async function authenticate(env, requiredScope, requiredPrincipalType) {
     }
   }
   if (requiredPrincipalType && credential.principal_type !== requiredPrincipalType) {
-    throw new SignGateInputError(403, "AUTHORIZATION_FAILED", ["PRINCIPAL_TYPE_NOT_ALLOWED"]);
+    throw new SignGateInputError(403, "AUTHORIZATION_FAILED", ["PRINCIPAL_TYPE_NOT_ALLOWED"], "", credential);
   }
-  const scopes = JSON.parse(credential.scopes_json);
+  const scopes = credentialJsonList(credential.scopes_json, [], "SCOPES_JSON");
   if (!scopes.includes(requiredScope)) {
-    throw new SignGateInputError(403, "AUTHORIZATION_FAILED", ["SCOPE_NOT_ALLOWED"]);
+    throw new SignGateInputError(403, "AUTHORIZATION_FAILED", ["SCOPE_NOT_ALLOWED"], "", credential);
   }
   await env.store.recordCredentialUse(credential.credential_id, nowIso(env.nowMs));
   return credential;
 }
 
 function credentialAllowsAction(authenticated, input) {
-  const environments = jsonList(authenticated.allowed_environments_json, ["local", "preview", "production"]);
-  const actionTypes = jsonList(authenticated.allowed_action_types_json, ["deploy_change"]);
-  const services = jsonList(authenticated.allowed_services_json, ["signgate-worker"]);
+  const environments = credentialJsonList(authenticated.allowed_environments_json, ["local", "preview", "production"], "ALLOWED_ENVIRONMENTS_JSON");
+  const actionTypes = credentialJsonList(authenticated.allowed_action_types_json, ["deploy_change"], "ALLOWED_ACTION_TYPES_JSON");
+  const services = credentialJsonList(authenticated.allowed_services_json, ["signgate-worker"], "ALLOWED_SERVICES_JSON");
   if (!environments.includes(input.action.target.environment)) return false;
   if (!actionTypes.includes(input.action.type)) return false;
   if (!services.includes(input.action.target.service)) return false;
@@ -823,6 +844,9 @@ export async function handleSignGateDecisionRequest(request, env = {}) {
     return signGateJsonResponse(await evaluateAndPersistDecision(input, authenticated, { store, nowMs }));
   } catch (error) {
     const status = error instanceof SignGateInputError ? error.status : 500;
+    if (!authenticated && error instanceof SignGateInputError && error.authenticatedCredential) {
+      authenticated = error.authenticatedCredential;
+    }
     const auditId = await safeAuditFailure(store, authenticated, "decision.rejected", error, nowMs);
     const body = errorBody(
       error instanceof SignGateInputError ? error : new SignGateInputError(500, "INTERNAL_INVARIANT_FAILED"),
@@ -968,6 +992,9 @@ export async function handleFounderApprovalGrantRequest(request, env = {}) {
     } : response);
   } catch (error) {
     const status = error instanceof SignGateInputError ? error.status : 500;
+    if (!authenticated && error instanceof SignGateInputError && error.authenticatedCredential) {
+      authenticated = error.authenticatedCredential;
+    }
     const auditId = await safeAuditFailure(store, authenticated, "approval_grant.rejected", error, nowMs);
     return signGateJsonResponse(
       errorBody(error instanceof SignGateInputError ? error : new SignGateInputError(500, "INTERNAL_INVARIANT_FAILED"), null, auditId),
@@ -1030,6 +1057,9 @@ export async function handleConsumeDecisionRequest(request, env = {}, decisionId
     return signGateJsonResponse(receipt);
   } catch (error) {
     const status = error instanceof SignGateInputError ? error.status : 500;
+    if (!authenticated && error instanceof SignGateInputError && error.authenticatedCredential) {
+      authenticated = error.authenticatedCredential;
+    }
     const auditId = await safeAuditFailure(store, authenticated, "decision.consume_rejected", error, nowMs, { decision_id: decisionId });
     return signGateJsonResponse(
       errorBody(error instanceof SignGateInputError ? error : new SignGateInputError(500, "INTERNAL_INVARIANT_FAILED"), null, auditId),
@@ -1168,11 +1198,12 @@ export async function createPreviewCredential({ store, rawKey, organizationId, p
   return credential;
 }
 
-export async function cleanupSignGatePreviewRetention({ store, organizationId, nowMs = Date.now(), batchSize = 100 }) {
+export async function cleanupSignGatePreviewRetention({ store, organizationId, nowMs = Date.now(), batchSize = 100, failAfterTable = null }) {
   return store.cleanupPreviewRetention({
     organization_id: organizationId,
     now_iso: nowIso(nowMs),
     batch_size: batchSize,
+    fail_after_table: failAfterTable,
   });
 }
 
@@ -1200,6 +1231,11 @@ export class MemorySignGateStore {
   key(org, idValue) { return `${org}:${idValue}`; }
   async createCredential(credential) { this.credentials.set(credential.key_prefix, credential); }
   async getCredentialByPrefix(prefix) { return this.credentials.get(prefix) || null; }
+  async getCredentialById(org, credentialId) {
+    return [...this.credentials.values()].find(
+      credential => credential.organization_id === org && credential.credential_id === credentialId,
+    ) || null;
+  }
   async recordCredentialUse(credentialId, usedAt) {
     for (const credential of this.credentials.values()) {
       if (credential.credential_id === credentialId) credential.last_used_at = usedAt;
@@ -1355,7 +1391,7 @@ export class MemorySignGateStore {
     return receipt;
   }
   async recordExecutionResult(result) { this.executionResults.push(result); }
-  async cleanupPreviewRetention({ organization_id, now_iso, batch_size = 100 }) {
+  async cleanupPreviewRetention({ organization_id, now_iso, batch_size = 100, fail_after_table = null }) {
     const now = Date.parse(now_iso);
     const deleted = { credentials: 0, mandates: 0, authorized_targets: 0, trusted_evidence: 0, decisions: 0, idempotency: 0, grants: 0, receipts: 0, audit_events: 0, execution_results: 0 };
     const deleteFromMap = (map, counter, predicate) => {
@@ -1367,22 +1403,40 @@ export class MemorySignGateStore {
         }
       }
     };
+    const failIfRequested = key => {
+      if (fail_after_table === key) throw new Error(`injected retention cleanup failure after ${key}`);
+    };
+    const hasActiveDecision = decisionId => [...this.decisions.values()].some(decision =>
+      decision.organization_id === organization_id &&
+      (!decisionId || decision.decision_id === decisionId) &&
+      decision.state === "AVAILABLE" &&
+      Date.parse(decision.expires_at) > now,
+    );
     deleteFromMap(this.receipts, "receipts", () => true);
-    deleteFromMap(this.idempotency, "idempotency", () => true);
+    failIfRequested("receipts");
+    deleteFromMap(this.idempotency, "idempotency", row => !hasActiveDecision(row.decision_id));
+    failIfRequested("idempotency");
     deleteFromMap(this.grants, "grants", grant => grant.status !== "AVAILABLE" || Date.parse(grant.expires_at) <= now);
+    failIfRequested("grants");
     deleteFromMap(this.decisions, "decisions", decision => decision.state !== "AVAILABLE" || Date.parse(decision.expires_at) <= now);
+    failIfRequested("decisions");
     deleteFromMap(this.credentials, "credentials", credential => credential.status === "revoked" || (credential.rotation_expires_at && Date.parse(credential.rotation_expires_at) <= now));
+    failIfRequested("credentials");
     deleteFromMap(this.mandates, "mandates", mandate => mandate.status !== "active" || Date.parse(mandate.expires_at) <= now);
+    failIfRequested("mandates");
     deleteFromMap(this.authorizedTargets, "authorized_targets", target => target.status !== "active" || (target.valid_until && Date.parse(target.valid_until) <= now));
-    deleteFromMap(this.trustedEvidence, "trusted_evidence", () => true);
+    failIfRequested("authorized_targets");
+    deleteFromMap(this.trustedEvidence, "trusted_evidence", () => !hasActiveDecision(null));
+    failIfRequested("trusted_evidence");
     this.auditEvents = this.auditEvents.filter(event => {
       if (deleted.audit_events >= batch_size) return true;
-      if (event.organization_id === organization_id && Date.parse(event.delete_after) <= now) {
+      if (event.organization_id === organization_id && Date.parse(event.delete_after) <= now && !hasActiveDecision(event.decision_id)) {
         deleted.audit_events += 1;
         return false;
       }
       return true;
     });
+    failIfRequested("audit_events");
     this.executionResults = this.executionResults.filter(result => {
       if (deleted.execution_results >= batch_size) return true;
       if (result.organization_id === organization_id && Date.parse(result.delete_after) <= now) {
@@ -1391,6 +1445,7 @@ export class MemorySignGateStore {
       }
       return true;
     });
+    failIfRequested("execution_results");
     return deleted;
   }
 }
@@ -1399,6 +1454,9 @@ export class D1SignGateStore {
   constructor(db) { this.db = db; }
   async getCredentialByPrefix(prefix) {
     return this.db.prepare("SELECT * FROM signgate_api_credentials WHERE key_prefix = ?").bind(prefix).first();
+  }
+  async getCredentialById(org, credentialId) {
+    return this.db.prepare("SELECT * FROM signgate_api_credentials WHERE organization_id = ? AND credential_id = ?").bind(org, credentialId).first();
   }
   async recordCredentialUse(credentialId, usedAt) {
     await this.db.prepare("UPDATE signgate_api_credentials SET last_used_at = ?, updated_at = ? WHERE credential_id = ?").bind(usedAt, usedAt, credentialId).run();
@@ -1663,18 +1721,35 @@ export class D1SignGateStore {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(result.execution_result_id, result.organization_id, result.decision_id, result.consume_receipt_id, result.execution_attempt_id, result.status, result.error_code, result.occurred_at, result.delete_after).run();
   }
-  async cleanupPreviewRetention({ organization_id, now_iso, batch_size = 100 }) {
+  async cleanupPreviewRetention({ organization_id, now_iso, batch_size = 100, fail_after_table = null }) {
     const tables = [
       ["signgate_execution_results", "execution_results"],
       ["signgate_consume_receipts", "receipts"],
-      ["signgate_request_idempotency", "idempotency"],
+      ["signgate_request_idempotency", "idempotency", `AND NOT EXISTS (
+        SELECT 1 FROM signgate_decisions d
+        WHERE d.organization_id = signgate_request_idempotency.organization_id
+          AND d.decision_id = signgate_request_idempotency.decision_id
+          AND d.state = 'AVAILABLE'
+          AND d.expires_at > ?
+      )`],
       ["signgate_approval_grants", "grants", "AND (status != 'AVAILABLE' OR expires_at <= ?)"],
       ["signgate_decisions", "decisions", "AND (state != 'AVAILABLE' OR expires_at <= ?)"],
-      ["signgate_audit_events", "audit_events"],
+      ["signgate_audit_events", "audit_events", `AND NOT EXISTS (
+        SELECT 1 FROM signgate_decisions d
+        WHERE d.organization_id = signgate_audit_events.organization_id
+          AND d.decision_id = signgate_audit_events.decision_id
+          AND d.state = 'AVAILABLE'
+          AND d.expires_at > ?
+      )`],
       ["signgate_api_credentials", "credentials", "AND (status = 'revoked' OR rotation_expires_at <= ?)"],
       ["signgate_mandates", "mandates", "AND (status != 'active' OR expires_at <= ?)"],
       ["signgate_authorized_targets", "authorized_targets", "AND (status != 'active' OR valid_until <= ?)"],
-      ["signgate_trusted_evidence", "trusted_evidence"],
+      ["signgate_trusted_evidence", "trusted_evidence", `AND NOT EXISTS (
+        SELECT 1 FROM signgate_decisions d
+        WHERE d.organization_id = signgate_trusted_evidence.organization_id
+          AND d.state = 'AVAILABLE'
+          AND d.expires_at > ?
+      )`],
     ];
     const deleted = {};
     for (const [table, key, predicate = ""] of tables) {
@@ -1687,6 +1762,9 @@ export class D1SignGateStore {
          )`,
       ).bind(...(predicate ? [organization_id, now_iso, now_iso, batch_size] : [organization_id, now_iso, batch_size])).run();
       deleted[key] = result.meta?.changes ?? 0;
+      if (fail_after_table === key) {
+        throw new Error(`injected retention cleanup failure after ${key}`);
+      }
     }
     return deleted;
   }

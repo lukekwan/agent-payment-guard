@@ -27,6 +27,8 @@ const FUTURE = "2026-07-19T00:30:00.000Z";
 const GRANT_FUTURE = "2026-07-19T00:10:00.000Z";
 const ORG = "org_nomos_labs";
 const AGENT_KEY = "sg_agent_abcdefghijklmnopqrstuvwxyz123456";
+const AGENT_PREVIOUS_KEY = "sg_agent_prev_abcdefghijklmnopqrstuvwxyz123456";
+const AGENT_NO_SCOPE_KEY = "sg_agent_noscope_abcdefghijklmnopqrstuvwxyz123456";
 const EXECUTOR_KEY = "sg_exec_abcdefghijklmnopqrstuvwxyz123456";
 const FOUNDER_KEY = "sg_founder_abcdefghijklmnopqrstuvwxyz123456";
 
@@ -277,6 +279,19 @@ test("DEV-SG-001 auth and tenant binding fail closed", async () => {
   assert.equal(noAuth.status, 401);
   const wrongScope = await postDecision(baseRequest(), env, EXECUTOR_KEY);
   assert.equal(wrongScope.status, 403);
+  await createPreviewCredential({
+    store: env.SIGNGATE_TEST_STORE,
+    rawKey: AGENT_NO_SCOPE_KEY,
+    organizationId: ORG,
+    principalId: "codex_dev_no_scope",
+    principalType: "agent",
+    scopes: ["decision:consume:deploy_change"],
+    nowMs: NOW,
+    pepper: env.SIGNGATE_API_KEY_PEPPER,
+  });
+  const wrongScopeSamePrincipalType = await postDecision(baseRequest(), env, AGENT_NO_SCOPE_KEY);
+  assert.equal(wrongScopeSamePrincipalType.status, 403);
+  assert.deepEqual((await wrongScopeSamePrincipalType.json()).reason_codes, ["SCOPE_NOT_ALLOWED"]);
   const wrongOrg = await postDecision(baseRequest({ organization_id: "org_other" }), env);
   assert.equal(wrongOrg.status, 403);
   const wrongAgent = await postDecision(baseRequest({ request_id: "req_wrong_agent", agent: { id: "codex_dev_02" } }), env);
@@ -286,10 +301,40 @@ test("DEV-SG-001 auth and tenant binding fail closed", async () => {
   assert.equal((await postDecision(baseRequest({ request_id: "req_active_key" }), env)).status, 200);
   agentCredential.status = "revoked";
   assert.equal((await postDecision(baseRequest({ request_id: "req_revoked_key" }), env)).status, 401);
+  const predecessor = await createPreviewCredential({
+    store: env.SIGNGATE_TEST_STORE,
+    rawKey: AGENT_PREVIOUS_KEY,
+    organizationId: ORG,
+    principalId: "codex_dev_01",
+    principalType: "agent",
+    scopes: ["decision:create:deploy_change"],
+    nowMs: NOW - 60 * 1000,
+    pepper: env.SIGNGATE_API_KEY_PEPPER,
+  });
   agentCredential.status = "rotating";
-  agentCredential.rotated_from_credential_id = "cred_previous";
+  agentCredential.rotated_from_credential_id = predecessor.credential_id;
   agentCredential.rotation_expires_at = "2026-07-19T00:05:00.000Z";
   assert.equal((await postDecision(baseRequest({ request_id: "req_rotating_key" }), env)).status, 200);
+  agentCredential.rotated_from_credential_id = "cred_missing";
+  assert.equal((await postDecision(baseRequest({ request_id: "req_missing_rotating_key" }), env)).status, 401);
+  agentCredential.rotated_from_credential_id = agentCredential.credential_id;
+  assert.equal((await postDecision(baseRequest({ request_id: "req_self_rotating_key" }), env)).status, 401);
+  agentCredential.rotated_from_credential_id = predecessor.credential_id;
+  predecessor.organization_id = "org_other";
+  assert.equal((await postDecision(baseRequest({ request_id: "req_cross_tenant_rotating_key" }), env)).status, 401);
+  predecessor.organization_id = ORG;
+  predecessor.principal_id = "codex_dev_02";
+  assert.equal((await postDecision(baseRequest({ request_id: "req_cross_principal_rotating_key" }), env)).status, 401);
+  predecessor.principal_id = "codex_dev_01";
+  predecessor.principal_type = "executor";
+  assert.equal((await postDecision(baseRequest({ request_id: "req_wrong_principal_type_rotating_key" }), env)).status, 401);
+  predecessor.principal_type = "agent";
+  predecessor.allowed_services_json = JSON.stringify(["other-worker"]);
+  assert.equal((await postDecision(baseRequest({ request_id: "req_constraint_widening_rotating_key" }), env)).status, 401);
+  predecessor.allowed_services_json = JSON.stringify(["signgate-worker"]);
+  predecessor.status = "revoked";
+  assert.equal((await postDecision(baseRequest({ request_id: "req_revoked_predecessor_rotating_key" }), env)).status, 401);
+  predecessor.status = "active";
   agentCredential.rotation_expires_at = null;
   assert.equal((await postDecision(baseRequest({ request_id: "req_null_rotating_key" }), env)).status, 401);
   agentCredential.rotation_expires_at = "2026-07-20T00:05:01.000Z";
@@ -309,6 +354,25 @@ test("DEV-SG-001 auth and tenant binding fail closed", async () => {
   assert.equal(actionDenied.decision, "DENY");
   assert.deepEqual(actionDenied.reason_codes, ["CREDENTIAL_TARGET_NOT_ALLOWED"]);
   agentCredential.allowed_action_types_json = JSON.stringify(["deploy_change"]);
+  agentCredential.allowed_action_types_json = "{";
+  const malformedActions = await postDecision(baseRequest({ request_id: "req_credential_malformed_actions" }), env);
+  assert.equal(malformedActions.status, 403);
+  assert.deepEqual((await malformedActions.json()).reason_codes, ["ALLOWED_ACTION_TYPES_JSON_MALFORMED"]);
+  agentCredential.allowed_action_types_json = JSON.stringify([]);
+  const emptyActions = await (await postDecision(baseRequest({ request_id: "req_credential_empty_actions" }), env)).json();
+  assert.equal(emptyActions.decision, "DENY");
+  assert.deepEqual(emptyActions.reason_codes, ["CREDENTIAL_TARGET_NOT_ALLOWED"]);
+  agentCredential.allowed_action_types_json = JSON.stringify(["deploy_change"]);
+  agentCredential.allowed_services_json = "{\"not\":\"an array\"}";
+  const malformedServices = await postDecision(baseRequest({ request_id: "req_credential_malformed_services" }), env);
+  assert.equal(malformedServices.status, 403);
+  assert.deepEqual((await malformedServices.json()).reason_codes, ["ALLOWED_SERVICES_JSON_MALFORMED"]);
+  agentCredential.allowed_services_json = JSON.stringify(["signgate-worker"]);
+  agentCredential.allowed_environments_json = JSON.stringify("preview");
+  const nonArrayEnvironment = await postDecision(baseRequest({ request_id: "req_credential_nonarray_env" }), env);
+  assert.equal(nonArrayEnvironment.status, 403);
+  assert.deepEqual((await nonArrayEnvironment.json()).reason_codes, ["ALLOWED_ENVIRONMENTS_JSON_MALFORMED"]);
+  agentCredential.allowed_environments_json = JSON.stringify(["local", "preview", "production"]);
 });
 
 test("DEV-SG-001 policy matrix implements frozen deploy_change outcomes", async () => {
@@ -684,6 +748,176 @@ test("DEV-SG-001 rejection responses carry redacted durable audit correlation wh
   assert.equal(missingD1Body.decision, undefined);
 });
 
+test("DEV-SG-001 rejection audit correlation matrix covers 400 401 403 409 422 500 503", async () => {
+  const env = await testEnv();
+  await createPreviewCredential({
+    store: env.SIGNGATE_TEST_STORE,
+    rawKey: AGENT_NO_SCOPE_KEY,
+    organizationId: ORG,
+    principalId: "codex_dev_no_scope",
+    principalType: "agent",
+    scopes: ["decision:consume:deploy_change"],
+    nowMs: NOW,
+    pepper: env.SIGNGATE_API_KEY_PEPPER,
+  });
+  const exactAuditRow = auditId => env.SIGNGATE_TEST_STORE.auditEvents.find(event => event.audit_id === auditId);
+  const assertRedactedError = body => {
+    assert.equal(body.enforcement_effect, "DENY");
+    assert.equal(body.decision, undefined);
+    assert.equal(body.execution_directive, undefined);
+    assert.doesNotMatch(JSON.stringify(body), /Bearer|sg_agent_|token=secret-value|Error:|stack|raw/i);
+  };
+  const durableCases = [
+    {
+      label: "400",
+      response: () => postDecision("{", env),
+      status: 400,
+      code: "MALFORMED_JSON",
+    },
+    {
+      label: "403 tenant mismatch",
+      response: () => postDecision(baseRequest({ request_id: "req_matrix_403", organization_id: "org_other" }), env),
+      status: 403,
+      code: "AUTHORIZATION_FAILED",
+    },
+    {
+      label: "403 wrong scope",
+      response: () => postDecision(baseRequest({ request_id: "req_matrix_403_scope" }), env, AGENT_NO_SCOPE_KEY),
+      status: 403,
+      code: "AUTHORIZATION_FAILED",
+    },
+    {
+      label: "403 wrong principal type",
+      response: () => postDecision(baseRequest({ request_id: "req_matrix_403_principal" }), env, EXECUTOR_KEY),
+      status: 403,
+      code: "AUTHORIZATION_FAILED",
+    },
+    {
+      label: "409 decision idempotency",
+      response: async () => {
+        await postDecision(baseRequest({ request_id: "req_matrix_409" }), env);
+        return postDecision(baseRequest({ request_id: "req_matrix_409", action: { parameters: { changed_routes: ["/v1/decisions", "/changed"] } } }), env);
+      },
+      status: 409,
+      code: "REQUEST_ID_REUSE_MISMATCH",
+    },
+    {
+      label: "409 consume conflict",
+      response: async () => {
+        const decision = await (await postDecision(baseRequest({ request_id: "req_matrix_409_consume" }), env)).json();
+        await postConsume(decision, env, "req_matrix_consume_a");
+        return postConsume(decision, env, "req_matrix_consume_b");
+      },
+      status: 409,
+      code: "DECISION_ALREADY_CONSUMED",
+      eventType: "decision.consume_rejected",
+    },
+    {
+      label: "409 approval grant conflict",
+      response: async () => {
+        const reviewRequest = await bindDefaultTrustedEvidence(env, baseRequest({
+          request_id: "req_matrix_409_grant_review",
+          action: { parameters: { touches_permissions: true } },
+        }));
+        const review = await (await postDecision(reviewRequest, env)).json();
+        const body = {
+          contract_version: SIGNGATE_CONTRACT_VERSION,
+          organization_id: ORG,
+          original_decision_id: review.decision_id,
+          action_fingerprint: review.action_fingerprint,
+          policy_version: SIGNGATE_POLICY_VERSION,
+          approval_reason: "FOUNDER_APPROVED_PREVIEW_PERMISSION_CHANGE",
+          expires_at: GRANT_FUTURE,
+        };
+        await handleFounderApprovalGrantRequest(new Request("https://signgate.test/internal/dogfood/founder-approval-grants", {
+          method: "POST",
+          headers: { authorization: `Bearer ${FOUNDER_KEY}` },
+          body: JSON.stringify(body),
+        }), env);
+        return handleFounderApprovalGrantRequest(new Request("https://signgate.test/internal/dogfood/founder-approval-grants", {
+          method: "POST",
+          headers: { authorization: `Bearer ${FOUNDER_KEY}` },
+          body: JSON.stringify({ ...body, expires_at: "2026-07-19T00:09:00.000Z" }),
+        }), env);
+      },
+      status: 409,
+      code: "APPROVAL_GRANT_IDEMPOTENCY_MISMATCH",
+      eventType: "approval_grant.rejected",
+    },
+    {
+      label: "422 schema",
+      response: () => postDecision(baseRequest({ request_id: "req_matrix_422", intent: "token=secret-value" }), env),
+      status: 422,
+      code: "REQUEST_SCHEMA_INVALID",
+    },
+    {
+      label: "422 mandate schema",
+      response: () => postDecision(baseRequest({ request_id: "req_matrix_422_mandate", mandate: { id: "" } }), env),
+      status: 422,
+      code: "REQUEST_SCHEMA_INVALID",
+    },
+    {
+      label: "422 evidence schema",
+      response: () => postDecision(baseRequest({ request_id: "req_matrix_422_evidence", evidence: [null] }), env),
+      status: 422,
+      code: "REQUEST_SCHEMA_INVALID",
+    },
+    {
+      label: "500",
+      response: async () => {
+        const originalGetMandate = env.SIGNGATE_TEST_STORE.getMandate.bind(env.SIGNGATE_TEST_STORE);
+        env.SIGNGATE_TEST_STORE.getMandate = async () => {
+          throw new Error("injected invariant failure with bearer sg_agent_should_not_leak");
+        };
+        const response = await postDecision(baseRequest({ request_id: "req_matrix_500" }), env);
+        env.SIGNGATE_TEST_STORE.getMandate = originalGetMandate;
+        return response;
+      },
+      status: 500,
+      code: "INTERNAL_INVARIANT_FAILED",
+    },
+  ];
+
+  for (const item of durableCases) {
+    const response = await item.response();
+    assert.equal(response.status, item.status, item.label);
+    const body = await response.json();
+    assert.equal(body.error, item.code, item.label);
+    assertRedactedError(body);
+    assert.match(body.audit_id, /^audit_/, item.label);
+    const audit = exactAuditRow(body.audit_id);
+    assert.ok(audit, item.label);
+    assert.equal(audit.organization_id, ORG);
+    assert.equal(audit.event_type, item.eventType || "decision.rejected");
+    assert.doesNotMatch(JSON.stringify(audit), /Bearer|sg_agent_|token=secret-value|stack|injected invariant failure/i);
+    assert.equal(JSON.parse(audit.metadata_json).error, item.code);
+  }
+
+  const unauthenticated = await handleSignGateDecisionRequest(
+    new Request("https://signgate.test/v1/decisions", { method: "POST", body: JSON.stringify(baseRequest({ request_id: "req_matrix_401" })) }),
+    env,
+  );
+  assert.equal(unauthenticated.status, 401);
+  const authBody = await unauthenticated.json();
+  assert.equal(authBody.error, "AUTHENTICATION_REQUIRED");
+  assert.equal(authBody.audit_id, null);
+  assertRedactedError(authBody);
+
+  const unavailable = await handleSignGateDecisionRequest(
+    new Request("https://signgate.test/v1/decisions", {
+      method: "POST",
+      headers: { authorization: `Bearer ${AGENT_KEY}` },
+      body: JSON.stringify(baseRequest({ request_id: "req_matrix_503" })),
+    }),
+    { SIGNGATE_TEST_NOW_MS: NOW, SIGNGATE_API_KEY_PEPPER: "test-pepper" },
+  );
+  assert.equal(unavailable.status, 503);
+  const unavailableBody = await unavailable.json();
+  assert.equal(unavailableBody.error, "POLICY_UNAVAILABLE");
+  assert.equal(unavailableBody.audit_id, null);
+  assertRedactedError(unavailableBody);
+});
+
 test("DEV-SG-001 consume rollback and concurrency invariants hold in product store", async () => {
   const receiptFailureStore = new MemorySignGateStore({ failReceipt: true });
   const receiptFailureEnv = await testEnv({ store: receiptFailureStore });
@@ -838,7 +1072,11 @@ test("DEV-SG-001 wrapper fail-closed behavior covers DF-01 through DF-07", async
     env,
     agentKey: AGENT_KEY,
     executorKey: EXECUTOR_KEY,
-    request: baseRequest({ request_id: "df_04", evidence: [] }),
+    request: baseRequest({
+      request_id: "df_04",
+      action: { parameters: { ci_evidence: { status: "failed" } } },
+      evidence: [{ ...baseRequest().evidence[0], status: "failed", source: "github_actions", id: "failed_test_run_001" }],
+    }),
     executionAttemptId: "df_04_attempt",
   });
   assert.equal(df04.status, "REFUSED");
@@ -961,18 +1199,26 @@ test("DF-03 exact unsupported secret change is denied with no execution", async 
   assert.equal(env.SIGNGATE_TEST_STORE.executionResults.length, 0);
 });
 
-test("DF-04 exact missing trusted evidence is denied with audit and no execution", async () => {
+test("DF-04 exact failed tests are denied with test reference and no execution", async () => {
   const env = await testEnv();
+  const request = baseRequest({
+    request_id: "df04_failed_tests",
+    action: { parameters: { ci_evidence: { status: "failed", run_id: "failed_test_run_001", checks: ["lint", "unit"] } } },
+    evidence: [{ ...baseRequest().evidence[0], id: "failed_test_run_001", source: "github_actions", status: "failed" }],
+  });
   const result = await runDeployChangePreviewWrapper({
     env,
     agentKey: AGENT_KEY,
     executorKey: EXECUTOR_KEY,
-    request: baseRequest({ request_id: "df04_missing_evidence", evidence: [] }),
+    request,
     executionAttemptId: "df04_attempt",
   });
   assert.equal(result.status, "REFUSED");
   assert.equal(result.reason, "DENY");
+  assert.deepEqual(result.decision.reason_codes, ["TESTS_FAILED"]);
+  assert.equal(result.decision.bound_action.parameters.ci_evidence.run_id, "failed_test_run_001");
   assert.equal(env.SIGNGATE_TEST_STORE.receipts.size, 0);
+  assert.equal(env.SIGNGATE_TEST_STORE.executionResults.length, 0);
 });
 
 test("DF-05 exact post-decision action mutation is refused before consume", async () => {
