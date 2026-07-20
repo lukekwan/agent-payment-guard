@@ -1,0 +1,40 @@
+{
+  "application_commit_under_test": "43f2316a7709198c2e46d29fc3d6673e0d458b6e",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "scenario_id": "DF-03",
+  "scenario_purpose": "Secret-touching deploy is denied and not executed",
+  "exact_test_name": "DF-03 exact unsupported secret change is denied with no execution",
+  "sanitized_input": {
+    "request_id": "df03_generated",
+    "touches_secrets": true,
+    "secret_material_in_payload": false
+  },
+  "expected_result": {
+    "decision": "DENY",
+    "reason_codes": [
+      "SECRET_CHANGE_NOT_SUPPORTED_V0_1"
+    ]
+  },
+  "actual_status": 200,
+  "actual_decision": "DENY",
+  "actual_reason_codes": [
+    "SECRET_CHANGE_NOT_SUPPORTED_V0_1"
+  ],
+  "state_assertions": {
+    "idempotency_rows": 1
+  },
+  "receipt_assertions": {
+    "consume_receipts": 0,
+    "execution_results": 0
+  },
+  "audit_assertions": {
+    "decision_created": 1
+  },
+  "execution_assertions": {
+    "wrapper_result": "REFUSED",
+    "unauthorized_external_execution": false
+  },
+  "pass_fail": "PASS"
+}

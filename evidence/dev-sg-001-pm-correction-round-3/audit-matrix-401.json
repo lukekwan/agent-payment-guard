@@ -1,0 +1,29 @@
+{
+  "application_commit_under_test": "43f2316a7709198c2e46d29fc3d6673e0d458b6e",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "matrix_group": "audit-matrix-401",
+  "sanitized_input": {
+    "raw_payload_omitted": true,
+    "bearer_token_omitted": true
+  },
+  "expected_result": {
+    "status": 401,
+    "error": "AUTHENTICATION_REQUIRED",
+    "event": null
+  },
+  "actual_status": 401,
+  "actual_error": "AUTHENTICATION_REQUIRED",
+  "response_audit_id": null,
+  "durable_audit": null,
+  "additional_cases": [],
+  "redaction_assertions": {
+    "no_stack": true,
+    "no_raw_bearer_token": true,
+    "no_raw_api_key": true,
+    "no_raw_payload": true,
+    "no_secret_text": true
+  },
+  "pass_fail": "PASS"
+}

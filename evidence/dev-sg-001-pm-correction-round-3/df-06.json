@@ -1,0 +1,40 @@
+{
+  "application_commit_under_test": "43f2316a7709198c2e46d29fc3d6673e0d458b6e",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "scenario_id": "DF-06",
+  "scenario_purpose": "Previously valid ALLOW expires before consume and persists one expiry",
+  "exact_test_name": "DF-06 exact previously valid ALLOW expires before consume with single audit",
+  "sanitized_input": {
+    "request_id": "df06_generated",
+    "issued_before_time_advance": true,
+    "trusted_time_advanced_minutes": 16
+  },
+  "expected_result": {
+    "wrapper": "REFUSED",
+    "consume_status": 409,
+    "state": "EXPIRED"
+  },
+  "actual_status": 409,
+  "actual_decision": "ALLOW",
+  "actual_reason_codes": [
+    "DECISION_EXPIRED"
+  ],
+  "state_assertions": {
+    "decision_state": "EXPIRED",
+    "available_to_expired_transition_count": 1
+  },
+  "receipt_assertions": {
+    "count": 0
+  },
+  "audit_assertions": {
+    "expiry_audits": 1
+  },
+  "execution_assertions": {
+    "wrapper_result": "REFUSED",
+    "execution_results": 0,
+    "unauthorized_external_execution": false
+  },
+  "pass_fail": "PASS"
+}

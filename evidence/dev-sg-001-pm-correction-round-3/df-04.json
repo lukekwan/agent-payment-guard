@@ -1,0 +1,40 @@
+{
+  "application_commit_under_test": "43f2316a7709198c2e46d29fc3d6673e0d458b6e",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "scenario_id": "DF-04",
+  "scenario_purpose": "Commit-bound failed-test evidence returns TESTS_FAILED",
+  "exact_test_name": "DF-04 exact failed tests are denied with test reference and no execution",
+  "sanitized_input": {
+    "request_id": "df04_generated",
+    "ci_status": "failed",
+    "test_reference": "failed_test_run_001"
+  },
+  "expected_result": {
+    "decision": "DENY",
+    "reason_codes": [
+      "TESTS_FAILED"
+    ]
+  },
+  "actual_status": 200,
+  "actual_decision": "DENY",
+  "actual_reason_codes": [
+    "TESTS_FAILED"
+  ],
+  "state_assertions": {
+    "preserved_test_reference": "failed_test_run_001"
+  },
+  "receipt_assertions": {
+    "consume_receipts": 0,
+    "execution_results": 0
+  },
+  "audit_assertions": {
+    "decision_created": 1
+  },
+  "execution_assertions": {
+    "wrapper_result": "REFUSED",
+    "unauthorized_external_execution": false
+  },
+  "pass_fail": "PASS"
+}

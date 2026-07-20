@@ -1,0 +1,41 @@
+{
+  "application_commit_under_test": "43f2316a7709198c2e46d29fc3d6673e0d458b6e",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "scenario_id": "DF-07",
+  "scenario_purpose": "Exact duplicate returns same artifact and consume remains single-use",
+  "exact_test_name": "DF-07 exact idempotent decision replays same artifact and consume remains single use",
+  "sanitized_input": {
+    "request_id": "df07_generated",
+    "exact_duplicate": true,
+    "changed_payload_same_request_id": true
+  },
+  "expected_result": {
+    "duplicate_same_artifact": true,
+    "changed_payload_status": 409,
+    "one_receipt": true
+  },
+  "actual_status": 200,
+  "actual_decision": "ALLOW",
+  "actual_reason_codes": [
+    "PREVIEW_DEPLOY_POLICY_PASSED"
+  ],
+  "state_assertions": {
+    "same_decision_id": true,
+    "changed_payload_error": "REQUEST_ID_REUSE_MISMATCH"
+  },
+  "receipt_assertions": {
+    "first_status": 200,
+    "same_attempt_retry_status": 200,
+    "different_attempt_status": 409,
+    "count": 1
+  },
+  "audit_assertions": {
+    "consumed_audits": 1
+  },
+  "execution_assertions": {
+    "unauthorized_external_execution": false
+  },
+  "pass_fail": "PASS"
+}

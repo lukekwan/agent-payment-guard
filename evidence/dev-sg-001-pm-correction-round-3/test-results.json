@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "command": "npm run check",
+  "test_total": 76,
+  "test_passed": 76,
+  "test_failed": 0,
+  "product_d1_status": "PASS 2/2",
+  "df_evidence_generation_status": "PASS",
+  "audit_evidence_generation_status": "PASS",
+  "retention_evidence_generation_status": "PASS",
+  "round_3_application_commit": "43f2316a7709198c2e46d29fc3d6673e0d458b6e"
+}

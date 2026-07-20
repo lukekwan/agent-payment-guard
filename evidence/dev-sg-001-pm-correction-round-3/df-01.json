@@ -1,0 +1,41 @@
+{
+  "application_commit_under_test": "43f2316a7709198c2e46d29fc3d6673e0d458b6e",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "scenario_id": "DF-01",
+  "scenario_purpose": "Preview deploy with passing tests executes once through wrapper",
+  "exact_test_name": "DF-01 exact preview ALLOW executes once through wrapper",
+  "sanitized_input": {
+    "request_id": "df01_generated",
+    "environment": "preview",
+    "ci_status": "passed"
+  },
+  "expected_result": {
+    "http_status": 200,
+    "decision": "ALLOW",
+    "wrapper": "EXECUTED_PREVIEW"
+  },
+  "actual_status": 200,
+  "actual_decision": "ALLOW",
+  "actual_reason_codes": [
+    "PREVIEW_DEPLOY_POLICY_PASSED"
+  ],
+  "state_assertions": {
+    "decision_state": "CONSUMED",
+    "idempotency_rows": 1
+  },
+  "receipt_assertions": {
+    "count": 1,
+    "receipt_decision_id": "dec_ba71eaaa88e876adf978de56b99b6351"
+  },
+  "audit_assertions": {
+    "consumed_audits": 1
+  },
+  "execution_assertions": {
+    "wrapper_result": "EXECUTED_PREVIEW",
+    "execution_results": 1,
+    "unauthorized_external_execution": false
+  },
+  "pass_fail": "PASS"
+}

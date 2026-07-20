@@ -1,0 +1,134 @@
+{
+  "P1-02": {
+    "status": "CLOSED",
+    "exact_correction": "Rotating credentials resolve and validate a real tenant-scoped predecessor; malformed/wrong-type stored credential constraints fail closed; empty arrays remain valid empty sets, not allow-all.",
+    "files_functions": {
+      "src/signgate-decision.js": [
+        "SignGateInputError",
+        "authenticate",
+        "credentialJsonList",
+        "credentialAllowsAction",
+        "MemorySignGateStore.getCredentialById",
+        "D1SignGateStore.getCredentialById"
+      ],
+      "test/signgate-decision.test.js": [
+        "DEV-SG-001 auth and tenant binding fail closed"
+      ],
+      "test/signgate-round3-evidence.mjs": [
+        "runCredentialEvidence"
+      ]
+    },
+    "executable_tests": [
+      "DEV-SG-001 auth and tenant binding fail closed",
+      "test/signgate-round3-evidence.mjs credential matrix"
+    ],
+    "actual_evidence_files": [
+      "evidence/dev-sg-001-pm-correction-round-3/credential-linkage-results.json",
+      "evidence/dev-sg-001-pm-correction-round-3/credential-malformed-constraints-results.json"
+    ],
+    "residual_limitation": "Preview credential lifecycle remains operator-managed; no credential-management API or general IAM was added."
+  },
+  "P2-01": {
+    "status": "CLOSED",
+    "exact_correction": "Table-driven audit matrix covers 400/401/403/409/422/500/503, including cross-handler consume and approval grant conflicts, with durable audit-row correlation when safe and null audit_id when not writable/truthful.",
+    "files_functions": {
+      "src/signgate-decision.js": [
+        "SignGateInputError.authenticatedCredential",
+        "handleSignGateDecisionRequest",
+        "handleFounderApprovalGrantRequest",
+        "handleConsumeDecisionRequest",
+        "safeAuditFailure"
+      ],
+      "test/signgate-decision.test.js": [
+        "DEV-SG-001 rejection audit correlation matrix covers 400 401 403 409 422 500 503"
+      ],
+      "test/signgate-round3-evidence.mjs": [
+        "runAuditEvidence"
+      ]
+    },
+    "executable_tests": [
+      "DEV-SG-001 rejection audit correlation matrix covers 400 401 403 409 422 500 503",
+      "test/signgate-round3-evidence.mjs audit matrix"
+    ],
+    "actual_evidence_files": [
+      "evidence/dev-sg-001-pm-correction-round-3/audit-matrix-400.json",
+      "evidence/dev-sg-001-pm-correction-round-3/audit-matrix-401.json",
+      "evidence/dev-sg-001-pm-correction-round-3/audit-matrix-403.json",
+      "evidence/dev-sg-001-pm-correction-round-3/audit-matrix-409.json",
+      "evidence/dev-sg-001-pm-correction-round-3/audit-matrix-422.json",
+      "evidence/dev-sg-001-pm-correction-round-3/audit-matrix-500.json",
+      "evidence/dev-sg-001-pm-correction-round-3/audit-matrix-503.json"
+    ],
+    "residual_limitation": "Pre-auth, complete D1 unavailability, and audit-store write failures return null audit_id because no durable audit can be truthfully claimed."
+  },
+  "P2-02": {
+    "status": "CLOSED",
+    "exact_correction": "DF-01 through DF-07 are exact frozen V2.2 scenarios; DF-04 is failed tests, DF-05 uses normal wrapper action mutation before consume, and DF-06 mints a valid ALLOW before trusted time advances.",
+    "files_functions": {
+      "test/signgate-decision.test.js": [
+        "DF-01 exact preview ALLOW executes once through wrapper",
+        "DF-02 exact Founder approval grant produces one fresh ALLOW then consumes",
+        "DF-03 exact unsupported secret change is denied with no execution",
+        "DF-04 exact failed tests are denied with test reference and no execution",
+        "DF-05 exact post-decision action mutation is refused before consume",
+        "DF-06 exact previously valid ALLOW expires before consume with single audit",
+        "DF-07 exact idempotent decision replays same artifact and consume remains single use"
+      ],
+      "test/signgate-round3-evidence.mjs": [
+        "runDfEvidence"
+      ]
+    },
+    "executable_tests": [
+      "Seven separately named DF tests",
+      "test/signgate-round3-evidence.mjs DF generator"
+    ],
+    "actual_evidence_files": [
+      "evidence/dev-sg-001-pm-correction-round-3/df-01.json",
+      "evidence/dev-sg-001-pm-correction-round-3/df-02.json",
+      "evidence/dev-sg-001-pm-correction-round-3/df-03.json",
+      "evidence/dev-sg-001-pm-correction-round-3/df-04.json",
+      "evidence/dev-sg-001-pm-correction-round-3/df-05.json",
+      "evidence/dev-sg-001-pm-correction-round-3/df-06.json",
+      "evidence/dev-sg-001-pm-correction-round-3/df-07.json"
+    ],
+    "residual_limitation": "Evidence is sanitized local preview/simulation output; production deployment remains unauthorized."
+  },
+  "P2-03": {
+    "status": "CLOSED",
+    "exact_correction": "Retention local-D1 fixture seeds every retained table and proves before/after delete_after, active/reference preservation, safe phase order, batch limits, idempotent rerun, unrelated-org preservation, and injected failure/retry safety.",
+    "files_functions": {
+      "src/signgate-decision.js": [
+        "cleanupSignGatePreviewRetention",
+        "MemorySignGateStore.cleanupPreviewRetention",
+        "D1SignGateStore.cleanupPreviewRetention"
+      ],
+      "test/signgate-product-d1-smoke.test.js": [
+        "DEV-SG-001 product D1 retention covers every table with preservation batching and retry"
+      ],
+      "test/signgate-round3-evidence.mjs": [
+        "runRetentionEvidence"
+      ]
+    },
+    "executable_tests": [
+      "DEV-SG-001 product D1 retention covers every table with preservation batching and retry",
+      "test/signgate-round3-evidence.mjs retention matrix"
+    ],
+    "actual_evidence_files": [
+      "evidence/dev-sg-001-pm-correction-round-3/retention-execution-results.json",
+      "evidence/dev-sg-001-pm-correction-round-3/retention-consume-receipts.json",
+      "evidence/dev-sg-001-pm-correction-round-3/retention-idempotency.json",
+      "evidence/dev-sg-001-pm-correction-round-3/retention-approval-grants.json",
+      "evidence/dev-sg-001-pm-correction-round-3/retention-decisions.json",
+      "evidence/dev-sg-001-pm-correction-round-3/retention-audit-events.json",
+      "evidence/dev-sg-001-pm-correction-round-3/retention-api-credentials.json",
+      "evidence/dev-sg-001-pm-correction-round-3/retention-mandates.json",
+      "evidence/dev-sg-001-pm-correction-round-3/retention-trusted-evidence.json",
+      "evidence/dev-sg-001-pm-correction-round-3/retention-authorized-targets.json",
+      "evidence/dev-sg-001-pm-correction-round-3/retention-failure-retry.json",
+      "evidence/dev-sg-001-pm-correction-round-3/retention-batch-limit.json",
+      "evidence/dev-sg-001-pm-correction-round-3/retention-idempotent-rerun.json"
+    ],
+    "residual_limitation": "Cleanup remains preview/operator-run only; no live scheduler, cron, deployment config, or production cleanup was added."
+  },
+  "round_3_application_commit": "43f2316a7709198c2e46d29fc3d6673e0d458b6e"
+}

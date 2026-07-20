@@ -1,0 +1,5 @@
+ src/signgate-decision.js               | 118 ++++-
+ test/signgate-decision.test.js         | 254 ++++++++++-
+ test/signgate-product-d1-smoke.test.js | 119 +++++
+ test/signgate-round3-evidence.mjs      | 767 +++++++++++++++++++++++++++++++++
+ 4 files changed, 1234 insertions(+), 24 deletions(-)
