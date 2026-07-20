@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { Miniflare } from "miniflare";
+import canonicalize from "canonicalize";
 
 import {
   SIGNGATE_CONTRACT_VERSION,
@@ -13,6 +14,7 @@ import {
   handleConsumeDecisionRequest,
   handleFounderApprovalGrantRequest,
   handleSignGateDecisionRequest,
+  sha256Hex,
 } from "../src/signgate-decision.js";
 
 const NOW = Date.parse("2026-07-19T00:00:00.000Z");
@@ -30,11 +32,16 @@ async function d1Env() {
     d1Databases: { GUARD_DB: "signgate-smoke" },
   });
   const db = await mf.getD1Database("GUARD_DB");
-  for (const statement of readFileSync(new URL("../migrations/0008_signgate_deploy_change_decisions.sql", import.meta.url), "utf8")
-    .split(";")
-    .map(sql => sql.trim())
-    .filter(Boolean)) {
-    await db.prepare(statement).run();
+  for (const migration of [
+    "../migrations/0008_signgate_deploy_change_decisions.sql",
+    "../migrations/0009_signgate_round4_authority_provenance.sql",
+  ]) {
+    for (const statement of readFileSync(new URL(migration, import.meta.url), "utf8")
+      .split(";")
+      .map(sql => sql.trim())
+      .filter(Boolean)) {
+      await db.prepare(statement).run();
+    }
   }
   const store = new D1SignGateStore(db);
   const env = { GUARD_DB: db, SIGNGATE_TEST_NOW_MS: NOW, SIGNGATE_API_KEY_PEPPER: "test-pepper" };
@@ -177,11 +184,29 @@ async function tableCount(db, table, where = "1 = 1", bindings = []) {
   return (await db.prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE ${where}`).bind(...bindings).first()).count;
 }
 
+async function authoritySnapshotFingerprint(snapshotJson) {
+  return `sha256:${await sha256Hex(canonicalize(JSON.parse(snapshotJson)))}`;
+}
+
 test("DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approval, and retention", async () => {
   const { env, db, store, mf } = await d1Env();
   try {
     const [, decision] = await postDecision(request("d1_allow"), env);
     assert.equal(decision.decision, "ALLOW");
+    const authorityRow = await db.prepare(
+      "SELECT authority_snapshot_json, authority_snapshot_fingerprint FROM signgate_decisions WHERE decision_id = ?",
+    ).bind(decision.decision_id).first();
+    const authoritySnapshot = JSON.parse(authorityRow.authority_snapshot_json);
+    assert.equal(authoritySnapshot.snapshot_version, "signgate_authority_snapshot_v1");
+    assert.equal(authoritySnapshot.credential.credential_id.length > 0, true);
+    assert.equal(authoritySnapshot.mandate.mandate_id, "mandate_preview_001");
+    assert.equal(authoritySnapshot.authorized_target.target_id, "target_preview");
+    assert.deepEqual(authoritySnapshot.trusted_evidence.map(item => item.evidence_id), ["evidence_tests_001"]);
+    assert.equal(authorityRow.authority_snapshot_fingerprint, await authoritySnapshotFingerprint(authorityRow.authority_snapshot_json));
+    const lowerSnapshot = authorityRow.authority_snapshot_json.toLowerCase();
+    for (const forbidden of ["api_key", "apikey", "bearer", "\"key_digest\"", "raw_credential", "password"]) {
+      assert.equal(lowerSnapshot.includes(forbidden), false, forbidden);
+    }
 
     const [consumeStatus, receipt] = await consume(decision, env, "attempt_1");
     assert.equal(consumeStatus, 200);
@@ -339,6 +364,15 @@ test("DEV-SG-001 product D1 retention covers every table with preservation batch
        VALUES (?, ?, ?, ?, 'deploy_change', ?, 'ALLOW', 'AVAILABLE', '{}', '{}', ?, '[]', ?, ?, ?, ?)`,
     ).bind("ret_dec_active", ORG, "ret_req_active", "fp_active", "sha256:retactive", SIGNGATE_POLICY_VERSION, old, future, due, old).run();
     await db.prepare(
+      `UPDATE signgate_decisions
+       SET credential_id = 'ret_cred_active',
+           mandate_id = 'ret_mandate_active',
+           authorized_target_id = 'ret_target_active',
+           evidence_ids_json = '["ret_evidence_eligible"]',
+           authority_snapshot_json = '{"credential_id":"ret_cred_active","mandate_id":"ret_mandate_active","authorized_target_id":"ret_target_active","evidence_ids":["ret_evidence_eligible"]}'
+       WHERE organization_id = ? AND decision_id = 'ret_dec_active'`,
+    ).bind(ORG).run();
+    await db.prepare(
       "INSERT INTO signgate_request_idempotency (organization_id, request_id, request_fingerprint, decision_id, response_json, policy_version, delete_after, created_at) VALUES (?, ?, ?, ?, '{}', ?, ?, ?), (?, ?, ?, ?, '{}', ?, ?, ?)",
     ).bind(ORG, "ret_idem_eligible", "fp_eligible", "ret_dec_eligible", SIGNGATE_POLICY_VERSION, due, old, ORG, "ret_idem_active", "fp_active", "ret_dec_active", SIGNGATE_POLICY_VERSION, due, old).run();
     await db.prepare(
@@ -368,9 +402,9 @@ test("DEV-SG-001 product D1 retention covers every table with preservation batch
     await db.prepare(
       `INSERT INTO signgate_api_credentials
       (credential_id, organization_id, principal_id, principal_type, key_prefix, key_digest, digest_version, scopes_json, status,
-       rotated_from_credential_id, rotation_expires_at, allowed_environments_json, allowed_action_types_json, allowed_services_json, delete_after, created_at, updated_at)
-      VALUES ('ret_cred_revoked', ?, 'codex_dev_old', 'agent', 'ret_prefix_1', 'digest', 'sg_key_digest_v1', '["decision:create:deploy_change"]', 'revoked', NULL, NULL, '["preview"]', '["deploy_change"]', '["signgate-worker"]', ?, ?, ?),
-             ('ret_cred_active', ?, 'codex_dev_active', 'agent', 'ret_prefix_2', 'digest2', 'sg_key_digest_v1', '["decision:create:deploy_change"]', 'active', NULL, NULL, '["preview"]', '["deploy_change"]', '["signgate-worker"]', ?, ?, ?)`,
+       rotated_from_credential_id, rotation_started_at, rotation_expires_at, allowed_environments_json, allowed_action_types_json, allowed_services_json, delete_after, created_at, updated_at)
+      VALUES ('ret_cred_revoked', ?, 'codex_dev_old', 'agent', 'ret_prefix_1', 'digest', 'sg_key_digest_v1', '["decision:create:deploy_change"]', 'revoked', NULL, NULL, NULL, '["preview"]', '["deploy_change"]', '["signgate-worker"]', ?, ?, ?),
+             ('ret_cred_active', ?, 'codex_dev_active', 'agent', 'ret_prefix_2', 'digest2', 'sg_key_digest_v1', '["decision:create:deploy_change"]', 'active', NULL, NULL, NULL, '["preview"]', '["deploy_change"]', '["signgate-worker"]', ?, ?, ?)`,
     ).bind(ORG, due, old, old, ORG, due, old, old).run();
     await db.prepare(
       "INSERT INTO signgate_mandates (organization_id, mandate_id, issuer, scope_json, status, issued_at, expires_at, delete_after, created_at) VALUES (?, 'ret_mandate_expired', 'founder_01', '[\"deploy:preview\"]', 'expired', ?, ?, ?, ?), (?, 'ret_mandate_active', 'founder_01', '[\"deploy:preview\"]', 'active', ?, ?, ?, ?)",
@@ -398,7 +432,7 @@ test("DEV-SG-001 product D1 retention covers every table with preservation batch
     assert.equal(firstPass.credentials, 1);
     assert.equal(firstPass.mandates, 1);
     assert.equal(firstPass.authorized_targets, 1);
-    assert.equal(firstPass.trusted_evidence, 0);
+    assert.equal(firstPass.trusted_evidence, 1);
     assert.equal(await tableCount(db, "signgate_decisions", "decision_id = 'ret_dec_active'"), 1);
     assert.equal(await tableCount(db, "signgate_request_idempotency", "request_id = 'ret_idem_active'"), 1);
     assert.equal(await tableCount(db, "signgate_audit_events", "audit_id = 'ret_audit_active'"), 1);
@@ -406,7 +440,7 @@ test("DEV-SG-001 product D1 retention covers every table with preservation batch
     assert.equal(await tableCount(db, "signgate_approval_grants", "approval_grant_id = 'ret_grant_active'"), 1);
     assert.equal(await tableCount(db, "signgate_mandates", "mandate_id = 'ret_mandate_active'"), 1);
     assert.equal(await tableCount(db, "signgate_authorized_targets", "target_id = 'ret_target_active'"), 1);
-    assert.equal(await tableCount(db, "signgate_trusted_evidence", "evidence_id = 'ret_evidence_eligible'"), 1);
+    assert.equal(await tableCount(db, "signgate_trusted_evidence", "evidence_id = 'ret_evidence_eligible'"), 0);
 
     await assert.rejects(
       cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: cleanupNow, batchSize: 100, failAfterTable: "grants" }),
@@ -429,6 +463,52 @@ test("DEV-SG-001 product D1 retention covers every table with preservation batch
     assert.ok(retry.trusted_evidence >= 1);
     const repeated = await cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: cleanupNow, batchSize: 100 });
     assert.ok(Object.values(repeated).every(value => value === 0));
+  } finally {
+    await mf.dispose();
+  }
+});
+
+test("DEV-SG-001 product D1 cleanup keeps executable decisions auditable by immutable authority snapshot", async () => {
+  const { env, db, store, mf } = await d1Env();
+  try {
+    const [, decision] = await postDecision(request("d1_authority_snapshot_cleanup"), env);
+    assert.equal(decision.decision, "ALLOW");
+    const before = await db.prepare(
+      "SELECT authority_snapshot_json, authority_snapshot_fingerprint FROM signgate_decisions WHERE decision_id = ?",
+    ).bind(decision.decision_id).first();
+    const snapshot = JSON.parse(before.authority_snapshot_json);
+    await db.prepare("UPDATE signgate_api_credentials SET status = 'revoked', delete_after = ? WHERE credential_id = ?")
+      .bind("2026-07-18T00:00:00.000Z", snapshot.credential.credential_id)
+      .run();
+    await db.prepare("UPDATE signgate_mandates SET status = 'expired', expires_at = ?, delete_after = ? WHERE mandate_id = ?")
+      .bind("2026-07-18T00:00:00.000Z", "2026-07-18T00:00:00.000Z", snapshot.mandate.mandate_id)
+      .run();
+    await db.prepare("UPDATE signgate_authorized_targets SET status = 'revoked', valid_until = ?, delete_after = ? WHERE target_id = ?")
+      .bind("2026-07-18T00:00:00.000Z", "2026-07-18T00:00:00.000Z", snapshot.authorized_target.target_id)
+      .run();
+    await db.prepare("UPDATE signgate_trusted_evidence SET delete_after = ? WHERE evidence_id = ?")
+      .bind("2026-07-18T00:00:00.000Z", snapshot.trusted_evidence[0].evidence_id)
+      .run();
+    await db.prepare(
+      "INSERT INTO signgate_trusted_evidence (organization_id, evidence_id, provider, status, commit_sha, action_fingerprint, subject_fingerprint, observed_at, delete_after, created_at) VALUES ('org_other', 'other_org_evidence', 'github_actions', 'passed', '5ac67be4fe17b5c1b773bcc584080cad704f4959', 'sha256:other', 'sha256:s', '2026-07-18T00:00:00.000Z', '2026-07-18T00:00:00.000Z', '2026-07-18T00:00:00.000Z')",
+    ).run();
+    const cleanup = await cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: Date.parse("2026-07-19T00:05:00.000Z"), batchSize: 100 });
+    assert.equal(cleanup.credentials, 1);
+    assert.equal(cleanup.mandates, 1);
+    assert.equal(cleanup.authorized_targets, 1);
+    assert.equal(cleanup.trusted_evidence, 1);
+    assert.equal(await tableCount(db, "signgate_decisions", "decision_id = ?", [decision.decision_id]), 1);
+    assert.equal(await tableCount(db, "signgate_api_credentials", "credential_id = ?", [snapshot.credential.credential_id]), 0);
+    assert.equal(await tableCount(db, "signgate_mandates", "mandate_id = ?", [snapshot.mandate.mandate_id]), 0);
+    assert.equal(await tableCount(db, "signgate_authorized_targets", "target_id = ?", [snapshot.authorized_target.target_id]), 0);
+    assert.equal(await tableCount(db, "signgate_trusted_evidence", "evidence_id = ?", [snapshot.trusted_evidence[0].evidence_id]), 0);
+    assert.equal(await tableCount(db, "signgate_trusted_evidence", "organization_id = 'org_other'"), 1);
+    const after = await db.prepare(
+      "SELECT state, authority_snapshot_json, authority_snapshot_fingerprint FROM signgate_decisions WHERE decision_id = ?",
+    ).bind(decision.decision_id).first();
+    assert.equal(after.state, "AVAILABLE");
+    assert.equal(after.authority_snapshot_json, before.authority_snapshot_json);
+    assert.equal(after.authority_snapshot_fingerprint, await authoritySnapshotFingerprint(after.authority_snapshot_json));
   } finally {
     await mf.dispose();
   }

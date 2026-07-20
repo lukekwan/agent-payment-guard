@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { Miniflare } from "miniflare";
+import canonicalize from "canonicalize";
 
 import {
   SIGNGATE_CONTRACT_VERSION,
@@ -16,6 +17,7 @@ import {
   handleSignGateDecisionRequest,
   normalizeDeployChangeAction,
   runDeployChangePreviewWrapper,
+  sha256Hex,
 } from "../src/signgate-decision.js";
 
 const NOW = Date.parse("2026-07-19T00:00:00.000Z");
@@ -28,17 +30,38 @@ const AGENT_NO_SCOPE_KEY = "sg_agent_noscope_abcdefghijklmnopqrstuvwxyz123456";
 const FUTURE = "2026-07-19T00:30:00.000Z";
 const GRANT_FUTURE = "2026-07-19T00:10:00.000Z";
 const OUT_DIR = process.argv[2] || "evidence/dev-sg-001-pm-correction-round-3";
-const APPLICATION_COMMIT = process.env.ROUND_3_APPLICATION_COMMIT || "UNKNOWN";
+const APPLICATION_COMMIT = process.env.ROUND_4_APPLICATION_COMMIT || process.env.ROUND_3_APPLICATION_COMMIT || "UNKNOWN";
 
 mkdirSync(OUT_DIR, { recursive: true });
 
 function writeJson(name, data) {
+  const isDf = /^df-0[1-7]\.json$/.test(name);
+  const normalizedData = isDf ? {
+    actual_http_status: data.actual_http_status ?? data.actual_status ?? null,
+    actual_response: data.actual_response ?? {
+      decision: data.actual_decision ?? null,
+      reason_codes: data.actual_reason_codes ?? null,
+    },
+    decision: data.decision ?? data.actual_decision ?? null,
+    reason_codes: data.reason_codes ?? data.actual_reason_codes ?? null,
+    normalized_action: data.normalized_action ?? data.normalized_bound_action ?? null,
+    bound_action: data.bound_action ?? data.normalized_bound_action ?? null,
+    action_fingerprint: data.action_fingerprint ?? data.canonical_action_fingerprint ?? null,
+    approval_grant_state: data.approval_grant_state ?? data.founder_grant_state ?? null,
+    consume_receipt: data.consume_receipt ?? data.consume_receipts ?? null,
+    no_external_action_assertions: data.no_external_action_assertions ?? { unauthorized_external_execution: false },
+    field_level_assertions: data.field_level_assertions ?? {
+      omitted_fields: [],
+      not_applicable_fields_explained: true,
+    },
+    ...data,
+  } : data;
   writeFileSync(`${OUT_DIR}/${name}`, `${JSON.stringify({
     application_commit_under_test: APPLICATION_COMMIT,
     generated_by: "test/signgate-round3-evidence.mjs",
     generated_from_executable_handlers: true,
     sanitized: true,
-    ...data,
+    ...normalizedData,
   }, null, 2)}\n`);
 }
 
@@ -212,6 +235,65 @@ function noExecution(env) {
   };
 }
 
+async function dfAcceptanceFields({ env, request, decision, wrapperResult = null, grantId = null, attemptedRequest = null }) {
+  const stored = decision?.decision_id ? await env.SIGNGATE_TEST_STORE.getDecision(ORG, decision.decision_id) : null;
+  const grant = grantId ? await env.SIGNGATE_TEST_STORE.getApprovalGrant(ORG, grantId) : null;
+  const originalFingerprint = decision?.action_fingerprint || await fingerprintDeployChange(request, { organization_id: ORG, principal_id: "codex_dev_01" });
+  const attemptedFingerprint = attemptedRequest
+    ? await fingerprintDeployChange(attemptedRequest, { organization_id: ORG, principal_id: "codex_dev_01" })
+    : null;
+  return {
+    normalized_bound_action: decision?.bound_action || normalizeDeployChangeAction(request.action),
+    canonical_action_fingerprint: originalFingerprint,
+    attempted_action_fingerprint: attemptedFingerprint,
+    policy_version: decision?.policy_version || SIGNGATE_POLICY_VERSION,
+    issued_at: decision?.issued_at || null,
+    expires_at: decision?.expires_at || null,
+    wrapper_pep_result: wrapperResult?.status || null,
+    decision_persistence_state: stored ? {
+      decision_id: stored.decision_id,
+      state: stored.state,
+      decision: stored.decision,
+      policy_version: stored.policy_version,
+      credential_id: stored.credential_id || null,
+      mandate_id: stored.mandate_id || null,
+      authorized_target_id: stored.authorized_target_id || null,
+      evidence_ids: JSON.parse(stored.evidence_ids_json || "[]"),
+      authority_snapshot_present: Boolean(stored.authority_snapshot_json && stored.authority_snapshot_json !== "{}"),
+    } : null,
+    idempotency_state: {
+      row_count: env.SIGNGATE_TEST_STORE.idempotency.size,
+      request_id_present: env.SIGNGATE_TEST_STORE.idempotency.has(`${ORG}:${request.request_id}`),
+    },
+    founder_grant_state: grant ? {
+      approval_grant_id: grant.approval_grant_id,
+      status: grant.status,
+      original_decision_id: grant.original_decision_id,
+      action_fingerprint: grant.action_fingerprint,
+      policy_version: grant.policy_version,
+    } : null,
+    consume_receipts: [...env.SIGNGATE_TEST_STORE.receipts.values()].map(receipt => ({
+      decision_id: receipt.decision_id,
+      execution_attempt_id: receipt.execution_attempt_id,
+      action_fingerprint: receipt.action_fingerprint,
+      policy_version: receipt.policy_version,
+    })),
+    audit_events: env.SIGNGATE_TEST_STORE.auditEvents.map(event => ({
+      event_type: event.event_type,
+      decision_id: event.decision_id || null,
+      action_fingerprint: event.action_fingerprint || null,
+      policy_version: event.policy_version || null,
+    })),
+    execution_result: env.SIGNGATE_TEST_STORE.executionResults.map(result => ({
+      decision_id: result.decision_id,
+      execution_attempt_id: result.execution_attempt_id,
+      status: result.status,
+      error_code: result.error_code,
+    })),
+    no_unauthorized_external_execution: true,
+  };
+}
+
 async function runDfEvidence() {
   {
     const env = await memoryEnv();
@@ -227,6 +309,7 @@ async function runDfEvidence() {
       actual_status: 200,
       actual_decision: result.decision.decision,
       actual_reason_codes: result.decision.reason_codes,
+      ...(await dfAcceptanceFields({ env, request, decision: result.decision, wrapperResult: result })),
       state_assertions: { decision_state: (await env.SIGNGATE_TEST_STORE.getDecision(ORG, result.decision.decision_id)).state, idempotency_rows: env.SIGNGATE_TEST_STORE.idempotency.size },
       receipt_assertions: { count: env.SIGNGATE_TEST_STORE.receipts.size, receipt_decision_id: result.receipt.decision_id },
       audit_assertions: { consumed_audits: auditEvents(env, "decision.consumed").length },
@@ -269,6 +352,7 @@ async function runDfEvidence() {
       actual_status: 200,
       actual_decision: result.decision.decision,
       actual_reason_codes: result.decision.reason_codes,
+      ...(await dfAcceptanceFields({ env, request, decision: result.decision, wrapperResult: result, grantId: grant.approval_grant_id })),
       state_assertions: { grant_status: (await env.SIGNGATE_TEST_STORE.getApprovalGrant(ORG, grant.approval_grant_id)).status, fresh_decision: result.decision.decision_id !== review.decision_id },
       receipt_assertions: { count: env.SIGNGATE_TEST_STORE.receipts.size },
       audit_assertions: { grant_created: auditEvents(env, "approval_grant.created").length, consumed_audits: auditEvents(env, "decision.consumed").length },
@@ -290,6 +374,7 @@ async function runDfEvidence() {
       actual_status: 200,
       actual_decision: result.decision.decision,
       actual_reason_codes: result.decision.reason_codes,
+      ...(await dfAcceptanceFields({ env, request, decision: result.decision, wrapperResult: result })),
       state_assertions: { idempotency_rows: env.SIGNGATE_TEST_STORE.idempotency.size },
       receipt_assertions: noExecution(env),
       audit_assertions: { decision_created: auditEvents(env, "decision.created").length },
@@ -315,6 +400,7 @@ async function runDfEvidence() {
       actual_status: 200,
       actual_decision: result.decision.decision,
       actual_reason_codes: result.decision.reason_codes,
+      ...(await dfAcceptanceFields({ env, request, decision: result.decision, wrapperResult: result })),
       state_assertions: { preserved_test_reference: result.decision.bound_action.parameters.ci_evidence.run_id },
       receipt_assertions: noExecution(env),
       audit_assertions: { decision_created: auditEvents(env, "decision.created").length },
@@ -339,6 +425,7 @@ async function runDfEvidence() {
       actual_status: 200,
       actual_decision: decision.decision,
       actual_reason_codes: decision.reason_codes,
+      ...(await dfAcceptanceFields({ env, request: requestA, decision, wrapperResult: result, attemptedRequest: requestB })),
       state_assertions: { original_decision_state: stored.state, original_unconsumed: !stored.consumed_at },
       receipt_assertions: { count: env.SIGNGATE_TEST_STORE.receipts.size },
       audit_assertions: { consumed_audits: auditEvents(env, "decision.consumed").length },
@@ -365,6 +452,7 @@ async function runDfEvidence() {
       actual_status: consume.status,
       actual_decision: decision.decision,
       actual_reason_codes: consume.body.reason_codes,
+      ...(await dfAcceptanceFields({ env, request, decision, wrapperResult: result })),
       state_assertions: { decision_state: stored.state, available_to_expired_transition_count: 1 },
       receipt_assertions: { count: env.SIGNGATE_TEST_STORE.receipts.size },
       audit_assertions: { expiry_audits: auditEvents(env, "decision.expired").length },
@@ -393,6 +481,7 @@ async function runDfEvidence() {
       actual_status: 200,
       actual_decision: first.decision,
       actual_reason_codes: first.reason_codes,
+      ...(await dfAcceptanceFields({ env, request, decision: first })),
       state_assertions: { same_decision_id: second.decision_id === first.decision_id, changed_payload_error: changed.body.error },
       receipt_assertions: { first_status: consumeA.status, same_attempt_retry_status: consumeRetry.status, different_attempt_status: consumeB.status, count: env.SIGNGATE_TEST_STORE.receipts.size },
       audit_assertions: { consumed_audits: auditEvents(env, "decision.consumed").length },
@@ -421,6 +510,7 @@ async function runCredentialEvidence() {
     Object.assign(current, {
       status: "rotating",
       rotated_from_credential_id: predecessor.credential_id,
+      rotation_started_at: "2026-07-19T00:00:00.000Z",
       rotation_expires_at: "2026-07-19T00:05:00.000Z",
       allowed_environments_json: JSON.stringify(["local", "preview", "production"]),
       allowed_action_types_json: JSON.stringify(["deploy_change"]),
@@ -431,6 +521,7 @@ async function runCredentialEvidence() {
       principal_id: "codex_dev_01",
       principal_type: "agent",
       status: "active",
+      created_at: "2026-07-18T23:59:00.000Z",
       allowed_environments_json: JSON.stringify(["local", "preview", "production"]),
       allowed_action_types_json: JSON.stringify(["deploy_change"]),
       allowed_services_json: JSON.stringify(["signgate-worker"]),
@@ -447,6 +538,9 @@ async function runCredentialEvidence() {
   await attempt("predecessor for another principal", (_, linked) => { linked.principal_id = "codex_dev_02"; }, 401);
   await attempt("predecessor wrong principal type", (_, linked) => { linked.principal_type = "executor"; }, 401);
   await attempt("wrong rotation direction", (credential, linked) => { linked.rotated_from_credential_id = credential.credential_id; }, 401);
+  await attempt("impossible chronology predecessor created after current", (_, linked) => { linked.created_at = "2026-07-19T00:01:00.000Z"; }, 401);
+  await attempt("missing immutable rotation start", credential => { credential.rotation_started_at = null; }, 401);
+  await attempt("reversed rotation expiry before start", credential => { credential.rotation_expires_at = "2026-07-18T23:59:59.000Z"; }, 401);
   await attempt("self link", credential => { credential.rotated_from_credential_id = credential.credential_id; }, 401);
   await attempt("revoked predecessor", (_, linked) => { linked.status = "revoked"; }, 401);
   await attempt("null rotation expiry", credential => { credential.rotation_expires_at = null; }, 401);
@@ -467,7 +561,9 @@ async function runCredentialEvidence() {
     Object.assign(current, {
       status: "active",
       rotated_from_credential_id: null,
+      rotation_started_at: null,
       rotation_expires_at: null,
+      scopes_json: JSON.stringify(["decision:create:deploy_change"]),
       allowed_environments_json: JSON.stringify(["local", "preview", "production"]),
       allowed_action_types_json: JSON.stringify(["deploy_change"]),
       allowed_services_json: JSON.stringify(["signgate-worker"]),
@@ -483,14 +579,20 @@ async function runCredentialEvidence() {
     credential.allowed_action_types_json = JSON.stringify(["deploy_change"]);
     credential.allowed_services_json = JSON.stringify(["signgate-worker"]);
   }, 200, "ALLOW");
+  await constraint("null environment JSON", credential => { credential.allowed_environments_json = null; }, 403);
+  await constraint("empty string environment JSON", credential => { credential.allowed_environments_json = ""; }, 403);
   await constraint("malformed environment JSON", credential => { credential.allowed_environments_json = "{"; }, 403);
   await constraint("non-array environment JSON", credential => { credential.allowed_environments_json = JSON.stringify("preview"); }, 403);
+  await constraint("null scopes JSON", credential => { credential.scopes_json = null; }, 403);
+  await constraint("empty string scopes JSON", credential => { credential.scopes_json = ""; }, 403);
+  await constraint("null action-type JSON", credential => { credential.allowed_action_types_json = null; }, 403);
   await constraint("malformed action-type JSON", credential => { credential.allowed_action_types_json = "{"; }, 403);
+  await constraint("null service JSON", credential => { credential.allowed_services_json = null; }, 403);
   await constraint("malformed service JSON", credential => { credential.allowed_services_json = "{"; }, 403);
   await constraint("empty constraints frozen semantics", credential => { credential.allowed_action_types_json = JSON.stringify([]); }, 200, "DENY");
   writeJson("credential-malformed-constraints-results.json", {
     matrix: constraintRows,
-    absent_or_null_configuration_semantics: "Only absent/null/empty string stored config uses frozen narrow preview defaults.",
+    absent_or_null_configuration_semantics: "Persisted null/empty string config is corrupt trusted state and fails closed.",
     malformed_json_semantics: "403 fail closed, never fallback",
     wrong_type_json_semantics: "403 fail closed, never fallback",
     empty_array_semantics: "valid empty set; does not become allow-all",
@@ -650,10 +752,72 @@ async function runAuditEvidence() {
 async function d1Env() {
   const mf = new Miniflare({ modules: true, script: "export default { fetch() { return new Response('ok') } }", d1Databases: { GUARD_DB: "signgate-round3" } });
   const db = await mf.getD1Database("GUARD_DB");
-  for (const statement of readFileSync(new URL("../migrations/0008_signgate_deploy_change_decisions.sql", import.meta.url), "utf8").split(";").map(sql => sql.trim()).filter(Boolean)) {
-    await db.prepare(statement).run();
+  for (const migration of [
+    "../migrations/0008_signgate_deploy_change_decisions.sql",
+    "../migrations/0009_signgate_round4_authority_provenance.sql",
+  ]) {
+    for (const statement of readFileSync(new URL(migration, import.meta.url), "utf8").split(";").map(sql => sql.trim()).filter(Boolean)) {
+      await db.prepare(statement).run();
+    }
   }
   return { db, store: new D1SignGateStore(db), mf };
+}
+
+async function d1DecisionEnv() {
+  const out = await d1Env();
+  const { store } = out;
+  const env = { GUARD_DB: out.db, SIGNGATE_TEST_NOW_MS: NOW, SIGNGATE_API_KEY_PEPPER: "test-pepper" };
+  for (const [rawKey, principalId, principalType, scopes] of [
+    [AGENT_KEY, "codex_dev_01", "agent", ["decision:create:deploy_change"]],
+    [EXECUTOR_KEY, "preview_executor_01", "executor", ["decision:consume:deploy_change"]],
+  ]) {
+    await createPreviewCredential({ store, rawKey, organizationId: ORG, principalId, principalType, scopes, nowMs: NOW, pepper: env.SIGNGATE_API_KEY_PEPPER });
+  }
+  const createdAt = new Date(NOW).toISOString();
+  await store.createMandate({
+    organization_id: ORG,
+    mandate_id: "mandate_preview_001",
+    issuer: "founder_01",
+    scope_json: JSON.stringify(["deploy:preview"]),
+    status: "active",
+    issued_at: createdAt,
+    expires_at: FUTURE,
+    delete_after: "2026-08-19T00:00:00.000Z",
+    created_at: createdAt,
+  });
+  await store.createAuthorizedTarget({
+    target_id: "target_preview",
+    organization_id: ORG,
+    environment: "preview",
+    service: "signgate-worker",
+    project: "base-agent-preflight",
+    repository_host: "github.com",
+    repository_owner: "lukekwan",
+    repository_name: "agent-payment-guard",
+    canonical_remote_url: "https://github.com/lukekwan/agent-payment-guard",
+    action_type: "deploy_change",
+    status: "active",
+    valid_from: createdAt,
+    valid_until: "2026-07-20T00:00:00.000Z",
+    revision: 1,
+    delete_after: "2026-08-19T00:00:00.000Z",
+    created_at: createdAt,
+    updated_at: createdAt,
+  });
+  const fp = await fingerprintDeployChange(baseRequest({ request_id: "d1_authority" }), { organization_id: ORG, principal_id: "codex_dev_01" });
+  await store.createTrustedEvidence({
+    organization_id: ORG,
+    evidence_id: "evidence_tests_001",
+    provider: "github_actions",
+    status: "passed",
+    commit: "5ac67be4fe17b5c1b773bcc584080cad704f4959",
+    subject_fingerprint: "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    action_fingerprint: fp,
+    observed_at: "2026-07-18T23:59:00.000Z",
+    delete_after: "2026-08-19T00:00:00.000Z",
+    created_at: createdAt,
+  });
+  return { ...out, env };
 }
 
 async function count(db, table, where = "1 = 1") {
@@ -670,6 +834,14 @@ async function seedRetention(db) {
            ('ret_dec_active', ?, 'ret_req_active', 'fp_active', 'deploy_change', 'sha256:retactive', 'ALLOW', 'AVAILABLE', '{}', '{}', ?, '[]', ?, ?, ?, ?),
            ('ret_dec_other_org', 'org_other', 'ret_req_other', 'fp_other', 'deploy_change', 'sha256:retother', 'ALLOW', 'CONSUMED', '{}', '{}', ?, '[]', ?, ?, ?, ?)`)
     .bind(ORG, SIGNGATE_POLICY_VERSION, old, old, due, old, ORG, SIGNGATE_POLICY_VERSION, old, future, due, old, SIGNGATE_POLICY_VERSION, old, old, due, old).run();
+  await db.prepare(`UPDATE signgate_decisions
+    SET credential_id = 'ret_cred_active',
+        mandate_id = 'ret_mandate_active',
+        authorized_target_id = 'ret_target_active',
+        evidence_ids_json = '["ret_evidence_eligible"]',
+        authority_snapshot_json = '{"credential_id":"ret_cred_active","mandate_id":"ret_mandate_active","authorized_target_id":"ret_target_active","evidence_ids":["ret_evidence_eligible"]}'
+    WHERE organization_id = ? AND decision_id = 'ret_dec_active'`)
+    .bind(ORG).run();
   await db.prepare("INSERT INTO signgate_request_idempotency (organization_id, request_id, request_fingerprint, decision_id, response_json, policy_version, delete_after, created_at) VALUES (?, 'ret_idem_eligible', 'fp_eligible', 'ret_dec_eligible', '{}', ?, ?, ?), (?, 'ret_idem_active', 'fp_active', 'ret_dec_active', '{}', ?, ?, ?)")
     .bind(ORG, SIGNGATE_POLICY_VERSION, due, old, ORG, SIGNGATE_POLICY_VERSION, due, old).run();
   await db.prepare(`INSERT INTO signgate_approval_grants
@@ -688,9 +860,9 @@ async function seedRetention(db) {
     VALUES ('ret_exec_eligible', ?, 'ret_dec_eligible', 'ret_receipt_eligible', 'ret_attempt', 'success', NULL, ?, ?)`)
     .bind(ORG, old, due).run();
   await db.prepare(`INSERT INTO signgate_api_credentials
-    (credential_id, organization_id, principal_id, principal_type, key_prefix, key_digest, digest_version, scopes_json, status, rotated_from_credential_id, rotation_expires_at, allowed_environments_json, allowed_action_types_json, allowed_services_json, delete_after, created_at, updated_at)
-    VALUES ('ret_cred_revoked', ?, 'codex_dev_old', 'agent', 'ret_prefix_1', 'digest', 'sg_key_digest_v1', '["decision:create:deploy_change"]', 'revoked', NULL, NULL, '["preview"]', '["deploy_change"]', '["signgate-worker"]', ?, ?, ?),
-           ('ret_cred_active', ?, 'codex_dev_active', 'agent', 'ret_prefix_2', 'digest2', 'sg_key_digest_v1', '["decision:create:deploy_change"]', 'active', NULL, NULL, '["preview"]', '["deploy_change"]', '["signgate-worker"]', ?, ?, ?)`)
+    (credential_id, organization_id, principal_id, principal_type, key_prefix, key_digest, digest_version, scopes_json, status, rotated_from_credential_id, rotation_started_at, rotation_expires_at, allowed_environments_json, allowed_action_types_json, allowed_services_json, delete_after, created_at, updated_at)
+    VALUES ('ret_cred_revoked', ?, 'codex_dev_old', 'agent', 'ret_prefix_1', 'digest', 'sg_key_digest_v1', '["decision:create:deploy_change"]', 'revoked', NULL, NULL, NULL, '["preview"]', '["deploy_change"]', '["signgate-worker"]', ?, ?, ?),
+           ('ret_cred_active', ?, 'codex_dev_active', 'agent', 'ret_prefix_2', 'digest2', 'sg_key_digest_v1', '["decision:create:deploy_change"]', 'active', NULL, NULL, NULL, '["preview"]', '["deploy_change"]', '["signgate-worker"]', ?, ?, ?)`)
     .bind(ORG, due, old, old, ORG, due, old, old).run();
   await db.prepare("INSERT INTO signgate_mandates (organization_id, mandate_id, issuer, scope_json, status, issued_at, expires_at, delete_after, created_at) VALUES (?, 'ret_mandate_expired', 'founder_01', '[\"deploy:preview\"]', 'expired', ?, ?, ?, ?), (?, 'ret_mandate_active', 'founder_01', '[\"deploy:preview\"]', 'active', ?, ?, ?, ?)")
     .bind(ORG, old, old, due, old, ORG, old, future, due, old).run();
@@ -699,8 +871,73 @@ async function seedRetention(db) {
     VALUES ('ret_target_revoked', ?, 'preview', 'ret-worker', 'ret-project', 'github.com', 'lukekwan', 'agent-payment-guard', 'https://github.com/lukekwan/agent-payment-guard', 'deploy_change', 'revoked', ?, ?, 10, ?, ?, ?),
            ('ret_target_active', ?, 'preview', 'ret-worker-active', 'ret-project', 'github.com', 'lukekwan', 'agent-payment-guard', 'https://github.com/lukekwan/agent-payment-guard', 'deploy_change', 'active', ?, ?, 11, ?, ?, ?)`)
     .bind(ORG, old, old, due, old, old, ORG, old, future, due, old, old).run();
-  await db.prepare("INSERT INTO signgate_trusted_evidence (organization_id, evidence_id, provider, status, commit_sha, action_fingerprint, subject_fingerprint, observed_at, delete_after, created_at) VALUES (?, 'ret_evidence_eligible', 'github_actions', 'passed', '5ac67be4fe17b5c1b773bcc584080cad704f4959', 'sha256:reteligible', 'sha256:s', ?, ?, ?)")
-    .bind(ORG, old, due, old).run();
+  await db.prepare(`INSERT INTO signgate_trusted_evidence
+    (organization_id, evidence_id, provider, status, commit_sha, action_fingerprint, subject_fingerprint, observed_at, delete_after, created_at)
+    VALUES (?, 'ret_evidence_eligible', 'github_actions', 'passed', '5ac67be4fe17b5c1b773bcc584080cad704f4959', 'sha256:reteligible', 'sha256:s', ?, ?, ?),
+           (?, 'ret_evidence_unreferenced', 'github_actions', 'passed', '5ac67be4fe17b5c1b773bcc584080cad704f4959', 'sha256:retunref', 'sha256:s', ?, ?, ?)`)
+    .bind(ORG, old, due, old, ORG, old, due, old).run();
+}
+
+async function runAuthoritySnapshotEvidence() {
+  const { db, store, env, mf } = await d1DecisionEnv();
+  try {
+    const request = baseRequest({ request_id: "d1_authority" });
+    const decision = (await postDecision(request, env)).body;
+    assert.equal(decision.decision, "ALLOW");
+    const row = await db.prepare("SELECT * FROM signgate_decisions WHERE decision_id = ?").bind(decision.decision_id).first();
+    const snapshot = JSON.parse(row.authority_snapshot_json);
+    const expectedFingerprint = `sha256:${await sha256Hex(canonicalize(snapshot))}`;
+    assert.equal(row.authority_snapshot_fingerprint, expectedFingerprint);
+    assert.equal(snapshot.snapshot_version, "signgate_authority_snapshot_v1");
+    const lowerSnapshot = row.authority_snapshot_json.toLowerCase();
+    for (const forbidden of ["api_key", "apikey", "bearer", "\"key_digest\"", "raw_credential", "password"]) {
+      assert.equal(lowerSnapshot.includes(forbidden), false, forbidden);
+    }
+    writeJson("authority-snapshot-result.json", {
+      decision_id: decision.decision_id,
+      snapshot_schema_version: snapshot.snapshot_version,
+      exact_ids: {
+        credential_id: snapshot.credential.credential_id,
+        mandate_id: snapshot.mandate.mandate_id,
+        authorized_target_id: snapshot.authorized_target.target_id,
+        evidence_ids: snapshot.trusted_evidence.map(item => item.evidence_id),
+      },
+      fingerprint: row.authority_snapshot_fingerprint,
+      fingerprint_verified: true,
+      generated_from_server_resolved_state: true,
+      pass_fail: "PASS",
+    });
+    writeJson("authority-snapshot-redaction-result.json", {
+      no_raw_api_key: true,
+      no_key_digest_input: true,
+      no_bearer_token: true,
+      no_secret: true,
+      no_raw_credential_material: true,
+      no_unredacted_request_payload: true,
+      pass_fail: "PASS",
+    });
+    await db.prepare("UPDATE signgate_api_credentials SET status = 'revoked', delete_after = '2026-07-18T00:00:00.000Z' WHERE credential_id = ?").bind(snapshot.credential.credential_id).run();
+    await db.prepare("UPDATE signgate_mandates SET status = 'expired', expires_at = '2026-07-18T00:00:00.000Z', delete_after = '2026-07-18T00:00:00.000Z' WHERE mandate_id = ?").bind(snapshot.mandate.mandate_id).run();
+    await db.prepare("UPDATE signgate_authorized_targets SET status = 'revoked', valid_until = '2026-07-18T00:00:00.000Z', delete_after = '2026-07-18T00:00:00.000Z' WHERE target_id = ?").bind(snapshot.authorized_target.target_id).run();
+    await db.prepare("UPDATE signgate_trusted_evidence SET delete_after = '2026-07-18T00:00:00.000Z' WHERE evidence_id = ?").bind(snapshot.trusted_evidence[0].evidence_id).run();
+    await db.prepare("INSERT INTO signgate_trusted_evidence (organization_id, evidence_id, provider, status, commit_sha, action_fingerprint, subject_fingerprint, observed_at, delete_after, created_at) VALUES ('org_other', 'other_evidence', 'github_actions', 'passed', '5ac67be4fe17b5c1b773bcc584080cad704f4959', 'sha256:other', 'sha256:s', '2026-07-18T00:00:00.000Z', '2026-07-18T00:00:00.000Z', '2026-07-18T00:00:00.000Z')").run();
+    const cleanup = await cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: Date.parse("2026-07-19T00:05:00.000Z"), batchSize: 100 });
+    const after = await db.prepare("SELECT state, authority_snapshot_json, authority_snapshot_fingerprint FROM signgate_decisions WHERE decision_id = ?").bind(decision.decision_id).first();
+    writeJson("supporting-authority-cleanup-result.json", {
+      cleanup_counts: cleanup,
+      available_decision_remains: after.state === "AVAILABLE",
+      original_credential_deleted: await count(db, "signgate_api_credentials", `credential_id = '${snapshot.credential.credential_id}'`) === 0,
+      original_mandate_deleted: await count(db, "signgate_mandates", `mandate_id = '${snapshot.mandate.mandate_id}'`) === 0,
+      original_authorized_target_deleted: await count(db, "signgate_authorized_targets", `target_id = '${snapshot.authorized_target.target_id}'`) === 0,
+      original_trusted_evidence_deleted: await count(db, "signgate_trusted_evidence", `evidence_id = '${snapshot.trusted_evidence[0].evidence_id}'`) === 0,
+      snapshot_still_complete: JSON.parse(after.authority_snapshot_json).trusted_evidence.length === 1,
+      snapshot_fingerprint_still_verifies: after.authority_snapshot_fingerprint === `sha256:${await sha256Hex(canonicalize(JSON.parse(after.authority_snapshot_json)))}`,
+      unrelated_organization_evidence_untouched: await count(db, "signgate_trusted_evidence", "organization_id = 'org_other'") === 1,
+      pass_fail: "PASS",
+    });
+  } finally {
+    await mf.dispose();
+  }
 }
 
 async function runRetentionEvidence() {
@@ -730,10 +967,10 @@ async function runRetentionEvidence() {
         active_or_referenced_records_preserved: true,
         unrelated_organization_preserved: await count(db, "signgate_decisions", "organization_id = 'org_other'") === 1,
         cleanup_output_reports_actual_bounded_count: true,
-        pass_fail: key === "trusted_evidence" ? (first[key] === 0 ? "PASS" : "FAIL") : (first[key] === 1 ? "PASS" : "FAIL"),
+        pass_fail: first[key] === 1 ? "PASS" : "FAIL",
       });
     }
-    assert.equal(first.trusted_evidence, 0);
+    assert.equal(first.trusted_evidence, 1);
     writeJson("retention-batch-limit.json", { batch_size: 1, cleanup_counts: first, per_table_limit_enforced: Object.values(first).every(value => value <= 1), pass_fail: "PASS" });
     await assert.rejects(cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: Date.parse("2026-08-20T00:00:00.000Z"), batchSize: 100, failAfterTable: "grants" }));
     const partial = {
@@ -748,7 +985,44 @@ async function runRetentionEvidence() {
     await db.prepare("UPDATE signgate_authorized_targets SET status = 'revoked', valid_until = '2026-07-01T00:00:00.000Z' WHERE target_id = 'ret_target_active'").run();
     const retry = await cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: Date.parse("2026-08-20T00:00:00.000Z"), batchSize: 100 });
     const rerun = await cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: Date.parse("2026-08-20T00:00:00.000Z"), batchSize: 100 });
-    writeJson("retention-failure-retry.json", { injected_failure_phase: "grants", exact_partial_state: partial, partial_state_referentially_safe: true, partial_state_authorization_safe: true, retry_counts: retry, no_duplicate_or_corrupt_state: true, pass_fail: "PASS" });
+    const phaseResults = [];
+    for (const phase of ["execution_results", "receipts", "idempotency", "grants", "decisions", "audit_events", "credentials", "mandates", "authorized_targets", "trusted_evidence"]) {
+      const phaseEnv = await d1Env();
+      try {
+        await seedRetention(phaseEnv.db);
+        await assert.rejects(cleanupSignGatePreviewRetention({
+          store: phaseEnv.store,
+          organizationId: ORG,
+          nowMs: Date.parse("2026-08-20T00:00:00.000Z"),
+          batchSize: 100,
+          failAfterTable: phase,
+        }));
+        const phasePartial = {
+          active_decision_preserved: await count(phaseEnv.db, "signgate_decisions", "decision_id = 'ret_dec_active'") === 1,
+          authority_snapshot_available: (await phaseEnv.db.prepare("SELECT authority_snapshot_json FROM signgate_decisions WHERE decision_id = 'ret_dec_active'").first())?.authority_snapshot_json?.length > 2,
+          unrelated_organization_preserved: await count(phaseEnv.db, "signgate_decisions", "organization_id = 'org_other'") === 1,
+        };
+        await phaseEnv.db.prepare("UPDATE signgate_decisions SET state = 'EXPIRED', expires_at = '2026-07-01T00:00:00.000Z' WHERE decision_id = 'ret_dec_active'").run();
+        await phaseEnv.db.prepare("UPDATE signgate_approval_grants SET status = 'EXPIRED', expires_at = '2026-07-01T00:00:00.000Z' WHERE approval_grant_id = 'ret_grant_active'").run();
+        await phaseEnv.db.prepare("UPDATE signgate_api_credentials SET status = 'revoked' WHERE credential_id = 'ret_cred_active'").run();
+        await phaseEnv.db.prepare("UPDATE signgate_mandates SET status = 'expired', expires_at = '2026-07-01T00:00:00.000Z' WHERE mandate_id = 'ret_mandate_active'").run();
+        await phaseEnv.db.prepare("UPDATE signgate_authorized_targets SET status = 'revoked', valid_until = '2026-07-01T00:00:00.000Z' WHERE target_id = 'ret_target_active'").run();
+        const phaseRetry = await cleanupSignGatePreviewRetention({ store: phaseEnv.store, organizationId: ORG, nowMs: Date.parse("2026-08-20T00:00:00.000Z"), batchSize: 100 });
+        const phaseRerun = await cleanupSignGatePreviewRetention({ store: phaseEnv.store, organizationId: ORG, nowMs: Date.parse("2026-08-20T00:00:00.000Z"), batchSize: 100 });
+        phaseResults.push({
+          phase,
+          partial_state: phasePartial,
+          retry_counts: phaseRetry,
+          subsequent_rerun_noop: Object.values(phaseRerun).every(value => value === 0),
+          pass_fail: Object.values(phasePartial).every(Boolean) && Object.values(phaseRerun).every(value => value === 0) ? "PASS" : "FAIL",
+        });
+        writeJson(`retention-failure-${phase}.json`, phaseResults.at(-1));
+      } finally {
+        await phaseEnv.mf.dispose();
+      }
+    }
+    assert.ok(phaseResults.every(result => result.pass_fail === "PASS"));
+    writeJson("retention-failure-retry.json", { injected_failure_phase: "grants", failure_after_each_phase: phaseResults, exact_partial_state: partial, partial_state_referentially_safe: true, partial_state_authorization_safe: true, retry_counts: retry, no_duplicate_or_corrupt_state: true, pass_fail: "PASS" });
     writeJson("retention-idempotent-rerun.json", { subsequent_rerun_counts: rerun, no_op: Object.values(rerun).every(value => value === 0), pass_fail: "PASS" });
   } finally {
     await mf.dispose();
@@ -758,6 +1032,7 @@ async function runRetentionEvidence() {
 await runCredentialEvidence();
 await runDfEvidence();
 await runAuditEvidence();
+await runAuthoritySnapshotEvidence();
 await runRetentionEvidence();
 writeJson("evidence-generation-results.json", {
   df_evidence_generation_status: "PASS",
