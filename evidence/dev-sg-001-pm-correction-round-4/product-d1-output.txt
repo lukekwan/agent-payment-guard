@@ -1,0 +1,11 @@
+✔ DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approval, and retention (5689.341708ms)
+✔ DEV-SG-001 product D1 retention covers every table with preservation batching and retry (1439.001792ms)
+✔ DEV-SG-001 product D1 cleanup keeps executable decisions auditable by immutable authority snapshot (965.9915ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8373.502

@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "p2_01_regression_status": "PASS",
+  "closed_findings_regression_status": "PASS",
+  "evidence": [
+    "npm-run-check.txt",
+    "focused-test-output.txt",
+    "product-d1-output.txt"
+  ]
+}

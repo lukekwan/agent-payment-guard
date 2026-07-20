@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "files": [
+    "migrations/0009_signgate_round4_authority_provenance.sql",
+    "src/signgate-decision.js",
+    "test/signgate-decision.test.js",
+    "test/signgate-product-d1-smoke.test.js",
+    "test/signgate-round3-evidence.mjs"
+  ],
+  "bad": []
+}

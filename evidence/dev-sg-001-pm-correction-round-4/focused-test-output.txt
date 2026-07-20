@@ -1,0 +1,27 @@
+✔ DEV-SG-001 strict JSON intake rejects malformed input before evaluation (45.355583ms)
+✔ DEV-SG-001 auth and tenant binding fail closed (17.677375ms)
+✔ DEV-SG-001 policy matrix implements frozen deploy_change outcomes (23.140833ms)
+✔ DEV-SG-001 trusted evidence requires exact server action binding (18.722084ms)
+✔ DEV-SG-001 idempotency and Founder grant lifecycle match frozen dogfood flow (5.321875ms)
+✔ DEV-SG-001 Memory approval grant use rolls back on audit failure (2.246542ms)
+✔ DEV-SG-001 consume is single-use, replay-safe, and expiry-persistent (5.876834ms)
+✔ DEV-SG-001 rejection responses carry redacted durable audit correlation when available (3.691875ms)
+✔ DEV-SG-001 rejection audit correlation matrix covers 400 401 403 409 422 500 503 (7.4185ms)
+✔ DEV-SG-001 consume rollback and concurrency invariants hold in product store (4.361292ms)
+✔ DEV-SG-001 fingerprint contract uses literal golden and sorted-unique set semantics (3.713459ms)
+✔ DEV-SG-001 wrapper fail-closed behavior covers DF-01 through DF-07 (8.987625ms)
+✔ DF-01 exact preview ALLOW executes once through wrapper (1.415459ms)
+✔ DF-02 exact Founder approval grant produces one fresh ALLOW then consumes (2.669083ms)
+✔ DF-03 exact unsupported secret change is denied with no execution (0.934292ms)
+✔ DF-04 exact failed tests are denied with test reference and no execution (0.95825ms)
+✔ DF-05 exact post-decision action mutation is refused before consume (0.8415ms)
+✔ DF-06 exact previously valid ALLOW expires before consume with single audit (1.537833ms)
+✔ DF-07 exact idempotent decision replays same artifact and consume remains single use (1.714042ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 257.756083

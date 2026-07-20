@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "required_fields": [
+    "application_commit_under_test",
+    "generated_by",
+    "generated_from_executable_handlers",
+    "scenario_id",
+    "sanitized_input",
+    "expected_result",
+    "actual_http_status",
+    "actual_response",
+    "decision",
+    "reason_codes",
+    "normalized_action",
+    "bound_action",
+    "action_fingerprint",
+    "policy_version",
+    "issued_at",
+    "expires_at",
+    "decision_state",
+    "approval_grant_state",
+    "idempotency_state",
+    "consume_receipt",
+    "audit_events",
+    "execution_result",
+    "no_external_action_assertions",
+    "field_level_assertions",
+    "pass_fail"
+  ],
+  "bad": []
+}

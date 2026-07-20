@@ -1,0 +1,34 @@
+{
+  "P1_02": {
+    "status": "CLOSED",
+    "correction": "Immutable rotation_started_at chronology and stored constraint fail-closed authorization",
+    "evidence": [
+      "credential-chronology-matrix.json",
+      "credential-constraint-matrix.json"
+    ]
+  },
+  "P2_02": {
+    "status": "CLOSED",
+    "correction": "DF-01 through DF-07 executable artifacts include all required top-level fields",
+    "evidence": [
+      "df-01.json",
+      "df-02.json",
+      "df-03.json",
+      "df-04.json",
+      "df-05.json",
+      "df-06.json",
+      "df-07.json",
+      "df-field-completeness-validation.json"
+    ]
+  },
+  "P2_03": {
+    "status": "CLOSED",
+    "correction": "Immutable per-decision authority snapshot with fingerprint; cleanup relies on snapshot and proves failure/retry after every phase",
+    "evidence": [
+      "authority-snapshot-schema-result.json",
+      "authority-snapshot-fingerprint-verification.json",
+      "supporting-authority-cleanup-result.json",
+      "failure-after-each-phase-validation.json"
+    ]
+  }
+}

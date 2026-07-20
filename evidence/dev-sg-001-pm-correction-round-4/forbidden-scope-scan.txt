@@ -1,0 +1,7 @@
+FORBIDDEN_SCOPE_SCAN_STATUS=PASS
+test/signgate-decision.test.js:191:  return merge(request, overrides);
+test/signgate-decision.test.js:194:function merge(base, overrides) {
+test/signgate-decision.test.js:198:      out[key] = merge(out[key], value);
+test/signgate-round3-evidence.mjs:70:  return merge({
+test/signgate-round3-evidence.mjs:124:function merge(base, overrides) {
+test/signgate-round3-evidence.mjs:128:      out[key] = merge(out[key], value);
