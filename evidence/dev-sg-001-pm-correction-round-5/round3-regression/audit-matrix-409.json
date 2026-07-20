@@ -1,0 +1,55 @@
+{
+  "application_commit_under_test": "57178f2da59392606676d2503479ab34eca95d4a",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "matrix_group": "audit-matrix-409",
+  "sanitized_input": {
+    "raw_payload_omitted": true,
+    "bearer_token_omitted": true
+  },
+  "expected_result": {
+    "status": 409,
+    "error": "REQUEST_ID_REUSE_MISMATCH",
+    "event": "decision.rejected"
+  },
+  "actual_status": 409,
+  "actual_error": "REQUEST_ID_REUSE_MISMATCH",
+  "response_audit_id": "audit_abd36cb8d4db534872835ca6a40fef0f",
+  "durable_audit": {
+    "audit_id": "audit_abd36cb8d4db534872835ca6a40fef0f",
+    "event_type": "decision.rejected",
+    "organization_id": "org_nomos_labs",
+    "principal_id": "codex_dev_01",
+    "metadata_keys": [
+      "error",
+      "correlation_id"
+    ]
+  },
+  "additional_cases": [
+    {
+      "label": "409 consume conflict",
+      "actual_status": 409,
+      "actual_error": "DECISION_ALREADY_CONSUMED",
+      "response_audit_id": "audit_bf4ce77b150790d3fce367c394a07abf",
+      "durable_audit_event_type": "decision.consume_rejected",
+      "returned_audit_id_matches_durable_row": true
+    },
+    {
+      "label": "409 approval-grant conflict",
+      "actual_status": 409,
+      "actual_error": "APPROVAL_GRANT_IDEMPOTENCY_MISMATCH",
+      "response_audit_id": "audit_3b9175e62775b41b7aff3f8c1e8241a0",
+      "durable_audit_event_type": "approval_grant.rejected",
+      "returned_audit_id_matches_durable_row": true
+    }
+  ],
+  "redaction_assertions": {
+    "no_stack": true,
+    "no_raw_bearer_token": true,
+    "no_raw_api_key": true,
+    "no_raw_payload": true,
+    "no_secret_text": true
+  },
+  "pass_fail": "PASS"
+}

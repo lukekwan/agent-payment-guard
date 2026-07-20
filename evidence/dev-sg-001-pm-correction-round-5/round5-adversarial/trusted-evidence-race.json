@@ -1,0 +1,48 @@
+{
+  "generated_by": "test/signgate-round5-adversarial.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "cases": [
+    {
+      "label": "disappears",
+      "status": 409,
+      "executable_allow_persisted": false
+    },
+    {
+      "label": "evidence ID changes",
+      "status": 409,
+      "executable_allow_persisted": false
+    },
+    {
+      "label": "provider changes",
+      "status": 409,
+      "executable_allow_persisted": false
+    },
+    {
+      "label": "status changes",
+      "status": 409,
+      "executable_allow_persisted": false
+    },
+    {
+      "label": "commit SHA changes",
+      "status": 409,
+      "executable_allow_persisted": false
+    },
+    {
+      "label": "action fingerprint changes",
+      "status": 409,
+      "executable_allow_persisted": false
+    },
+    {
+      "label": "observed_at changes",
+      "status": 409,
+      "executable_allow_persisted": false
+    },
+    {
+      "label": "observed_at invalid",
+      "status": 409,
+      "executable_allow_persisted": false
+    }
+  ],
+  "status": "PASS"
+}

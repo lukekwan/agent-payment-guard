@@ -1,0 +1,10 @@
+{
+  "application_commit_under_test": "57178f2da59392606676d2503479ab34eca95d4a",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "df_evidence_generation_status": "PASS",
+  "audit_evidence_generation_status": "PASS",
+  "retention_evidence_generation_status": "PASS",
+  "pass_fail": "PASS"
+}

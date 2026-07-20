@@ -1,0 +1,11 @@
+{
+  "generated_by": "test/signgate-round5-adversarial.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "legacy_state_after_0010": "NON_EXECUTABLE",
+  "invalidation_audit_count": 1,
+  "legacy_consume_status": 409,
+  "valid_round5_state_after_0010": "AVAILABLE",
+  "valid_round5_consume_status": 200,
+  "status": "PASS"
+}

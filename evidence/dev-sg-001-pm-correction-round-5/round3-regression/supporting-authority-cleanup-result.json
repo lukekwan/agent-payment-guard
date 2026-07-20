@@ -1,0 +1,27 @@
+{
+  "application_commit_under_test": "57178f2da59392606676d2503479ab34eca95d4a",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "cleanup_counts": {
+    "execution_results": 0,
+    "receipts": 0,
+    "idempotency": 0,
+    "grants": 0,
+    "decisions": 0,
+    "audit_events": 0,
+    "credentials": 1,
+    "mandates": 1,
+    "authorized_targets": 1,
+    "trusted_evidence": 1
+  },
+  "available_decision_remains": true,
+  "original_credential_deleted": true,
+  "original_mandate_deleted": true,
+  "original_authorized_target_deleted": true,
+  "original_trusted_evidence_deleted": true,
+  "snapshot_still_complete": true,
+  "snapshot_fingerprint_still_verifies": true,
+  "unrelated_organization_evidence_untouched": true,
+  "pass_fail": "PASS"
+}

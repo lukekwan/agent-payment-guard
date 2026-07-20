@@ -1,0 +1,38 @@
+{
+  "application_commit_under_test": "57178f2da59392606676d2503479ab34eca95d4a",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "matrix_group": "audit-matrix-400",
+  "sanitized_input": {
+    "raw_payload_omitted": true,
+    "bearer_token_omitted": true
+  },
+  "expected_result": {
+    "status": 400,
+    "error": "MALFORMED_JSON",
+    "event": "decision.rejected"
+  },
+  "actual_status": 400,
+  "actual_error": "MALFORMED_JSON",
+  "response_audit_id": "audit_bd8e9f0e32d859367dba90db97e0c4fc",
+  "durable_audit": {
+    "audit_id": "audit_bd8e9f0e32d859367dba90db97e0c4fc",
+    "event_type": "decision.rejected",
+    "organization_id": "org_nomos_labs",
+    "principal_id": "codex_dev_01",
+    "metadata_keys": [
+      "error",
+      "correlation_id"
+    ]
+  },
+  "additional_cases": [],
+  "redaction_assertions": {
+    "no_stack": true,
+    "no_raw_bearer_token": true,
+    "no_raw_api_key": true,
+    "no_raw_payload": true,
+    "no_secret_text": true
+  },
+  "pass_fail": "PASS"
+}

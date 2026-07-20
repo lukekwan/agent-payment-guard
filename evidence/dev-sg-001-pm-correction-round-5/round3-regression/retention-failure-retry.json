@@ -1,0 +1,250 @@
+{
+  "application_commit_under_test": "57178f2da59392606676d2503479ab34eca95d4a",
+  "generated_by": "test/signgate-round3-evidence.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "injected_failure_phase": "grants",
+  "failure_after_each_phase": [
+    {
+      "phase": "execution_results",
+      "partial_state": {
+        "active_decision_preserved": true,
+        "authority_snapshot_available": true,
+        "unrelated_organization_preserved": true
+      },
+      "retry_counts": {
+        "execution_results": 0,
+        "receipts": 1,
+        "idempotency": 2,
+        "grants": 2,
+        "decisions": 2,
+        "audit_events": 2,
+        "credentials": 2,
+        "mandates": 2,
+        "authorized_targets": 2,
+        "trusted_evidence": 2
+      },
+      "subsequent_rerun_noop": true,
+      "pass_fail": "PASS"
+    },
+    {
+      "phase": "receipts",
+      "partial_state": {
+        "active_decision_preserved": true,
+        "authority_snapshot_available": true,
+        "unrelated_organization_preserved": true
+      },
+      "retry_counts": {
+        "execution_results": 0,
+        "receipts": 0,
+        "idempotency": 2,
+        "grants": 2,
+        "decisions": 2,
+        "audit_events": 2,
+        "credentials": 2,
+        "mandates": 2,
+        "authorized_targets": 2,
+        "trusted_evidence": 2
+      },
+      "subsequent_rerun_noop": true,
+      "pass_fail": "PASS"
+    },
+    {
+      "phase": "idempotency",
+      "partial_state": {
+        "active_decision_preserved": true,
+        "authority_snapshot_available": true,
+        "unrelated_organization_preserved": true
+      },
+      "retry_counts": {
+        "execution_results": 0,
+        "receipts": 0,
+        "idempotency": 1,
+        "grants": 2,
+        "decisions": 2,
+        "audit_events": 2,
+        "credentials": 2,
+        "mandates": 2,
+        "authorized_targets": 2,
+        "trusted_evidence": 2
+      },
+      "subsequent_rerun_noop": true,
+      "pass_fail": "PASS"
+    },
+    {
+      "phase": "grants",
+      "partial_state": {
+        "active_decision_preserved": true,
+        "authority_snapshot_available": true,
+        "unrelated_organization_preserved": true
+      },
+      "retry_counts": {
+        "execution_results": 0,
+        "receipts": 0,
+        "idempotency": 1,
+        "grants": 1,
+        "decisions": 2,
+        "audit_events": 2,
+        "credentials": 2,
+        "mandates": 2,
+        "authorized_targets": 2,
+        "trusted_evidence": 2
+      },
+      "subsequent_rerun_noop": true,
+      "pass_fail": "PASS"
+    },
+    {
+      "phase": "decisions",
+      "partial_state": {
+        "active_decision_preserved": true,
+        "authority_snapshot_available": true,
+        "unrelated_organization_preserved": true
+      },
+      "retry_counts": {
+        "execution_results": 0,
+        "receipts": 0,
+        "idempotency": 1,
+        "grants": 1,
+        "decisions": 1,
+        "audit_events": 2,
+        "credentials": 2,
+        "mandates": 2,
+        "authorized_targets": 2,
+        "trusted_evidence": 2
+      },
+      "subsequent_rerun_noop": true,
+      "pass_fail": "PASS"
+    },
+    {
+      "phase": "audit_events",
+      "partial_state": {
+        "active_decision_preserved": true,
+        "authority_snapshot_available": true,
+        "unrelated_organization_preserved": true
+      },
+      "retry_counts": {
+        "execution_results": 0,
+        "receipts": 0,
+        "idempotency": 1,
+        "grants": 1,
+        "decisions": 1,
+        "audit_events": 1,
+        "credentials": 2,
+        "mandates": 2,
+        "authorized_targets": 2,
+        "trusted_evidence": 2
+      },
+      "subsequent_rerun_noop": true,
+      "pass_fail": "PASS"
+    },
+    {
+      "phase": "credentials",
+      "partial_state": {
+        "active_decision_preserved": true,
+        "authority_snapshot_available": true,
+        "unrelated_organization_preserved": true
+      },
+      "retry_counts": {
+        "execution_results": 0,
+        "receipts": 0,
+        "idempotency": 1,
+        "grants": 1,
+        "decisions": 1,
+        "audit_events": 1,
+        "credentials": 1,
+        "mandates": 2,
+        "authorized_targets": 2,
+        "trusted_evidence": 2
+      },
+      "subsequent_rerun_noop": true,
+      "pass_fail": "PASS"
+    },
+    {
+      "phase": "mandates",
+      "partial_state": {
+        "active_decision_preserved": true,
+        "authority_snapshot_available": true,
+        "unrelated_organization_preserved": true
+      },
+      "retry_counts": {
+        "execution_results": 0,
+        "receipts": 0,
+        "idempotency": 1,
+        "grants": 1,
+        "decisions": 1,
+        "audit_events": 1,
+        "credentials": 1,
+        "mandates": 1,
+        "authorized_targets": 2,
+        "trusted_evidence": 2
+      },
+      "subsequent_rerun_noop": true,
+      "pass_fail": "PASS"
+    },
+    {
+      "phase": "authorized_targets",
+      "partial_state": {
+        "active_decision_preserved": true,
+        "authority_snapshot_available": true,
+        "unrelated_organization_preserved": true
+      },
+      "retry_counts": {
+        "execution_results": 0,
+        "receipts": 0,
+        "idempotency": 1,
+        "grants": 1,
+        "decisions": 1,
+        "audit_events": 1,
+        "credentials": 1,
+        "mandates": 1,
+        "authorized_targets": 1,
+        "trusted_evidence": 2
+      },
+      "subsequent_rerun_noop": true,
+      "pass_fail": "PASS"
+    },
+    {
+      "phase": "trusted_evidence",
+      "partial_state": {
+        "active_decision_preserved": true,
+        "authority_snapshot_available": true,
+        "unrelated_organization_preserved": true
+      },
+      "retry_counts": {
+        "execution_results": 0,
+        "receipts": 0,
+        "idempotency": 1,
+        "grants": 1,
+        "decisions": 1,
+        "audit_events": 1,
+        "credentials": 1,
+        "mandates": 1,
+        "authorized_targets": 1,
+        "trusted_evidence": 0
+      },
+      "subsequent_rerun_noop": true,
+      "pass_fail": "PASS"
+    }
+  ],
+  "exact_partial_state": {
+    "active_decision_preserved": true,
+    "active_idempotency_preserved": true,
+    "active_audit_preserved": true
+  },
+  "partial_state_referentially_safe": true,
+  "partial_state_authorization_safe": true,
+  "retry_counts": {
+    "execution_results": 0,
+    "receipts": 0,
+    "idempotency": 1,
+    "grants": 1,
+    "decisions": 1,
+    "audit_events": 1,
+    "credentials": 1,
+    "mandates": 1,
+    "authorized_targets": 1,
+    "trusted_evidence": 1
+  },
+  "no_duplicate_or_corrupt_state": true,
+  "pass_fail": "PASS"
+}

@@ -1,0 +1,128 @@
+{
+  "generated_by": "test/signgate-round5-adversarial.mjs",
+  "generated_from_executable_handlers": true,
+  "sanitized": true,
+  "cases": [
+    {
+      "label": "snapshot JSON changed to {}",
+      "consume_status": 409,
+      "error": "AUTHORITY_SNAPSHOT_INVALID",
+      "decision_state_after_reject": "AVAILABLE",
+      "receipts": 0,
+      "rejected_audit_durable": true
+    },
+    {
+      "label": "one nested value changed",
+      "consume_status": 409,
+      "error": "AUTHORITY_SNAPSHOT_INVALID",
+      "decision_state_after_reject": "AVAILABLE",
+      "receipts": 0,
+      "rejected_audit_durable": true
+    },
+    {
+      "label": "fingerprint changed",
+      "consume_status": 409,
+      "error": "AUTHORITY_SNAPSHOT_INVALID",
+      "decision_state_after_reject": "AVAILABLE",
+      "receipts": 0,
+      "rejected_audit_durable": true
+    },
+    {
+      "label": "fingerprint missing",
+      "consume_status": 409,
+      "error": "AUTHORITY_SNAPSHOT_INVALID",
+      "decision_state_after_reject": "AVAILABLE",
+      "receipts": 0,
+      "rejected_audit_durable": true
+    },
+    {
+      "label": "malformed snapshot JSON",
+      "consume_status": 409,
+      "error": "AUTHORITY_SNAPSHOT_INVALID",
+      "decision_state_after_reject": "AVAILABLE",
+      "receipts": 0,
+      "rejected_audit_durable": true
+    },
+    {
+      "label": "missing credential section",
+      "consume_status": 409,
+      "error": "AUTHORITY_SNAPSHOT_INVALID",
+      "decision_state_after_reject": "AVAILABLE",
+      "receipts": 0,
+      "rejected_audit_durable": true
+    },
+    {
+      "label": "missing mandate section",
+      "consume_status": 409,
+      "error": "AUTHORITY_SNAPSHOT_INVALID",
+      "decision_state_after_reject": "AVAILABLE",
+      "receipts": 0,
+      "rejected_audit_durable": true
+    },
+    {
+      "label": "missing target section",
+      "consume_status": 409,
+      "error": "AUTHORITY_SNAPSHOT_INVALID",
+      "decision_state_after_reject": "AVAILABLE",
+      "receipts": 0,
+      "rejected_audit_durable": true
+    },
+    {
+      "label": "empty trusted_evidence",
+      "consume_status": 409,
+      "error": "AUTHORITY_SNAPSHOT_INVALID",
+      "decision_state_after_reject": "AVAILABLE",
+      "receipts": 0,
+      "rejected_audit_durable": true
+    },
+    {
+      "label": "mismatched credential reference",
+      "consume_status": 409,
+      "error": "AUTHORITY_SNAPSHOT_INVALID",
+      "decision_state_after_reject": "AVAILABLE",
+      "receipts": 0,
+      "rejected_audit_durable": true
+    },
+    {
+      "label": "mismatched mandate reference",
+      "consume_status": 409,
+      "error": "AUTHORITY_SNAPSHOT_INVALID",
+      "decision_state_after_reject": "AVAILABLE",
+      "receipts": 0,
+      "rejected_audit_durable": true
+    },
+    {
+      "label": "mismatched target reference",
+      "consume_status": 409,
+      "error": "AUTHORITY_SNAPSHOT_INVALID",
+      "decision_state_after_reject": "AVAILABLE",
+      "receipts": 0,
+      "rejected_audit_durable": true
+    },
+    {
+      "label": "mismatched evidence IDs",
+      "consume_status": 409,
+      "error": "AUTHORITY_SNAPSHOT_INVALID",
+      "decision_state_after_reject": "AVAILABLE",
+      "receipts": 0,
+      "rejected_audit_durable": true
+    },
+    {
+      "label": "unsupported snapshot_version",
+      "consume_status": 409,
+      "error": "AUTHORITY_SNAPSHOT_INVALID",
+      "decision_state_after_reject": "AVAILABLE",
+      "receipts": 0,
+      "rejected_audit_durable": true
+    },
+    {
+      "label": "secret-like field inserted",
+      "consume_status": 409,
+      "error": "AUTHORITY_SNAPSHOT_INVALID",
+      "decision_state_after_reject": "AVAILABLE",
+      "receipts": 0,
+      "rejected_audit_durable": true
+    }
+  ],
+  "status": "PASS"
+}
