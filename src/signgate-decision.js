@@ -101,6 +101,8 @@ const ALLOWED_APPROVAL_REASON_CODES = new Set([
   "FOUNDER_APPROVED_PREVIEW_CREDENTIAL_CHANGE",
 ]);
 const APPROVAL_GRANT_MAX_TTL_SECONDS = 10 * 60;
+const AUTHORITY_SNAPSHOT_VERSION = "signgate_authority_snapshot_v1";
+const AUTHORITY_FINGERPRINT_PATTERN = /^sha256:[a-f0-9]{64}$/;
 
 const DEPLOY_FIELD_PATHS = Object.freeze([
   ["action", "target", "environment"],
@@ -441,6 +443,16 @@ function rejectSecretMaterial(value, path = "$") {
   for (const [key, child] of Object.entries(value)) rejectSecretMaterial(child, `${path}.${key}`);
 }
 
+function rejectSecretBearingFields(value, path = "$") {
+  if (!value || typeof value !== "object") return;
+  for (const [key, child] of Object.entries(value)) {
+    if (/secret|token|password|private[_-]?key|api[_-]?key|key_digest|raw_credential/i.test(key)) {
+      throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_SNAPSHOT_SECRET_FIELD"], path);
+    }
+    rejectSecretBearingFields(child, `${path}.${key}`);
+  }
+}
+
 export function normalizeSortedUniqueStrings(values, fieldName = "set") {
   validateStringArray(values, fieldName);
   return [...new Set(values)].sort();
@@ -676,23 +688,71 @@ async function evaluateDeployChange(input, authenticated, env, actionFingerprint
     ) {
       throw new SignGateInputError(409, "APPROVAL_GRANT_REUSE_MISMATCH", ["APPROVAL_GRANT_INVALID"]);
     }
-    return ["ALLOW", ["APPROVAL_GRANT_ACCEPTED"], grant.approval_grant_id];
+    return ["ALLOW", ["APPROVAL_GRANT_ACCEPTED"], grant.approval_grant_id, {
+      mandate: mandate.mandate,
+      target: targetAuthorization.target,
+      trustedEvidence: evidence.evidence,
+    }];
   }
-  return ["ALLOW", ["PREVIEW_DEPLOY_POLICY_PASSED"]];
+  return ["ALLOW", ["PREVIEW_DEPLOY_POLICY_PASSED"], null, {
+    mandate: mandate.mandate,
+    target: targetAuthorization.target,
+    trustedEvidence: evidence.evidence,
+  }];
 }
 
-async function decisionAuthorityProvenance(input, authenticated, env, actionFingerprint, capturedAt, decision) {
+async function decisionAuthorityProvenance(input, authenticated, env, actionFingerprint, capturedAt, decision, evaluatedAuthority = null) {
+  const currentCredential = await env.store.getCredentialById(authenticated.organization_id, authenticated.credential_id);
   const mandate = await env.store.getMandate(authenticated.organization_id, input.mandate.id);
   const target = await env.store.findAuthorizedTarget(authenticated.organization_id, input.action);
   const ci = input.action.parameters.ci_evidence;
   const testEvidence = input.evidence.find(item => item.type === "test_result");
   const trustedEvidence = await env.store.getTrustedEvidence(authenticated.organization_id, testEvidence?.id || ci?.run_id);
-  const evidenceIds = trustedEvidence?.evidence_id ? [trustedEvidence.evidence_id] : [];
-  if (decision === "ALLOW" && (!mandate || !target)) {
-    throw new SignGateInputError(500, "INTERNAL_INVARIANT_FAILED", ["AUTHORITY_SNAPSHOT_INCOMPLETE"]);
+  if (decision === "ALLOW") {
+    const exactEvidence = trustedEvidence && trustedEvidence.evidence_id === (testEvidence?.id || ci?.run_id);
+    if (
+      !currentCredential ||
+      currentCredential.status !== authenticated.status ||
+      currentCredential.digest_version !== authenticated.digest_version ||
+      currentCredential.scopes_json !== authenticated.scopes_json ||
+      (currentCredential.allowed_agent_id || null) !== (authenticated.allowed_agent_id || null) ||
+      currentCredential.allowed_environments_json !== authenticated.allowed_environments_json ||
+      currentCredential.allowed_action_types_json !== authenticated.allowed_action_types_json ||
+      currentCredential.allowed_services_json !== authenticated.allowed_services_json ||
+      !["active", "rotating"].includes(currentCredential.status) ||
+      !mandate ||
+      mandate.mandate_id !== evaluatedAuthority?.mandate?.mandate_id ||
+      mandate.scope_json !== evaluatedAuthority?.mandate?.scope_json ||
+      mandate.status !== "active" ||
+      Date.parse(mandate.expires_at) <= env.nowMs ||
+      !target ||
+      target.target_id !== evaluatedAuthority?.target?.target_id ||
+      target.revision !== evaluatedAuthority?.target?.revision ||
+      target.canonical_remote_url !== evaluatedAuthority?.target?.canonical_remote_url ||
+      target.status !== "active" ||
+      (target.valid_from && Date.parse(target.valid_from) > env.nowMs) ||
+      (target.valid_until && Date.parse(target.valid_until) <= env.nowMs) ||
+      !exactEvidence ||
+      trustedEvidence.evidence_id !== evaluatedAuthority?.trustedEvidence?.evidence_id ||
+      trustedEvidence.provider !== evaluatedAuthority?.trustedEvidence?.provider ||
+      trustedEvidence.status !== evaluatedAuthority?.trustedEvidence?.status ||
+      trustedEvidence.commit !== evaluatedAuthority?.trustedEvidence?.commit ||
+      trustedEvidence.action_fingerprint !== evaluatedAuthority?.trustedEvidence?.action_fingerprint ||
+      trustedEvidence.observed_at !== evaluatedAuthority?.trustedEvidence?.observed_at ||
+      trustedEvidence.status !== "passed" ||
+      trustedEvidence.provider !== ci.provider ||
+      trustedEvidence.commit?.toLowerCase() !== input.action.parameters.git_commit.toLowerCase() ||
+      trustedEvidence.action_fingerprint !== actionFingerprint ||
+      !Number.isFinite(Date.parse(trustedEvidence.observed_at)) ||
+      Date.parse(trustedEvidence.observed_at) > env.nowMs ||
+      env.nowMs - Date.parse(trustedEvidence.observed_at) > 24 * 60 * 60 * 1000
+    ) {
+      throw new SignGateInputError(409, "AUTHORITY_PROVENANCE_INVALID", ["AUTHORITY_PROVENANCE_INVALID"]);
+    }
   }
+  const evidenceIds = trustedEvidence?.evidence_id ? [trustedEvidence.evidence_id] : [];
   const snapshot = {
-    snapshot_version: "signgate_authority_snapshot_v1",
+    snapshot_version: AUTHORITY_SNAPSHOT_VERSION,
     captured_at: capturedAt,
     credential: {
       credential_id: authenticated.credential_id,
@@ -733,14 +793,7 @@ async function decisionAuthorityProvenance(input, authenticated, env, actionFing
       commit_sha: trustedEvidence.commit,
       action_fingerprint: trustedEvidence.action_fingerprint || null,
       observed_at: trustedEvidence.observed_at,
-    }] : [{
-      evidence_id: testEvidence?.id || ci?.run_id || "unavailable",
-      provider: ci?.provider || testEvidence?.source || "unavailable",
-      status_at_decision: ci?.status || testEvidence?.status || "unavailable",
-      commit_sha: ci?.commit || input.action.parameters.git_commit,
-      action_fingerprint: null,
-      observed_at: testEvidence?.observed_at || input.context?.requested_at || capturedAt,
-    }],
+    }] : [],
   };
   const snapshotJson = canonicalize(snapshot);
   return {
@@ -754,7 +807,7 @@ async function decisionAuthorityProvenance(input, authenticated, env, actionFing
 }
 
 async function persistDecision(input, authenticated, env, evaluated) {
-  const [decision, reasonCodes, approvalGrantId = null] = evaluated;
+  const [decision, reasonCodes, approvalGrantId = null, evaluatedAuthority = null] = evaluated;
   const issuedAt = nowIso(env.nowMs);
   const expiresAt = decision === "ALLOW"
     ? plusSecondsIso(issuedAt, SIGNGATE_ALLOW_TTL_SECONDS)
@@ -770,7 +823,7 @@ async function persistDecision(input, authenticated, env, evaluated) {
   const requestFingerprint = await semanticRequestFingerprint(input, authenticated, env, actionFingerprint);
   const boundAction = normalizeDeployChangeAction(input.action);
   const approvalGrant = approvalGrantId ? await env.store.getApprovalGrant(authenticated.organization_id, approvalGrantId) : null;
-  const authority = await decisionAuthorityProvenance(input, authenticated, env, actionFingerprint, issuedAt, decision);
+  const authority = await decisionAuthorityProvenance(input, authenticated, env, actionFingerprint, issuedAt, decision, evaluatedAuthority);
   const response = {
     contract_version: SIGNGATE_CONTRACT_VERSION,
     api_status: SIGNGATE_API_STATUS,
@@ -836,6 +889,104 @@ async function persistDecision(input, authenticated, env, evaluated) {
   };
   await env.store.createDecision(record);
   return response;
+}
+
+function parseJsonObjectForAuthority(value) {
+  if (typeof value !== "string" || value.length === 0) {
+    throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_SNAPSHOT_MISSING"]);
+  }
+  try {
+    const parsed = JSON.parse(value);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new Error("snapshot must be an object");
+    }
+    return parsed;
+  } catch {
+    throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_SNAPSHOT_MALFORMED"]);
+  }
+}
+
+function parseEvidenceIds(value) {
+  try {
+    const parsed = JSON.parse(value || "[]");
+    if (!Array.isArray(parsed) || parsed.some(item => typeof item !== "string" || item.length === 0)) {
+      throw new Error("invalid evidence ids");
+    }
+    return parsed;
+  } catch {
+    throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_EVIDENCE_IDS_INVALID"]);
+  }
+}
+
+async function validateExecutableAuthoritySnapshot(decision) {
+  const snapshot = parseJsonObjectForAuthority(decision.authority_snapshot_json);
+  rejectSecretBearingFields(snapshot);
+  rejectSecretMaterial(snapshot);
+  if (snapshot.snapshot_version !== AUTHORITY_SNAPSHOT_VERSION) {
+    throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_SNAPSHOT_VERSION_UNSUPPORTED"]);
+  }
+  if (!AUTHORITY_FINGERPRINT_PATTERN.test(decision.authority_snapshot_fingerprint || "")) {
+    throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_SNAPSHOT_FINGERPRINT_INVALID"]);
+  }
+  const credential = snapshot.credential;
+  const mandate = snapshot.mandate;
+  const target = snapshot.authorized_target;
+  const evidence = snapshot.trusted_evidence;
+  if (!credential || typeof credential !== "object" || Array.isArray(credential)) {
+    throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_CREDENTIAL_MISSING"]);
+  }
+  if (!mandate || typeof mandate !== "object" || Array.isArray(mandate)) {
+    throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_MANDATE_MISSING"]);
+  }
+  if (!target || typeof target !== "object" || Array.isArray(target)) {
+    throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_TARGET_MISSING"]);
+  }
+  if (!Array.isArray(evidence) || evidence.length === 0) {
+    throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_TRUSTED_EVIDENCE_MISSING"]);
+  }
+  const requiredCredential = ["credential_id", "principal_id", "principal_type", "digest_version", "scopes", "allowed_environments", "allowed_action_types", "allowed_services", "status_at_decision"];
+  const requiredMandate = ["mandate_id", "issuer", "scope", "status_at_decision", "issued_at", "expires_at"];
+  const requiredTarget = ["target_id", "revision", "environment", "service", "project", "canonical_remote_url", "action_type", "status_at_decision", "valid_from"];
+  const requiredEvidence = ["evidence_id", "provider", "status_at_decision", "commit_sha", "action_fingerprint", "observed_at"];
+  if (requiredCredential.some(field => credential[field] === undefined || credential[field] === null || credential[field] === "")) {
+    throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_CREDENTIAL_INCOMPLETE"]);
+  }
+  if (requiredMandate.some(field => mandate[field] === undefined || mandate[field] === null || mandate[field] === "")) {
+    throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_MANDATE_INCOMPLETE"]);
+  }
+  if (requiredTarget.some(field => target[field] === undefined || target[field] === null || target[field] === "")) {
+    throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_TARGET_INCOMPLETE"]);
+  }
+  for (const item of evidence) {
+    if (!item || typeof item !== "object" || Array.isArray(item) || requiredEvidence.some(field => item[field] === undefined || item[field] === null || item[field] === "")) {
+      throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_TRUSTED_EVIDENCE_INCOMPLETE"]);
+    }
+    if (!Number.isFinite(Date.parse(item.observed_at))) {
+      throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_TRUSTED_EVIDENCE_OBSERVED_AT_INVALID"]);
+    }
+  }
+  if (
+    credential.credential_id !== decision.credential_id ||
+    mandate.mandate_id !== decision.mandate_id ||
+    target.target_id !== decision.authorized_target_id
+  ) {
+    throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_REFERENCE_MISMATCH"]);
+  }
+  const evidenceIds = parseEvidenceIds(decision.evidence_ids_json);
+  if (
+    evidenceIds.length !== evidence.length ||
+    evidence.map(item => item.evidence_id).some((evidenceId, index) => evidenceId !== evidenceIds[index])
+  ) {
+    throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_EVIDENCE_REFERENCE_MISMATCH"]);
+  }
+  const canonicalSnapshot = canonicalize(snapshot);
+  if (!canonicalSnapshot) {
+    throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_SNAPSHOT_CANONICALIZATION_FAILED"]);
+  }
+  const expected = `sha256:${await sha256Hex(canonicalSnapshot)}`;
+  if (expected !== decision.authority_snapshot_fingerprint) {
+    throw new SignGateInputError(409, "AUTHORITY_SNAPSHOT_INVALID", ["AUTHORITY_SNAPSHOT_FINGERPRINT_MISMATCH"]);
+  }
 }
 
 async function semanticRequestFingerprint(input, authenticated, env, actionFingerprint) {
@@ -1454,6 +1605,12 @@ export class MemorySignGateStore {
     ) {
       throw new SignGateInputError(decision ? 409 : 404, "DECISION_NOT_CONSUMABLE", ["DECISION_NOT_CONSUMABLE"]);
     }
+    await validateExecutableAuthoritySnapshot(decision);
+    if (decision.state !== "AVAILABLE" || [...this.receipts.values()].some(
+      receipt => receipt.organization_id === input.organization_id && receipt.decision_id === input.decision_id,
+    )) {
+      throw new SignGateInputError(409, "DECISION_ALREADY_CONSUMED", ["DECISION_ALREADY_CONSUMED"]);
+    }
     if (Date.parse(decision.expires_at) <= Date.parse(input.now_iso)) {
       decision.state = "EXPIRED";
       decision.expired_at = input.now_iso;
@@ -1769,6 +1926,17 @@ export class D1SignGateStore {
     if (same) return JSON.parse(same.receipt_json);
     const other = await this.db.prepare("SELECT consume_receipt_id FROM signgate_consume_receipts WHERE organization_id = ? AND decision_id = ?").bind(input.organization_id, input.decision_id).first();
     if (other) throw new SignGateInputError(409, "DECISION_ALREADY_CONSUMED", ["DECISION_ALREADY_CONSUMED"]);
+    const decisionBeforeConsume = await this.getDecision(input.organization_id, input.decision_id);
+    if (
+      !decisionBeforeConsume ||
+      decisionBeforeConsume.decision !== "ALLOW" ||
+      decisionBeforeConsume.state !== "AVAILABLE" ||
+      decisionBeforeConsume.action_fingerprint !== input.action_fingerprint ||
+      decisionBeforeConsume.policy_version !== input.policy_version
+    ) {
+      throw new SignGateInputError(decisionBeforeConsume ? 409 : 404, "DECISION_NOT_CONSUMABLE", ["DECISION_NOT_CONSUMABLE"]);
+    }
+    await validateExecutableAuthoritySnapshot(decisionBeforeConsume);
     const token = id("lock");
     const receipt = {
       consume_receipt_id: id("rcpt"),

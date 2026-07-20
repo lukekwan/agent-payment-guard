@@ -35,6 +35,7 @@ async function d1Env() {
   for (const migration of [
     "../migrations/0008_signgate_deploy_change_decisions.sql",
     "../migrations/0009_signgate_round4_authority_provenance.sql",
+    "../migrations/0010_signgate_round5_authority_enforcement.sql",
   ]) {
     for (const statement of readFileSync(new URL(migration, import.meta.url), "utf8")
       .split(";")
