@@ -16686,11 +16686,21 @@ export default {
       url.pathname === "/admin/purchases.json"
     ) {
       if (!(await adminAuthorized(request, env))) {
-        response = json(
-          { error: "admin_unauthorized" },
-          request.headers.get("authorization") ? 403 : 401,
-          adminSecurityHeaders({ "www-authenticate": "Bearer" }),
-        );
+        if (
+          url.pathname === "/admin/purchases" &&
+          !request.headers.get("authorization")
+        ) {
+          response = new Response(null, {
+            status: 303,
+            headers: adminSecurityHeaders({ location: "/admin/login" }),
+          });
+        } else {
+          response = json(
+            { error: "admin_unauthorized" },
+            request.headers.get("authorization") ? 403 : 401,
+            adminSecurityHeaders({ "www-authenticate": "Bearer" }),
+          );
+        }
       } else {
         try {
           const data = await purchaseDashboardData(env.GUARD_DB, url.searchParams);

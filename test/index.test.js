@@ -1844,14 +1844,21 @@ test("agent capability security bundle keeps pass warn fail and unavailable evid
   assert.equal(JSON.stringify(deny), JSON.stringify(deny).replace(/bearer|api[_-]?key|authorization/i, ""));
 });
 
-test("admin purchases rejects query tokens and returns no-store security headers", async () => {
+test("admin purchases rejects query tokens and redirects browser users to login", async () => {
   const response = await worker.fetch(
     new Request("https://example.test/admin/purchases?token=legacy-secret"),
     { ADMIN_DASHBOARD_TOKEN: "legacy-secret" },
   );
-  assert.equal(response.status, 401);
-  assert.equal((await response.json()).error, "admin_unauthorized");
+  assert.equal(response.status, 303);
+  assert.equal(response.headers.get("location"), "/admin/login");
   assert.equal(response.headers.get("cache-control"), "no-store");
   assert.match(response.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/);
   assert.match(response.headers.get("x-robots-tag") ?? "", /noindex/);
+
+  const apiResponse = await worker.fetch(
+    new Request("https://example.test/admin/purchases.json"),
+    { ADMIN_DASHBOARD_TOKEN_V2: "current-secret" },
+  );
+  assert.equal(apiResponse.status, 401);
+  assert.equal((await apiResponse.json()).error, "admin_unauthorized");
 });
