@@ -718,6 +718,15 @@ const CATALOG_METADATA = {
     price_reason:
       "Bundle-priced security decision that replaces repeated separate preflight purchases for the same capability workflow.",
   },
+  "base-payment-due-diligence-bundle": {
+    group: "base-payment-due-diligence",
+    when_to_buy:
+      "Before an agent pays a Base merchant, signs a USDC transfer, or trusts a wallet/payment workflow.",
+    returns:
+      "One workflow-level bundle with merchant trust, wallet activity, counterparty, balance, nonce, gas, optional receipt/payment-proof, approval, event-log, and contract checks.",
+    price_reason:
+      "Bundle-priced replacement for repeated separate Base payment due-diligence purchases.",
+  },
 };
 const PRODUCTS = [
   {
@@ -2825,6 +2834,67 @@ const PRODUCTS = [
         x402_url: { type: "string", pattern: "^https?://", maxLength: 2048 },
       },
       required: ["target_type", "identifier"],
+    },
+  },
+  {
+    id: "base-payment-due-diligence-bundle",
+    path: "/v1/x402/base/payment-due-diligence-bundle",
+    price: "$0.150",
+    description:
+      "Bundle the Base merchant, wallet, receipt, approval, counterparty, balance, nonce, gas, and contract checks an agent runs before paying.",
+    input: {
+      merchant_address: PAY_TO,
+      wallet_address: PAY_TO,
+      tx: "0xb2d1308a0df026083e5793106af4ed2342d4b517d42935e05c1fb2f91544707f",
+      expected_recipient: PAY_TO,
+      expected_amount: "0.02",
+      token: USDC,
+      owner: PAY_TO,
+      spender: PAY_TO,
+      contract_address: "0x4200000000000000000000000000000000000006",
+      from_block: "47600000",
+      gas_limit: "21000",
+    },
+    inputSchema: {
+      properties: {
+        merchant_address: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Merchant or payment recipient to trust-score.",
+        },
+        wallet_address: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Buyer, merchant, or workflow wallet to inspect.",
+        },
+        tx: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{64}$",
+          description: "Optional Base transaction hash for receipt and payment proof checks.",
+        },
+        expected_recipient: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Expected USDC recipient for payment proof.",
+        },
+        expected_amount: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Expected USDC amount for payment proof.",
+        },
+        token: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        owner: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        spender: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        contract_address: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        from_block: { type: "string", pattern: "^[0-9]+$" },
+        gas_limit: { type: "string", pattern: "^[0-9]+$" },
+        since: {
+          type: "string",
+          pattern: "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+          description: "Wallet activity lower bound. Defaults to 30 days ago.",
+        },
+      },
+      required: ["merchant_address"],
     },
   },
 ];
@@ -6921,6 +6991,132 @@ export async function stablecoinBalance(address, fetchImpl = fetch) {
       reputation: "ok",
     })),
   });
+}
+
+async function basePaymentDueDiligenceBundle(input, fetchImpl = fetch) {
+  const now = new Date();
+  const merchantAddress = String(input.merchant_address ?? "").trim();
+  const walletAddress = String(input.wallet_address ?? merchantAddress).trim();
+  const tx = String(input.tx ?? "").trim();
+  const expectedRecipient = String(input.expected_recipient ?? merchantAddress).trim();
+  const expectedAmount = String(input.expected_amount ?? "").trim();
+  const token = String(input.token ?? "").trim();
+  const owner = String(input.owner ?? walletAddress).trim();
+  const spender = String(input.spender ?? merchantAddress).trim();
+  const contractAddress = String(input.contract_address ?? merchantAddress).trim();
+  const fromBlock = String(input.from_block ?? "").trim();
+  const gasLimit = String(input.gas_limit ?? "21000").trim();
+  const since =
+    String(input.since ?? "").trim() ||
+    new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const checks = [];
+  const run = async (id, enabled, fn) => {
+    if (!enabled) {
+      checks.push({ id, status: "skipped" });
+      return;
+    }
+    try {
+      checks.push({ id, status: "ok", result: await fn() });
+    } catch (error) {
+      checks.push({
+        id,
+        status: "unavailable",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
+  await run("x402-merchant-trust", ADDRESS_PATTERN.test(merchantAddress), () =>
+    merchantTrust(merchantAddress, fetchImpl),
+  );
+  await run(
+    "base-wallet-activity-delta",
+    ADDRESS_PATTERN.test(walletAddress) && Number.isFinite(Date.parse(since)),
+    () => walletActivityDelta(walletAddress, since, fetchImpl),
+  );
+  await run("base-wallet-counterparty", ADDRESS_PATTERN.test(walletAddress), () =>
+    walletCounterparty(walletAddress, fetchImpl),
+  );
+  await run("base-stablecoin-balance", ADDRESS_PATTERN.test(walletAddress), () =>
+    stablecoinBalance(walletAddress, fetchImpl),
+  );
+  await run("base-nonce-readiness", ADDRESS_PATTERN.test(walletAddress), () =>
+    nonceReadiness(walletAddress, fetchImpl),
+  );
+  await run(
+    "base-gas-fee-quote",
+    /^[0-9]+$/.test(gasLimit) &&
+      Number.isSafeInteger(Number(gasLimit)) &&
+      Number(gasLimit) >= 21_000 &&
+      Number(gasLimit) <= 30_000_000,
+    () => gasFeeQuote(gasLimit, fetchImpl),
+  );
+  await run("base-usdc-receipt", TX_PATTERN.test(tx), () =>
+    usdcReceipt(tx, fetchImpl),
+  );
+  await run(
+    "base-payment-proof",
+    TX_PATTERN.test(tx) &&
+      ADDRESS_PATTERN.test(expectedRecipient) &&
+      usdcToAtomic(expectedAmount) !== null,
+    () => paymentProof(tx, expectedRecipient, expectedAmount, fetchImpl),
+  );
+  await run(
+    "base-approval-risk",
+    ADDRESS_PATTERN.test(token) &&
+      ADDRESS_PATTERN.test(owner) &&
+      ADDRESS_PATTERN.test(spender),
+    () => approvalRisk(token, owner, spender, fetchImpl),
+  );
+  await run("base-contract-verification", ADDRESS_PATTERN.test(contractAddress), () =>
+    contractVerification(contractAddress, fetchImpl),
+  );
+  await run(
+    "base-event-log-monitor",
+    ADDRESS_PATTERN.test(contractAddress) &&
+      /^[0-9]+$/.test(fromBlock) &&
+      Number.isSafeInteger(Number(fromBlock)),
+    () => eventLogMonitor(contractAddress, fromBlock, fetchImpl),
+  );
+
+  const ok = checks.filter(check => check.status === "ok").length;
+  const unavailable = checks.filter(check => check.status === "unavailable").length;
+  const skipped = checks.filter(check => check.status === "skipped").length;
+  return {
+    product: "base-payment-due-diligence-bundle",
+    schema_version: "1.0",
+    pricing_version: PRICING_VERSION,
+    network: BASE_MAINNET,
+    evaluated_at: now.toISOString(),
+    merchant_address: merchantAddress,
+    wallet_address: walletAddress || null,
+    summary: {
+      checks_total: checks.length,
+      checks_ok: ok,
+      checks_unavailable: unavailable,
+      checks_skipped: skipped,
+      recommendation:
+        unavailable === 0
+          ? "Use this bundle as the payment due-diligence evidence set."
+          : "Review unavailable checks before allowing high-value autonomous payment.",
+    },
+    replaces_separate_operations: [
+      "x402-merchant-trust",
+      "base-payment-proof",
+      "base-wallet-activity-delta",
+      "base-approval-risk",
+      "base-contract-verification",
+      "base-usdc-receipt",
+      "base-wallet-counterparty",
+      "base-event-log-monitor",
+      "base-gas-fee-quote",
+      "base-nonce-readiness",
+      "base-stablecoin-balance",
+    ],
+    separate_list_price_usdc: "0.205",
+    bundle_price_usdc: PRODUCTS_BY_ID["base-payment-due-diligence-bundle"].price,
+    checks,
+  };
 }
 
 export function buildDexMarketMonitor({
@@ -12737,6 +12933,16 @@ function recommendedWorkflows() {
           "Buy the label/counterparty steps only when the first preflight returns medium/high risk or the value at risk is material.",
       },
       {
+        id: "base-payment-due-diligence-before-agent-pay",
+        goal: "Replace repeated Base payment safety purchases with one bundled due-diligence evidence set before an agent pays.",
+        sequence: [
+          "base-payment-due-diligence-bundle",
+          "agent-payment-guard",
+        ],
+        escalation:
+          "Use the separate component checks only when the bundle marks a required payment, wallet, contract, or receipt check unavailable.",
+      },
+      {
         id: "kyt-or-aml-local-dataset-import",
         goal: "Import source-attributed wallet risk intelligence into a KYT, AML, VASP, wallet-security, or payment-risk system.",
         sequence: [
@@ -13933,6 +14139,25 @@ function createPaidApp() {
       return c.json(
         {
           error: "upstream_unavailable",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["base-payment-due-diligence-bundle"].path, async c => {
+    const input = Object.fromEntries(new URL(c.req.url).searchParams.entries());
+    const merchantAddress = String(input.merchant_address ?? "");
+    if (!ADDRESS_PATTERN.test(merchantAddress)) {
+      return c.json({ error: "invalid_due_diligence_merchant_address" }, 400);
+    }
+    try {
+      return c.json(await basePaymentDueDiligenceBundle(input));
+    } catch (error) {
+      return c.json(
+        {
+          error: "payment_due_diligence_bundle_failed",
           message: error instanceof Error ? error.message : String(error),
         },
         502,
@@ -16001,6 +16226,7 @@ async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
     highestRevenue,
     byPricingVersion,
     workflows,
+    buyerAttribution,
     recent,
     recentProbes,
     legacyAggregates,
@@ -16102,6 +16328,28 @@ async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
     bindAll(
       db.prepare(
         `SELECT
+           COALESCE(payer_address, 'unknown') AS payer_address,
+           CASE WHEN payer_address IS NULL THEN NULL ELSE substr(payer_address, 1, 6) || '...' || substr(payer_address, -4) END AS payer_address_short,
+           buyer_id_hash,
+           user_agent_hash,
+           country,
+           COUNT(*) AS purchase_count,
+           COALESCE(SUM(CAST(COALESCE(paid_amount, price_usdc) AS REAL)), 0) AS revenue,
+           MIN(COALESCE(purchased_at, created_at)) AS first_seen_at,
+           MAX(COALESCE(purchased_at, created_at)) AS last_seen_at,
+           GROUP_CONCAT(DISTINCT COALESCE(operation_id, product_id)) AS operations,
+           GROUP_CONCAT(DISTINCT sequence_id) AS sequence_ids
+         FROM x402_purchase_events
+         WHERE ${payable.where}
+         GROUP BY COALESCE(payer_address, buyer_id_hash, user_agent_hash, 'unknown'), buyer_id_hash, user_agent_hash, country
+         ORDER BY revenue DESC, purchase_count DESC, last_seen_at DESC
+         LIMIT 50`,
+      ),
+      payable.binds,
+    ).all(),
+    bindAll(
+      db.prepare(
+        `SELECT
            COALESCE(purchased_at, created_at) AS purchased_at,
            purchase_id,
            COALESCE(operation_id, product_id) AS operation_id,
@@ -16114,8 +16362,11 @@ async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
            currency,
            network,
            payment_hash,
+           payer_address,
            CASE WHEN payer_address IS NULL THEN NULL ELSE substr(payer_address, 1, 6) || '...' || substr(payer_address, -4) END AS payer_address_short,
            buyer_id_hash,
+           request_id,
+           sequence_id,
            response_status,
            decision,
            internal_test,
@@ -16183,14 +16434,20 @@ async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
     repeated_workflows: (workflows.results ?? []).map(row => ({
       ...row,
       bundle_replacement_count:
-        String(row.sequence ?? "").includes("a2a-agent-card-preflight") &&
-        String(row.sequence ?? "").includes("github-repository-health") &&
-        String(row.sequence ?? "").includes("npm-package-preflight")
+        (String(row.sequence ?? "").includes("a2a-agent-card-preflight") &&
+          String(row.sequence ?? "").includes("github-repository-health") &&
+          String(row.sequence ?? "").includes("npm-package-preflight")) ||
+        (String(row.sequence ?? "").includes("x402-merchant-trust") &&
+          String(row.sequence ?? "").includes("base-payment-proof"))
           ? Number(row.unique_buyers ?? 0)
           : 0,
-      bundle_price: PRODUCTS_BY_ID["agent-capability-security-preflight"].price,
+      bundle_price:
+        String(row.sequence ?? "").includes("x402-merchant-trust")
+          ? PRODUCTS_BY_ID["base-payment-due-diligence-bundle"].price
+          : PRODUCTS_BY_ID["agent-capability-security-preflight"].price,
     })),
     bundle_conversion_rate: null,
+    buyer_attribution: buyerAttribution.results ?? [],
     recent: recent.results ?? [],
     recent_probes: recentProbes.results ?? [],
     legacy_aggregates: legacyAggregates.results ?? [],
@@ -16250,9 +16507,14 @@ function purchaseDashboardHtml(data) {
       row => `<tr><td><code>${escapeHtml(row.sequence)}</code></td><td>${row.purchase_count}</td><td>${row.unique_buyers}</td><td>${row.bundle_replacement_count}</td><td>$${Number(row.separate_purchase_total ?? 0).toFixed(3)}</td><td>${escapeHtml(row.bundle_price)}</td></tr>`,
     )
     .join("");
+  const buyerRows = data.buyer_attribution
+    .map(
+      row => `<tr><td><code>${escapeHtml(row.payer_address === "unknown" ? "" : row.payer_address)}</code></td><td><code>${escapeHtml(String(row.buyer_id_hash ?? "").slice(0, 24))}</code></td><td>${escapeHtml(row.country ?? "")}</td><td>${row.purchase_count}</td><td>$${Number(row.revenue ?? 0).toFixed(3)}</td><td>${escapeHtml(row.first_seen_at)}</td><td>${escapeHtml(row.last_seen_at)}</td><td><code>${escapeHtml(row.operations ?? "")}</code></td><td><code>${escapeHtml(String(row.sequence_ids ?? "").slice(0, 80))}</code></td></tr>`,
+    )
+    .join("");
   const recentRows = data.recent
     .map(
-      row => `<tr><td>${escapeHtml(row.purchased_at)}</td><td>${escapeHtml(row.operation_id)}</td><td><code>${escapeHtml(row.path)}</code></td><td>$${Number(row.paid_amount ?? 0).toFixed(3)}</td><td>${escapeHtml(row.pricing_version ?? "legacy")}</td><td>${escapeHtml(row.payer_address_short ?? "")}</td><td><code>${escapeHtml(String(row.buyer_id_hash ?? "").slice(0, 16))}</code></td><td>${escapeHtml(row.internal_test ?? "unknown")}</td></tr>`,
+      row => `<tr><td>${escapeHtml(row.purchased_at)}</td><td>${escapeHtml(row.operation_id)}</td><td><code>${escapeHtml(row.path)}</code></td><td>$${Number(row.paid_amount ?? 0).toFixed(3)}</td><td>${escapeHtml(row.pricing_version ?? "legacy")}</td><td><code>${escapeHtml(row.payer_address ?? row.payer_address_short ?? "")}</code></td><td><code>${escapeHtml(String(row.buyer_id_hash ?? "").slice(0, 16))}</code></td><td><code>${escapeHtml(row.sequence_id ?? "")}</code></td><td>${escapeHtml(row.internal_test ?? "unknown")}</td></tr>`,
     )
     .join("");
   const probeRows = data.recent_probes
@@ -16311,8 +16573,10 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
 <table><thead><tr><th>Pricing Version</th><th>Purchases</th><th>Revenue</th></tr></thead><tbody>${pricingRows || '<tr><td colspan="3">No purchases recorded yet.</td></tr>'}</tbody></table>
 <h2>Repeated Workflows</h2>
 <table><thead><tr><th>Sequence</th><th>Sequence Count</th><th>Unique Buyers</th><th>Bundle Replaceable</th><th>Separate Total</th><th>Bundle Price</th></tr></thead><tbody>${workflowRows || '<tr><td colspan="6">No repeated workflows recorded yet.</td></tr>'}</tbody></table>
+<h2>Buyer Attribution</h2>
+<table><thead><tr><th>Payer Address</th><th>Buyer Hash</th><th>Country</th><th>Purchases</th><th>Revenue</th><th>First Seen</th><th>Last Seen</th><th>Operations</th><th>Sequences</th></tr></thead><tbody>${buyerRows || '<tr><td colspan="9">No attributed buyers recorded yet.</td></tr>'}</tbody></table>
 <h2>Recent Attributed Paid Calls</h2>
-<table><thead><tr><th>Time</th><th>Operation</th><th>Path</th><th>Paid</th><th>Pricing Version</th><th>Payer</th><th>Buyer Hash</th><th>Internal/Test</th></tr></thead><tbody>${recentRows || '<tr><td colspan="8">No purchases recorded yet.</td></tr>'}</tbody></table>
+<table><thead><tr><th>Time</th><th>Operation</th><th>Path</th><th>Paid</th><th>Pricing Version</th><th>Payer</th><th>Buyer Hash</th><th>Sequence</th><th>Internal/Test</th></tr></thead><tbody>${recentRows || '<tr><td colspan="9">No purchases recorded yet.</td></tr>'}</tbody></table>
 <h2>Recent Route Probes / Discovery Calls</h2>
 <p class="muted">These are successful HEAD/OPTIONS/discovery executions or calls without payment evidence. They are useful for x402scan registration and route interest, but they are not revenue.</p>
 <table><thead><tr><th>Time</th><th>Product</th><th>Method</th><th>Path</th><th>List Price</th><th>Country</th><th>Status</th></tr></thead><tbody>${probeRows || '<tr><td colspan="7">No route probes recorded yet.</td></tr>'}</tbody></table>

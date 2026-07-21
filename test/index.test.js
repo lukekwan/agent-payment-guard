@@ -186,6 +186,7 @@ test("worker exposes discovery documents", async () => {
   assert.ok(document.paths["/v1/x402/sumsub/crystal-crypto-risk-evidence"]);
   assert.ok(document.paths["/v1/x402/sumsub/travel-rule-evidence"]);
   assert.ok(document.paths["/v1/x402/sumsub/watchlist-aml-evidence"]);
+  assert.ok(document.paths["/v1/x402/base/payment-due-diligence-bundle"]);
   assert.ok(document.paths["/v1/agentic-commerce/preflight/sample"]);
   assert.ok(document.paths["/v1/agentic-commerce/preflight"].post);
   assert.ok(
@@ -205,8 +206,8 @@ test("worker exposes discovery documents", async () => {
     new Request("https://example.test/catalog.json"),
   );
   const catalogDocument = await catalog.json();
-  assert.equal(catalogDocument.product_families, 74);
-  assert.equal(catalogDocument.paid_operations_observed_on_x402scan, 76);
+  assert.equal(catalogDocument.product_families, 75);
+  assert.equal(catalogDocument.paid_operations_observed_on_x402scan, 77);
   assert.equal(catalogDocument.pricing_version, "x402-pricing-v1-20260720");
   assert.ok(
     catalogDocument.products.find(
@@ -243,19 +244,24 @@ test("worker exposes discovery documents", async () => {
       workflow => workflow.id === "agent-buyer-identity-before-x402-purchase",
     ),
   );
+  assert.ok(
+    catalogDocument.recommended_workflows.find(
+      workflow => workflow.id === "base-payment-due-diligence-before-agent-pay",
+    ),
+  );
 
   const card = await worker.fetch(
     new Request("https://example.test/.well-known/agent-card.json"),
   );
-  assert.equal((await card.json()).skills.length, 74);
+  assert.equal((await card.json()).skills.length, 75);
 
   const x402Discovery = await worker.fetch(
     new Request("https://example.test/.well-known/x402"),
   );
   const x402DiscoveryDocument = await x402Discovery.json();
-  assert.equal(x402DiscoveryDocument.resources.length, 74);
-  assert.equal(x402DiscoveryDocument.operation_count, 76);
-  assert.equal(x402DiscoveryDocument.paid_operations.length, 76);
+  assert.equal(x402DiscoveryDocument.resources.length, 75);
+  assert.equal(x402DiscoveryDocument.operation_count, 77);
+  assert.equal(x402DiscoveryDocument.paid_operations.length, 77);
   assert.ok(
     x402DiscoveryDocument.paid_operations.find(
       operation =>
@@ -286,6 +292,11 @@ test("worker exposes discovery documents", async () => {
     ),
   );
   assert.ok(
+    x402DiscoveryDocument.resources.includes(
+      "https://example.test/v1/x402/base/payment-due-diligence-bundle",
+    ),
+  );
+  assert.ok(
     x402DiscoveryDocument.paid_operations.find(
       operation =>
         operation.id === "agent-buyer-policy-kit" &&
@@ -297,8 +308,8 @@ test("worker exposes discovery documents", async () => {
     new Request("https://example.test/registry.json"),
   );
   const registryDocument = await registry.json();
-  assert.equal(registryDocument.counts.product_families, 74);
-  assert.equal(registryDocument.counts.paid_operations, 76);
+  assert.equal(registryDocument.counts.product_families, 75);
+  assert.equal(registryDocument.counts.paid_operations, 77);
   assert.equal(registryDocument.pricing_version, "x402-pricing-v1-20260720");
   assert.ok(
     registryDocument.operations.find(
