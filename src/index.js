@@ -16431,21 +16431,37 @@ async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
     revenue_by_service: highestRevenue.results ?? [],
     purchases_by_service: mostPurchased.results ?? [],
     purchases_by_pricing_version: byPricingVersion.results ?? [],
-    repeated_workflows: (workflows.results ?? []).map(row => ({
-      ...row,
-      bundle_replacement_count:
-        (String(row.sequence ?? "").includes("a2a-agent-card-preflight") &&
-          String(row.sequence ?? "").includes("github-repository-health") &&
-          String(row.sequence ?? "").includes("npm-package-preflight")) ||
-        (String(row.sequence ?? "").includes("x402-merchant-trust") &&
-          String(row.sequence ?? "").includes("base-payment-proof"))
-          ? Number(row.unique_buyers ?? 0)
-          : 0,
-      bundle_price:
-        String(row.sequence ?? "").includes("x402-merchant-trust")
-          ? PRODUCTS_BY_ID["base-payment-due-diligence-bundle"].price
-          : PRODUCTS_BY_ID["agent-capability-security-preflight"].price,
-    })),
+    repeated_workflows: (workflows.results ?? []).map(row => {
+      const sequence = String(row.sequence ?? "");
+      const capabilityBundleMatch =
+        sequence.includes("a2a-agent-card-preflight") &&
+        sequence.includes("github-repository-health") &&
+        sequence.includes("npm-package-preflight");
+      const baseDueDiligenceMatches = [
+        "x402-merchant-trust",
+        "base-payment-proof",
+        "base-wallet-activity-delta",
+        "base-approval-risk",
+        "base-contract-verification",
+        "base-usdc-receipt",
+        "base-wallet-counterparty",
+        "base-event-log-monitor",
+        "base-gas-fee-quote",
+        "base-nonce-readiness",
+        "base-stablecoin-balance",
+      ].filter(operation => sequence.includes(operation)).length;
+      return {
+        ...row,
+        bundle_replacement_count:
+          capabilityBundleMatch || baseDueDiligenceMatches >= 3
+            ? Number(row.unique_buyers ?? 0)
+            : 0,
+        bundle_price:
+          baseDueDiligenceMatches >= 2
+            ? PRODUCTS_BY_ID["base-payment-due-diligence-bundle"].price
+            : PRODUCTS_BY_ID["agent-capability-security-preflight"].price,
+      };
+    }),
     bundle_conversion_rate: null,
     buyer_attribution: buyerAttribution.results ?? [],
     recent: recent.results ?? [],
