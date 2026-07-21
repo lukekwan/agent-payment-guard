@@ -727,6 +727,31 @@ const CATALOG_METADATA = {
     price_reason:
       "Bundle-priced replacement for repeated separate Base payment due-diligence purchases.",
   },
+  "x402-transaction-preflight-lite": {
+    group: "x402-transaction-preflight",
+    when_to_buy:
+      "Low-friction price test before an agent pays an x402 merchant or signs a Base transaction.",
+    returns:
+      "ALLOW/REQUIRE_REVIEW/DENY plus PASS/WARN/FAIL evidence checks for the transaction workflow.",
+    price_reason: "0.15 USDC variant for automated agent flows with lower value at risk.",
+  },
+  "x402-transaction-preflight": {
+    group: "x402-transaction-preflight",
+    when_to_buy:
+      "Primary transaction preflight before an agent pays an x402 merchant or signs a Base transaction.",
+    returns:
+      "One explainable transaction decision with merchant, wallet, payment proof, receipt, contract, gas, nonce, and balance evidence.",
+    price_reason:
+      "0.25 USDC primary test price because it replaces multiple round trips and evidence purchases.",
+  },
+  "x402-transaction-preflight-plus": {
+    group: "x402-transaction-preflight",
+    when_to_buy:
+      "Higher-assurance price test for enterprise, compliance, or high-value x402 transaction review.",
+    returns:
+      "ALLOW/REQUIRE_REVIEW/DENY plus the same explainable evidence set at the high-value variant price.",
+    price_reason: "0.50 USDC variant for enterprise/compliance willingness-to-pay testing.",
+  },
 };
 const PRODUCTS = [
   {
@@ -2837,11 +2862,11 @@ const PRODUCTS = [
     },
   },
   {
-    id: "base-payment-due-diligence-bundle",
-    path: "/v1/x402/base/payment-due-diligence-bundle",
+    id: "x402-transaction-preflight-lite",
+    path: "/v1/x402/transaction/preflight-lite",
     price: "$0.150",
     description:
-      "Bundle the Base merchant, wallet, receipt, approval, counterparty, balance, nonce, gas, and contract checks an agent runs before paying.",
+      "Low-friction x402 transaction preflight price test with one explainable decision and bundled Base evidence.",
     input: {
       merchant_address: PAY_TO,
       wallet_address: PAY_TO,
@@ -2893,6 +2918,80 @@ const PRODUCTS = [
           pattern: "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
           description: "Wallet activity lower bound. Defaults to 30 days ago.",
         },
+      },
+      required: ["merchant_address"],
+    },
+  },
+  {
+    id: "x402-transaction-preflight",
+    path: "/v1/x402/transaction/preflight",
+    price: "$0.250",
+    description:
+      "Explainable x402 transaction preflight: return ALLOW, REQUIRE_REVIEW, or DENY with bundled Base evidence before an agent pays.",
+    input: {
+      merchant_address: PAY_TO,
+      wallet_address: PAY_TO,
+      tx: "0xb2d1308a0df026083e5793106af4ed2342d4b517d42935e05c1fb2f91544707f",
+      expected_recipient: PAY_TO,
+      expected_amount: "0.02",
+      token: USDC,
+      owner: PAY_TO,
+      spender: PAY_TO,
+      contract_address: "0x4200000000000000000000000000000000000006",
+      from_block: "47600000",
+      gas_limit: "21000",
+    },
+    inputSchema: {
+      properties: {
+        merchant_address: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        wallet_address: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        tx: { type: "string", pattern: "^0x[a-fA-F0-9]{64}$" },
+        expected_recipient: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        expected_amount: { type: "string", pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$" },
+        token: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        owner: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        spender: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        contract_address: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        from_block: { type: "string", pattern: "^[0-9]+$" },
+        gas_limit: { type: "string", pattern: "^[0-9]+$" },
+        since: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}T.+Z$" },
+      },
+      required: ["merchant_address"],
+    },
+  },
+  {
+    id: "x402-transaction-preflight-plus",
+    path: "/v1/x402/transaction/preflight-plus",
+    price: "$0.500",
+    description:
+      "Higher-assurance x402 transaction preflight price test for enterprise, compliance, or high-value agent payments.",
+    input: {
+      merchant_address: PAY_TO,
+      wallet_address: PAY_TO,
+      tx: "0xb2d1308a0df026083e5793106af4ed2342d4b517d42935e05c1fb2f91544707f",
+      expected_recipient: PAY_TO,
+      expected_amount: "0.02",
+      token: USDC,
+      owner: PAY_TO,
+      spender: PAY_TO,
+      contract_address: "0x4200000000000000000000000000000000000006",
+      from_block: "47600000",
+      gas_limit: "21000",
+    },
+    inputSchema: {
+      properties: {
+        merchant_address: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        wallet_address: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        tx: { type: "string", pattern: "^0x[a-fA-F0-9]{64}$" },
+        expected_recipient: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        expected_amount: { type: "string", pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$" },
+        token: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        owner: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        spender: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        contract_address: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        from_block: { type: "string", pattern: "^[0-9]+$" },
+        gas_limit: { type: "string", pattern: "^[0-9]+$" },
+        since: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}T.+Z$" },
       },
       required: ["merchant_address"],
     },
@@ -6993,7 +7092,29 @@ export async function stablecoinBalance(address, fetchImpl = fetch) {
   });
 }
 
-async function basePaymentDueDiligenceBundle(input, fetchImpl = fetch) {
+function evidenceOutcome(check) {
+  if (check.status === "unavailable" || check.status === "skipped") return "WARN";
+  const serialized = JSON.stringify(check.result ?? {}).toLowerCase();
+  const riskScore = Number(
+    check.result?.risk_score ??
+      check.result?.assessment?.risk_score ??
+      check.result?.summary?.risk_score ??
+      NaN,
+  );
+  if (/\b(deny|block|blocked|critical|malicious|sanction)\b/.test(serialized)) {
+    return "FAIL";
+  }
+  if (Number.isFinite(riskScore) && riskScore >= 80) return "FAIL";
+  if (
+    /\b(warn|review|medium|high|suspicious|unverified)\b/.test(serialized) ||
+    (Number.isFinite(riskScore) && riskScore >= 50)
+  ) {
+    return "WARN";
+  }
+  return "PASS";
+}
+
+async function x402TransactionPreflight(input, productId, fetchImpl = fetch) {
   const now = new Date();
   const merchantAddress = String(input.merchant_address ?? "").trim();
   const walletAddress = String(input.wallet_address ?? merchantAddress).trim();
@@ -7012,17 +7133,20 @@ async function basePaymentDueDiligenceBundle(input, fetchImpl = fetch) {
   const checks = [];
   const run = async (id, enabled, fn) => {
     if (!enabled) {
-      checks.push({ id, status: "skipped" });
+      const check = { id, status: "skipped" };
+      checks.push({ ...check, outcome: evidenceOutcome(check) });
       return;
     }
     try {
-      checks.push({ id, status: "ok", result: await fn() });
+      const check = { id, status: "ok", result: await fn() };
+      checks.push({ ...check, outcome: evidenceOutcome(check) });
     } catch (error) {
-      checks.push({
+      const check = {
         id,
         status: "unavailable",
         error: error instanceof Error ? error.message : String(error),
-      });
+      };
+      checks.push({ ...check, outcome: evidenceOutcome(check) });
     }
   };
 
@@ -7082,12 +7206,17 @@ async function basePaymentDueDiligenceBundle(input, fetchImpl = fetch) {
   const ok = checks.filter(check => check.status === "ok").length;
   const unavailable = checks.filter(check => check.status === "unavailable").length;
   const skipped = checks.filter(check => check.status === "skipped").length;
+  const failed = checks.filter(check => check.outcome === "FAIL").length;
+  const warned = checks.filter(check => check.outcome === "WARN").length;
+  const decision = failed > 0 ? "DENY" : warned > 0 ? "REQUIRE_REVIEW" : "ALLOW";
+  const product = PRODUCTS_BY_ID[productId] ?? PRODUCTS_BY_ID["x402-transaction-preflight"];
   return {
-    product: "base-payment-due-diligence-bundle",
+    product: product.id,
     schema_version: "1.0",
     pricing_version: PRICING_VERSION,
     network: BASE_MAINNET,
     evaluated_at: now.toISOString(),
+    decision,
     merchant_address: merchantAddress,
     wallet_address: walletAddress || null,
     summary: {
@@ -7095,10 +7224,15 @@ async function basePaymentDueDiligenceBundle(input, fetchImpl = fetch) {
       checks_ok: ok,
       checks_unavailable: unavailable,
       checks_skipped: skipped,
+      evidence_passed: checks.filter(check => check.outcome === "PASS").length,
+      evidence_warned: warned,
+      evidence_failed: failed,
       recommendation:
-        unavailable === 0
-          ? "Use this bundle as the payment due-diligence evidence set."
-          : "Review unavailable checks before allowing high-value autonomous payment.",
+        decision === "ALLOW"
+          ? "Proceed with the transaction under the caller's policy limits."
+          : decision === "REQUIRE_REVIEW"
+          ? "Require review before payment because one or more evidence checks warned or were unavailable."
+          : "Deny payment because one or more evidence checks failed.",
     },
     replaces_separate_operations: [
       "x402-merchant-trust",
@@ -7114,7 +7248,13 @@ async function basePaymentDueDiligenceBundle(input, fetchImpl = fetch) {
       "base-stablecoin-balance",
     ],
     separate_list_price_usdc: "0.205",
-    bundle_price_usdc: PRODUCTS_BY_ID["base-payment-due-diligence-bundle"].price,
+    preflight_price_usdc: product.price,
+    price_variant:
+      product.id === "x402-transaction-preflight-lite"
+        ? "0.15"
+        : product.id === "x402-transaction-preflight-plus"
+        ? "0.50"
+        : "0.25",
     checks,
   };
 }
@@ -12933,14 +13073,14 @@ function recommendedWorkflows() {
           "Buy the label/counterparty steps only when the first preflight returns medium/high risk or the value at risk is material.",
       },
       {
-        id: "base-payment-due-diligence-before-agent-pay",
-        goal: "Replace repeated Base payment safety purchases with one bundled due-diligence evidence set before an agent pays.",
+        id: "x402-transaction-preflight-before-agent-pay",
+        goal: "Buy one explainable transaction preflight before an agent pays an x402 merchant or signs a Base transfer.",
         sequence: [
-          "base-payment-due-diligence-bundle",
+          "x402-transaction-preflight",
           "agent-payment-guard",
         ],
         escalation:
-          "Use the separate component checks only when the bundle marks a required payment, wallet, contract, or receipt check unavailable.",
+          "Use separate component checks only when the transaction preflight returns REQUIRE_REVIEW or DENY and the agent needs deeper evidence.",
       },
       {
         id: "kyt-or-aml-local-dataset-import",
@@ -14146,24 +14286,33 @@ function createPaidApp() {
     }
   });
 
-  app.get(PRODUCTS_BY_ID["base-payment-due-diligence-bundle"].path, async c => {
-    const input = Object.fromEntries(new URL(c.req.url).searchParams.entries());
-    const merchantAddress = String(input.merchant_address ?? "");
-    if (!ADDRESS_PATTERN.test(merchantAddress)) {
-      return c.json({ error: "invalid_due_diligence_merchant_address" }, 400);
-    }
-    try {
-      return c.json(await basePaymentDueDiligenceBundle(input));
-    } catch (error) {
-      return c.json(
-        {
-          error: "payment_due_diligence_bundle_failed",
-          message: error instanceof Error ? error.message : String(error),
-        },
-        502,
-      );
-    }
-  });
+  for (const productId of [
+    "x402-transaction-preflight-lite",
+    "x402-transaction-preflight",
+    "x402-transaction-preflight-plus",
+  ]) {
+    app.get(PRODUCTS_BY_ID[productId].path, async c => {
+      const input = Object.fromEntries(new URL(c.req.url).searchParams.entries());
+      const merchantAddress = String(input.merchant_address ?? "");
+      if (!ADDRESS_PATTERN.test(merchantAddress)) {
+        return c.json({ error: "invalid_transaction_preflight_merchant_address" }, 400);
+      }
+      try {
+        const result = await x402TransactionPreflight(input, productId);
+        c.header("x-signgate-decision", result.decision);
+        c.header("x-signgate-outcome", result.decision);
+        return c.json(result);
+      } catch (error) {
+        return c.json(
+          {
+            error: "x402_transaction_preflight_failed",
+            message: error instanceof Error ? error.message : String(error),
+          },
+          502,
+        );
+      }
+    });
+  }
 
   app.get(PRODUCTS[13].path, async c => {
     const token = c.req.query("token") ?? "";
@@ -16227,6 +16376,8 @@ async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
     byPricingVersion,
     workflows,
     buyerAttribution,
+    buyerCohorts,
+    transactionConversion,
     recent,
     recentProbes,
     legacyAggregates,
@@ -16349,6 +16500,52 @@ async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
     ).all(),
     bindAll(
       db.prepare(
+        `WITH buyer_firsts AS (
+           SELECT
+             COALESCE(buyer_id_hash, payer_address, user_agent_hash, 'unknown') AS buyer_key,
+             MIN(COALESCE(purchased_at, created_at)) AS first_seen_at,
+             MAX(COALESCE(purchased_at, created_at)) AS last_seen_at,
+             COUNT(*) AS purchase_count,
+             COALESCE(SUM(CAST(COALESCE(paid_amount, price_usdc) AS REAL)), 0) AS revenue
+           FROM x402_purchase_events
+           WHERE ${payable.where}
+           GROUP BY COALESCE(buyer_id_hash, payer_address, user_agent_hash, 'unknown')
+         )
+         SELECT
+           substr(first_seen_at, 1, 10) AS cohort_date,
+           COUNT(*) AS buyer_count,
+           SUM(CASE WHEN purchase_count > 1 THEN 1 ELSE 0 END) AS repeat_buyers,
+           SUM(purchase_count) AS purchase_count,
+           COALESCE(SUM(revenue), 0) AS revenue,
+           MAX(last_seen_at) AS latest_purchase
+         FROM buyer_firsts
+         GROUP BY substr(first_seen_at, 1, 10)
+         ORDER BY cohort_date DESC
+         LIMIT 30`,
+      ),
+      payable.binds,
+    ).all(),
+    bindAll(
+      db.prepare(
+        `SELECT
+           sequence_id,
+           COUNT(*) AS purchase_count,
+           MIN(COALESCE(purchased_at, created_at)) AS first_seen_at,
+           MAX(COALESCE(purchased_at, created_at)) AS last_seen_at,
+           SUM(CASE WHEN COALESCE(operation_id, product_id) IN ('x402-transaction-preflight-lite','x402-transaction-preflight','x402-transaction-preflight-plus') THEN 1 ELSE 0 END) AS preflight_count,
+           SUM(CASE WHEN COALESCE(operation_id, product_id) IN ('base-payment-proof','base-usdc-receipt') THEN 1 ELSE 0 END) AS followup_payment_evidence_count,
+           GROUP_CONCAT(COALESCE(operation_id, product_id), ' -> ') AS sequence
+         FROM x402_purchase_events
+         WHERE ${payable.where} AND sequence_id IS NOT NULL
+         GROUP BY sequence_id
+         HAVING preflight_count > 0 OR followup_payment_evidence_count > 0
+         ORDER BY last_seen_at DESC
+         LIMIT 50`,
+      ),
+      payable.binds,
+    ).all(),
+    bindAll(
+      db.prepare(
         `SELECT
            COALESCE(purchased_at, created_at) AS purchased_at,
            purchase_id,
@@ -16458,12 +16655,19 @@ async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
             : 0,
         bundle_price:
           baseDueDiligenceMatches >= 2
-            ? PRODUCTS_BY_ID["base-payment-due-diligence-bundle"].price
+            ? PRODUCTS_BY_ID["x402-transaction-preflight"].price
             : PRODUCTS_BY_ID["agent-capability-security-preflight"].price,
       };
     }),
     bundle_conversion_rate: null,
     buyer_attribution: buyerAttribution.results ?? [],
+    buyer_cohorts: buyerCohorts.results ?? [],
+    transaction_conversion: (transactionConversion.results ?? []).map(row => ({
+      ...row,
+      payment_after_check:
+        Number(row.preflight_count ?? 0) > 0 &&
+        Number(row.followup_payment_evidence_count ?? 0) > 0,
+    })),
     recent: recent.results ?? [],
     recent_probes: recentProbes.results ?? [],
     legacy_aggregates: legacyAggregates.results ?? [],
@@ -16526,6 +16730,16 @@ function purchaseDashboardHtml(data) {
   const buyerRows = data.buyer_attribution
     .map(
       row => `<tr><td><code>${escapeHtml(row.payer_address === "unknown" ? "" : row.payer_address)}</code></td><td><code>${escapeHtml(String(row.buyer_id_hash ?? "").slice(0, 24))}</code></td><td>${escapeHtml(row.country ?? "")}</td><td>${row.purchase_count}</td><td>$${Number(row.revenue ?? 0).toFixed(3)}</td><td>${escapeHtml(row.first_seen_at)}</td><td>${escapeHtml(row.last_seen_at)}</td><td><code>${escapeHtml(row.operations ?? "")}</code></td><td><code>${escapeHtml(String(row.sequence_ids ?? "").slice(0, 80))}</code></td></tr>`,
+    )
+    .join("");
+  const cohortRows = data.buyer_cohorts
+    .map(
+      row => `<tr><td>${escapeHtml(row.cohort_date)}</td><td>${row.buyer_count}</td><td>${row.repeat_buyers}</td><td>${row.purchase_count}</td><td>$${Number(row.revenue ?? 0).toFixed(3)}</td><td>${escapeHtml(row.latest_purchase)}</td></tr>`,
+    )
+    .join("");
+  const conversionRows = data.transaction_conversion
+    .map(
+      row => `<tr><td><code>${escapeHtml(row.sequence_id ?? "")}</code></td><td>${row.purchase_count}</td><td>${row.preflight_count}</td><td>${row.followup_payment_evidence_count}</td><td>${row.payment_after_check ? "YES" : "NO"}</td><td>${escapeHtml(row.first_seen_at)}</td><td>${escapeHtml(row.last_seen_at)}</td><td><code>${escapeHtml(row.sequence ?? "")}</code></td></tr>`,
     )
     .join("");
   const recentRows = data.recent
@@ -16591,6 +16805,11 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
 <table><thead><tr><th>Sequence</th><th>Sequence Count</th><th>Unique Buyers</th><th>Bundle Replaceable</th><th>Separate Total</th><th>Bundle Price</th></tr></thead><tbody>${workflowRows || '<tr><td colspan="6">No repeated workflows recorded yet.</td></tr>'}</tbody></table>
 <h2>Buyer Attribution</h2>
 <table><thead><tr><th>Payer Address</th><th>Buyer Hash</th><th>Country</th><th>Purchases</th><th>Revenue</th><th>First Seen</th><th>Last Seen</th><th>Operations</th><th>Sequences</th></tr></thead><tbody>${buyerRows || '<tr><td colspan="9">No attributed buyers recorded yet.</td></tr>'}</tbody></table>
+<h2>Repeat Buyer Cohorts</h2>
+<table><thead><tr><th>Cohort Date</th><th>Buyers</th><th>Repeat Buyers</th><th>Purchases</th><th>Revenue</th><th>Latest Purchase</th></tr></thead><tbody>${cohortRows || '<tr><td colspan="6">No cohorts recorded yet.</td></tr>'}</tbody></table>
+<h2>Transaction Preflight Conversion</h2>
+<p class="muted">Admin-only inference by sequence id. A payment is counted after a check when the same sequence later includes payment-proof or USDC receipt evidence.</p>
+<table><thead><tr><th>Sequence</th><th>Purchases</th><th>Preflights</th><th>Payment Evidence</th><th>Payment After Check</th><th>First Seen</th><th>Last Seen</th><th>Endpoint Sequence</th></tr></thead><tbody>${conversionRows || '<tr><td colspan="8">No transaction preflight conversion yet.</td></tr>'}</tbody></table>
 <h2>Recent Attributed Paid Calls</h2>
 <table><thead><tr><th>Time</th><th>Operation</th><th>Path</th><th>Paid</th><th>Pricing Version</th><th>Payer</th><th>Buyer Hash</th><th>Sequence</th><th>Internal/Test</th></tr></thead><tbody>${recentRows || '<tr><td colspan="9">No purchases recorded yet.</td></tr>'}</tbody></table>
 <h2>Recent Route Probes / Discovery Calls</h2>
