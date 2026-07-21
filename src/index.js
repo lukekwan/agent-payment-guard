@@ -752,6 +752,60 @@ const CATALOG_METADATA = {
       "ALLOW/REQUIRE_REVIEW/DENY plus the same explainable evidence set at the high-value variant price.",
     price_reason: "0.50 USDC variant for enterprise/compliance willingness-to-pay testing.",
   },
+  "bcs-wallet-risk-bundle": {
+    group: "kyt-wallet-risk",
+    when_to_buy:
+      "When static wallet labels are not enough and an agent needs a paid BCS-backed KYT bundle.",
+    returns:
+      "BlockchainSecurity labels, risk score, address classification, wallet overview, provenance, and credit headers in one response.",
+    price_reason:
+      "Higher-priced bundle because it can consume multiple paid BlockchainSecurity checks.",
+  },
+  "bcs-investigation-pack": {
+    group: "kyt-wallet-risk",
+    when_to_buy:
+      "When a wallet hit needs deeper fund-flow or cross-chain investigation before payment, payout, or onboarding.",
+    returns:
+      "BlockchainSecurity wallet overview, multi-hop fund trace, optional cross-chain transaction tracking, and investigation guidance.",
+    price_reason:
+      "Premium investigation bundle because tracing endpoints are expensive and high-value.",
+  },
+  "quicknode-rpc-health": {
+    group: "agent-chain-data",
+    when_to_buy:
+      "Before an agent pays for or routes through a QuickNode/Base RPC endpoint.",
+    returns:
+      "RPC chain id, latest block, selected method probes, latency, PASS/WARN/FAIL outcomes, and route decision.",
+    price_reason:
+      "Infrastructure preflight priced above static metadata because it performs live RPC probes.",
+  },
+  "quicknode-wallet-execution-readiness": {
+    group: "agent-chain-data",
+    when_to_buy:
+      "Before an agent signs a Base transaction and needs nonce, gas, and stablecoin readiness evidence.",
+    returns:
+      "Nonce readiness, gas quote, stablecoin balance, RPC provenance, and ALLOW/REQUIRE_REVIEW decision.",
+    price_reason:
+      "Execution-readiness bundle replaces repeated nonce, balance, and gas checks.",
+  },
+  "sumsub-counterparty-compliance-bundle": {
+    group: "sumsub-compliance-evidence",
+    when_to_buy:
+      "Before an agent pays or onboards a counterparty that needs identity, watchlist, case, and residency evidence.",
+    returns:
+      "Bundled Sumsub DB_NET, watchlist/AML, case-management, and PoA evidence contracts.",
+    price_reason:
+      "Compliance bundle priced above individual evidence contracts because it composes multiple controls.",
+  },
+  "sumsub-crypto-transfer-compliance-bundle": {
+    group: "sumsub-compliance-evidence",
+    when_to_buy:
+      "Before a crypto transfer needs KYT, wallet ownership, Travel Rule, or Crystal risk evidence.",
+    returns:
+      "Bundled Sumsub KYT, payment-method crypto, Travel Rule, and Crystal crypto-risk evidence contracts.",
+    price_reason:
+      "Higher-value crypto-transfer compliance evidence bundle for regulated payments.",
+  },
 };
 const PRODUCTS = [
   {
@@ -2994,6 +3048,108 @@ const PRODUCTS = [
         since: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}T.+Z$" },
       },
       required: ["merchant_address"],
+    },
+  },
+  {
+    id: "bcs-wallet-risk-bundle",
+    path: "/v1/x402/bcs/wallet-risk-bundle",
+    price: "$0.250",
+    description:
+      "Bundle BlockchainSecurity labels, risk score, classification, and wallet overview for one address.",
+    input: { blockchain: "ethereum", address: PAY_TO, symbols: "USDC" },
+    inputSchema: {
+      properties: {
+        blockchain: { type: "string", pattern: "^[a-z0-9_-]{2,32}$" },
+        address: { type: "string", pattern: "^[A-Za-z0-9:_-]{3,128}$" },
+        symbols: { type: "string", pattern: "^[A-Za-z0-9.,_-]{0,240}$" },
+        contracts: { type: "string", pattern: "^[A-Za-z0-9:.,_-]{0,800}$" },
+      },
+      required: ["blockchain", "address"],
+    },
+  },
+  {
+    id: "bcs-investigation-pack",
+    path: "/v1/x402/bcs/investigation-pack",
+    price: "$0.750",
+    description:
+      "Run BlockchainSecurity wallet overview plus fund-flow tracing and optional cross-chain tracking for investigations.",
+    input: { blockchain: "ethereum", address: PAY_TO, direction: "both", depth: "2", limit: "50" },
+    inputSchema: {
+      properties: {
+        blockchain: { type: "string", pattern: "^[a-z0-9_-]{2,32}$" },
+        address: { type: "string", pattern: "^[A-Za-z0-9:_-]{3,128}$" },
+        direction: { type: "string", enum: ["in", "out", "both"] },
+        depth: { type: "string", pattern: "^[1-5]$" },
+        limit: { type: "string", pattern: "^[0-9]{1,3}$" },
+        txhash: { type: "string", pattern: "^[A-Za-z0-9:_-]{0,160}$" },
+        label: { type: "string", pattern: "^[A-Za-z0-9_-]{0,40}$" },
+      },
+      required: ["blockchain", "address"],
+    },
+  },
+  {
+    id: "quicknode-rpc-health",
+    path: "/v1/x402/quicknode/rpc-health",
+    price: "$0.025",
+    description:
+      "Probe a QuickNode/Base JSON-RPC endpoint for chain id, latest block, method availability, latency, and route readiness.",
+    input: { endpoint_url: "https://mainnet.base.org", methods: "eth_chainId,eth_blockNumber" },
+    inputSchema: {
+      properties: {
+        endpoint_url: { type: "string", pattern: "^https?://", maxLength: 2048 },
+        methods: { type: "string", pattern: "^[A-Za-z0-9_.,:-]{1,300}$" },
+      },
+      required: ["endpoint_url"],
+    },
+  },
+  {
+    id: "quicknode-wallet-execution-readiness",
+    path: "/v1/x402/quicknode/wallet-execution-readiness",
+    price: "$0.050",
+    description:
+      "Check Base wallet execution readiness using RPC-backed nonce, gas, and stablecoin balance evidence.",
+    input: { address: PAY_TO, gas_limit: "21000" },
+    inputSchema: {
+      properties: {
+        address: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        gas_limit: { type: "string", pattern: "^[0-9]+$" },
+      },
+      required: ["address"],
+    },
+  },
+  {
+    id: "sumsub-counterparty-compliance-bundle",
+    path: "/v1/x402/sumsub/counterparty-compliance-bundle",
+    price: "$0.150",
+    description:
+      "Bundle Sumsub DB_NET, watchlist/AML, case-management, and proof-of-address evidence for counterparty review.",
+    input: { applicant_id: "applicant_demo_001", case_id: "case_demo_001", counterparty_reference: "merchant_demo", jurisdiction: "HK" },
+    inputSchema: {
+      properties: {
+        applicant_id: { type: "string", pattern: "^[A-Za-z0-9._:-]{1,128}$" },
+        case_id: { type: "string", pattern: "^[A-Za-z0-9._:-]{1,128}$" },
+        counterparty_reference: { type: "string", pattern: "^[A-Za-z0-9._:-]{1,128}$" },
+        jurisdiction: { type: "string", pattern: "^[A-Z]{2}$" },
+      },
+      required: ["applicant_id"],
+    },
+  },
+  {
+    id: "sumsub-crypto-transfer-compliance-bundle",
+    path: "/v1/x402/sumsub/crypto-transfer-compliance-bundle",
+    price: "$0.200",
+    description:
+      "Bundle Sumsub KYT, crypto payment-method, Travel Rule, and Crystal crypto-risk evidence for one transfer.",
+    input: { transaction_id: "tx_demo_001", wallet: PAY_TO, transfer_reference: "travel_rule_demo_001", asset: "USDC", chain: "base" },
+    inputSchema: {
+      properties: {
+        transaction_id: { type: "string", pattern: "^[A-Za-z0-9._:-]{1,128}$" },
+        wallet: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+        transfer_reference: { type: "string", pattern: "^[A-Za-z0-9._:-]{1,128}$" },
+        asset: { type: "string", pattern: "^[A-Za-z0-9._:-]{2,32}$" },
+        chain: { type: "string", pattern: "^[A-Za-z0-9._:-]{2,64}$" },
+      },
+      required: ["transaction_id", "wallet"],
     },
   },
 ];
@@ -6386,6 +6542,239 @@ export async function bcsGatewayRequest({
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function bcsWalletRiskBundle({ apiKey, blockchain, address, symbols, contracts }) {
+  const querySymbols = parseCsvList(symbols ?? "", /^[A-Za-z0-9._-]{1,40}$/);
+  const queryContracts = parseCsvList(contracts ?? "", /^[A-Za-z0-9:._-]{3,128}$/);
+  const commonBody = {
+    blockchain,
+    address,
+    ...(querySymbols.length ? { symbols: querySymbols } : {}),
+    ...(queryContracts.length ? { contracts: queryContracts } : {}),
+  };
+  const [labels, risk, classify, overview] = await Promise.allSettled([
+    bcsGatewayRequest({
+      product: "bcs-wallet-risk-bundle.labels",
+      apiKey,
+      upstreamPath: "/v1/labels",
+      query: { chain: blockchain, address, sources: "all" },
+    }),
+    bcsGatewayRequest({
+      product: "bcs-wallet-risk-bundle.risk",
+      apiKey,
+      method: "POST",
+      upstreamPath: "/v1/address-risk",
+      body: commonBody,
+    }),
+    bcsGatewayRequest({
+      product: "bcs-wallet-risk-bundle.classify",
+      apiKey,
+      method: "POST",
+      upstreamPath: "/v1/address-classify",
+      body: { blockchain, addresses: [address] },
+    }),
+    bcsGatewayRequest({
+      product: "bcs-wallet-risk-bundle.overview",
+      apiKey,
+      method: "POST",
+      upstreamPath: "/v1/wallet-overview",
+      body: commonBody,
+    }),
+  ]);
+  const checks = { labels, risk, classify, overview };
+  const failed = Object.values(checks).filter(result => result.status === "rejected");
+  return {
+    product: "bcs-wallet-risk-bundle",
+    schema_version: "1.0",
+    provider: "blockchainsecurity-atlantis",
+    blockchain,
+    address,
+    decision: failed.length ? "REQUIRE_REVIEW" : "ALLOW",
+    checks: Object.fromEntries(
+      Object.entries(checks).map(([key, result]) => [
+        key,
+        result.status === "fulfilled"
+          ? { outcome: "PASS", evidence: result.value }
+          : { outcome: "WARN", error: result.reason?.message ?? String(result.reason) },
+      ]),
+    ),
+    limitations: [
+      "This bundle exposes upstream BCS evidence but does not reveal the server-side API key.",
+      "A WARN means the specific upstream component failed or was unavailable.",
+    ],
+  };
+}
+
+async function bcsInvestigationPack({
+  apiKey,
+  blockchain,
+  address,
+  direction = "both",
+  depth = 2,
+  limit = 50,
+  txhash = "",
+  label = "",
+}) {
+  const [overview, trace, crossChain] = await Promise.allSettled([
+    bcsGatewayRequest({
+      product: "bcs-investigation-pack.overview",
+      apiKey,
+      method: "POST",
+      upstreamPath: "/v1/wallet-overview",
+      body: { blockchain, address },
+    }),
+    bcsGatewayRequest({
+      product: "bcs-investigation-pack.trace",
+      apiKey,
+      method: "POST",
+      upstreamPath: "/v1/trace",
+      body: {
+        blockchain,
+        address,
+        track_setting: { direction, depth, limit },
+      },
+    }),
+    txhash && label
+      ? bcsGatewayRequest({
+          product: "bcs-investigation-pack.cross_chain",
+          apiKey,
+          upstreamPath: "/v1/cross-chain",
+          query: { txhash, label },
+        })
+      : Promise.resolve({ skipped: true, reason: "cross_chain_input_missing" }),
+  ]);
+  const checks = { overview, trace, cross_chain: crossChain };
+  const failed = Object.values(checks).filter(result => result.status === "rejected");
+  return {
+    product: "bcs-investigation-pack",
+    schema_version: "1.0",
+    provider: "blockchainsecurity-atlantis",
+    blockchain,
+    address,
+    decision: failed.length ? "REQUIRE_REVIEW" : "ALLOW",
+    checks: Object.fromEntries(
+      Object.entries(checks).map(([key, result]) => [
+        key,
+        result.status === "fulfilled"
+          ? {
+              outcome: result.value?.skipped ? "WARN" : "PASS",
+              evidence: result.value,
+            }
+          : { outcome: "WARN", error: result.reason?.message ?? String(result.reason) },
+      ]),
+    ),
+  };
+}
+
+async function rpcCallEndpoint(endpointUrl, method, params = [], fetchImpl = fetch) {
+  const controller = new AbortController();
+  const started = Date.now();
+  const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+  try {
+    const response = await fetchImpl(endpointUrl, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        "user-agent": "SignGateQuickNodePreflight/1.0",
+      },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+      signal: controller.signal,
+    });
+    const payload = await response.json();
+    if (!response.ok || payload.error) {
+      throw new Error(payload.error?.message ?? `HTTP ${response.status}`);
+    }
+    return { result: payload.result, latency_ms: Date.now() - started };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function quicknodeRpcHealth({ endpointUrl, methods, fetchImpl = fetch }) {
+  const methodList = parseCsvList(methods || "eth_chainId,eth_blockNumber", /^[A-Za-z0-9_.:-]{2,80}$/, 8);
+  const checks = [];
+  for (const method of methodList) {
+    const params =
+      method === "eth_getBlockByNumber"
+        ? ["latest", false]
+        : method === "eth_getBalance"
+        ? [PAY_TO, "latest"]
+        : [];
+    try {
+      const result = await rpcCallEndpoint(endpointUrl, method, params, fetchImpl);
+      checks.push({ method, outcome: "PASS", ...result });
+    } catch (error) {
+      checks.push({
+        method,
+        outcome: "FAIL",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  const failed = checks.filter(check => check.outcome === "FAIL").length;
+  return {
+    product: "quicknode-rpc-health",
+    schema_version: "1.0",
+    endpoint_origin: new URL(endpointUrl).origin,
+    checked_methods: methodList,
+    decision: failed ? "REQUIRE_REVIEW" : "ALLOW",
+    checks,
+    limitations: [
+      "Endpoint-specific archival, trace, debug, and websocket capabilities need dedicated provider-side checks.",
+      "This does not expose or validate the caller's QuickNode credentials beyond the supplied endpoint URL.",
+    ],
+  };
+}
+
+async function quicknodeWalletExecutionReadiness({ address, gasLimit, fetchImpl = fetch }) {
+  const [nonce, gas, balance] = await Promise.allSettled([
+    nonceReadiness(address, fetchImpl),
+    gasFeeQuote(gasLimit, fetchImpl),
+    stablecoinBalance(address, fetchImpl),
+  ]);
+  const checks = { nonce, gas, balance };
+  const failed = Object.values(checks).filter(result => result.status === "rejected");
+  return {
+    product: "quicknode-wallet-execution-readiness",
+    schema_version: "1.0",
+    network: BASE_MAINNET,
+    address,
+    decision: failed.length ? "REQUIRE_REVIEW" : "ALLOW",
+    checks: Object.fromEntries(
+      Object.entries(checks).map(([key, result]) => [
+        key,
+        result.status === "fulfilled"
+          ? { outcome: "PASS", evidence: result.value }
+          : { outcome: "WARN", error: result.reason?.message ?? String(result.reason) },
+      ]),
+    ),
+  };
+}
+
+function sumsubEvidenceBundle(product, entries) {
+  const evidence = entries.map(entry => ({
+    id: entry.productId,
+    outcome: "PASS",
+    evidence: buildSumsubEvidenceServiceResponse({
+      productId: entry.productId,
+      input: entry.input,
+    }),
+  }));
+  const failed = evidence.filter(item => item.evidence.decision === "DENY");
+  const review = evidence.filter(item => item.evidence.decision === "REQUIRE_REVIEW");
+  return {
+    product,
+    schema_version: "1.0",
+    provider: "sumsub",
+    decision: failed.length ? "DENY" : review.length ? "REQUIRE_REVIEW" : "ALLOW",
+    evidence,
+    limitations: [
+      "This is an x402 evidence bundle over Sumsub capability contracts; live Sumsub data must stay server-side.",
+      "The response does not create applicants, upload documents, trigger checks, or expose Sumsub credentials.",
+    ],
+  };
 }
 
 function usdcToAtomic(value) {
@@ -15283,6 +15672,58 @@ function createPaidApp() {
     }
   });
 
+  app.get(PRODUCTS_BY_ID["quicknode-rpc-health"].path, async c => {
+    const endpointUrl = c.req.query("endpoint_url") ?? "";
+    const methods = c.req.query("methods") ?? "eth_chainId,eth_blockNumber";
+    try {
+      validatePublicUrl(endpointUrl);
+    } catch {
+      return c.json({ error: "invalid_quicknode_rpc_health_endpoint" }, 400);
+    }
+    if (!/^[A-Za-z0-9_.,:-]{1,300}$/.test(methods)) {
+      return c.json({ error: "invalid_quicknode_rpc_health_methods" }, 400);
+    }
+    try {
+      return c.json(await quicknodeRpcHealth({ endpointUrl, methods }));
+    } catch (error) {
+      return c.json(
+        {
+          error: "quicknode_rpc_health_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["quicknode-wallet-execution-readiness"].path, async c => {
+    const address = c.req.query("address") ?? "";
+    const gasLimit = c.req.query("gas_limit") ?? "21000";
+    const parsedGasLimit = Number(gasLimit);
+    if (
+      !ADDRESS_PATTERN.test(address) ||
+      !/^[0-9]+$/.test(gasLimit) ||
+      !Number.isSafeInteger(parsedGasLimit) ||
+      parsedGasLimit < 21_000 ||
+      parsedGasLimit > 30_000_000
+    ) {
+      return c.json({ error: "invalid_quicknode_wallet_execution_input" }, 400);
+    }
+    try {
+      return c.json(
+        await quicknodeWalletExecutionReadiness({ address, gasLimit }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "quicknode_wallet_execution_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
   for (const productId of [
     "address-risk",
     "token-risk",
@@ -15321,6 +15762,55 @@ function createPaidApp() {
       return c.json(buildSumsubEvidenceServiceResponse({ productId, input }));
     });
   }
+
+  app.get(PRODUCTS_BY_ID["sumsub-counterparty-compliance-bundle"].path, c => {
+    const applicantId = c.req.query("applicant_id") ?? "";
+    const caseId = c.req.query("case_id") ?? "case_demo_001";
+    const counterpartyReference =
+      c.req.query("counterparty_reference") ?? "merchant_demo";
+    const jurisdiction = c.req.query("jurisdiction") ?? "HK";
+    if (
+      !/^[A-Za-z0-9._:-]{1,128}$/.test(applicantId) ||
+      !/^[A-Za-z0-9._:-]{1,128}$/.test(caseId) ||
+      !/^[A-Za-z0-9._:-]{1,128}$/.test(counterpartyReference) ||
+      !/^[A-Z]{2}$/.test(jurisdiction)
+    ) {
+      return c.json({ error: "invalid_sumsub_counterparty_bundle_input" }, 400);
+    }
+    return c.json(
+      sumsubEvidenceBundle("sumsub-counterparty-compliance-bundle", [
+        { productId: "sumsub-db-net-evidence", input: { applicant_id: applicantId, principal_reference: counterpartyReference } },
+        { productId: "sumsub-watchlist-aml-evidence", input: { applicant_id: applicantId, counterparty_reference: counterpartyReference } },
+        { productId: "sumsub-case-management-evidence", input: { case_id: caseId, reference_id: counterpartyReference } },
+        { productId: "sumsub-poa-evidence", input: { applicant_id: applicantId, jurisdiction } },
+      ]),
+    );
+  });
+
+  app.get(PRODUCTS_BY_ID["sumsub-crypto-transfer-compliance-bundle"].path, c => {
+    const transactionId = c.req.query("transaction_id") ?? "";
+    const wallet = c.req.query("wallet") ?? "";
+    const transferReference = c.req.query("transfer_reference") ?? transactionId;
+    const asset = c.req.query("asset") ?? "USDC";
+    const chain = c.req.query("chain") ?? "base";
+    if (
+      !/^[A-Za-z0-9._:-]{1,128}$/.test(transactionId) ||
+      !ADDRESS_PATTERN.test(wallet) ||
+      !/^[A-Za-z0-9._:-]{1,128}$/.test(transferReference) ||
+      !/^[A-Za-z0-9._:-]{2,32}$/.test(asset) ||
+      !/^[A-Za-z0-9._:-]{2,64}$/.test(chain)
+    ) {
+      return c.json({ error: "invalid_sumsub_crypto_transfer_bundle_input" }, 400);
+    }
+    return c.json(
+      sumsubEvidenceBundle("sumsub-crypto-transfer-compliance-bundle", [
+        { productId: "sumsub-kyt-evidence", input: { transaction_id: transactionId, asset, chain } },
+        { productId: "sumsub-payment-method-crypto-evidence", input: { applicant_id: transactionId, wallet } },
+        { productId: "sumsub-travel-rule-evidence", input: { transfer_reference: transferReference, originator: "originator_demo", beneficiary: "beneficiary_demo" } },
+        { productId: "sumsub-crystal-crypto-risk-evidence", input: { wallet, transaction_reference: transactionId } },
+      ]),
+    );
+  });
 
   app.get(PRODUCTS_BY_ID["base-token-exit-risk"].path, async c => {
     const token = c.req.query("token") ?? "";
@@ -15366,6 +15856,80 @@ function createPaidApp() {
       return c.json(
         {
           error: "bcs_labels_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["bcs-wallet-risk-bundle"].path, async c => {
+    const blockchain = (c.req.query("blockchain") ?? "").toLowerCase();
+    const address = c.req.query("address") ?? "";
+    if (!validateBcsChain(blockchain) || !validateBcsAddress(address)) {
+      return c.json({ error: "invalid_bcs_wallet_risk_bundle_input" }, 400);
+    }
+    try {
+      return c.json(
+        await bcsWalletRiskBundle({
+          apiKey: c.env?.BCS_API_KEY,
+          blockchain,
+          address,
+          symbols: c.req.query("symbols") ?? "",
+          contracts: c.req.query("contracts") ?? "",
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "bcs_wallet_risk_bundle_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["bcs-investigation-pack"].path, async c => {
+    const blockchain = (c.req.query("blockchain") ?? "").toLowerCase();
+    const address = c.req.query("address") ?? "";
+    const direction = c.req.query("direction") ?? "both";
+    const depth = Number(c.req.query("depth") ?? "2");
+    const limit = Number(c.req.query("limit") ?? "50");
+    const txhash = c.req.query("txhash") ?? "";
+    const label = (c.req.query("label") ?? "").toLowerCase();
+    if (
+      !validateBcsChain(blockchain) ||
+      !validateBcsAddress(address) ||
+      !["in", "out", "both"].includes(direction) ||
+      !Number.isInteger(depth) ||
+      depth < 1 ||
+      depth > 5 ||
+      !Number.isInteger(limit) ||
+      limit < 1 ||
+      limit > 500 ||
+      (txhash && !/^[A-Za-z0-9:_-]{16,160}$/.test(txhash)) ||
+      (label && !/^[A-Za-z0-9_-]{2,40}$/.test(label))
+    ) {
+      return c.json({ error: "invalid_bcs_investigation_pack_input" }, 400);
+    }
+    try {
+      return c.json(
+        await bcsInvestigationPack({
+          apiKey: c.env?.BCS_API_KEY,
+          blockchain,
+          address,
+          direction,
+          depth,
+          limit,
+          txhash,
+          label,
+        }),
+      );
+    } catch (error) {
+      return c.json(
+        {
+          error: "bcs_investigation_pack_failed",
           message: error instanceof Error ? error.message : String(error),
         },
         502,
