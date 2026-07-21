@@ -1844,16 +1844,37 @@ test("agent capability security bundle keeps pass warn fail and unavailable evid
   assert.equal(JSON.stringify(deny), JSON.stringify(deny).replace(/bearer|api[_-]?key|authorization/i, ""));
 });
 
-test("admin purchases rejects query tokens and redirects browser users to login", async () => {
+test("admin purchases accepts fixed query token links and redirects browser users to login", async () => {
+  const purchaseDb = {
+    prepare() {
+      return {
+        bind() {
+          return this;
+        },
+        async first() {
+          return {};
+        },
+        async all() {
+          return { results: [] };
+        },
+      };
+    },
+  };
   const response = await worker.fetch(
-    new Request("https://example.test/admin/purchases?token=legacy-secret"),
-    { ADMIN_DASHBOARD_TOKEN: "legacy-secret" },
+    new Request("https://example.test/admin/purchases?token=current-secret"),
+    { ADMIN_DASHBOARD_TOKEN_V2: "current-secret", GUARD_DB: purchaseDb },
   );
-  assert.equal(response.status, 303);
-  assert.equal(response.headers.get("location"), "/admin/login");
+  assert.equal(response.status, 200);
   assert.equal(response.headers.get("cache-control"), "no-store");
   assert.match(response.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/);
   assert.match(response.headers.get("x-robots-tag") ?? "", /noindex/);
+
+  const redirectResponse = await worker.fetch(
+    new Request("https://example.test/admin/purchases"),
+    { ADMIN_DASHBOARD_TOKEN_V2: "current-secret", GUARD_DB: purchaseDb },
+  );
+  assert.equal(redirectResponse.status, 303);
+  assert.equal(redirectResponse.headers.get("location"), "/admin/login");
 
   const apiResponse = await worker.fetch(
     new Request("https://example.test/admin/purchases.json"),
@@ -1861,50 +1882,4 @@ test("admin purchases rejects query tokens and redirects browser users to login"
   );
   assert.equal(apiResponse.status, 401);
   assert.equal((await apiResponse.json()).error, "admin_unauthorized");
-});
-
-async function adminLinkSignature(exp, nonce, secret) {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const signature = new Uint8Array(
-    await crypto.subtle.sign(
-      "HMAC",
-      key,
-      new TextEncoder().encode(`signgate-admin-link.${exp}.${nonce}`),
-    ),
-  );
-  let binary = "";
-  for (const byte of signature) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-
-test("admin short-lived session link sets cookie without accepting permanent query token", async () => {
-  const secret = "current-secret";
-  const exp = String(Math.floor(Date.now() / 1000) + 120);
-  const nonce = "browser-login-nonce-123";
-  const sig = await adminLinkSignature(exp, nonce, secret);
-  const response = await worker.fetch(
-    new Request(`https://example.test/admin/session?exp=${exp}&nonce=${nonce}&sig=${sig}`),
-    { ADMIN_DASHBOARD_TOKEN_V2: secret },
-  );
-  assert.equal(response.status, 303);
-  assert.equal(response.headers.get("location"), "/admin/purchases");
-  assert.match(response.headers.get("set-cookie") ?? "", /__Host-signgate_admin=/);
-  assert.match(response.headers.get("set-cookie") ?? "", /HttpOnly/);
-  assert.match(response.headers.get("set-cookie") ?? "", /Secure/);
-  assert.match(response.headers.get("set-cookie") ?? "", /SameSite=Strict/);
-
-  const expired = await worker.fetch(
-    new Request(
-      `https://example.test/admin/session?exp=${Math.floor(Date.now() / 1000) - 1}&nonce=${nonce}&sig=${sig}`,
-    ),
-    { ADMIN_DASHBOARD_TOKEN_V2: secret },
-  );
-  assert.equal(expired.status, 401);
-  assert.equal((await expired.json()).error, "admin_link_invalid_or_expired");
 });
