@@ -8,11 +8,21 @@ SOURCE_DOCUMENTATION_PACKAGE=COMPLETE
 
 LOCAL_VALIDATION=PASS
 
-CORE_API_CONTRACT_APPROVAL=PENDING
+CORE_API_CONTRACT_DECISION=RECORDED
+
+DECISION=PARTIAL_APPROVAL
 
 HOSTED_GITBOOK_VISUAL_QA=BLOCKED_BY_AUTHORITY
 
 PUBLICATION_READINESS=NOT_READY
+
+CURRENT_CONTRACTS_APPROVED=2
+
+DOCS_ONLY_APPROVED=1
+
+PROPOSED_CANDIDATES_APPROVED=2
+
+RETURNED_TO_DEVELOPER=1
 
 All normalized contracts and response envelopes in this package remain documentation proposals. This handoff does not authorize a runtime route, production OpenAPI change, sandbox, live Test it, GitBook sync, or publication.
 
@@ -27,16 +37,16 @@ All normalized contracts and response envelopes in this package remain documenta
 | 5 | Merchant & x402 Trust | GET | `/v1/x402/base/merchant-trust` | Yes | Yes, classified `VERIFIED_PUBLIC` | Runtime product schema and `merchant-x402-trust/REQUEST-SCHEMAS.md` | Current merchant-trust builder and `merchant-x402-trust/RESPONSE-SCHEMAS.md` | Present in runtime-generated OpenAPI | `test/index.test.js` asserts path/schema and paid-route behavior; contract fixtures pass |
 | 6 | Merchant & x402 Trust | GET | `/v1/x402/web/endpoint-preflight` | Yes | Yes, classified `VERIFIED_PUBLIC` | Runtime product schema and `merchant-x402-trust/REQUEST-SCHEMAS.md` | Current endpoint-preflight builder and `merchant-x402-trust/RESPONSE-SCHEMAS.md` | Present in runtime-generated OpenAPI | `test/index.test.js` asserts path/schema and paid-route behavior; contract fixtures pass |
 
-## Operational readiness and recommended PM decision
+## Operational readiness and final PM decision
 
-| # | Auth status | Price status | Rate-limit status | Sample status | Sandbox status | Side effects | Public authority | Recommended PM decision |
+| # | Auth status | Price status | Rate-limit status | Sample status | Sandbox status | Side effects | Public authority | Final PM decision |
 |---:|---|---|---|---|---|---|---|---|
-| 1 | TBD; no scope asserted | TBD; no approved price | Undocumented | Documentation fixture only; no live request | No key or isolated Base URL | Proposed read-only orchestration; no route exists | `PROPOSED_CANDIDATE` | `APPROVE_AS_PROPOSED_CANDIDATE` — permit clearly labelled design documentation only; do not put in live/current API Reference |
-| 2 | Current x402 payment challenge; no API-key/OAuth scope claimed | **Conflict:** runtime registry `$0.15`; README `0.005 USDC` | Undocumented | Safe fixture available; no browser payment | No key or isolated Base URL | Read-only evaluation, but x402 payment/billing occurs | `CURRENT_ROUTE` / `VERIFIED_PUBLIC` | `RETURN_TO_DEVELOPER` — resolve the authoritative price and billing evidence before first-release publication |
-| 3 | Current code unauthenticated; future auth/scope TBD | No verified catalog price | Undocumented | Credential-free sample representation exists; it is not production proof | No key or isolated Base URL | Evaluation only; no signing or settlement | `IMPLEMENTED_UNVERIFIED` | `APPROVE_DOCS_ONLY` — retain sample/onboarding documentation, but withhold current-production authority and live Test it pending production verification |
-| 4 | TBD; no scope asserted | TBD; no approved price | Undocumented | Documentation fixture only; no live request | No key or isolated Base URL | Proposed directive evaluation only; must never sign or mint approval | `PROPOSED_CANDIDATE` | `APPROVE_AS_PROPOSED_CANDIDATE` — permit clearly labelled design documentation only; do not present as a current route |
-| 5 | Current x402 payment challenge; no API-key/OAuth scope claimed | Verified catalog price `0.03 USDC` | Undocumented | Safe fixture available; no browser payment | No key or isolated Base URL | Read-only lookup, with x402 payment/billing | `CURRENT_ROUTE` / `VERIFIED_PUBLIC` | `APPROVE_CURRENT_CONTRACT` — subject to final auth, rate-limit, response capture, and public wording review |
-| 6 | Current x402 payment challenge; no API-key/OAuth scope claimed | Verified catalog price `0.005 USDC` | Undocumented | Safe fixture available; no browser payment | No key or isolated Base URL | Performs remote endpoint inspection and x402 billing; implementation must enforce SSRF/redirect controls | `CURRENT_ROUTE` / `VERIFIED_PUBLIC` | `APPROVE_CURRENT_CONTRACT` — subject to final auth, rate-limit, SSRF/security, response capture, and public wording review |
+| 1 | TBD; no scope asserted | TBD; no approved price | Undocumented | Documentation fixture only; no live request | No key or isolated Base URL | Proposed read-only orchestration; no route exists | `PROPOSED_CANDIDATE` | `APPROVE_AS_PROPOSED_CANDIDATE` — first-class core service and non-production contract only; exclude from executable/current API Reference and Test it; unified route explicitly does not exist |
+| 2 | Current x402 payment challenge; no API-key/OAuth scope claimed | **Conflict:** runtime registry `$0.15`; README `0.005 USDC` | Undocumented | Safe fixture available; no browser payment | No key or isolated Base URL | Read-only evaluation, but x402 payment/billing occurs | `CURRENT_ROUTE` / `VERIFIED_PUBLIC` | `RETURN_TO_DEVELOPER` — identify billing source of truth; align runtime, catalog, README, docs, and tests; capture challenge and paid-response evidence; publish no price before correction |
+| 3 | Current code unauthenticated; future auth/scope TBD | No verified catalog price | Undocumented | Credential-free sample representation exists; it is not production proof | No key or isolated Base URL | Evaluation only; no signing or settlement | `IMPLEMENTED_UNVERIFIED` | `APPROVE_DOCS_ONLY` — architecture, samples, decision semantics, and safe onboarding only; no production, Test it, sandbox, auth, billing, or rate-limit claim |
+| 4 | TBD; no scope asserted | TBD; no approved price | Undocumented | Documentation fixture only; no live request | No key or isolated Base URL | Proposed directive evaluation only; must never sign, mint approval, or enforce execution | `PROPOSED_CANDIDATE` | `APPROVE_AS_PROPOSED_CANDIDATE` — documentation/contract design only; not a current route; no Test it or production claim |
+| 5 | Current x402 payment challenge; no API-key/OAuth scope claimed | Catalog value `0.03 USDC`, pending production verification | Undocumented | Safe fixture available; no browser payment | No key or isolated Base URL | Read-only lookup, with x402 payment/billing | `CURRENT_ROUTE` / `VERIFIED_PUBLIC` | `APPROVE_CURRENT_CONTRACT` — publication remains blocked on real production request/response, price, challenge, limits, errors, and wording verification |
+| 6 | Current x402 payment challenge; no API-key/OAuth scope claimed | Catalog value `0.005 USDC`, pending production verification | Undocumented | Safe fixture available; no browser payment | No key or isolated Base URL | Performs remote endpoint inspection and x402 billing; SSRF/redirect controls require review | `CURRENT_ROUTE` / `VERIFIED_PUBLIC` | `APPROVE_CURRENT_CONTRACT` — publication remains blocked on real production request/response, price, challenge, limits, errors, SSRF/redirect review, and wording verification |
 
 ## Required escalations
 
@@ -60,6 +70,26 @@ No verified sandbox-key issuance flow or isolated sandbox Base URL exists. All s
 
 The shared `data` / `meta` and `error` / `meta` presentation is not a current runtime contract. Applying it to existing v1 routes would be breaking. PM should keep it non-binding or commission a separately versioned `/v2` contract and migration plan.
 
+## First-release authority lists
+
+### Current contract API Reference allowlist
+
+- `GET /v1/x402/base/merchant-trust`
+- `GET /v1/x402/web/endpoint-preflight`
+
+### Docs-only surfaces
+
+- `POST /v1/agentic-commerce/preflight` — label `IMPLEMENTED_UNVERIFIED`
+
+### Proposed candidate surfaces
+
+- `POST /v1/risk-source/address-risk`
+- `POST /v1/approval-signer/evaluate`
+
+### Returned to developer
+
+- `GET /v1/x402/agent/payment-risk-gateway`
+
 ## PM decision record
 
 PM must select exactly one allowed decision for each row:
@@ -71,4 +101,4 @@ PM must select exactly one allowed decision for each row:
 - `DEFER_FROM_FIRST_RELEASE`
 - `REJECT`
 
-No first-release contract is approved until PM records the six decisions and resolves or accepts every escalation above.
+The six PM decisions are recorded. Contract authority is partially approved, but publication readiness remains blocked by the endpoint-specific conditions above. See `handoffs/` for the three follow-up packages.
