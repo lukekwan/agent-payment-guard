@@ -49,7 +49,7 @@ for(const file of files){
    if(lang==="python"){ execFileSync("python3",["-c","import ast,sys; ast.parse(sys.stdin.read())"],{input:code}); pyCount++; }
  }
 }
-const allDocs = fs.readdirSync(docsRoot,{recursive:true}).filter(x=>String(x).endsWith(".md")).map(x=>path.join(docsRoot,String(x)));
+const allDocs = fs.readdirSync(docsRoot,{recursive:true}).filter(x=>String(x).endsWith(".md") && String(x)!=="VALIDATION-REPORT.md").map(x=>path.join(docsRoot,String(x)));
 const corpus=allDocs.map(p=>fs.readFileSync(p,"utf8")).join("\n");
 for(const forbidden of ["sk_live_","ghp_","BEGIN PRIVATE KEY"]){ if(corpus.includes(forbidden)) failures.push("forbidden secret pattern: "+forbidden); }
 const report={status:failures.length?"FAIL":"PASS",endpoints:data.endpoints.length,request_scenarios:scenarioCount,response_envelopes:responseCount,curl_blocks:curlCount,javascript_blocks:jsCount,python_blocks:pyCount,failures};

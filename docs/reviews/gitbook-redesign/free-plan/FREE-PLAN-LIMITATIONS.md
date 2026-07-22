@@ -11,5 +11,6 @@
 | Mixed contract authority | Six endpoints differ | Page-level candidate/current labels |
 | Sandbox absent | No verified key/Base URL | example.invalid safe samples |
 | Production Test it absent | Not authorized | Browse/view/copy CTAs only |
+| Hosted branch draft unavailable | Git Sync is pinned to the base branch; saving a branch change starts sync | Keep source on Draft PR; capture hosted draft only after explicit GitBook mutation authorization |
 
 These constraints do not authorize an upgrade or publication.

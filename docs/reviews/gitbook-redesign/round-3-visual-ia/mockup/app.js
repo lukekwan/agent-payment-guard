@@ -15,7 +15,7 @@ const copy = {
     start: "Start with a safe sample", explore: "Explore API Reference",
     availability: "Sample available · sandbox key issuance and sandbox Base URL remain unavailable",
     serviceEyebrow: "Core API services", serviceTitle: "Start with the control surface that matches your integration.",
-    serviceText: "Four first-release outcomes. Availability, authentication, and billing stay explicit.",
+    serviceText: "Five first-release services. Availability, authentication, and billing stay explicit.",
     sampleEyebrow: "Safe sample", sampleTitle: "Inspect a response without sending a live request.",
     quickEyebrow: "Five-minute quickstart", quickTitle: "Move from a safe sample to the right production path.",
     quickText: "The current flow does not pretend a sandbox credential or isolated endpoint exists.",
@@ -37,7 +37,7 @@ const copy = {
     start: "從安全範例開始", explore: "瀏覽 API 參考",
     availability: "安全範例可用 · sandbox API key 與 Base URL 尚未提供",
     serviceEyebrow: "核心 API 服務", serviceTitle: "依整合情境選擇正確的控制入口。",
-    serviceText: "首頁只呈現四個第一版服務，並明確標示 availability、authentication 與 billing。",
+    serviceText: "首頁只呈現五個第一版服務，並明確標示 availability、authentication 與 billing。",
     sampleEyebrow: "安全範例", sampleTitle: "不發出 live request，也能先理解回應。",
     quickEyebrow: "五分鐘快速開始", quickTitle: "從安全範例走向正確的 production 整合路徑。",
     quickText: "目前流程不會假裝已經有 sandbox credential 或獨立 endpoint。",
@@ -65,11 +65,13 @@ document.getElementById("localeButton").textContent = t.locale;
 document.getElementById("localeButton").onclick = () => location.search = `?page=${page}&lang=${lang === "en" ? "zh" : "en"}&theme=${theme}`;
 
 const services = lang === "zh" ? [
+  ["RS", "Risk Source API", "檢視地址風險、標籤、曝險、行為與多跳證據邊界。", "Candidate · sample", "View contract"],
   ["PC", "Agent Payment Control", "代理付款前先評估政策、Mandate 與風險。", "Production · x402", "Explore reference"],
   ["AC", "Agentic Commerce", "購買前檢查買方、商家、Mandate 與情境。", "Safe sample", "View safe sample"],
   ["AS", "Approval & Signer Control", "理解 approval 與 signer directive，不暗示已強制執行。", "Guidance only", "Understand directives"],
   ["XT", "Merchant & x402 Trust", "購買前檢查 merchant、origin、server 與 resource。", "Production · x402", "Explore trust APIs"]
 ] : [
+  ["RS", "Risk Source API", "Inspect address risk, labels, exposure, behavior, and multi-hop evidence boundaries.", "Candidate · sample", "View contract"],
   ["PC", "Agent Payment Control", "Evaluate policy, mandate, and risk before an agent pays.", "Production · x402", "Explore reference"],
   ["AC", "Agentic Commerce", "Check buyer, merchant, mandate, and purchase context.", "Safe sample", "View safe sample"],
   ["AS", "Approval & Signer Control", "Interpret approval and signer directives without implying enforcement.", "Guidance only", "Understand directives"],
@@ -85,12 +87,12 @@ const sideDocs = lang === "zh" ? {
   "CORE CONCEPTS": ["Response format", "Decision model", "Mandate", "Evidence", "Approval", "Signer directive", "Error handling", "Rate limits", "Pricing & usage"],
   "INTEGRATION GUIDES": ["Agent payment", "API purchase / x402", "Signer execution", "Human approval", "JavaScript & Python SDKs", "MCP integration"]
 };
-const sideApi = ["Agent Payment Control", "Agentic Commerce", "Approval & Signer Control", "Merchant & x402 Trust", "Wallet & Transaction Evidence", "Agent / API Supply Chain", "System & Audit", "Models", "Download OpenAPI spec"];
+const sideApi = ["Risk Source API", "Agent Payment Control", "Agentic Commerce Preflight", "Approval & Signer Control", "Merchant & x402 Trust"];
 
 function serviceCards() {
   return services.map((s, i) => `<article class="service-card">
-    <div class="card-head"><div class="card-icon">${s[0]}</div><span class="availability-badge ${i === 1 ? "sample" : i === 2 ? "restricted" : ""}">${s[3]}</span></div>
-    <h3>${s[1]}</h3><p>${s[2]}</p><div class="service-facts"><span>${i === 1 ? "Free · no auth" : i === 2 ? "Service-dependent" : "Paid · read-only"}</span><span>${s[4]} <i class="arrow"></i></span></div>
+    <div class="card-head"><div class="card-icon">${s[0]}</div><span class="availability-badge ${i === 0 || i === 2 ? "sample" : i === 3 ? "restricted" : ""}">${s[3]}</span></div>
+    <h3>${s[1]}</h3><p>${s[2]}</p><div class="service-facts"><span>${i === 0 || i === 3 ? "Proposed · not deployed" : i === 2 ? "Sample view · no auth" : "x402 · verify terms"}</span><span>${s[4]} <i class="arrow"></i></span></div>
   </article>`).join("");
 }
 
@@ -110,10 +112,10 @@ function samplePanel() {
 }
 
 function quickstart() {
-  const steps = lang === "zh" ? ["選擇安全範例", "設定 sample Base URL", "送出 sample request", "檢查 response", "選擇 production 整合路徑"] : ["Choose a safe sample", "Set the sample Base URL", "Send the sample request", "Inspect the response", "Select the production integration path"];
+  const steps = lang === "zh" ? ["選擇安全範例", "查看 sample request", "複製 cURL", "檢查 sample response", "依 decision 停止、核准或繼續"] : ["Choose a safe sample", "View the sample request", "Copy cURL", "Inspect the sample response", "Stop, approve, or continue by decision"];
   return `<div class="quickstart-shell"><div class="steps">${steps.map((x, i) => `<div class="step ${i === 0 ? "active" : ""}"><div class="step-number">${i + 1}</div><div><h4>${x}</h4><p>${i < 4 ? "Safe sample · no credential" : "Sandbox comes later"}</p></div></div>`).join("")}</div><div><div class="code-panel"><div class="code-tabs"><span class="active">cURL</span><span>JavaScript</span><span>Python</span><button>Copy</button><small>sample · no credential</small></div><pre class="code-block"><span class="comment"># Safe documentation sample — not sandbox</span>
-SIGNGATE_SAMPLE_URL=<span class="string">"https://api.nomoslabs.io"</span>
-curl <span class="string">"$SIGNGATE_SAMPLE_URL/v1/agentic-commerce/preflight/sample"</span> \\
+SIGNGATE_SAMPLE_URL=<span class="string">"https://api.example.invalid"</span>
+curl <span class="string">"$SIGNGATE_SAMPLE_URL/v1/agentic-commerce/preflight"</span> \\
   --header <span class="string">"Accept: application/json"</span>
 
 <span class="comment"># Read the service-local decision and fail closed.</span></pre></div><div class="gap-callout"><strong>Sandbox comes later</strong><span>No sandbox key issuance or isolated sandbox Base URL is verified. Production Test it remains disabled.</span></div></div></div>`;

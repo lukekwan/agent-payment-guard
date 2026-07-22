@@ -41,3 +41,13 @@ Result: PASS — 62 tests, 0 failures.
 - Agent Payment price is blocked by the verified repository conflict: src registry says $0.15 while README says 0.005 USDC.
 - External link probing is limited to the signed-in GitBook UI and public site inspection; no production API request was sent.
 - End-to-end Variant publication, sandbox, production Test it, and paid features were not exercised.
+
+## Visual validation
+
+- Desktop five-service Home proposal: PASS.
+- Desktop API Reference proposal: PASS.
+- Mobile zh-TW overflow: PASS — scrollWidth 375, clientWidth 375.
+- Traditional Chinese headline wrapping: PASS — explicit two-line headline preserved.
+- WCAG contrast token checks: PASS — lowest tested critical ratio 7.50:1.
+- Actual Basic plan/Sections/Variant controls: captured from signed-in GitBook UI.
+- Hosted redesigned branch screenshot: NOT RUN — Git Sync remains pinned to the unchanged base branch, and saving a branch change would mutate GitBook state/start sync.

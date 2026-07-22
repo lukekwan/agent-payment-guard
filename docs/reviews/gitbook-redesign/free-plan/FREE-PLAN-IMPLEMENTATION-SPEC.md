@@ -16,6 +16,16 @@ Evidence was collected in the signed-in GitBook site UI on 2026-07-22.
 
 ![Current Basic site structure](screenshots/site-structure-capabilities.png)
 
+Additional evidence:
+
+- [Current Basic public site](screenshots/current-basic-public-home.png)
+- [Git Sync pinned to the unchanged base branch](screenshots/git-sync-pinned-branch.png)
+- [Five-service local proposal](screenshots/local-proposal-home-desktop.png)
+- [API Reference local proposal](screenshots/local-proposal-api-reference.png)
+- [Traditional Chinese mobile local proposal](screenshots/local-proposal-mobile-zh-tw.png)
+
+The three local-proposal images are not represented as GitBook-rendered screenshots. The actual Git Sync configuration remains pinned to docs/doc-sg-001-api-docs; changing it and saving would start a sync. Because GitBook mutation/publication is not authorized, the redesigned branch cannot be truthfully captured in the hosted renderer in this round.
+
 ## Free-plan implementation
 
 The branch source uses one site and one Space. Since five native Sections are unavailable, the journey is reproduced with Home landing links, a compact SUMMARY grouped into Documentation, API Reference, Changelog, Help Center, and Language, plus five service pages.
@@ -43,3 +53,11 @@ Edit on a docs branch, validate, update Draft PR, inspect GitBook Change Request
 ## Future upgrade path
 
 If Ultimate is later approved, map Documentation, API Reference, Changelog, and Help Center to native Sections without changing stable page slugs.
+
+## Visual QA results
+
+- Desktop Home: five service cards present, service cards precede deep concepts.
+- Desktop API Reference: complete endpoint-page proposal remains sample-only.
+- Mobile zh-TW at 390 by 844: document scrollWidth 375 equals clientWidth 375; no horizontal overflow.
+- Traditional Chinese headline preserved as two intentional lines without word splitting.
+- Critical dark-theme contrast ratios: primary text 18.40:1, secondary text 10.38:1, tertiary text 7.50:1, primary button 9.35:1, accent 13.42:1, warning 12.86:1. All exceed WCAG AA for their tested uses.
