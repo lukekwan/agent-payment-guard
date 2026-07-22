@@ -32,6 +32,8 @@ Changelog
 
 Filters must not hide breaking/security/deprecation entries by default. Each endpoint page links to filtered history. Deprecations state replacement, first notice, sunset date, and expected response/header behavior. A docs-only proposal does not appear as a production API change.
 
+Internal documentation events—including inventory baselines, navigation proposals, and validation-claim corrections—never appear in the customer Changelog. The local screenshot uses explicitly labeled illustrative external product changes only: endpoint added, price changed, and SDK deprecation.
+
 ### Visual treatment
 
 Use a vertical date timeline on desktop and a single-column list on mobile. Type badges use semantic tokens: added teal; changed amber; deprecated/danger red; fixed neutral blue-gray; security red with explicit text. Color is never the only differentiator.
@@ -51,6 +53,16 @@ Use a vertical date timeline on desktop and a single-column list on mobile. Type
 9. Common errors
 10. Integration troubleshooting
 11. Contact support
+
+The first viewport must also expose SignGate-specific questions:
+
+- Why did SignGate return `REQUIRE_APPROVAL`?
+- What does `signer_directive` mean?
+- Can an `ALLOW` decision be reused?
+- What happens when evidence expires?
+- Why was a payment denied or blocked?
+- How does x402 billing work?
+- How do I verify a decision before execution?
 
 ### Article template
 

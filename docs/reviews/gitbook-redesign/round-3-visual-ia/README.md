@@ -10,8 +10,9 @@ This review package implements the Founder’s additional Developer Portal direc
 4. [Changelog and Help Center IA](CHANGELOG-AND-HELP-CENTER-IA.md)
 5. [Benchmark and visual acceptance matrix](BENCHMARK-ACCEPTANCE-MATRIX.md)
 6. [Visual validation report](VISUAL-VALIDATION-REPORT.md)
-7. `screenshots/` visual evidence
-8. `mockup/` local HTML/CSS/JavaScript source
+7. [Round 3 visual correction report](ROUND-3-VISUAL-CORRECTION-REPORT.md)
+8. `screenshots/` visual evidence
+9. `mockup/` local HTML/CSS/JavaScript source
 
 ## Explicit gaps
 

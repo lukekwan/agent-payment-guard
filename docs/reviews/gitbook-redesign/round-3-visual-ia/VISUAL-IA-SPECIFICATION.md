@@ -10,7 +10,7 @@ The portal must expose five persistent first-level destinations. They are produc
 
 | Destination | Purpose | Primary modules | Sidebar behavior |
 | --- | --- | --- | --- |
-| Home | Explain SignGate, reveal the service catalog, start a safe request, and route users to SDK/MCP/support. | Hero, value proposition, service cards, five-minute quickstart, outcomes, Test API, SDK/MCP, support links. | No long documentation tree; contextual section anchors only. |
+| Home | Explain SignGate, reveal the four first-release services, start a safe sample, and route users to SDK/MCP/support. | Hero, four service cards, safe sample, five-minute quickstart, outcomes, SDK/MCP, support links. | No long documentation tree; contextual section anchors only. |
 | Documentation | Teach integration tasks and cross-service concepts. | Quickstart, auth, environments, response format, errors, rate limits, pricing/billing, pagination, concepts, guides. | Dedicated Documentation sidebar. |
 | API Reference | Present approved public operations only. | Collapsible service families, methods/paths, models, OpenAPI download. | Dedicated service-family sidebar; never mirrors Documentation. |
 | Changelog | Make contract and environment change visible and actionable. | Added/changed/deprecated/fixed/security entries, endpoint impact, migration, effective date. | Changelog filters/archive only. |
@@ -80,15 +80,16 @@ Required locale controls: reciprocal language switch, equivalent-page mapping, s
 | Role | Token | Proposed value | Rule |
 | --- | --- | --- | --- |
 | Page background | `--bg` | `#070A0C` | Near-black, not pure black |
-| Base surface | `--surface` | `#0D1215` | Sidebar, code and low-elevation blocks |
-| Elevated card | `--surface-raised` | `#12191D` | Cards/panels only |
-| Border | `--border` | `#243036` | Restrained 1px borders |
+| Base surface | `--surface` | `#0D1417` | Sidebar, card and low-elevation blocks |
+| Elevated card | `--surface-raised` | `#131C20` | Cards/panels only |
+| Border | `--border` | `#2B3A40` | Restrained, readable 1px borders |
 | Primary text | `--text` | `#F3F7F7` | Headings and important labels |
-| Secondary text | `--muted` | `#94A3A8` | Paragraphs, metadata |
+| Secondary text | `--muted` | `#AFBEC3` | Paragraphs; 10.38:1 on page background |
+| Metadata text | `--muted-2` | `#91A2A8` | Inactive navigation and metadata; 7.50:1 on page background |
 | Primary accent | `--accent` | `#2DD4BF` | One cyan/teal accent only |
 | Accent emphasis | `--accent-strong` | `#5EEAD4` | Active states/links; sparingly |
 | Warning | `--warning` | `#FBBF24` | Warnings only |
-| Danger | `--danger` | `#FB7185` | Destructive/error state only |
+| Danger | `--danger` | `#FF8EA0` | Destructive/error state only |
 
 Typography uses a neutral UI sans-serif and a monospace family for methods, paths, fields and code. Default body size is 15–16px, line height 1.55–1.7, measure 65–78 characters. Desktop content max width is 1440px; readable article text stays below 800px.
 
@@ -115,14 +116,13 @@ The same semantic cannot change color between pages or locales. Teal does not me
 
 ## 5. Home composition — fixed order
 
-1. **Hero:** one outcome-led headline, concise paragraph, “safe sample” and “API services” CTAs, visible sandbox gap.
-2. **Core value proposition:** policy layer before payment, API purchase, signer or sensitive action.
-3. **API service cards:** purpose, availability, auth/payment, operation count; no unverifiable Test it link.
-4. **Five-minute quickstart:** five numbered steps and cURL/JavaScript/Python tabs.
-5. **Decision outcomes:** service-aware ALLOW, review/approval, deny/block patterns; no false universal enum.
-6. **Safe Test API:** credential-free sample only until sandbox exists.
-7. **SDK/MCP:** package/tool status must be verified before install claims.
-8. **Changelog / Help Center / Support:** visible last-mile adoption paths.
+1. **Hero:** “Decide before agents pay, purchase, or sign,” concise value proposition, primary developer paths, visible sandbox gap.
+2. **Four service cards:** Agent Payment Control, Agentic Commerce, Approval & Signer Control, Merchant & x402 Trust. At least part of this catalog appears in the first desktop viewport.
+3. **Safe sample:** visibly states `SAMPLE RESPONSE`, `NO LIVE REQUEST SENT`, endpoint, `environment=sample`, HTTP status example, request-ID availability, Copy, and Response/Request/cURL tabs.
+4. **Five-minute quickstart:** sample-first five steps and cURL/JavaScript/Python tabs.
+5. **Response / decision explanation:** service-aware ALLOW, review/approval, deny/block patterns; no false universal enum.
+6. **SDK/MCP:** package/tool status must be verified before install claims.
+7. **Changelog / Help Center / Support:** visible last-mile adoption paths; support remains secondary.
 
 Atomic consume, action fingerprints, preview limitations and detailed enforcement move to Documentation/Core Concepts or the deploy_change preview guide.
 
@@ -130,11 +130,11 @@ Atomic consume, action fingerprints, preview limitations and detailed enforcemen
 
 | Step | Required developer experience | Current truth |
 | ---: | --- | --- |
-| 1 | Obtain sandbox API key with scope, expiry, rotation and revocation guidance | **Implementation gap:** no verified issuance flow |
-| 2 | Set sandbox Base URL and clearly distinguish sample/sandbox/production | **Implementation gap:** no verified isolated sandbox host |
-| 3 | Send the first request in cURL, JavaScript or Python | Sample GET/fixtures can demonstrate shape; no live sandbox claim |
-| 4 | Inspect response, request ID, environment, expiry and usage | Proposed envelope; current services differ |
-| 5 | Stop, seek approval, or continue according to the exact service contract | Must remain service-specific and fail closed |
+| 1 | Choose a safe sample | Free GET sample; no purchase, transfer, signer action, or live provider verification |
+| 2 | Set the sample Base URL and keep it distinct from sandbox/production | Current sample origin only; sandbox remains an implementation gap |
+| 3 | Send the sample request in cURL, JavaScript or Python | No credential and no live economic action |
+| 4 | Inspect the exact current response | Do not invent `request_id`, usage, or normalized envelope fields absent from the source |
+| 5 | Select the correct production integration path | Confirm endpoint-specific authority, auth, billing, and fail-closed handling |
 
 No CTA may say “Get sandbox key,” “Run in sandbox,” or “Try live” until the missing environment and credential flow are implemented and QA verified.
 
@@ -148,7 +148,7 @@ No CTA may say “Get sandbox key,” “Run in sandbox,” or “Try live” un
 
 ## 8. Accessibility and visual QA
 
-Minimum acceptance: WCAG AA contrast for text/controls, logical heading order, keyboard reachability, visible focus, 44px primary touch targets, non-color status labels, reduced-motion support, 200% zoom, code horizontal-scroll check, and English/Traditional Chinese line-wrap review.
+Minimum acceptance: WCAG AA contrast for text/controls, logical heading order, keyboard reachability, visible focus, 44px primary touch targets, non-color status labels, reduced-motion support, 200% zoom, code horizontal-scroll check, and English/Traditional Chinese line-wrap review. Corrected local tokens measure 18.40:1 primary, 10.38:1 secondary, 7.50:1 metadata, 13.42:1 link/active, 11.62:1 warning, and 8.54:1 danger on their specified dark backgrounds. Native GitBook rendering must be retested.
 
 ## 9. Non-authorized implementation boundary
 
