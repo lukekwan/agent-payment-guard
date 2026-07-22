@@ -1,5 +1,5 @@
-root: ./docs/
+root: ./docs/gitbook/public/
 
 structure:
-  readme: README.md
+  readme: en/README.md
   summary: SUMMARY.md

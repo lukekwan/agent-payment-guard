@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SignGate Developer Portal — visual proposal</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="proposal-ribbon">VISUAL PROPOSAL · NOT A LIVE API</div>
+  <header class="topbar">
+    <a class="brand" href="?page=home&lang=en&theme=dark" aria-label="SignGate home">
+      <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span>SignGate</span>
+      <small>Developers</small>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a data-page="home">Home</a>
+      <a data-page="docs">Documentation</a>
+      <a data-page="api">API Reference</a>
+      <a data-page="changelog">Changelog</a>
+      <a data-page="help">Help Center</a>
+    </nav>
+    <div class="top-actions">
+      <button class="search-button"><span class="search-icon"></span><span>Search docs</span><kbd>⌘ K</kbd></button>
+      <button class="locale-button" id="localeButton">EN</button>
+      <a class="support-button" data-page="help">Get support</a>
+    </div>
+  </header>
+  <button class="mobile-menu" aria-label="Open navigation"><span></span><span></span><span></span></button>
+  <div id="app"></div>
+  <footer class="footer">
+    <div><span class="status-dot"></span> Systems operational</div>
+    <div>Visual proposal only · Sandbox gap remains open</div>
+    <div>© Nomos Labs</div>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>

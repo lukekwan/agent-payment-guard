@@ -1,0 +1,491 @@
+{
+  "contract_status": "PROPOSED_CANDIDATE",
+  "endpoints": [
+    {
+      "id": "risk-source-address-risk",
+      "method": "POST",
+      "path": "/v1/risk-source/address-risk",
+      "request_schema": {
+        "required": [
+          "chain",
+          "address"
+        ],
+        "allowed": [
+          "chain",
+          "address",
+          "options"
+        ]
+      },
+      "minimal": {
+        "chain": "ethereum",
+        "address": "0x1111111111111111111111111111111111111111"
+      },
+      "complete": {
+        "chain": "ethereum",
+        "address": "0x1111111111111111111111111111111111111111",
+        "options": {
+          "include_behavioral_signals": true,
+          "include_multi_hop_exposure": true,
+          "max_hops": 3
+        }
+      },
+      "invalid": {
+        "chain": "ethereum",
+        "address": "bad",
+        "unknown": true
+      },
+      "auth_failure": {
+        "status": 401,
+        "code": "AUTH_TBD"
+      },
+      "billing_failure": {
+        "status": 402,
+        "code": "BILLING_TBD"
+      },
+      "stale_evidence": {
+        "status": 503,
+        "code": "EVIDENCE_UNAVAILABLE"
+      },
+      "success": {
+        "data": {
+          "endpoint": "risk-source-address-risk",
+          "decision": "sample"
+        },
+        "meta": {
+          "request_id": "req_sample_001",
+          "schema_version": "candidate-1.0",
+          "environment": "sample",
+          "query_time": "2026-06-16T02:30:00Z",
+          "latency_ms": 1
+        }
+      },
+      "error": {
+        "error": {
+          "code": "INVALID_REQUEST",
+          "message": "The sample request is invalid.",
+          "reason_codes": [
+            "INVALID_INPUT"
+          ],
+          "details": []
+        },
+        "meta": {
+          "request_id": "req_sample_001",
+          "environment": "sample"
+        }
+      }
+    },
+    {
+      "id": "agent-payment",
+      "method": "GET",
+      "path": "/v1/x402/agent/payment-risk-gateway",
+      "request_schema": {
+        "required": [
+          "request_id",
+          "agent_id",
+          "purpose",
+          "pay_to",
+          "amount_usdc",
+          "nonce"
+        ],
+        "allowed": [
+          "request_id",
+          "agent_id",
+          "purpose",
+          "pay_to",
+          "amount_usdc",
+          "nonce",
+          "session_id",
+          "invoice_id",
+          "invoice_hash",
+          "expires_at",
+          "max_single_usdc",
+          "human_review_above_usdc",
+          "allow_pay_to",
+          "block_pay_to",
+          "risk_score",
+          "risk_labels"
+        ]
+      },
+      "minimal": {
+        "request_id": "req_sample_001",
+        "agent_id": "agent_demo",
+        "purpose": "api_purchase",
+        "pay_to": "0x1111111111111111111111111111111111111111",
+        "amount_usdc": "0.025",
+        "nonce": "nonce_demo_001"
+      },
+      "complete": {
+        "request_id": "req_sample_002",
+        "agent_id": "agent_demo",
+        "purpose": "api_purchase",
+        "pay_to": "0x1111111111111111111111111111111111111111",
+        "amount_usdc": "0.025",
+        "nonce": "nonce_demo_002",
+        "session_id": "session_demo",
+        "invoice_id": "invoice_demo",
+        "invoice_hash": "sha256:demo",
+        "expires_at": "2026-06-16T03:00:00Z",
+        "max_single_usdc": "0.10",
+        "human_review_above_usdc": "0.09",
+        "allow_pay_to": "0x1111111111111111111111111111111111111111",
+        "risk_score": 5,
+        "risk_labels": "sample"
+      },
+      "invalid": {
+        "agent_id": "agent_demo"
+      },
+      "auth_failure": {
+        "status": 402,
+        "code": "X402_PAYMENT_REQUIRED"
+      },
+      "billing_failure": {
+        "status": 402,
+        "code": "X402_PAYMENT_INVALID"
+      },
+      "stale_evidence": {
+        "status": 200,
+        "code": "LIMITED_CALLER_SUPPLIED_RISK"
+      },
+      "success": {
+        "data": {
+          "endpoint": "agent-payment",
+          "decision": "allow"
+        },
+        "meta": {
+          "request_id": "req_sample_001",
+          "schema_version": "candidate-1.0",
+          "environment": "sample",
+          "query_time": "2026-06-16T02:30:00Z",
+          "latency_ms": 1
+        }
+      },
+      "error": {
+        "error": {
+          "code": "INVALID_REQUEST",
+          "message": "The sample request is invalid.",
+          "reason_codes": [
+            "INVALID_INPUT"
+          ],
+          "details": []
+        },
+        "meta": {
+          "request_id": "req_sample_001",
+          "environment": "sample"
+        }
+      }
+    },
+    {
+      "id": "agentic-commerce",
+      "method": "POST",
+      "path": "/v1/agentic-commerce/preflight",
+      "request_schema": {
+        "required": [
+          "agent_role",
+          "product_category",
+          "amount_usdc"
+        ],
+        "allowed": [
+          "buyer_id",
+          "agent_id",
+          "agent_role",
+          "action",
+          "product_category",
+          "amount_usdc",
+          "asset",
+          "chain",
+          "merchant_domain",
+          "merchant_wallet",
+          "mandate",
+          "merchant"
+        ]
+      },
+      "minimal": {
+        "agent_role": "buyer",
+        "product_category": "api",
+        "amount_usdc": "0.025"
+      },
+      "complete": {
+        "buyer_id": "buyer_demo",
+        "agent_id": "agent_demo",
+        "agent_role": "buyer",
+        "action": "payment_execution",
+        "product_category": "api",
+        "amount_usdc": "0.025",
+        "asset": "USDC",
+        "chain": "base",
+        "merchant_domain": "merchant.example",
+        "merchant_wallet": "0x1111111111111111111111111111111111111111",
+        "mandate": {
+          "id": "mandate_demo"
+        },
+        "merchant": {
+          "id": "merchant_demo"
+        }
+      },
+      "invalid": {
+        "agent_role": "buyer"
+      },
+      "auth_failure": {
+        "status": 401,
+        "code": "FUTURE_AUTH_TBD"
+      },
+      "billing_failure": {
+        "status": 402,
+        "code": "BILLING_TBD"
+      },
+      "stale_evidence": {
+        "status": 503,
+        "code": "EVIDENCE_UNAVAILABLE"
+      },
+      "success": {
+        "data": {
+          "endpoint": "agentic-commerce",
+          "decision": "ALLOW"
+        },
+        "meta": {
+          "request_id": "req_sample_001",
+          "schema_version": "candidate-1.0",
+          "environment": "sample",
+          "query_time": "2026-06-16T02:30:00Z",
+          "latency_ms": 1
+        }
+      },
+      "error": {
+        "error": {
+          "code": "INVALID_REQUEST",
+          "message": "The sample request is invalid.",
+          "reason_codes": [
+            "INVALID_INPUT"
+          ],
+          "details": []
+        },
+        "meta": {
+          "request_id": "req_sample_001",
+          "environment": "sample"
+        }
+      }
+    },
+    {
+      "id": "approval-signer",
+      "method": "POST",
+      "path": "/v1/approval-signer/evaluate",
+      "request_schema": {
+        "required": [
+          "request_id",
+          "decision",
+          "action",
+          "signer"
+        ],
+        "allowed": [
+          "request_id",
+          "decision",
+          "action",
+          "signer",
+          "mandate",
+          "approval",
+          "decision_expires_at"
+        ]
+      },
+      "minimal": {
+        "request_id": "req_sample_003",
+        "decision": "REQUIRE_APPROVAL",
+        "action": {
+          "chain": "base",
+          "asset": "USDC",
+          "amount": "0.025",
+          "destination": "0x1111111111111111111111111111111111111111",
+          "nonce": "nonce_demo_003"
+        },
+        "signer": {
+          "class": "policy_controlled"
+        }
+      },
+      "complete": {
+        "request_id": "req_sample_004",
+        "decision": "REQUIRE_APPROVAL",
+        "action": {
+          "chain": "base",
+          "asset": "USDC",
+          "amount": "0.025",
+          "destination": "0x1111111111111111111111111111111111111111",
+          "nonce": "nonce_demo_004"
+        },
+        "signer": {
+          "class": "policy_controlled"
+        },
+        "mandate": {
+          "id": "mandate_demo"
+        },
+        "approval": {
+          "id": "approval_demo"
+        },
+        "decision_expires_at": "2026-06-16T03:00:00Z"
+      },
+      "invalid": {
+        "request_id": "req_bad",
+        "decision": "YES"
+      },
+      "auth_failure": {
+        "status": 401,
+        "code": "AUTH_TBD"
+      },
+      "billing_failure": {
+        "status": 402,
+        "code": "BILLING_TBD"
+      },
+      "stale_evidence": {
+        "status": 409,
+        "code": "DECISION_EXPIRED"
+      },
+      "success": {
+        "data": {
+          "endpoint": "approval-signer",
+          "decision": "sample"
+        },
+        "meta": {
+          "request_id": "req_sample_001",
+          "schema_version": "candidate-1.0",
+          "environment": "sample",
+          "query_time": "2026-06-16T02:30:00Z",
+          "latency_ms": 1
+        }
+      },
+      "error": {
+        "error": {
+          "code": "INVALID_REQUEST",
+          "message": "The sample request is invalid.",
+          "reason_codes": [
+            "INVALID_INPUT"
+          ],
+          "details": []
+        },
+        "meta": {
+          "request_id": "req_sample_001",
+          "environment": "sample"
+        }
+      }
+    },
+    {
+      "id": "merchant-trust",
+      "method": "GET",
+      "path": "/v1/x402/base/merchant-trust",
+      "request_schema": {
+        "required": [
+          "address"
+        ],
+        "allowed": [
+          "address"
+        ]
+      },
+      "minimal": {
+        "address": "0x1111111111111111111111111111111111111111"
+      },
+      "complete": {
+        "address": "0x2222222222222222222222222222222222222222"
+      },
+      "invalid": {
+        "address": "bad"
+      },
+      "auth_failure": {
+        "status": 402,
+        "code": "X402_PAYMENT_REQUIRED"
+      },
+      "billing_failure": {
+        "status": 402,
+        "code": "X402_PAYMENT_INVALID"
+      },
+      "stale_evidence": {
+        "status": 503,
+        "code": "EVIDENCE_UNAVAILABLE"
+      },
+      "success": {
+        "data": {
+          "endpoint": "merchant-trust",
+          "decision": "sample"
+        },
+        "meta": {
+          "request_id": "req_sample_001",
+          "schema_version": "candidate-1.0",
+          "environment": "sample",
+          "query_time": "2026-06-16T02:30:00Z",
+          "latency_ms": 1
+        }
+      },
+      "error": {
+        "error": {
+          "code": "INVALID_REQUEST",
+          "message": "The sample request is invalid.",
+          "reason_codes": [
+            "INVALID_INPUT"
+          ],
+          "details": []
+        },
+        "meta": {
+          "request_id": "req_sample_001",
+          "environment": "sample"
+        }
+      }
+    },
+    {
+      "id": "endpoint-preflight",
+      "method": "GET",
+      "path": "/v1/x402/web/endpoint-preflight",
+      "request_schema": {
+        "required": [
+          "url"
+        ],
+        "allowed": [
+          "url"
+        ]
+      },
+      "minimal": {
+        "url": "https://merchant.example/.well-known/x402"
+      },
+      "complete": {
+        "url": "https://merchant.example/pay?asset=USDC"
+      },
+      "invalid": {
+        "url": "file:///etc/passwd"
+      },
+      "auth_failure": {
+        "status": 402,
+        "code": "X402_PAYMENT_REQUIRED"
+      },
+      "billing_failure": {
+        "status": 402,
+        "code": "X402_PAYMENT_INVALID"
+      },
+      "stale_evidence": {
+        "status": 503,
+        "code": "ENDPOINT_UNAVAILABLE"
+      },
+      "success": {
+        "data": {
+          "endpoint": "endpoint-preflight",
+          "decision": "sample"
+        },
+        "meta": {
+          "request_id": "req_sample_001",
+          "schema_version": "candidate-1.0",
+          "environment": "sample",
+          "query_time": "2026-06-16T02:30:00Z",
+          "latency_ms": 1
+        }
+      },
+      "error": {
+        "error": {
+          "code": "INVALID_REQUEST",
+          "message": "The sample request is invalid.",
+          "reason_codes": [
+            "INVALID_INPUT"
+          ],
+          "details": []
+        },
+        "meta": {
+          "request_id": "req_sample_001",
+          "environment": "sample"
+        }
+      }
+    }
+  ]
+}

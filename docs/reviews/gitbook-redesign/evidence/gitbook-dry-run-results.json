@@ -1,0 +1,170 @@
+{
+  "generated_at": "2026-07-19T15:38:39.073Z",
+  "status": "DRY_RUN_ONLY",
+  "publication_performed": false,
+  "merge_performed": false,
+  "deletion_performed": false,
+  "network_calls_performed": false,
+  "credentials_read": false,
+  "target": "GitBook draft/change request",
+  "hierarchy": {
+    "default_locale": "en",
+    "locales": [
+      {
+        "code": "en",
+        "label": "English"
+      },
+      {
+        "code": "zh-TW",
+        "label": "繁體中文"
+      }
+    ],
+    "sections": [
+      {
+        "id": "getting-started",
+        "title": "GET STARTED",
+        "pages": 5
+      },
+      {
+        "id": "concepts",
+        "title": "CORE CONCEPTS",
+        "pages": 8
+      },
+      {
+        "id": "api-reference",
+        "title": "API REFERENCE",
+        "pages": 8
+      },
+      {
+        "id": "guides",
+        "title": "GUIDES",
+        "pages": 8
+      },
+      {
+        "id": "security",
+        "title": "SECURITY",
+        "pages": 8
+      },
+      {
+        "id": "examples",
+        "title": "EXAMPLES",
+        "pages": 6
+      },
+      {
+        "id": "resources",
+        "title": "RESOURCES",
+        "pages": 4
+      }
+    ]
+  },
+  "files": [
+    ".gitbook.yaml",
+    "docs/gitbook/public/SUMMARY.md",
+    "docs/gitbook/public/en/README.md",
+    "docs/gitbook/public/en/api-reference/consume-decision.md",
+    "docs/gitbook/public/en/api-reference/create-decision.md",
+    "docs/gitbook/public/en/api-reference/errors.md",
+    "docs/gitbook/public/en/api-reference/overview.md",
+    "docs/gitbook/public/en/api-reference/reason-codes.md",
+    "docs/gitbook/public/en/api-reference/request-schemas.md",
+    "docs/gitbook/public/en/api-reference/response-schemas.md",
+    "docs/gitbook/public/en/api-reference/schemas.md",
+    "docs/gitbook/public/en/concepts/action-binding.md",
+    "docs/gitbook/public/en/concepts/atomic-consume.md",
+    "docs/gitbook/public/en/concepts/decision-lifecycle.md",
+    "docs/gitbook/public/en/concepts/decision-model.md",
+    "docs/gitbook/public/en/concepts/decision-values.md",
+    "docs/gitbook/public/en/concepts/fail-closed.md",
+    "docs/gitbook/public/en/concepts/idempotency.md",
+    "docs/gitbook/public/en/concepts/mandates-and-evidence.md",
+    "docs/gitbook/public/en/examples/allow-flow.md",
+    "docs/gitbook/public/en/examples/approval-flow.md",
+    "docs/gitbook/public/en/examples/curl.md",
+    "docs/gitbook/public/en/examples/errors.md",
+    "docs/gitbook/public/en/examples/javascript.md",
+    "docs/gitbook/public/en/examples/python.md",
+    "docs/gitbook/public/en/getting-started/authentication.md",
+    "docs/gitbook/public/en/getting-started/consume-allow.md",
+    "docs/gitbook/public/en/getting-started/first-decision.md",
+    "docs/gitbook/public/en/getting-started/introduction.md",
+    "docs/gitbook/public/en/getting-started/quickstart.md",
+    "docs/gitbook/public/en/guides/downstream-failure.md",
+    "docs/gitbook/public/en/guides/executor-integration.md",
+    "docs/gitbook/public/en/guides/expired-decisions.md",
+    "docs/gitbook/public/en/guides/fingerprints.md",
+    "docs/gitbook/public/en/guides/preview-deployment.md",
+    "docs/gitbook/public/en/guides/require-approval.md",
+    "docs/gitbook/public/en/guides/retries.md",
+    "docs/gitbook/public/en/guides/safe-execution.md",
+    "docs/gitbook/public/en/resources/api-status.md",
+    "docs/gitbook/public/en/resources/changelog.md",
+    "docs/gitbook/public/en/resources/support.md",
+    "docs/gitbook/public/en/resources/versioning.md",
+    "docs/gitbook/public/en/security/audit.md",
+    "docs/gitbook/public/en/security/authentication.md",
+    "docs/gitbook/public/en/security/overview.md",
+    "docs/gitbook/public/en/security/preview-limitations.md",
+    "docs/gitbook/public/en/security/replay-protection.md",
+    "docs/gitbook/public/en/security/retention.md",
+    "docs/gitbook/public/en/security/secret-handling.md",
+    "docs/gitbook/public/en/security/tenant-isolation.md",
+    "docs/gitbook/public/navigation.json",
+    "docs/gitbook/public/zh-TW/README.md",
+    "docs/gitbook/public/zh-TW/api-reference/consume-decision.md",
+    "docs/gitbook/public/zh-TW/api-reference/create-decision.md",
+    "docs/gitbook/public/zh-TW/api-reference/errors.md",
+    "docs/gitbook/public/zh-TW/api-reference/overview.md",
+    "docs/gitbook/public/zh-TW/api-reference/reason-codes.md",
+    "docs/gitbook/public/zh-TW/api-reference/request-schemas.md",
+    "docs/gitbook/public/zh-TW/api-reference/response-schemas.md",
+    "docs/gitbook/public/zh-TW/api-reference/schemas.md",
+    "docs/gitbook/public/zh-TW/concepts/action-binding.md",
+    "docs/gitbook/public/zh-TW/concepts/atomic-consume.md",
+    "docs/gitbook/public/zh-TW/concepts/decision-lifecycle.md",
+    "docs/gitbook/public/zh-TW/concepts/decision-model.md",
+    "docs/gitbook/public/zh-TW/concepts/decision-values.md",
+    "docs/gitbook/public/zh-TW/concepts/fail-closed.md",
+    "docs/gitbook/public/zh-TW/concepts/idempotency.md",
+    "docs/gitbook/public/zh-TW/concepts/mandates-and-evidence.md",
+    "docs/gitbook/public/zh-TW/examples/allow-flow.md",
+    "docs/gitbook/public/zh-TW/examples/approval-flow.md",
+    "docs/gitbook/public/zh-TW/examples/curl.md",
+    "docs/gitbook/public/zh-TW/examples/errors.md",
+    "docs/gitbook/public/zh-TW/examples/javascript.md",
+    "docs/gitbook/public/zh-TW/examples/python.md",
+    "docs/gitbook/public/zh-TW/getting-started/authentication.md",
+    "docs/gitbook/public/zh-TW/getting-started/consume-allow.md",
+    "docs/gitbook/public/zh-TW/getting-started/first-decision.md",
+    "docs/gitbook/public/zh-TW/getting-started/introduction.md",
+    "docs/gitbook/public/zh-TW/getting-started/quickstart.md",
+    "docs/gitbook/public/zh-TW/guides/downstream-failure.md",
+    "docs/gitbook/public/zh-TW/guides/executor-integration.md",
+    "docs/gitbook/public/zh-TW/guides/expired-decisions.md",
+    "docs/gitbook/public/zh-TW/guides/fingerprints.md",
+    "docs/gitbook/public/zh-TW/guides/preview-deployment.md",
+    "docs/gitbook/public/zh-TW/guides/require-approval.md",
+    "docs/gitbook/public/zh-TW/guides/retries.md",
+    "docs/gitbook/public/zh-TW/guides/safe-execution.md",
+    "docs/gitbook/public/zh-TW/resources/api-status.md",
+    "docs/gitbook/public/zh-TW/resources/changelog.md",
+    "docs/gitbook/public/zh-TW/resources/support.md",
+    "docs/gitbook/public/zh-TW/resources/versioning.md",
+    "docs/gitbook/public/zh-TW/security/audit.md",
+    "docs/gitbook/public/zh-TW/security/authentication.md",
+    "docs/gitbook/public/zh-TW/security/overview.md",
+    "docs/gitbook/public/zh-TW/security/preview-limitations.md",
+    "docs/gitbook/public/zh-TW/security/replay-protection.md",
+    "docs/gitbook/public/zh-TW/security/retention.md",
+    "docs/gitbook/public/zh-TW/security/secret-handling.md",
+    "docs/gitbook/public/zh-TW/security/tenant-isolation.md",
+    "docs/openapi/signgate-public-v0.1.openapi.json"
+  ],
+  "openapi": {
+    "source": "docs/openapi/signgate-public-v0.1.openapi.json",
+    "sha256": "44bf1a1335c0e4aa8ba7783730103250fd910aed3e804bec0a8d483ea8db37fa"
+  },
+  "excluded": [
+    "docs/gitbook/internal",
+    "docs/openapi/signgate-internal-v0.1.openapi.json"
+  ]
+}

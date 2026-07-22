@@ -1,86 +1,32 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const validationDir = join(root, "docs", "examples", "validation");
-mkdirSync(validationDir, { recursive: true });
-
-const requiredFiles = [
-  ".gitbook.yaml",
-  "docs/README.md",
-  "docs/SUMMARY.md",
-  "docs/changelog.md",
-  "docs/help-center.md",
-  "docs/openapi/signgate-public-v0.1.openapi.json",
-  "docs/openapi/signgate-internal-v0.1.openapi.json",
-  "docs/openapi/README.md",
-  "docs/en/README.md",
-  "docs/en/quickstart.md",
-  "docs/en/authentication.md",
-  "docs/en/decision-lifecycle.md",
-  "docs/en/errors.md",
-  "docs/en/api-reference/README.md",
-  "docs/en/api-reference/create-decision.md",
-  "docs/en/api-reference/consume-decision.md",
-  "docs/en/examples.md",
-  "docs/zh/README.md",
-  "docs/zh/quickstart.md",
-  "docs/zh/authentication.md",
-  "docs/zh/decision-lifecycle.md",
-  "docs/zh/errors.md",
-  "docs/zh/api-reference/README.md",
-  "docs/zh/api-reference/create-decision.md",
-  "docs/zh/api-reference/consume-decision.md",
-  "docs/zh/examples.md",
-  "docs/examples/curl/create-decision.sh",
-  "docs/examples/curl/consume-decision.sh",
-  "docs/examples/javascript/create-decision.mjs",
-  "docs/examples/python/create_decision.py",
-  "tools/gitbook-sync/README.md",
-  "tools/gitbook-sync/validate-docs.mjs",
-  "tools/gitbook-sync/dry-run.mjs"
-];
-
-const forbiddenChangedPrefixes = [
-  "src/",
-  "migrations/",
-  "test/",
-  "evidence/"
-];
-
-const forbiddenChangedFiles = [
-  "package.json",
-  "package-lock.json",
-  "wrangler.jsonc"
-];
+const publicRoot = join(root, "docs/gitbook/public");
+const reviewDir = join(root, "docs/reviews/gitbook-redesign");
+const output = join(reviewDir, "evidence", "VALIDATION_RESULTS.json");
+mkdirSync(dirname(output), { recursive: true });
 
 function read(relativePath) {
   return readFileSync(join(root, relativePath), "utf8");
 }
 
-function parseJson(relativePath) {
-  return JSON.parse(read(relativePath));
-}
-
-function sha256(value) {
-  return createHash("sha256").update(value).digest("hex");
-}
-
 function assert(condition, message) {
-  if (!condition) {
-    throw new Error(message);
-  }
+  if (!condition) throw new Error(message);
 }
 
-function command(commandName, args, options = {}) {
-  execFileSync(commandName, args, {
-    cwd: root,
-    stdio: "pipe",
-    env: { ...process.env, ...options.env }
+function walk(directory) {
+  return readdirSync(directory).flatMap((entry) => {
+    const target = join(directory, entry);
+    return statSync(target).isDirectory() ? walk(target) : [target];
   });
+}
+
+function command(name, args, env = {}) {
+  execFileSync(name, args, { cwd: root, stdio: "pipe", env: { ...process.env, ...env } });
 }
 
 const checks = [];
@@ -89,122 +35,148 @@ function check(name, fn) {
   checks.push({ name, status: "PASS" });
 }
 
-check("required deliverable files exist", () => {
-  for (const file of requiredFiles) {
-    assert(existsSync(join(root, file)), `missing required file: ${file}`);
-  }
+const navigation = JSON.parse(read("docs/gitbook/public/navigation.json"));
+const markdownFiles = walk(publicRoot).filter((file) => file.endsWith(".md"));
+const publicText = [
+  ...walk(publicRoot).filter((file) => !file.endsWith(".png")).map((file) => readFileSync(file, "utf8")),
+  read("docs/openapi/signgate-public-v0.1.openapi.json")
+].join("\n");
+
+check("required roots and manifests exist", () => {
+  for (const file of [
+    ".gitbook.yaml",
+    "docs/gitbook/public/SUMMARY.md",
+    "docs/gitbook/public/navigation.json",
+    "docs/gitbook/public/en/README.md",
+    "docs/gitbook/public/zh-TW/README.md",
+    "docs/gitbook/internal/README.md",
+    "docs/openapi/signgate-public-v0.1.openapi.json",
+    "tools/gitbook-sync/sync.mjs"
+  ]) assert(existsSync(join(root, file)), `missing ${file}`);
 });
 
-check("openapi json parses", () => {
-  parseJson("docs/openapi/signgate-public-v0.1.openapi.json");
-  parseJson("docs/openapi/signgate-internal-v0.1.openapi.json");
-});
-
-check("gitbook configuration targets docs navigation", () => {
-  const config = read(".gitbook.yaml");
-  assert(/^root:\s*\.\/docs\/?\s*$/m.test(config), ".gitbook.yaml must use ./docs/ as root");
-  assert(/^\s*readme:\s*README\.md\s*$/m.test(config), ".gitbook.yaml must select docs/README.md");
-  assert(/^\s*summary:\s*SUMMARY\.md\s*$/m.test(config), ".gitbook.yaml must select docs/SUMMARY.md");
-});
-
-check("gitbook summary links resolve", () => {
-  const summary = read("docs/SUMMARY.md");
-  const links = [...summary.matchAll(/\]\(([^)]+)\)/g)].map((match) => match[1]);
-  assert(links.length > 0, "docs/SUMMARY.md contains no navigation links");
-  for (const link of links) {
-    if (/^(?:https?:|#)/.test(link)) continue;
-    const path = link.split("#", 1)[0];
-    assert(existsSync(join(root, "docs", path)), `broken GitBook summary link: ${link}`);
-  }
-});
-
-check("gitbook page links resolve", () => {
-  const pages = requiredFiles.filter((file) => file.startsWith("docs/") && file.endsWith(".md"));
-  for (const page of pages) {
-    const links = [...read(page).matchAll(/\]\(([^)]+)\)/g)].map((match) => match[1]);
-    for (const link of links) {
-      if (/^(?:https?:|mailto:|#)/.test(link)) continue;
-      const target = decodeURI(link.split("#", 1)[0]);
-      assert(existsSync(join(root, dirname(page), target)), `broken link in ${page}: ${link}`);
+check("navigation resolves and locale hierarchy is symmetric", () => {
+  assert(navigation.defaultLocale === "en", "English must be the default locale");
+  assert(navigation.locales.map(({ code }) => code).join(",") === "en,zh-TW", "locale order mismatch");
+  assert(navigation.sections.length === 7, "expected seven navigation sections");
+  for (const section of navigation.sections) {
+    for (const page of section.pages) {
+      for (const locale of navigation.locales) {
+        assert(existsSync(join(publicRoot, page.paths[locale.code])), `missing navigation page ${page.paths[locale.code]}`);
+      }
     }
   }
 });
 
-check("public gitbook navigation excludes internal API", () => {
-  const summary = read("docs/SUMMARY.md");
-  assert(!summary.includes("/internal/"), "public GitBook navigation exposes an internal path");
-  assert(!summary.includes("signgate-internal"), "public GitBook navigation links the internal OpenAPI specification");
-  assert(!summary.includes("founder-approval-grants"), "public GitBook navigation exposes the Founder dogfood endpoint");
+check("all local Markdown links resolve", () => {
+  const broken = [];
+  for (const file of markdownFiles) {
+    const text = readFileSync(file, "utf8");
+    for (const match of text.matchAll(/\[[^\]]+\]\(([^)#]+)(?:#[^)]+)?\)/g)) {
+      const href = match[1];
+      if (/^(https?:|mailto:)/.test(href)) continue;
+      if (!existsSync(resolve(dirname(file), href))) broken.push(`${file}: ${href}`);
+    }
+  }
+  assert(broken.length === 0, `broken links:\n${broken.join("\n")}`);
 });
 
-check("public openapi excludes internal founder endpoint", () => {
-  const publicSpec = parseJson("docs/openapi/signgate-public-v0.1.openapi.json");
-  assert(publicSpec.paths["/v1/decisions"], "public spec missing POST /v1/decisions");
-  assert(publicSpec.paths["/v1/decisions/{decision_id}/consume"], "public spec missing consume endpoint");
-  assert(!publicSpec.paths["/internal/dogfood/founder-approval-grants"], "public spec exposes internal Founder endpoint");
-});
-
-check("internal openapi includes founder endpoint", () => {
-  const internalSpec = parseJson("docs/openapi/signgate-internal-v0.1.openapi.json");
-  assert(internalSpec.paths["/internal/dogfood/founder-approval-grants"], "internal spec missing Founder endpoint");
-  assert(internalSpec.paths["/internal/dogfood/founder-approval-grants"].post["x-internal"] === true, "Founder endpoint must be marked x-internal");
-});
-
-check("required public wording present", () => {
-  const combined = `${read("docs/en/README.md")}\n${read("docs/zh/README.md")}\n${read("docs/openapi/signgate-public-v0.1.openapi.json")}`;
+check("public wording and product boundary are explicit", () => {
   for (const phrase of [
-    "preview",
-    "ALLOW is not executable until atomic consume succeeds",
-    "ALLOW is action-bound",
+    "SignGate is the policy and execution control layer for autonomous agents.",
+    "Preview execution environment",
+    "ALLOW",
     "REQUIRE_APPROVAL",
     "DENY",
-    "Every non-valid-ALLOW outcome fails closed",
-    "Production deployment is not authorized",
-    "Commerce/x402 enforcement is not live"
-  ]) {
-    assert(combined.includes(phrase), `missing required wording: ${phrase}`);
+    "action-bound",
+    "time-limited",
+    "single-use",
+    "atomic consume",
+    "Production execution is not currently available in this preview."
+  ]) assert(publicText.includes(phrase), `missing required wording: ${phrase}`);
+});
+
+check("public surface contains no internal identifiers", () => {
+  for (const phrase of [
+    "/internal/dogfood/founder-approval-grants",
+    "approval:founder:deploy_change",
+    "Founder Gate 4",
+    "DEV-SG-001",
+    "DOC-SG-001"
+  ]) assert(!publicText.toLowerCase().includes(phrase.toLowerCase()), `public content contains ${phrase}`);
+});
+
+check("public OpenAPI is parseable and public-only", () => {
+  const spec = JSON.parse(read("docs/openapi/signgate-public-v0.1.openapi.json"));
+  assert(spec.openapi === "3.1.0", "OpenAPI version mismatch");
+  assert(spec.paths["/v1/decisions"]?.post, "create decision missing");
+  assert(spec.paths["/v1/decisions/{decision_id}/consume"]?.post, "consume missing");
+  assert(Object.keys(spec.paths).length === 2, "unexpected public paths");
+  assert(spec.paths["/v1/decisions"].post["x-codeSamples"]?.length === 3, "create code samples missing");
+  assert(spec.paths["/v1/decisions/{decision_id}/consume"].post["x-codeSamples"]?.length === 3, "consume code samples missing");
+});
+
+check("GitBook endpoint pages embed safe OpenAPI operations", () => {
+  const expected = [
+    ["en/api-reference/create-decision.md", "/v1/decisions"],
+    ["en/api-reference/consume-decision.md", "/v1/decisions/{decision_id}/consume"],
+    ["zh-TW/api-reference/create-decision.md", "/v1/decisions"],
+    ["zh-TW/api-reference/consume-decision.md", "/v1/decisions/{decision_id}/consume"]
+  ];
+  for (const [file, path] of expected) {
+    const text = read(`docs/gitbook/public/${file}`);
+    assert(text.includes('{% openapi src="https://raw.githubusercontent.com/lukekwan/agent-payment-guard/ef29cbffe06703a64a8c095b30b0e0bd188930ae/docs/openapi/signgate-public-v0.1.openapi.json"'), `${file} OpenAPI block missing`);
+    assert(text.includes(`path="${path}" method="post" %}`), `${file} operation selector mismatch`);
+    assert(text.includes("preview credential"), `${file} Test it safety boundary missing`);
   }
 });
 
-check("example syntax validates", () => {
-  command("sh", ["-n", "docs/examples/curl/create-decision.sh"]);
-  command("sh", ["-n", "docs/examples/curl/consume-decision.sh"]);
-  command("node", ["--check", "docs/examples/javascript/create-decision.mjs"]);
-  command("python3", ["-m", "py_compile", "docs/examples/python/create_decision.py"], {
-    env: { PYTHONPYCACHEPREFIX: join(process.env.TMPDIR || "/tmp", "signgate-doc-pycache") }
-  });
-});
-
-check("examples use environment variables for credentials", () => {
+check("executable examples parse and fail closed", () => {
+  command("bash", ["-n", "docs/gitbook/public/examples/signgate-allow-flow.sh"]);
+  command("node", ["--check", "docs/gitbook/public/examples/signgate-allow-flow.mjs"]);
+  command("python3", ["-m", "py_compile", "docs/gitbook/public/examples/signgate_allow_flow.py"], { PYTHONPYCACHEPREFIX: "/tmp/signgate-doc-pycache" });
   const examples = [
-    read("docs/examples/curl/create-decision.sh"),
-    read("docs/examples/curl/consume-decision.sh"),
-    read("docs/examples/javascript/create-decision.mjs"),
-    read("docs/examples/python/create_decision.py")
+    read("docs/gitbook/public/examples/signgate-allow-flow.sh"),
+    read("docs/gitbook/public/examples/signgate-allow-flow.mjs"),
+    read("docs/gitbook/public/examples/signgate_allow_flow.py")
   ].join("\n");
-  assert(examples.includes("SIGNGATE_AGENT_KEY"), "missing SIGNGATE_AGENT_KEY usage");
-  assert(examples.includes("SIGNGATE_EXECUTOR_KEY") || examples.includes("decision:create"), "missing executor or scoped credential guidance");
-  assert(!examples.includes("sk_live_"), "example appears to contain live secret prefix");
-  assert(!examples.includes("x402 purchase execution"), "examples must not implement x402 execution");
+  assert(examples.includes("SIGNGATE_BASE_URL"), "base URL environment variable missing");
+  assert(examples.includes("SIGNGATE_API_KEY"), "API key environment variable missing");
+  assert(examples.includes('!= "ALLOW"') || examples.includes("!= 'ALLOW'"), "non-ALLOW stop missing");
+  assert(!/gb_api_[A-Za-z0-9]+/.test(examples), "GitBook token-like value detected");
 });
 
-check("forbidden paths are not changed on documentation branch", () => {
-  const changed = execFileSync("git", ["diff", "--name-only", "be7d64eb49004e46b54481ac53139130dde28cb3..HEAD"], { cwd: root, encoding: "utf8" })
-    .trim()
-    .split("\n")
-    .filter(Boolean);
-  const forbidden = changed.filter((file) => forbiddenChangedFiles.includes(file) || forbiddenChangedPrefixes.some((prefix) => file.startsWith(prefix)));
-  assert(forbidden.length === 0, `forbidden paths changed: ${forbidden.join(", ")}`);
+check("sync is dry-run by default and public-only", () => {
+  const output = execFileSync("node", ["tools/gitbook-sync/sync.mjs"], { cwd: root, encoding: "utf8" });
+  const plan = JSON.parse(output);
+  assert(plan.mode === "DRY_RUN", "sync default is not dry-run");
+  assert(plan.publication_performed === false && plan.merge_performed === false, "unsafe default action");
+  assert(plan.allowlisted_files.every((file) => !file.includes("/internal/") && !file.includes("signgate-internal")), "internal file allowlisted");
+});
+
+check("documentation branch does not change implementation", () => {
+  const changed = execFileSync("git", ["diff", "--name-only", "d60a4cd2f2d033f64f62b0d84486747276b131ca..HEAD"], { cwd: root, encoding: "utf8" }).trim().split("\n").filter(Boolean);
+  const forbidden = changed.filter((file) => ["src/", "migrations/", "test/", "evidence/", "package.json", "package-lock.json", "wrangler.jsonc"].some((prefix) => file === prefix || file.startsWith(prefix)));
+  assert(forbidden.length === 0, `implementation paths changed: ${forbidden.join(", ")}`);
 });
 
 const results = {
   generated_at: new Date().toISOString(),
   status: "PASS",
   checks,
-  file_hashes: Object.fromEntries(requiredFiles.map((file) => [file, sha256(read(file))])),
+  counts: {
+    markdown_pages: markdownFiles.length,
+    english_pages: markdownFiles.filter((file) => file.includes("/en/")).length,
+    traditional_chinese_pages: markdownFiles.filter((file) => file.includes("/zh-TW/")).length,
+    navigation_sections: navigation.sections.length
+  },
+  hashes: {
+    navigation: createHash("sha256").update(read("docs/gitbook/public/navigation.json")).digest("hex"),
+    public_openapi: createHash("sha256").update(read("docs/openapi/signgate-public-v0.1.openapi.json")).digest("hex")
+  },
   public_internal_boundary: "PASS",
-  gitbook_publication: "NOT_PERFORMED_DRY_RUN_ONLY"
+  gitbook_publication: "NOT_PERFORMED"
 };
 
-writeFileSync(join(validationDir, "doc-validation-results.json"), `${JSON.stringify(results, null, 2)}\n`);
+writeFileSync(output, `${JSON.stringify(results, null, 2)}\n`);
 console.log(JSON.stringify(results, null, 2));

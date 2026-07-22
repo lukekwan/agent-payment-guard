@@ -1,0 +1,441 @@
+{
+  "version": 1,
+  "defaultLocale": "en",
+  "locales": [
+    {
+      "code": "en",
+      "label": "English",
+      "home": "en/README.md"
+    },
+    {
+      "code": "zh-TW",
+      "label": "繁體中文",
+      "home": "zh-TW/README.md"
+    }
+  ],
+  "sections": [
+    {
+      "id": "getting-started",
+      "title": "GET STARTED",
+      "pages": [
+        {
+          "id": "getting-started/introduction",
+          "title": "Introduction",
+          "paths": {
+            "en": "en/getting-started/introduction.md",
+            "zh-TW": "zh-TW/getting-started/introduction.md"
+          }
+        },
+        {
+          "id": "getting-started/quickstart",
+          "title": "Quickstart",
+          "paths": {
+            "en": "en/getting-started/quickstart.md",
+            "zh-TW": "zh-TW/getting-started/quickstart.md"
+          }
+        },
+        {
+          "id": "getting-started/authentication",
+          "title": "Authentication",
+          "paths": {
+            "en": "en/getting-started/authentication.md",
+            "zh-TW": "zh-TW/getting-started/authentication.md"
+          }
+        },
+        {
+          "id": "getting-started/first-decision",
+          "title": "Make your first decision",
+          "paths": {
+            "en": "en/getting-started/first-decision.md",
+            "zh-TW": "zh-TW/getting-started/first-decision.md"
+          }
+        },
+        {
+          "id": "getting-started/consume-allow",
+          "title": "Consume an ALLOW safely",
+          "paths": {
+            "en": "en/getting-started/consume-allow.md",
+            "zh-TW": "zh-TW/getting-started/consume-allow.md"
+          }
+        }
+      ]
+    },
+    {
+      "id": "concepts",
+      "title": "CORE CONCEPTS",
+      "pages": [
+        {
+          "id": "concepts/decision-model",
+          "title": "Decision model",
+          "paths": {
+            "en": "en/concepts/decision-model.md",
+            "zh-TW": "zh-TW/concepts/decision-model.md"
+          }
+        },
+        {
+          "id": "concepts/decision-values",
+          "title": "ALLOW, REQUIRE_APPROVAL, and DENY",
+          "paths": {
+            "en": "en/concepts/decision-values.md",
+            "zh-TW": "zh-TW/concepts/decision-values.md"
+          }
+        },
+        {
+          "id": "concepts/action-binding",
+          "title": "Action binding",
+          "paths": {
+            "en": "en/concepts/action-binding.md",
+            "zh-TW": "zh-TW/concepts/action-binding.md"
+          }
+        },
+        {
+          "id": "concepts/decision-lifecycle",
+          "title": "Decision lifecycle",
+          "paths": {
+            "en": "en/concepts/decision-lifecycle.md",
+            "zh-TW": "zh-TW/concepts/decision-lifecycle.md"
+          }
+        },
+        {
+          "id": "concepts/idempotency",
+          "title": "Idempotency",
+          "paths": {
+            "en": "en/concepts/idempotency.md",
+            "zh-TW": "zh-TW/concepts/idempotency.md"
+          }
+        },
+        {
+          "id": "concepts/atomic-consume",
+          "title": "Atomic consume",
+          "paths": {
+            "en": "en/concepts/atomic-consume.md",
+            "zh-TW": "zh-TW/concepts/atomic-consume.md"
+          }
+        },
+        {
+          "id": "concepts/mandates-and-evidence",
+          "title": "Mandates and evidence",
+          "paths": {
+            "en": "en/concepts/mandates-and-evidence.md",
+            "zh-TW": "zh-TW/concepts/mandates-and-evidence.md"
+          }
+        },
+        {
+          "id": "concepts/fail-closed",
+          "title": "Fail closed",
+          "paths": {
+            "en": "en/concepts/fail-closed.md",
+            "zh-TW": "zh-TW/concepts/fail-closed.md"
+          }
+        }
+      ]
+    },
+    {
+      "id": "api-reference",
+      "title": "API REFERENCE",
+      "pages": [
+        {
+          "id": "api-reference/overview",
+          "title": "Overview",
+          "paths": {
+            "en": "en/api-reference/overview.md",
+            "zh-TW": "zh-TW/api-reference/overview.md"
+          }
+        },
+        {
+          "id": "api-reference/create-decision",
+          "title": "Create a decision",
+          "paths": {
+            "en": "en/api-reference/create-decision.md",
+            "zh-TW": "zh-TW/api-reference/create-decision.md"
+          }
+        },
+        {
+          "id": "api-reference/consume-decision",
+          "title": "Consume a decision",
+          "paths": {
+            "en": "en/api-reference/consume-decision.md",
+            "zh-TW": "zh-TW/api-reference/consume-decision.md"
+          }
+        },
+        {
+          "id": "api-reference/schemas",
+          "title": "Schemas",
+          "paths": {
+            "en": "en/api-reference/schemas.md",
+            "zh-TW": "zh-TW/api-reference/schemas.md"
+          }
+        },
+        {
+          "id": "api-reference/request-schemas",
+          "title": "Request schemas",
+          "paths": {
+            "en": "en/api-reference/request-schemas.md",
+            "zh-TW": "zh-TW/api-reference/request-schemas.md"
+          }
+        },
+        {
+          "id": "api-reference/response-schemas",
+          "title": "Response schemas",
+          "paths": {
+            "en": "en/api-reference/response-schemas.md",
+            "zh-TW": "zh-TW/api-reference/response-schemas.md"
+          }
+        },
+        {
+          "id": "api-reference/errors",
+          "title": "Errors",
+          "paths": {
+            "en": "en/api-reference/errors.md",
+            "zh-TW": "zh-TW/api-reference/errors.md"
+          }
+        },
+        {
+          "id": "api-reference/reason-codes",
+          "title": "Reason codes",
+          "paths": {
+            "en": "en/api-reference/reason-codes.md",
+            "zh-TW": "zh-TW/api-reference/reason-codes.md"
+          }
+        }
+      ]
+    },
+    {
+      "id": "guides",
+      "title": "GUIDES",
+      "pages": [
+        {
+          "id": "guides/preview-deployment",
+          "title": "Evaluate a preview deployment",
+          "paths": {
+            "en": "en/guides/preview-deployment.md",
+            "zh-TW": "zh-TW/guides/preview-deployment.md"
+          }
+        },
+        {
+          "id": "guides/fingerprints",
+          "title": "Validate fingerprints",
+          "paths": {
+            "en": "en/guides/fingerprints.md",
+            "zh-TW": "zh-TW/guides/fingerprints.md"
+          }
+        },
+        {
+          "id": "guides/require-approval",
+          "title": "Handle REQUIRE_APPROVAL",
+          "paths": {
+            "en": "en/guides/require-approval.md",
+            "zh-TW": "zh-TW/guides/require-approval.md"
+          }
+        },
+        {
+          "id": "guides/retries",
+          "title": "Retry safely",
+          "paths": {
+            "en": "en/guides/retries.md",
+            "zh-TW": "zh-TW/guides/retries.md"
+          }
+        },
+        {
+          "id": "guides/safe-execution",
+          "title": "Execute only after consume",
+          "paths": {
+            "en": "en/guides/safe-execution.md",
+            "zh-TW": "zh-TW/guides/safe-execution.md"
+          }
+        },
+        {
+          "id": "guides/expired-decisions",
+          "title": "Handle expired decisions",
+          "paths": {
+            "en": "en/guides/expired-decisions.md",
+            "zh-TW": "zh-TW/guides/expired-decisions.md"
+          }
+        },
+        {
+          "id": "guides/downstream-failure",
+          "title": "Handle downstream execution failure",
+          "paths": {
+            "en": "en/guides/downstream-failure.md",
+            "zh-TW": "zh-TW/guides/downstream-failure.md"
+          }
+        },
+        {
+          "id": "guides/executor-integration",
+          "title": "Integrate with an executor",
+          "paths": {
+            "en": "en/guides/executor-integration.md",
+            "zh-TW": "zh-TW/guides/executor-integration.md"
+          }
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "title": "SECURITY",
+      "pages": [
+        {
+          "id": "security/overview",
+          "title": "Security model",
+          "paths": {
+            "en": "en/security/overview.md",
+            "zh-TW": "zh-TW/security/overview.md"
+          }
+        },
+        {
+          "id": "security/authentication",
+          "title": "Authentication",
+          "paths": {
+            "en": "en/security/authentication.md",
+            "zh-TW": "zh-TW/security/authentication.md"
+          }
+        },
+        {
+          "id": "security/secret-handling",
+          "title": "Secret handling",
+          "paths": {
+            "en": "en/security/secret-handling.md",
+            "zh-TW": "zh-TW/security/secret-handling.md"
+          }
+        },
+        {
+          "id": "security/replay-protection",
+          "title": "Replay protection",
+          "paths": {
+            "en": "en/security/replay-protection.md",
+            "zh-TW": "zh-TW/security/replay-protection.md"
+          }
+        },
+        {
+          "id": "security/audit",
+          "title": "Audit records",
+          "paths": {
+            "en": "en/security/audit.md",
+            "zh-TW": "zh-TW/security/audit.md"
+          }
+        },
+        {
+          "id": "security/tenant-isolation",
+          "title": "Tenant isolation",
+          "paths": {
+            "en": "en/security/tenant-isolation.md",
+            "zh-TW": "zh-TW/security/tenant-isolation.md"
+          }
+        },
+        {
+          "id": "security/retention",
+          "title": "Retention",
+          "paths": {
+            "en": "en/security/retention.md",
+            "zh-TW": "zh-TW/security/retention.md"
+          }
+        },
+        {
+          "id": "security/preview-limitations",
+          "title": "Preview limitations",
+          "paths": {
+            "en": "en/security/preview-limitations.md",
+            "zh-TW": "zh-TW/security/preview-limitations.md"
+          }
+        }
+      ]
+    },
+    {
+      "id": "examples",
+      "title": "EXAMPLES",
+      "pages": [
+        {
+          "id": "examples/curl",
+          "title": "cURL",
+          "paths": {
+            "en": "en/examples/curl.md",
+            "zh-TW": "zh-TW/examples/curl.md"
+          }
+        },
+        {
+          "id": "examples/javascript",
+          "title": "JavaScript",
+          "paths": {
+            "en": "en/examples/javascript.md",
+            "zh-TW": "zh-TW/examples/javascript.md"
+          }
+        },
+        {
+          "id": "examples/python",
+          "title": "Python",
+          "paths": {
+            "en": "en/examples/python.md",
+            "zh-TW": "zh-TW/examples/python.md"
+          }
+        },
+        {
+          "id": "examples/allow-flow",
+          "title": "Complete ALLOW flow",
+          "paths": {
+            "en": "en/examples/allow-flow.md",
+            "zh-TW": "zh-TW/examples/allow-flow.md"
+          }
+        },
+        {
+          "id": "examples/approval-flow",
+          "title": "Complete REQUIRE_APPROVAL flow",
+          "paths": {
+            "en": "en/examples/approval-flow.md",
+            "zh-TW": "zh-TW/examples/approval-flow.md"
+          }
+        },
+        {
+          "id": "examples/errors",
+          "title": "Common error handling",
+          "paths": {
+            "en": "en/examples/errors.md",
+            "zh-TW": "zh-TW/examples/errors.md"
+          }
+        }
+      ]
+    },
+    {
+      "id": "resources",
+      "title": "RESOURCES",
+      "pages": [
+        {
+          "id": "resources/changelog",
+          "title": "Changelog",
+          "paths": {
+            "en": "en/resources/changelog.md",
+            "zh-TW": "zh-TW/resources/changelog.md"
+          }
+        },
+        {
+          "id": "resources/api-status",
+          "title": "API status",
+          "paths": {
+            "en": "en/resources/api-status.md",
+            "zh-TW": "zh-TW/resources/api-status.md"
+          }
+        },
+        {
+          "id": "resources/versioning",
+          "title": "Versioning",
+          "paths": {
+            "en": "en/resources/versioning.md",
+            "zh-TW": "zh-TW/resources/versioning.md"
+          }
+        },
+        {
+          "id": "resources/support",
+          "title": "Support and contact",
+          "paths": {
+            "en": "en/resources/support.md",
+            "zh-TW": "zh-TW/resources/support.md"
+          }
+        }
+      ]
+    }
+  ],
+  "publicOpenApi": "../../openapi/signgate-public-v0.1.openapi.json",
+  "excludedRoots": [
+    "../internal",
+    "../../openapi/internal"
+  ]
+}
