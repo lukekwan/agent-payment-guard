@@ -25,7 +25,23 @@ const FOUNDER_KEY = "sg_founder_abcdefghijklmnopqrstuvwxyz123456";
 const FUTURE = "2026-07-19T00:30:00.000Z";
 const GRANT_FUTURE = "2026-07-19T00:10:00.000Z";
 
-async function d1Env() {
+class PreInsertMutatingD1Store extends D1SignGateStore {
+  constructor(db, mutateBeforeInsert = null) {
+    super(db);
+    this.mutateBeforeInsert = mutateBeforeInsert;
+    this.mutated = false;
+  }
+
+  async createDecision(record) {
+    if (record.decision === "ALLOW" && this.mutateBeforeInsert && !this.mutated) {
+      this.mutated = true;
+      await this.mutateBeforeInsert(this.db, record);
+    }
+    return super.createDecision(record);
+  }
+}
+
+async function d1Env({ StoreClass = D1SignGateStore, mutateBeforeInsert = null } = {}) {
   const mf = new Miniflare({
     modules: true,
     script: "export default { fetch() { return new Response('ok') } }",
@@ -44,8 +60,13 @@ async function d1Env() {
       await db.prepare(statement).run();
     }
   }
-  const store = new D1SignGateStore(db);
-  const env = { GUARD_DB: db, SIGNGATE_TEST_NOW_MS: NOW, SIGNGATE_API_KEY_PEPPER: "test-pepper" };
+  const store = new StoreClass(db, mutateBeforeInsert);
+  const env = {
+    GUARD_DB: db,
+    SIGNGATE_TEST_STORE: store,
+    SIGNGATE_TEST_NOW_MS: NOW,
+    SIGNGATE_API_KEY_PEPPER: "test-pepper",
+  };
   for (const [rawKey, principalId, principalType, scopes] of [
     [AGENT_KEY, "codex_dev_01", "agent", ["decision:create:deploy_change"]],
     [EXECUTOR_KEY, "preview_executor_01", "executor", ["decision:consume:deploy_change"]],
@@ -340,6 +361,75 @@ test("DEV-SG-001 bounded product D1 smoke covers atomic consume, expiry, approva
     await db.prepare("UPDATE signgate_api_credentials SET status = 'revoked', delete_after = ? WHERE principal_type = 'agent'").bind("2026-08-19T00:00:00.000Z").run();
     const cleanupCredentials = await cleanupSignGatePreviewRetention({ store, organizationId: ORG, nowMs: Date.parse("2026-08-20T00:00:00.000Z"), batchSize: 1 });
     assert.equal(cleanupCredentials.credentials, 1);
+  } finally {
+    await mf.dispose();
+  }
+});
+
+test("DEV-SG-001 D1 atomic authority boundary rejects every post-provenance/pre-insert mutation without partial success state", async () => {
+  const mutations = {
+    credential: (db, record) => db.prepare(
+      "UPDATE signgate_api_credentials SET status = 'revoked' WHERE organization_id = ? AND credential_id = ?",
+    ).bind(record.organization_id, record.credential_id).run(),
+    mandate: (db, record) => db.prepare(
+      "UPDATE signgate_mandates SET status = 'revoked' WHERE organization_id = ? AND mandate_id = ?",
+    ).bind(record.organization_id, record.mandate_id).run(),
+    authorized_target: (db, record) => db.prepare(
+      "UPDATE signgate_authorized_targets SET revision = revision + 1 WHERE organization_id = ? AND target_id = ?",
+    ).bind(record.organization_id, record.authorized_target_id).run(),
+    trusted_evidence: (db, record) => db.prepare(
+      "UPDATE signgate_trusted_evidence SET status = 'revoked' WHERE organization_id = ? AND evidence_id = ?",
+    ).bind(record.organization_id, JSON.parse(record.evidence_ids_json)[0]).run(),
+  };
+  for (const [name, mutateBeforeInsert] of Object.entries(mutations)) {
+    const { env, db, mf } = await d1Env({ StoreClass: PreInsertMutatingD1Store, mutateBeforeInsert });
+    try {
+      const [status, body] = await postDecision(request(`d1_atomic_authority_${name}`), env);
+      assert.equal(status, 500, name);
+      assert.equal(body.error, "INTERNAL_INVARIANT_FAILED", name);
+      assert.equal("decision" in body, false, name);
+      assert.equal(await tableCount(db, "signgate_decisions"), 0, name);
+      assert.equal(await tableCount(db, "signgate_request_idempotency"), 0, name);
+      assert.equal(await tableCount(db, "signgate_consume_receipts"), 0, name);
+      assert.equal(await tableCount(db, "signgate_audit_events", "event_type = 'decision.created'"), 0, name);
+      assert.equal(await tableCount(db, "signgate_audit_events", "event_type = 'decision.rejected'"), 1, name);
+    } finally {
+      await mf.dispose();
+    }
+  }
+
+  const mutateApprovedEvidence = (db, record) => db.prepare(
+    "UPDATE signgate_trusted_evidence SET status = 'revoked' WHERE organization_id = ? AND evidence_id = ?",
+  ).bind(record.organization_id, JSON.parse(record.evidence_ids_json)[0]).run();
+  const { env, db, mf } = await d1Env({ StoreClass: PreInsertMutatingD1Store, mutateBeforeInsert: mutateApprovedEvidence });
+  try {
+    const reviewRequest = await bindTrustedEvidence(db, request("d1_atomic_review", { touches_permissions: true }));
+    const [, review] = await postDecision(reviewRequest, env);
+    assert.equal(review.decision, "REQUIRE_APPROVAL");
+    const grantResponse = await handleFounderApprovalGrantRequest(new Request("https://signgate.test/internal/dogfood/founder-approval-grants", {
+      method: "POST",
+      headers: { authorization: `Bearer ${FOUNDER_KEY}` },
+      body: JSON.stringify({
+        contract_version: SIGNGATE_CONTRACT_VERSION,
+        organization_id: ORG,
+        original_decision_id: review.decision_id,
+        action_fingerprint: review.action_fingerprint,
+        policy_version: SIGNGATE_POLICY_VERSION,
+        approval_reason: "FOUNDER_APPROVED_PREVIEW_PERMISSION_CHANGE",
+        expires_at: GRANT_FUTURE,
+      }),
+    }), env);
+    assert.equal(grantResponse.status, 200);
+    const grant = await grantResponse.json();
+    const [status, body] = await postDecision(request("d1_atomic_approved", { touches_permissions: true }, [
+      { id: grant.approval_grant_id, type: "approval_grant", source: "founder", status: "approved", original_decision_id: review.decision_id },
+    ]), env);
+    assert.equal(status, 500);
+    assert.equal(body.error, "INTERNAL_INVARIANT_FAILED");
+    assert.equal((await db.prepare("SELECT status FROM signgate_approval_grants WHERE approval_grant_id = ?").bind(grant.approval_grant_id).first()).status, "AVAILABLE");
+    assert.equal(await tableCount(db, "signgate_decisions", "approval_grant_id = ?", [grant.approval_grant_id]), 0);
+    assert.equal(await tableCount(db, "signgate_request_idempotency", "request_id = 'd1_atomic_approved'"), 0);
+    assert.equal(await tableCount(db, "signgate_audit_events", "request_id = 'd1_atomic_approved' AND event_type = 'decision.created'"), 0);
   } finally {
     await mf.dispose();
   }

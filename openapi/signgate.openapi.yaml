@@ -1,0 +1,112 @@
+openapi: 3.1.0
+info:
+  title: SignGate Preview Contract Reconciliation Candidate
+  version: 0.1-candidate
+  description: >-
+    Review-only SignGate contract surface. This document does not authorize
+    deployment, production use, payment execution, or a live commerce adapter.
+servers:
+  - url: https://not-configured.invalid
+    description: No production API base URL is configured.
+paths:
+  /v1/decisions:
+    post:
+      operationId: createSignGateDecision
+      summary: Evaluate a SignGate action
+      description: >-
+        Canonical SignGate v0.1 endpoint. The implemented vertical slice is
+        deploy_change. A successful policy evaluation returns ALLOW,
+        REQUIRE_APPROVAL, or DENY. System failures never return a policy DENY.
+      security:
+        - previewApiKey: []
+      responses:
+        "200":
+          description: Policy result containing exactly ALLOW, REQUIRE_APPROVAL, or DENY.
+        "400":
+          $ref: "#/components/responses/CallerError"
+        "401":
+          $ref: "#/components/responses/CallerError"
+        "403":
+          $ref: "#/components/responses/CallerError"
+        "409":
+          $ref: "#/components/responses/CallerError"
+        "422":
+          $ref: "#/components/responses/CallerError"
+        "500":
+          $ref: "#/components/responses/SystemError"
+        "503":
+          $ref: "#/components/responses/SystemError"
+  /v1/decisions/{decision_id}/consume:
+    post:
+      operationId: consumeSignGateDecision
+      summary: Atomically consume one executable decision
+      description: Internal or preview-protected; not a generally available production API.
+      security:
+        - previewApiKey: []
+      parameters:
+        - name: decision_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Atomic consume receipt. }
+        "409": { $ref: "#/components/responses/CallerError" }
+        "500": { $ref: "#/components/responses/SystemError" }
+        "503": { $ref: "#/components/responses/SystemError" }
+  /v1/agentic-commerce/preflight:
+    x-signgate-status: PREVIEW_PLANNED_NOT_DEPLOYED
+    post:
+      operationId: plannedPaymentDecisionCompatibilityAdapter
+      summary: Documented payment/x402 compatibility mapping
+      description: >-
+        PREVIEW / PLANNED / NOT DEPLOYED. This operation documents the mapping
+        only and is not an externally reachable enforcement adapter.
+      deprecated: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentDecisionRequest"
+      responses:
+        "501":
+          description: Adapter is planned and not deployed.
+components:
+  securitySchemes:
+    previewApiKey:
+      type: http
+      scheme: bearer
+  responses:
+    CallerError:
+      description: Caller, authentication, schema, or conflict error; enforcement fails closed.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    SystemError:
+      description: System or dependency failure; never a policy DENY decision.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+  schemas:
+    PaymentDecision:
+      type: string
+      enum: [ALLOW, REQUIRE_APPROVAL, DENY]
+    PaymentDecisionRequest:
+      $ref: ../specs/payment-decision-contract.schema.json#/$defs/PaymentDecisionRequest
+    PaymentDecisionResponse:
+      $ref: ../specs/payment-decision-contract.schema.json#/$defs/PaymentDecisionResponse
+    ErrorEnvelope:
+      type: object
+      additionalProperties: false
+      required: [schema_version, error, reason_codes, enforcement_effect]
+      properties:
+        schema_version: { type: string }
+        error: { type: string }
+        reason_codes:
+          type: array
+          items: { type: string }
+        request_id: { type: [string, "null"] }
+        enforcement_effect:
+          type: string
+          const: DENY
+        audit_ref: { type: [string, "null"] }

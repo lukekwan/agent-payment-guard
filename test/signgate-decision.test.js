@@ -233,6 +233,22 @@ async function postConsume(decision, env, attempt = "exec_attempt_001", override
   );
 }
 
+class PreInsertMutatingMemoryStore extends MemorySignGateStore {
+  constructor(mutate) {
+    super();
+    this.mutateBeforeInsert = mutate;
+    this.mutated = false;
+  }
+
+  async createDecision(record) {
+    if (record.decision === "ALLOW" && !this.mutated) {
+      this.mutated = true;
+      this.mutateBeforeInsert(this, record);
+    }
+    return super.createDecision(record);
+  }
+}
+
 async function bindDefaultTrustedEvidence(env, request) {
   const evidence = env.SIGNGATE_TEST_STORE.trustedEvidence.get(`${ORG}:evidence_tests_001`);
   evidence.action_fingerprint = await fingerprintDeployChange(request, {
@@ -559,6 +575,37 @@ test("DEV-SG-001 trusted evidence requires exact server action binding", async (
     const env = await testEnv();
     const replay = await (await postDecision(baseRequest({ request_id: `req_replay_${label.replaceAll(" ", "_")}`, ...mutation }), env)).json();
     assert.notEqual(replay.decision, "ALLOW", label);
+  }
+});
+
+test("DEV-SG-001 memory persistence fails closed for every post-provenance authority mutation", async () => {
+  const mutations = {
+    credential(store, record) {
+      const credential = [...store.credentials.values()].find(item => item.credential_id === record.credential_id);
+      credential.status = "revoked";
+    },
+    mandate(store, record) {
+      store.mandates.get(store.key(record.organization_id, record.mandate_id)).status = "revoked";
+    },
+    authorized_target(store, record) {
+      store.authorizedTargets.get(store.key(record.organization_id, record.authorized_target_id)).revision += 1;
+    },
+    trusted_evidence(store, record) {
+      const evidenceId = JSON.parse(record.evidence_ids_json)[0];
+      store.trustedEvidence.get(store.key(record.organization_id, evidenceId)).status = "revoked";
+    },
+  };
+  for (const [name, mutate] of Object.entries(mutations)) {
+    const store = new PreInsertMutatingMemoryStore(mutate);
+    const env = await testEnv({ store });
+    const response = await postDecision(baseRequest({ request_id: `req_memory_toctou_${name}` }), env);
+    const body = await response.json();
+    assert.equal(response.status, 409, name);
+    assert.equal(body.error, "AUTHORITY_PROVENANCE_INVALID", name);
+    assert.equal(store.decisions.size, 0, name);
+    assert.equal(store.idempotency.size, 0, name);
+    assert.equal(store.auditEvents.filter(event => event.event_type === "decision.created").length, 0, name);
+    assert.equal(store.receipts.size, 0, name);
   }
 });
 

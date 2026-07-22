@@ -989,6 +989,77 @@ async function validateExecutableAuthoritySnapshot(decision) {
   }
 }
 
+function recordAuthorityMatchesCurrentSources(record, { credential, mandate, target, evidence, approvalGrant = null }) {
+  const snapshot = parseJsonObjectForAuthority(record.authority_snapshot_json);
+  if (!snapshot) return false;
+  const expectedCredential = snapshot.credential || {};
+  const expectedMandate = snapshot.mandate || {};
+  const expectedTarget = snapshot.authorized_target || {};
+  const expectedEvidence = Array.isArray(snapshot.trusted_evidence) ? snapshot.trusted_evidence : [];
+  const actualEvidence = evidence ? [evidence] : [];
+  const credentialCommit = credential &&
+    credential.organization_id === record.organization_id &&
+    credential.credential_id === expectedCredential.credential_id &&
+    credential.principal_id === expectedCredential.principal_id &&
+    credential.principal_type === expectedCredential.principal_type &&
+    credential.digest_version === expectedCredential.digest_version &&
+    credential.status === expectedCredential.status_at_decision &&
+    ["active", "rotating"].includes(credential.status) &&
+    JSON.stringify(credentialJsonList(credential.scopes_json, "SCOPES_JSON")) === JSON.stringify(expectedCredential.scopes) &&
+    JSON.stringify(credentialJsonList(credential.allowed_environments_json, "ALLOWED_ENVIRONMENTS_JSON")) === JSON.stringify(expectedCredential.allowed_environments) &&
+    JSON.stringify(credentialJsonList(credential.allowed_action_types_json, "ALLOWED_ACTION_TYPES_JSON")) === JSON.stringify(expectedCredential.allowed_action_types) &&
+    JSON.stringify(credentialJsonList(credential.allowed_services_json, "ALLOWED_SERVICES_JSON")) === JSON.stringify(expectedCredential.allowed_services) &&
+    (credential.allowed_agent_id || null) === (expectedCredential.allowed_agent_id || null);
+  const mandateCommit = mandate &&
+    mandate.organization_id === record.organization_id &&
+    mandate.mandate_id === expectedMandate.mandate_id &&
+    mandate.issuer === expectedMandate.issuer &&
+    mandate.status === expectedMandate.status_at_decision &&
+    mandate.status === "active" &&
+    mandate.issued_at === expectedMandate.issued_at &&
+    mandate.expires_at === expectedMandate.expires_at &&
+    Date.parse(mandate.expires_at) > Date.parse(record.issued_at) &&
+    JSON.stringify(JSON.parse(mandate.scope_json)) === JSON.stringify(expectedMandate.scope);
+  const targetCommit = target &&
+    target.organization_id === record.organization_id &&
+    target.target_id === expectedTarget.target_id &&
+    target.revision === expectedTarget.revision &&
+    target.environment === expectedTarget.environment &&
+    target.service === expectedTarget.service &&
+    target.project === expectedTarget.project &&
+    target.canonical_remote_url === expectedTarget.canonical_remote_url &&
+    target.action_type === expectedTarget.action_type &&
+    target.status === expectedTarget.status_at_decision &&
+    target.status === "active" &&
+    target.valid_from === expectedTarget.valid_from &&
+    (target.valid_until || null) === (expectedTarget.valid_until || null) &&
+    Date.parse(target.valid_from) <= Date.parse(record.issued_at) &&
+    (!target.valid_until || Date.parse(target.valid_until) > Date.parse(record.issued_at));
+  const evidenceCommit = expectedEvidence.length === 1 && actualEvidence.length === 1 &&
+    actualEvidence[0].organization_id === record.organization_id &&
+    actualEvidence[0].evidence_id === expectedEvidence[0].evidence_id &&
+    actualEvidence[0].provider === expectedEvidence[0].provider &&
+    actualEvidence[0].status === expectedEvidence[0].status_at_decision &&
+    actualEvidence[0].status === "passed" &&
+    (actualEvidence[0].commit ?? actualEvidence[0].commit_sha) === expectedEvidence[0].commit_sha &&
+    actualEvidence[0].action_fingerprint === expectedEvidence[0].action_fingerprint &&
+    actualEvidence[0].observed_at === expectedEvidence[0].observed_at &&
+    actualEvidence[0].action_fingerprint === record.action_fingerprint;
+  const approvalCommit = !record.approval_grant_id || (
+    approvalGrant &&
+    approvalGrant.organization_id === record.organization_id &&
+    approvalGrant.approval_grant_id === record.approval_grant_id &&
+    approvalGrant.status === "AVAILABLE" &&
+    approvalGrant.original_decision_id === record.original_decision_id &&
+    approvalGrant.action_fingerprint === record.action_fingerprint &&
+    approvalGrant.policy_version === record.policy_version &&
+    approvalGrant.approver_role === "founder" &&
+    Date.parse(approvalGrant.expires_at) > Date.parse(record.issued_at) &&
+    Date.parse(approvalGrant.original_decision_expires_at) > Date.parse(record.issued_at)
+  );
+  return Boolean(credentialCommit && mandateCommit && targetCommit && evidenceCommit && approvalCommit);
+}
+
 async function semanticRequestFingerprint(input, authenticated, env, actionFingerprint) {
   const mandate = await env.store.getMandate(authenticated.organization_id, input.mandate.id);
   const ci = input.action.parameters.ci_evidence;
@@ -1523,6 +1594,20 @@ export class MemorySignGateStore {
   async getTrustedEvidence(org, evidenceId) { return this.trustedEvidence.get(this.key(org, evidenceId)) || null; }
   async recordAuditEvent(audit) { this.auditEvents.push(audit); }
   async createDecision(record) {
+    if (record.decision === "ALLOW") {
+      const snapshot = parseJsonObjectForAuthority(record.authority_snapshot_json);
+      const evidenceId = snapshot?.trusted_evidence?.[0]?.evidence_id;
+      const current = {
+        credential: [...this.credentials.values()].find(item => item.organization_id === record.organization_id && item.credential_id === record.credential_id) || null,
+        mandate: this.mandates.get(this.key(record.organization_id, record.mandate_id)) || null,
+        target: this.authorizedTargets.get(this.key(record.organization_id, record.authorized_target_id)) || null,
+        evidence: evidenceId ? this.trustedEvidence.get(this.key(record.organization_id, evidenceId)) || null : null,
+        approvalGrant: record.approval_grant_id ? this.grants.get(this.key(record.organization_id, record.approval_grant_id)) || null : null,
+      };
+      if (!recordAuthorityMatchesCurrentSources(record, current)) {
+        throw new SignGateInputError(409, "AUTHORITY_PROVENANCE_INVALID", ["AUTHORITY_PROVENANCE_INVALID"]);
+      }
+    }
     if (record.approval_grant_id && record.decision === "ALLOW") {
       const grant = this.grants.get(this.key(record.organization_id, record.approval_grant_id));
       if (!grant || grant.status !== "AVAILABLE") {
@@ -1800,6 +1885,109 @@ export class D1SignGateStore {
   }
   async createDecision(record) {
     const statements = [];
+    if (record.decision === "ALLOW") {
+      statements.push(
+        this.db.prepare(
+          `INSERT INTO signgate_decisions (organization_id)
+           WITH expected(snapshot) AS (SELECT json(?))
+           SELECT NULL
+           FROM expected
+           WHERE ? = 'ALLOW'
+             AND NOT (
+               EXISTS (
+                 SELECT 1 FROM signgate_api_credentials c
+                 WHERE c.organization_id = ?
+                   AND c.credential_id = json_extract(expected.snapshot, '$.credential.credential_id')
+                   AND c.principal_id = json_extract(expected.snapshot, '$.credential.principal_id')
+                   AND c.principal_type = json_extract(expected.snapshot, '$.credential.principal_type')
+                   AND c.digest_version = json_extract(expected.snapshot, '$.credential.digest_version')
+                   AND c.status = json_extract(expected.snapshot, '$.credential.status_at_decision')
+                   AND c.status IN ('active', 'rotating')
+                   AND json(c.scopes_json) = json(json_extract(expected.snapshot, '$.credential.scopes'))
+                   AND json(c.allowed_environments_json) = json(json_extract(expected.snapshot, '$.credential.allowed_environments'))
+                   AND json(c.allowed_action_types_json) = json(json_extract(expected.snapshot, '$.credential.allowed_action_types'))
+                   AND json(c.allowed_services_json) = json(json_extract(expected.snapshot, '$.credential.allowed_services'))
+                   AND c.allowed_agent_id IS json_extract(expected.snapshot, '$.credential.allowed_agent_id')
+               )
+               AND EXISTS (
+                 SELECT 1 FROM signgate_mandates m
+                 WHERE m.organization_id = ?
+                   AND m.mandate_id = json_extract(expected.snapshot, '$.mandate.mandate_id')
+                   AND m.issuer = json_extract(expected.snapshot, '$.mandate.issuer')
+                   AND json(m.scope_json) = json(json_extract(expected.snapshot, '$.mandate.scope'))
+                   AND m.status = json_extract(expected.snapshot, '$.mandate.status_at_decision')
+                   AND m.status = 'active'
+                   AND m.issued_at = json_extract(expected.snapshot, '$.mandate.issued_at')
+                   AND m.expires_at = json_extract(expected.snapshot, '$.mandate.expires_at')
+                   AND m.expires_at > ?
+               )
+               AND EXISTS (
+                 SELECT 1 FROM signgate_authorized_targets t
+                 WHERE t.organization_id = ?
+                   AND t.target_id = json_extract(expected.snapshot, '$.authorized_target.target_id')
+                   AND t.revision = json_extract(expected.snapshot, '$.authorized_target.revision')
+                   AND t.environment = json_extract(expected.snapshot, '$.authorized_target.environment')
+                   AND t.service = json_extract(expected.snapshot, '$.authorized_target.service')
+                   AND t.project = json_extract(expected.snapshot, '$.authorized_target.project')
+                   AND t.canonical_remote_url = json_extract(expected.snapshot, '$.authorized_target.canonical_remote_url')
+                   AND t.action_type = json_extract(expected.snapshot, '$.authorized_target.action_type')
+                   AND t.status = json_extract(expected.snapshot, '$.authorized_target.status_at_decision')
+                   AND t.status = 'active'
+                   AND t.valid_from = json_extract(expected.snapshot, '$.authorized_target.valid_from')
+                   AND t.valid_from <= ?
+                   AND t.valid_until IS json_extract(expected.snapshot, '$.authorized_target.valid_until')
+                   AND (t.valid_until IS NULL OR t.valid_until > ?)
+               )
+               AND json_array_length(expected.snapshot, '$.trusted_evidence') = 1
+               AND EXISTS (
+                 SELECT 1 FROM signgate_trusted_evidence e
+                 WHERE e.organization_id = ?
+                   AND e.evidence_id = json_extract(expected.snapshot, '$.trusted_evidence[0].evidence_id')
+                   AND e.provider = json_extract(expected.snapshot, '$.trusted_evidence[0].provider')
+                   AND e.status = json_extract(expected.snapshot, '$.trusted_evidence[0].status_at_decision')
+                   AND e.status = 'passed'
+                   AND e.commit_sha = json_extract(expected.snapshot, '$.trusted_evidence[0].commit_sha')
+                   AND e.action_fingerprint = json_extract(expected.snapshot, '$.trusted_evidence[0].action_fingerprint')
+                   AND e.action_fingerprint = ?
+                   AND e.observed_at = json_extract(expected.snapshot, '$.trusted_evidence[0].observed_at')
+               )
+               AND (
+                 ? IS NULL OR EXISTS (
+                   SELECT 1 FROM signgate_approval_grants g
+                   WHERE g.organization_id = ?
+                     AND g.approval_grant_id = ?
+                     AND g.status = 'AVAILABLE'
+                     AND g.original_decision_id = ?
+                     AND g.action_fingerprint = ?
+                     AND g.policy_version = ?
+                     AND g.approver_role = 'founder'
+                     AND g.expires_at > ?
+                     AND g.original_decision_expires_at > ?
+                 )
+               )
+             )`,
+        ).bind(
+          record.authority_snapshot_json,
+          record.decision,
+          record.organization_id,
+          record.organization_id,
+          record.issued_at,
+          record.organization_id,
+          record.issued_at,
+          record.issued_at,
+          record.organization_id,
+          record.action_fingerprint,
+          record.approval_grant_id,
+          record.organization_id,
+          record.approval_grant_id,
+          record.original_decision_id,
+          record.action_fingerprint,
+          record.policy_version,
+          record.issued_at,
+          record.issued_at,
+        ),
+      );
+    }
     if (record.approval_grant_id && record.decision === "ALLOW") {
       statements.push(
         this.db.prepare(
