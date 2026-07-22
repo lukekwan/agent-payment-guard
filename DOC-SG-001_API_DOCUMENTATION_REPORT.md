@@ -18,6 +18,10 @@
 - Internal OpenAPI: docs/openapi/signgate-internal-v0.1.openapi.json
 - English documentation: docs/en/README.md
 - Traditional Chinese documentation: docs/zh/README.md
+- GitBook configuration: .gitbook.yaml
+- GitBook landing page and navigation: docs/README.md, docs/SUMMARY.md
+- English GitBook pages: docs/en/authentication.md, docs/en/decision-lifecycle.md, docs/en/errors.md, docs/en/api-reference/, docs/en/examples.md
+- Traditional Chinese GitBook pages: docs/zh/authentication.md, docs/zh/decision-lifecycle.md, docs/zh/errors.md, docs/zh/api-reference/, docs/zh/examples.md
 - curl examples: docs/examples/curl/
 - JavaScript example: docs/examples/javascript/create-decision.mjs
 - Python example: docs/examples/python/create_decision.py

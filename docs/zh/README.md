@@ -2,6 +2,8 @@
 
 狀態：preview。Production deployment 尚未被授權。
 
+你可以從[驗證與授權](authentication.md)、[Decision 生命週期](decision-lifecycle.md)或 [API 參考](api-reference/README.md)開始閱讀。
+
 SignGate v0.1 是 `deploy_change` action 的 policy decision point。它會評估結構化 action request，並回傳三種 decision value 之一：
 
 - `ALLOW`：只有在 atomic consume 成功後，完全相同的 bound action 才可以繼續。
@@ -106,3 +108,5 @@ SignGate 會對 RFC 8785 canonical fingerprint envelope 做 SHA-256。Envelope �
 ## Commerce/x402 Status
 
 DOC-SG-001 中 commerce/x402 enforcement 不是 live。既有 commerce preflight surface 保留為 documented non-live compatibility stub。Payment enforcement、x402 purchase execution、signer integration 與獨立 commerce policy engine 都不在本 scope。
+
+下一步：[驗證與授權](authentication.md)
