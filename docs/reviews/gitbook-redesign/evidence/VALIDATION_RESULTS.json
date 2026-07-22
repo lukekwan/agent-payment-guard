@@ -1,6 +1,9 @@
 {
-  "generated_at": "2026-07-22T05:35:55.068Z",
+  "generated_at": "2026-07-22T07:12:15.916Z",
   "status": "PASS",
+  "validation_type": "DOCUMENT_STRUCTURE_VALIDATION",
+  "api_correctness_status": "NOT_EVALUATED",
+  "scope_note": "PASS covers documentation structure, navigation, local links, syntax, public/internal wording boundaries, and dry-run behavior. It does not certify route, deployed OpenAPI, catalog, pricing, authentication, sandbox, or runtime contract correctness.",
   "checks": [
     {
       "name": "required roots and manifests exist",
