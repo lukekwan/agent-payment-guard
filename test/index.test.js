@@ -17,6 +17,7 @@ import worker, {
   buildNpmPackagePreflight,
   buildNonceReadiness,
   buildOpenApiSpecPreflight,
+  buildPaymentDueDiligenceBundle,
   buildPaymentGuardDecision,
   buildPaymentProof,
   buildPredictionMarketSnapshot,
@@ -24,6 +25,7 @@ import worker, {
   buildNewPoolRisk,
   buildAgentBuyerIdentityPreflight,
   buildAgenticCommercePreflight,
+  buildAgentPaymentExecutionReadiness,
   buildAgentSpendRoutePlan,
   buildSumsubEvidenceServiceResponse,
   sampleAgenticCommercePreflightInput,
@@ -123,9 +125,11 @@ test("worker exposes discovery documents", async () => {
   assert.ok(document.paths["/v1/x402/base/usdc-receipt"]);
   assert.ok(document.paths["/v1/x402/base/wallet-counterparty"]);
   assert.ok(document.paths["/v1/x402/base/event-log-monitor"]);
+  assert.ok(document.paths["/v1/x402/base/payment-due-diligence-bundle"]);
   assert.ok(document.paths["/v1/x402/base/gas-fee-quote"]);
   assert.ok(document.paths["/v1/x402/base/nonce-readiness"]);
   assert.ok(document.paths["/v1/x402/base/stablecoin-balance"]);
+  assert.ok(document.paths["/v1/x402/agent/payment-execution-readiness"]);
   assert.ok(document.paths["/v1/x402/base/dex-market-monitor"]);
   assert.ok(document.paths["/v1/x402/prediction/market-snapshot"]);
   assert.ok(document.paths["/v1/x402/web/endpoint-preflight"]);
@@ -214,8 +218,8 @@ test("worker exposes discovery documents", async () => {
     new Request("https://example.test/catalog.json"),
   );
   const catalogDocument = await catalog.json();
-  assert.equal(catalogDocument.product_families, 83);
-  assert.equal(catalogDocument.paid_operations_observed_on_x402scan, 85);
+  assert.equal(catalogDocument.product_families, 85);
+  assert.equal(catalogDocument.paid_operations_observed_on_x402scan, 87);
   assert.equal(catalogDocument.pricing_version, "x402-pricing-v1-20260720");
   assert.ok(
     catalogDocument.products.find(
@@ -261,15 +265,15 @@ test("worker exposes discovery documents", async () => {
   const card = await worker.fetch(
     new Request("https://example.test/.well-known/agent-card.json"),
   );
-  assert.equal((await card.json()).skills.length, 83);
+  assert.equal((await card.json()).skills.length, 85);
 
   const x402Discovery = await worker.fetch(
     new Request("https://example.test/.well-known/x402"),
   );
   const x402DiscoveryDocument = await x402Discovery.json();
-  assert.equal(x402DiscoveryDocument.resources.length, 83);
-  assert.equal(x402DiscoveryDocument.operation_count, 85);
-  assert.equal(x402DiscoveryDocument.paid_operations.length, 85);
+  assert.equal(x402DiscoveryDocument.resources.length, 85);
+  assert.equal(x402DiscoveryDocument.operation_count, 87);
+  assert.equal(x402DiscoveryDocument.paid_operations.length, 87);
   assert.ok(
     x402DiscoveryDocument.paid_operations.find(
       operation =>
@@ -310,6 +314,16 @@ test("worker exposes discovery documents", async () => {
     ),
   );
   assert.ok(
+    x402DiscoveryDocument.resources.includes(
+      "https://example.test/v1/x402/base/payment-due-diligence-bundle",
+    ),
+  );
+  assert.ok(
+    x402DiscoveryDocument.resources.includes(
+      "https://example.test/v1/x402/agent/payment-execution-readiness",
+    ),
+  );
+  assert.ok(
     x402DiscoveryDocument.paid_operations.find(
       operation =>
         operation.id === "agent-buyer-policy-kit" &&
@@ -321,8 +335,8 @@ test("worker exposes discovery documents", async () => {
     new Request("https://example.test/registry.json"),
   );
   const registryDocument = await registry.json();
-  assert.equal(registryDocument.counts.product_families, 83);
-  assert.equal(registryDocument.counts.paid_operations, 85);
+  assert.equal(registryDocument.counts.product_families, 85);
+  assert.equal(registryDocument.counts.paid_operations, 87);
   assert.equal(registryDocument.pricing_version, "x402-pricing-v1-20260720");
   assert.ok(
     registryDocument.operations.find(
@@ -1069,6 +1083,63 @@ test("five new product builders return machine-readable results", () => {
     },
   });
   assert.equal(events.event_count, 1);
+});
+
+test("payment due diligence and execution readiness bundles return decision-grade output", () => {
+  const diligence = buildPaymentDueDiligenceBundle({
+    merchantAddress: "0x1111111111111111111111111111111111111111",
+    walletAddress: "0x2222222222222222222222222222222222222222",
+    tx: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    expectedRecipient: "0x1111111111111111111111111111111111111111",
+    expectedAmount: "0.025",
+    since: "2026-06-21T00:00:00Z",
+    contractAddress: "0x3333333333333333333333333333333333333333",
+    fromBlock: "47600000",
+    checks: [
+      { id: "x402-merchant-trust", status: "ok", outcome: "PASS", result: {} },
+      { id: "base-payment-proof", status: "ok", outcome: "PASS", result: {} },
+      { id: "base-wallet-activity-delta", status: "ok", outcome: "PASS", result: {} },
+      { id: "base-wallet-counterparty", status: "ok", outcome: "PASS", result: {} },
+      { id: "base-usdc-receipt", status: "ok", outcome: "PASS", result: {} },
+      { id: "base-event-log-monitor", status: "ok", outcome: "PASS", result: {} },
+    ],
+  });
+  assert.equal(diligence.product, "base-payment-due-diligence-bundle");
+  assert.equal(diligence.decision, "ALLOW");
+  assert.equal(diligence.summary.checks_ok, 6);
+
+  const readiness = buildAgentPaymentExecutionReadiness({
+    input: {
+      request_id: "demo-request-1",
+      agent_id: "demo-agent",
+      pay_to: "0x1111111111111111111111111111111111111111",
+      amount_usdc: "0.025",
+      owner: "0x2222222222222222222222222222222222222222",
+    },
+    authorization: {
+      decision: "allow",
+      max_allowed_amount_usdc: "0.100000",
+      intent: {
+        request_id: "demo-request-1",
+        agent_id: "demo-agent",
+        pay_to: "0x1111111111111111111111111111111111111111",
+        amount_usdc: "0.025000",
+      },
+      policy: { max_single_usdc: "0.100000" },
+      reasons: [],
+    },
+    stablecoinBalance: { total_estimated_value_usd: 1.25 },
+    checks: [
+      { id: "x402-merchant-trust", status: "ok", outcome: "PASS", result: {} },
+      { id: "base-approval-risk", status: "ok", outcome: "PASS", result: {} },
+      { id: "base-nonce-readiness", status: "ok", outcome: "PASS", result: {} },
+      { id: "base-gas-fee-quote", status: "ok", outcome: "PASS", result: {} },
+      { id: "base-stablecoin-balance", status: "ok", outcome: "PASS", result: {} },
+    ],
+  });
+  assert.equal(readiness.product, "agent-payment-execution-readiness");
+  assert.equal(readiness.decision, "ALLOW_PAY");
+  assert.equal(readiness.liquidity.ready, true);
 });
 
 test("five execution and market-data builders return machine-readable results", () => {

@@ -718,15 +718,6 @@ const CATALOG_METADATA = {
     price_reason:
       "Bundle-priced security decision that replaces repeated separate preflight purchases for the same capability workflow.",
   },
-  "base-payment-due-diligence-bundle": {
-    group: "base-payment-due-diligence",
-    when_to_buy:
-      "Before an agent pays a Base merchant, signs a USDC transfer, or trusts a wallet/payment workflow.",
-    returns:
-      "One workflow-level bundle with merchant trust, wallet activity, counterparty, balance, nonce, gas, optional receipt/payment-proof, approval, event-log, and contract checks.",
-    price_reason:
-      "Bundle-priced replacement for repeated separate Base payment due-diligence purchases.",
-  },
   "x402-transaction-preflight-lite": {
     group: "x402-transaction-preflight",
     when_to_buy:
@@ -787,6 +778,24 @@ const CATALOG_METADATA = {
       "Nonce readiness, gas quote, stablecoin balance, RPC provenance, and ALLOW/REQUIRE_REVIEW decision.",
     price_reason:
       "Execution-readiness bundle replaces repeated nonce, balance, and gas checks.",
+  },
+  "base-payment-due-diligence-bundle": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "When a buyer or verifier wants one paid workflow for merchant trust, payment proof, wallet activity, counterparty, receipt, and event evidence.",
+    returns:
+      "Merchant trust, payment proof when provided, wallet activity delta, counterparty summary, USDC receipt, event-log monitor results, PASS/WARN/FAIL outcomes, and an ALLOW/REQUIRE_REVIEW/DENY decision.",
+    price_reason:
+      "Bundle price is lower than buying the evidence calls separately and better matches verifier workflow behavior.",
+  },
+  "agent-payment-execution-readiness": {
+    group: "x402-payment-safety",
+    when_to_buy:
+      "Before an autonomous agent moves funds or pays an API and needs one authorization-style readiness decision.",
+    returns:
+      "Mandate and policy decision, recipient trust, spender approval risk, receipt evidence when present, nonce readiness, gas quote, stablecoin liquidity, and ALLOW_PAY/REVIEW_CREDIT/BLOCK_OR_DELAY.",
+    price_reason:
+      "Decision bundle replaces separate policy, merchant, allowance, nonce, gas, balance, and receipt checks.",
   },
   "sumsub-counterparty-compliance-bundle": {
     group: "sumsub-compliance-evidence",
@@ -3150,6 +3159,164 @@ const PRODUCTS = [
         chain: { type: "string", pattern: "^[A-Za-z0-9._:-]{2,64}$" },
       },
       required: ["transaction_id", "wallet"],
+    },
+  },
+  {
+    id: "base-payment-due-diligence-bundle",
+    path: "/v1/x402/base/payment-due-diligence-bundle",
+    price: "$0.075",
+    description:
+      "Bundle merchant trust, payment proof, wallet activity, counterparty, receipt, and event evidence before or after an agent payment.",
+    input: {
+      merchant_address: PAY_TO,
+      wallet_address: PAY_TO,
+      tx: "0xb2d1308a0df026083e5793106af4ed2342d4b517d42935e05c1fb2f91544707f",
+      expected_recipient: PAY_TO,
+      expected_amount: "0.02",
+      since: "2026-06-21T00:00:00Z",
+      contract_address: "0x4200000000000000000000000000000000000006",
+      from_block: "47600000",
+    },
+    inputSchema: {
+      properties: {
+        merchant_address: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Base merchant or API payment recipient address.",
+        },
+        wallet_address: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Base buyer or agent wallet to analyze.",
+        },
+        tx: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{64}$",
+          description: "Optional transaction hash for payment proof and receipt evidence.",
+        },
+        expected_recipient: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Expected USDC recipient for payment-proof verification.",
+        },
+        expected_amount: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Expected USDC amount for payment-proof verification.",
+        },
+        since: {
+          type: "string",
+          pattern: "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+          description: "Return wallet activity observed at or after this timestamp.",
+        },
+        contract_address: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Contract or address whose event logs should be monitored.",
+        },
+        from_block: {
+          type: "string",
+          pattern: "^[0-9]+$",
+          description: "Return event logs from this Base block onward.",
+        },
+      },
+      required: ["merchant_address", "wallet_address"],
+    },
+  },
+  {
+    id: "agent-payment-execution-readiness",
+    path: "/v1/x402/agent/payment-execution-readiness",
+    price: "$0.050",
+    description:
+      "Return a real-time agent payment readiness decision using mandate, recipient, approval, receipt, nonce, gas, and stablecoin evidence.",
+    input: {
+      request_id: "demo-request-1",
+      agent_id: "demo-agent",
+      purpose: "api_purchase",
+      pay_to: PAY_TO,
+      amount_usdc: "0.025",
+      owner: PAY_TO,
+      spender: PAY_TO,
+      token: USDC,
+      gas_limit: "21000",
+      max_single_usdc: "0.10",
+      session_budget_usdc: "1.00",
+      daily_budget_usdc: "5.00",
+    },
+    inputSchema: {
+      properties: {
+        request_id: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,128}$",
+          description: "Idempotent payment intent or policy request id.",
+        },
+        agent_id: {
+          type: "string",
+          maxLength: 120,
+          description: "Agent identity or internal principal.",
+        },
+        purpose: {
+          type: "string",
+          maxLength: 160,
+          description: "Business purpose for the payment.",
+        },
+        pay_to: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Recipient or API merchant payment address.",
+        },
+        amount_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Requested payment amount in USDC.",
+        },
+        owner: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Wallet or token owner expected to execute payment.",
+        },
+        spender: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "Address approved or expected to spend the owner's token.",
+        },
+        token: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{40}$",
+          description: "ERC-20 token used for the payment or approval check.",
+        },
+        tx: {
+          type: "string",
+          pattern: "^0x[a-fA-F0-9]{64}$",
+          description: "Optional prior transaction hash for receipt evidence.",
+        },
+        gas_limit: {
+          type: "string",
+          pattern: "^[0-9]+$",
+          description: "Expected transaction gas limit.",
+        },
+        max_single_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Policy max single payment.",
+        },
+        session_budget_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Policy session budget.",
+        },
+        daily_budget_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Policy daily budget.",
+        },
+        human_review_above_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Policy threshold that requires human review.",
+        },
+      },
+      required: ["request_id", "pay_to", "amount_usdc", "owner"],
     },
   },
 ];
@@ -7501,6 +7668,339 @@ function evidenceOutcome(check) {
     return "WARN";
   }
   return "PASS";
+}
+
+function summarizeEvidenceChecks(checks) {
+  const ok = checks.filter(check => check.status === "ok").length;
+  const unavailable = checks.filter(check => check.status === "unavailable").length;
+  const skipped = checks.filter(check => check.status === "skipped").length;
+  const failed = checks.filter(check => check.outcome === "FAIL").length;
+  const warned = checks.filter(check => check.outcome === "WARN").length;
+  return {
+    checks_total: checks.length,
+    checks_ok: ok,
+    checks_unavailable: unavailable,
+    checks_skipped: skipped,
+    evidence_passed: checks.filter(check => check.outcome === "PASS").length,
+    evidence_warned: warned,
+    evidence_failed: failed,
+  };
+}
+
+function dueDiligenceDecision(summary) {
+  if (summary.evidence_failed > 0) return "DENY";
+  if (summary.evidence_warned > 0) return "REQUIRE_REVIEW";
+  return "ALLOW";
+}
+
+export function buildPaymentDueDiligenceBundle({
+  merchantAddress,
+  walletAddress,
+  tx = "",
+  expectedRecipient = "",
+  expectedAmount = "",
+  since = "",
+  contractAddress = "",
+  fromBlock = "",
+  checks = [],
+  fetchedAt = new Date().toISOString(),
+} = {}) {
+  const summary = summarizeEvidenceChecks(checks);
+  const decision = dueDiligenceDecision(summary);
+  return {
+    product: "base-payment-due-diligence-bundle",
+    schema_version: "1.0",
+    pricing_version: PRICING_VERSION,
+    network: BASE_MAINNET,
+    evaluated_at: fetchedAt,
+    decision,
+    merchant_address: merchantAddress || null,
+    wallet_address: walletAddress || null,
+    payment_reference: {
+      tx: tx || null,
+      expected_recipient: expectedRecipient || null,
+      expected_amount_usdc: expectedAmount || null,
+    },
+    monitoring_reference: {
+      since: since || null,
+      contract_address: contractAddress || null,
+      from_block: fromBlock || null,
+    },
+    summary: {
+      ...summary,
+      recommendation:
+        decision === "ALLOW"
+          ? "Proceed with the workflow under the buyer's policy; evidence checks passed."
+          : decision === "REQUIRE_REVIEW"
+            ? "Require review because some bundle evidence is missing, unavailable, or warned."
+            : "Deny or delay because at least one bundle evidence check failed.",
+    },
+    replaces_separate_operations: [
+      "x402-merchant-trust",
+      "base-payment-proof",
+      "base-wallet-activity-delta",
+      "base-wallet-counterparty",
+      "base-usdc-receipt",
+      "base-event-log-monitor",
+    ],
+    separate_list_price_usdc: "0.186",
+    bundle_price_usdc: PRODUCTS_BY_ID["base-payment-due-diligence-bundle"]?.price ?? "$0.075",
+    checks,
+    limitations: [
+      "This bundle returns evidence and a preflight decision; it does not move funds or guarantee merchant delivery.",
+      "Skipped checks should be treated as review signals for high-value or regulated workflows.",
+    ],
+  };
+}
+
+export async function paymentDueDiligenceBundle(input, fetchImpl = fetch) {
+  const now = new Date();
+  const merchantAddress = String(input.merchant_address ?? "").trim();
+  const walletAddress = String(input.wallet_address ?? merchantAddress).trim();
+  const tx = String(input.tx ?? "").trim();
+  const expectedRecipient = String(input.expected_recipient ?? merchantAddress).trim();
+  const expectedAmount = String(input.expected_amount ?? "").trim();
+  const since =
+    String(input.since ?? "").trim() ||
+    new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const contractAddress = String(input.contract_address ?? merchantAddress).trim();
+  const fromBlock = String(input.from_block ?? "").trim();
+  const checks = [];
+  const run = async (id, enabled, fn) => {
+    if (!enabled) {
+      const check = { id, status: "skipped" };
+      checks.push({ ...check, outcome: evidenceOutcome(check) });
+      return;
+    }
+    try {
+      const check = { id, status: "ok", result: await fn() };
+      checks.push({ ...check, outcome: evidenceOutcome(check) });
+    } catch (error) {
+      const check = {
+        id,
+        status: "unavailable",
+        error: error instanceof Error ? error.message : String(error),
+      };
+      checks.push({ ...check, outcome: evidenceOutcome(check) });
+    }
+  };
+
+  await run("x402-merchant-trust", ADDRESS_PATTERN.test(merchantAddress), () =>
+    merchantTrust(merchantAddress, fetchImpl),
+  );
+  await run(
+    "base-wallet-activity-delta",
+    ADDRESS_PATTERN.test(walletAddress) && Number.isFinite(Date.parse(since)),
+    () => walletActivityDelta(walletAddress, since, fetchImpl),
+  );
+  await run("base-wallet-counterparty", ADDRESS_PATTERN.test(walletAddress), () =>
+    walletCounterparty(walletAddress, fetchImpl),
+  );
+  await run("base-usdc-receipt", TX_PATTERN.test(tx), () =>
+    usdcReceipt(tx, fetchImpl),
+  );
+  await run(
+    "base-payment-proof",
+    TX_PATTERN.test(tx) &&
+      ADDRESS_PATTERN.test(expectedRecipient) &&
+      usdcToAtomic(expectedAmount) !== null,
+    () => paymentProof(tx, expectedRecipient, expectedAmount, fetchImpl),
+  );
+  await run(
+    "base-event-log-monitor",
+    ADDRESS_PATTERN.test(contractAddress) &&
+      /^[0-9]+$/.test(fromBlock) &&
+      Number.isSafeInteger(Number(fromBlock)),
+    () => eventLogMonitor(contractAddress, fromBlock, fetchImpl),
+  );
+
+  return buildPaymentDueDiligenceBundle({
+    merchantAddress,
+    walletAddress,
+    tx,
+    expectedRecipient,
+    expectedAmount,
+    since,
+    contractAddress,
+    fromBlock,
+    checks,
+    fetchedAt: now.toISOString(),
+  });
+}
+
+export function buildAgentPaymentExecutionReadiness({
+  input = {},
+  authorization,
+  checks = [],
+  stablecoinBalance: balance = null,
+  fetchedAt = new Date().toISOString(),
+} = {}) {
+  const summary = summarizeEvidenceChecks(checks);
+  const amountUsdc = Number(input.amount_usdc ?? 0);
+  const availableUsdc = Number(balance?.total_estimated_value_usd ?? NaN);
+  const reasons = [...(authorization?.reasons ?? [])];
+  let liquidityReady = null;
+  if (Number.isFinite(amountUsdc) && Number.isFinite(availableUsdc)) {
+    liquidityReady = availableUsdc >= amountUsdc;
+    if (!liquidityReady) {
+      reasons.push(
+        guardReason(
+          "INSUFFICIENT_STABLECOIN_LIQUIDITY",
+          "medium",
+          `Observed stablecoin balance ${availableUsdc.toFixed(6)} is below requested ${amountUsdc.toFixed(6)} USDC.`,
+          "liquidity",
+        ),
+      );
+    }
+  }
+  let decision;
+  if (authorization?.decision === "deny" || summary.evidence_failed > 0) {
+    decision = "BLOCK_OR_DELAY";
+  } else if (
+    authorization?.decision === "review" ||
+    summary.evidence_warned > 0 ||
+    liquidityReady === false
+  ) {
+    decision = "REVIEW_CREDIT";
+  } else {
+    decision = "ALLOW_PAY";
+  }
+  return {
+    product: "agent-payment-execution-readiness",
+    schema_version: "1.0",
+    pricing_version: PRICING_VERSION,
+    network: BASE_MAINNET,
+    evaluated_at: fetchedAt,
+    decision,
+    signing_directive:
+      decision === "ALLOW_PAY"
+        ? "sign_with_policy_controlled_key"
+        : decision === "REVIEW_CREDIT"
+          ? "hold_for_review_or_credit_policy"
+          : "do_not_sign",
+    intent: authorization?.intent ?? {
+      request_id: input.request_id ?? null,
+      agent_id: input.agent_id ?? null,
+      pay_to: input.pay_to ?? null,
+      amount_usdc: input.amount_usdc ?? null,
+    },
+    mandate: {
+      authorization_decision: authorization?.decision ?? "unknown",
+      max_allowed_amount_usdc: authorization?.max_allowed_amount_usdc ?? null,
+      policy: authorization?.policy ?? null,
+    },
+    liquidity: {
+      checked: Boolean(balance),
+      ready: liquidityReady,
+      total_estimated_value_usd: Number.isFinite(availableUsdc)
+        ? Number(availableUsdc.toFixed(6))
+        : null,
+      required_usdc: Number.isFinite(amountUsdc) ? Number(amountUsdc.toFixed(6)) : null,
+    },
+    summary: {
+      ...summary,
+      recommendation:
+        decision === "ALLOW_PAY"
+          ? "Credential, policy, recipient, approval, gas, nonce, and liquidity checks are ready for controlled signing."
+          : decision === "REVIEW_CREDIT"
+            ? "Hold execution and route to review, treasury, or credit policy before signing."
+            : "Block or delay execution until the failed readiness signal is resolved.",
+    },
+    reasons,
+    checks,
+    replaces_separate_operations: [
+      "agent-payment-risk-gateway",
+      "x402-merchant-trust",
+      "base-approval-risk",
+      "base-usdc-receipt",
+      "base-nonce-readiness",
+      "base-gas-fee-quote",
+      "base-stablecoin-balance",
+    ],
+    bundle_price_usdc: PRODUCTS_BY_ID["agent-payment-execution-readiness"]?.price ?? "$0.050",
+    limitations: [
+      "This is a real-time authorization and readiness decision, not a lender, wallet, custodian, or transaction submitter.",
+      "Credit or treasury release remains a separate policy integration controlled by the owner.",
+    ],
+  };
+}
+
+export async function agentPaymentExecutionReadiness(input, fetchImpl = fetch) {
+  const now = new Date();
+  const owner = String(input.owner ?? input.wallet_address ?? "").trim();
+  const payTo = String(input.pay_to ?? "").trim();
+  const spender = String(input.spender ?? payTo).trim();
+  const token = String(input.token ?? USDC).trim();
+  const tx = String(input.tx ?? "").trim();
+  const gasLimit = String(input.gas_limit ?? "21000").trim();
+  const authorization = await buildAgentPaymentAuthorization({
+    input: {
+      ...input,
+      purpose: input.purpose ?? "agent_payment_execution",
+      chain: input.chain ?? BASE_MAINNET,
+      token,
+    },
+    evaluatedAt: now.toISOString(),
+  });
+  const checks = [];
+  let balance = null;
+  const run = async (id, enabled, fn) => {
+    if (!enabled) {
+      const check = { id, status: "skipped" };
+      checks.push({ ...check, outcome: evidenceOutcome(check) });
+      return null;
+    }
+    try {
+      const result = await fn();
+      const check = { id, status: "ok", result };
+      checks.push({ ...check, outcome: evidenceOutcome(check) });
+      return result;
+    } catch (error) {
+      const check = {
+        id,
+        status: "unavailable",
+        error: error instanceof Error ? error.message : String(error),
+      };
+      checks.push({ ...check, outcome: evidenceOutcome(check) });
+      return null;
+    }
+  };
+
+  await run("x402-merchant-trust", ADDRESS_PATTERN.test(payTo), () =>
+    merchantTrust(payTo, fetchImpl),
+  );
+  await run(
+    "base-approval-risk",
+    ADDRESS_PATTERN.test(token) &&
+      ADDRESS_PATTERN.test(owner) &&
+      ADDRESS_PATTERN.test(spender),
+    () => approvalRisk(token, owner, spender, fetchImpl),
+  );
+  await run("base-usdc-receipt", TX_PATTERN.test(tx), () =>
+    usdcReceipt(tx, fetchImpl),
+  );
+  await run("base-nonce-readiness", ADDRESS_PATTERN.test(owner), () =>
+    nonceReadiness(owner, fetchImpl),
+  );
+  await run(
+    "base-gas-fee-quote",
+    /^[0-9]+$/.test(gasLimit) &&
+      Number.isSafeInteger(Number(gasLimit)) &&
+      Number(gasLimit) >= 21_000 &&
+      Number(gasLimit) <= 30_000_000,
+    () => gasFeeQuote(gasLimit, fetchImpl),
+  );
+  balance = await run("base-stablecoin-balance", ADDRESS_PATTERN.test(owner), () =>
+    stablecoinBalance(owner, fetchImpl),
+  );
+
+  return buildAgentPaymentExecutionReadiness({
+    input,
+    authorization,
+    checks,
+    stablecoinBalance: balance,
+    fetchedAt: now.toISOString(),
+  });
 }
 
 async function x402TransactionPreflight(input, productId, fetchImpl = fetch) {
@@ -14615,7 +15115,45 @@ function createPaidApp() {
     }
   });
 
-  app.get(PRODUCTS[10].path, async c => {
+  app.get(PRODUCTS_BY_ID["base-payment-due-diligence-bundle"].path, async c => {
+    const input = {
+      merchant_address: c.req.query("merchant_address") ?? "",
+      wallet_address: c.req.query("wallet_address") ?? "",
+      tx: c.req.query("tx") ?? "",
+      expected_recipient: c.req.query("expected_recipient") ?? "",
+      expected_amount: c.req.query("expected_amount") ?? "",
+      since: c.req.query("since") ?? "",
+      contract_address: c.req.query("contract_address") ?? "",
+      from_block: c.req.query("from_block") ?? "",
+    };
+    if (
+      !ADDRESS_PATTERN.test(input.merchant_address) ||
+      !ADDRESS_PATTERN.test(input.wallet_address) ||
+      (input.tx && !TX_PATTERN.test(input.tx)) ||
+      (input.expected_recipient && !ADDRESS_PATTERN.test(input.expected_recipient)) ||
+      (input.expected_amount && usdcToAtomic(input.expected_amount) === null) ||
+      (input.since && !Number.isFinite(Date.parse(input.since))) ||
+      (input.contract_address && !ADDRESS_PATTERN.test(input.contract_address)) ||
+      (input.from_block &&
+        (!/^[0-9]+$/.test(input.from_block) ||
+          !Number.isSafeInteger(Number(input.from_block))))
+    ) {
+      return c.json({ error: "invalid_payment_due_diligence_bundle_input" }, 400);
+    }
+    try {
+      return c.json(await paymentDueDiligenceBundle(input));
+    } catch (error) {
+      return c.json(
+        {
+          error: "payment_due_diligence_bundle_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["base-gas-fee-quote"].path, async c => {
     const gasLimit = c.req.query("gas_limit") ?? "";
     const parsed = Number(gasLimit);
     if (
@@ -14639,7 +15177,7 @@ function createPaidApp() {
     }
   });
 
-  app.get(PRODUCTS[11].path, async c => {
+  app.get(PRODUCTS_BY_ID["base-nonce-readiness"].path, async c => {
     const address = c.req.query("address") ?? "";
     if (!ADDRESS_PATTERN.test(address)) {
       return c.json({ error: "invalid_nonce_address" }, 400);
@@ -14657,7 +15195,7 @@ function createPaidApp() {
     }
   });
 
-  app.get(PRODUCTS[12].path, async c => {
+  app.get(PRODUCTS_BY_ID["base-stablecoin-balance"].path, async c => {
     const address = c.req.query("address") ?? "";
     if (!ADDRESS_PATTERN.test(address)) {
       return c.json({ error: "invalid_stablecoin_address" }, 400);
@@ -14668,6 +15206,59 @@ function createPaidApp() {
       return c.json(
         {
           error: "upstream_unavailable",
+          message: error instanceof Error ? error.message : String(error),
+        },
+        502,
+      );
+    }
+  });
+
+  app.get(PRODUCTS_BY_ID["agent-payment-execution-readiness"].path, async c => {
+    const input = {
+      request_id: c.req.query("request_id") ?? "",
+      agent_id: c.req.query("agent_id") ?? "",
+      purpose: c.req.query("purpose") ?? "",
+      pay_to: c.req.query("pay_to") ?? "",
+      amount_usdc: c.req.query("amount_usdc") ?? "",
+      owner: c.req.query("owner") ?? "",
+      spender: c.req.query("spender") ?? "",
+      token: c.req.query("token") ?? USDC,
+      tx: c.req.query("tx") ?? "",
+      gas_limit: c.req.query("gas_limit") ?? "21000",
+      max_single_usdc: c.req.query("max_single_usdc") ?? "0.10",
+      session_budget_usdc: c.req.query("session_budget_usdc") ?? "1.00",
+      daily_budget_usdc: c.req.query("daily_budget_usdc") ?? "5.00",
+      human_review_above_usdc: c.req.query("human_review_above_usdc") ?? "",
+      risk_score: c.req.query("risk_score") ?? "0",
+      risk_labels: c.req.query("risk_labels") ?? "",
+    };
+    const gasLimit = Number(input.gas_limit);
+    if (
+      !/^[A-Za-z0-9._:-]{1,128}$/.test(input.request_id) ||
+      !ADDRESS_PATTERN.test(input.pay_to) ||
+      usdcToAtomic(input.amount_usdc) === null ||
+      !ADDRESS_PATTERN.test(input.owner) ||
+      (input.spender && !ADDRESS_PATTERN.test(input.spender)) ||
+      !ADDRESS_PATTERN.test(input.token) ||
+      (input.tx && !TX_PATTERN.test(input.tx)) ||
+      !/^[0-9]+$/.test(input.gas_limit) ||
+      !Number.isSafeInteger(gasLimit) ||
+      gasLimit < 21_000 ||
+      gasLimit > 30_000_000 ||
+      parseNonNegativeNumber(input.max_single_usdc) === null ||
+      parseNonNegativeNumber(input.session_budget_usdc) === null ||
+      parseNonNegativeNumber(input.daily_budget_usdc) === null ||
+      (input.human_review_above_usdc &&
+        parseNonNegativeNumber(input.human_review_above_usdc) === null)
+    ) {
+      return c.json({ error: "invalid_agent_payment_execution_readiness_input" }, 400);
+    }
+    try {
+      return c.json(await agentPaymentExecutionReadiness(input));
+    } catch (error) {
+      return c.json(
+        {
+          error: "agent_payment_execution_readiness_failed",
           message: error instanceof Error ? error.message : String(error),
         },
         502,
@@ -14703,7 +15294,7 @@ function createPaidApp() {
     });
   }
 
-  app.get(PRODUCTS[13].path, async c => {
+  app.get(PRODUCTS_BY_ID["base-dex-market-monitor"].path, async c => {
     const token = c.req.query("token") ?? "";
     if (!ADDRESS_PATTERN.test(token)) {
       return c.json({ error: "invalid_dex_token" }, 400);
@@ -14721,7 +15312,7 @@ function createPaidApp() {
     }
   });
 
-  app.get(PRODUCTS[14].path, async c => {
+  app.get(PRODUCTS_BY_ID["prediction-market-snapshot"].path, async c => {
     const ticker = c.req.query("ticker") ?? "";
     if (!/^[A-Za-z0-9._-]{3,160}$/.test(ticker)) {
       return c.json({ error: "invalid_prediction_market_ticker" }, 400);
