@@ -16923,6 +16923,68 @@ function bindAll(statement, values) {
   return values.length ? statement.bind(...values) : statement;
 }
 
+function csvValues(value) {
+  return String(value ?? "")
+    .split(",")
+    .map(item => item.trim())
+    .filter(Boolean);
+}
+
+function classifyPurchaseBuyer(row = {}) {
+  const purchaseCount = Number(row.purchase_count ?? 0);
+  const revenue = Number(row.revenue ?? 0);
+  const internalCount = Number(row.internal_test_count ?? 0);
+  const operations = new Set(csvValues(row.operations));
+  const sequenceCount = csvValues(row.sequence_ids).length;
+  const userAgents = String(row.user_agents ?? "").toLowerCase();
+  const uniqueUserAgentHashes = Number(row.unique_user_agent_hashes ?? 0);
+  if (internalCount > 0 && internalCount >= purchaseCount) {
+    return {
+      classification: "internal_test",
+      confidence: "high",
+      reason: "all purchases are marked internal/test",
+    };
+  }
+  if (/verifier|crawler|spider|bot|monitor|scanner/.test(userAgents)) {
+    return {
+      classification: "likely_verifier",
+      confidence: "high",
+      reason: "buyer user-agent identifies as automated verification traffic",
+    };
+  }
+  if (
+    purchaseCount >= 7 &&
+    operations.size >= 5 &&
+    uniqueUserAgentHashes <= 1 &&
+    revenue < 1
+  ) {
+    return {
+      classification: "likely_verifier",
+      confidence: "medium",
+      reason: "single buyer repeatedly purchased a broad low-price endpoint basket",
+    };
+  }
+  if (purchaseCount >= 2 && sequenceCount > 0 && operations.size >= 2) {
+    return {
+      classification: "repeat_agent_buyer",
+      confidence: "medium",
+      reason: "repeat paid buyer with multi-endpoint workflow evidence",
+    };
+  }
+  if (purchaseCount === 1) {
+    return {
+      classification: "one_off_buyer",
+      confidence: "low",
+      reason: "single attributed purchase only",
+    };
+  }
+  return {
+    classification: "unknown",
+    confidence: "low",
+    reason: "insufficient attribution data",
+  };
+}
+
 async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
   if (!db) throw new Error("purchase_db_unavailable");
   const filters = purchaseDashboardFilters(searchParams);
@@ -17047,8 +17109,11 @@ async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
            CASE WHEN payer_address IS NULL THEN NULL ELSE substr(payer_address, 1, 6) || '...' || substr(payer_address, -4) END AS payer_address_short,
            buyer_id_hash,
            user_agent_hash,
+           COUNT(DISTINCT user_agent_hash) AS unique_user_agent_hashes,
+           GROUP_CONCAT(DISTINCT user_agent) AS user_agents,
            country,
            COUNT(*) AS purchase_count,
+           SUM(CASE WHEN internal_test IS NOT NULL AND internal_test != 'unknown' THEN 1 ELSE 0 END) AS internal_test_count,
            COALESCE(SUM(CAST(COALESCE(paid_amount, price_usdc) AS REAL)), 0) AS revenue,
            MIN(COALESCE(purchased_at, created_at)) AS first_seen_at,
            MAX(COALESCE(purchased_at, created_at)) AS last_seen_at,
@@ -17134,6 +17199,7 @@ async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
            country,
            campaign,
            referrer,
+           user_agent,
            user_agent_hash
        FROM x402_purchase_events
        WHERE ${payable.where}
@@ -17224,7 +17290,27 @@ async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
       };
     }),
     bundle_conversion_rate: null,
-    buyer_attribution: buyerAttribution.results ?? [],
+    buyer_attribution: (buyerAttribution.results ?? []).map(row => ({
+      ...row,
+      ...classifyPurchaseBuyer(row),
+    })),
+    buyer_classification_summary: Object.values(
+      (buyerAttribution.results ?? []).reduce((summary, row) => {
+        const classification = classifyPurchaseBuyer(row).classification;
+        const current =
+          summary[classification] ??
+          (summary[classification] = {
+            classification,
+            attribution_group_count: 0,
+            purchase_count: 0,
+            revenue: 0,
+          });
+        current.attribution_group_count += 1;
+        current.purchase_count += Number(row.purchase_count ?? 0);
+        current.revenue += Number(row.revenue ?? 0);
+        return summary;
+      }, {}),
+    ),
     buyer_cohorts: buyerCohorts.results ?? [],
     transaction_conversion: (transactionConversion.results ?? []).map(row => ({
       ...row,
@@ -17291,9 +17377,14 @@ function purchaseDashboardHtml(data) {
       row => `<tr><td><code>${escapeHtml(row.sequence)}</code></td><td>${row.purchase_count}</td><td>${row.unique_buyers}</td><td>${row.bundle_replacement_count}</td><td>$${Number(row.separate_purchase_total ?? 0).toFixed(3)}</td><td>${escapeHtml(row.bundle_price)}</td></tr>`,
     )
     .join("");
+  const classificationRows = data.buyer_classification_summary
+    .map(
+      row => `<tr><td>${escapeHtml(row.classification)}</td><td>${row.attribution_group_count}</td><td>${row.purchase_count}</td><td>$${Number(row.revenue ?? 0).toFixed(3)}</td></tr>`,
+    )
+    .join("");
   const buyerRows = data.buyer_attribution
     .map(
-      row => `<tr><td><code>${escapeHtml(row.payer_address === "unknown" ? "" : row.payer_address)}</code></td><td><code>${escapeHtml(String(row.buyer_id_hash ?? "").slice(0, 24))}</code></td><td>${escapeHtml(row.country ?? "")}</td><td>${row.purchase_count}</td><td>$${Number(row.revenue ?? 0).toFixed(3)}</td><td>${escapeHtml(row.first_seen_at)}</td><td>${escapeHtml(row.last_seen_at)}</td><td><code>${escapeHtml(row.operations ?? "")}</code></td><td><code>${escapeHtml(String(row.sequence_ids ?? "").slice(0, 80))}</code></td></tr>`,
+      row => `<tr><td>${escapeHtml(row.classification)}</td><td>${escapeHtml(row.confidence)}</td><td>${escapeHtml(row.reason)}</td><td><code>${escapeHtml(row.payer_address === "unknown" ? "" : row.payer_address)}</code></td><td><code>${escapeHtml(String(row.buyer_id_hash ?? "").slice(0, 24))}</code></td><td>${escapeHtml(row.country ?? "")}</td><td>${row.purchase_count}</td><td>$${Number(row.revenue ?? 0).toFixed(3)}</td><td>${escapeHtml(row.first_seen_at)}</td><td>${escapeHtml(row.last_seen_at)}</td><td><code>${escapeHtml(row.operations ?? "")}</code></td><td><code>${escapeHtml(String(row.user_agents ?? "").slice(0, 80))}</code></td><td><code>${escapeHtml(String(row.sequence_ids ?? "").slice(0, 80))}</code></td></tr>`,
     )
     .join("");
   const cohortRows = data.buyer_cohorts
@@ -17308,7 +17399,7 @@ function purchaseDashboardHtml(data) {
     .join("");
   const recentRows = data.recent
     .map(
-      row => `<tr><td>${escapeHtml(row.purchased_at)}</td><td>${escapeHtml(row.operation_id)}</td><td><code>${escapeHtml(row.path)}</code></td><td>$${Number(row.paid_amount ?? 0).toFixed(3)}</td><td>${escapeHtml(row.pricing_version ?? "legacy")}</td><td><code>${escapeHtml(row.payer_address ?? row.payer_address_short ?? "")}</code></td><td><code>${escapeHtml(String(row.buyer_id_hash ?? "").slice(0, 16))}</code></td><td><code>${escapeHtml(row.sequence_id ?? "")}</code></td><td>${escapeHtml(row.internal_test ?? "unknown")}</td></tr>`,
+      row => `<tr><td>${escapeHtml(row.purchased_at)}</td><td>${escapeHtml(row.operation_id)}</td><td><code>${escapeHtml(row.path)}</code></td><td>$${Number(row.paid_amount ?? 0).toFixed(3)}</td><td>${escapeHtml(row.pricing_version ?? "legacy")}</td><td><code>${escapeHtml(row.payer_address ?? row.payer_address_short ?? "")}</code></td><td><code>${escapeHtml(String(row.buyer_id_hash ?? "").slice(0, 16))}</code></td><td><code>${escapeHtml(row.sequence_id ?? "")}</code></td><td>${escapeHtml(row.internal_test ?? "unknown")}</td><td><code>${escapeHtml(String(row.user_agent ?? "").slice(0, 80))}</code></td></tr>`,
     )
     .join("");
   const probeRows = data.recent_probes
@@ -17367,15 +17458,18 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
 <table><thead><tr><th>Pricing Version</th><th>Purchases</th><th>Revenue</th></tr></thead><tbody>${pricingRows || '<tr><td colspan="3">No purchases recorded yet.</td></tr>'}</tbody></table>
 <h2>Repeated Workflows</h2>
 <table><thead><tr><th>Sequence</th><th>Sequence Count</th><th>Unique Buyers</th><th>Bundle Replaceable</th><th>Separate Total</th><th>Bundle Price</th></tr></thead><tbody>${workflowRows || '<tr><td colspan="6">No repeated workflows recorded yet.</td></tr>'}</tbody></table>
+<h2>Buyer Classification</h2>
+<p class="muted">Heuristic labels separate verifier/crawler-style traffic from repeat buyers. Labels are evidence for triage, not billing or access-control decisions.</p>
+<table><thead><tr><th>Classification</th><th>Attribution Groups</th><th>Purchases</th><th>Revenue</th></tr></thead><tbody>${classificationRows || '<tr><td colspan="4">No classified buyers recorded yet.</td></tr>'}</tbody></table>
 <h2>Buyer Attribution</h2>
-<table><thead><tr><th>Payer Address</th><th>Buyer Hash</th><th>Country</th><th>Purchases</th><th>Revenue</th><th>First Seen</th><th>Last Seen</th><th>Operations</th><th>Sequences</th></tr></thead><tbody>${buyerRows || '<tr><td colspan="9">No attributed buyers recorded yet.</td></tr>'}</tbody></table>
+<table><thead><tr><th>Class</th><th>Confidence</th><th>Reason</th><th>Payer Address</th><th>Buyer Hash</th><th>Country</th><th>Purchases</th><th>Revenue</th><th>First Seen</th><th>Last Seen</th><th>Operations</th><th>User Agents</th><th>Sequences</th></tr></thead><tbody>${buyerRows || '<tr><td colspan="13">No attributed buyers recorded yet.</td></tr>'}</tbody></table>
 <h2>Repeat Buyer Cohorts</h2>
 <table><thead><tr><th>Cohort Date</th><th>Buyers</th><th>Repeat Buyers</th><th>Purchases</th><th>Revenue</th><th>Latest Purchase</th></tr></thead><tbody>${cohortRows || '<tr><td colspan="6">No cohorts recorded yet.</td></tr>'}</tbody></table>
 <h2>Transaction Preflight Conversion</h2>
 <p class="muted">Admin-only inference by sequence id. A payment is counted after a check when the same sequence later includes payment-proof or USDC receipt evidence.</p>
 <table><thead><tr><th>Sequence</th><th>Purchases</th><th>Preflights</th><th>Payment Evidence</th><th>Payment After Check</th><th>First Seen</th><th>Last Seen</th><th>Endpoint Sequence</th></tr></thead><tbody>${conversionRows || '<tr><td colspan="8">No transaction preflight conversion yet.</td></tr>'}</tbody></table>
 <h2>Recent Attributed Paid Calls</h2>
-<table><thead><tr><th>Time</th><th>Operation</th><th>Path</th><th>Paid</th><th>Pricing Version</th><th>Payer</th><th>Buyer Hash</th><th>Sequence</th><th>Internal/Test</th></tr></thead><tbody>${recentRows || '<tr><td colspan="9">No purchases recorded yet.</td></tr>'}</tbody></table>
+<table><thead><tr><th>Time</th><th>Operation</th><th>Path</th><th>Paid</th><th>Pricing Version</th><th>Payer</th><th>Buyer Hash</th><th>Sequence</th><th>Internal/Test</th><th>User Agent</th></tr></thead><tbody>${recentRows || '<tr><td colspan="10">No purchases recorded yet.</td></tr>'}</tbody></table>
 <h2>Recent Route Probes / Discovery Calls</h2>
 <p class="muted">These are successful HEAD/OPTIONS/discovery executions or calls without payment evidence. They are useful for x402scan registration and route interest, but they are not revenue.</p>
 <table><thead><tr><th>Time</th><th>Product</th><th>Method</th><th>Path</th><th>List Price</th><th>Country</th><th>Status</th></tr></thead><tbody>${probeRows || '<tr><td colspan="7">No route probes recorded yet.</td></tr>'}</tbody></table>
