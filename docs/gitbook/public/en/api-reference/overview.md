@@ -1,57 +1,23 @@
 ---
-description: Endpoints, schemas, and errors for the public SignGate Preview execution API.
+description: First-release SignGate service allowlist and availability boundaries.
 ---
 
-# API reference
+# API Reference
 
-The public API has two operations: create a policy decision and atomically consume an `ALLOW`.
+The first release organizes six endpoint contracts under five developer-facing services. A page may describe a verified current route, an implemented-but-unverified route, or a proposed candidate; check its availability before integration.
 
 {% hint style="info" %}
-**Primary constraint:** The public API does not provide production execution.
+Browse and copy safe samples now. Sandbox keys, an isolated sandbox Base URL, and production browser Test it are not verified.
 {% endhint %}
 
-## Base URL
+## Services
 
-```text
-$SIGNGATE_BASE_URL
-```
+- [Risk Source API](services/risk-source.md) — one candidate Address Risk endpoint; not deployed.
+- [Agent Payment Control](services/agent-payment-control.md) — one verified x402 wrapper; price conflict pending.
+- [Agentic Commerce Preflight](services/agentic-commerce.md) — one implemented compatibility route; production readiness unverified.
+- [Approval & Signer Control](services/approval-signer-control.md) — one candidate endpoint; not deployed.
+- [Merchant & x402 Trust](services/merchant-x402-trust.md) — two verified x402 wrappers.
 
-Use the Preview execution environment URL supplied by your authorized integration.
+## Contract rule
 
-## Authentication
-
-```http
-Authorization: Bearer <SIGNGATE_API_KEY>
-```
-
-## Endpoints
-
-<table data-view="cards">
-  <thead>
-    <tr>
-      <th></th>
-      <th></th>
-      <th data-hidden data-card-target data-type="content-ref"></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Create a decision</strong></td>
-      <td>POST /v1/decisions</td>
-      <td><a href="create-decision.md">create-decision.md</a></td>
-    </tr>
-    <tr>
-      <td><strong>Consume an ALLOW</strong></td>
-      <td>POST /v1/decisions/{decision_id}/consume</td>
-      <td><a href="consume-decision.md">consume-decision.md</a></td>
-    </tr>
-  </tbody>
-</table>
-
-## Reference map
-
-- [Schemas](schemas.md)
-- [Request schemas](request-schemas.md)
-- [Response schemas](response-schemas.md)
-- [Error responses](errors.md)
-- [Reason codes](reason-codes.md)
+OpenAPI-generated material never overrides the human-readable availability, authentication, billing, evidence, retry, and security notes. Candidate envelopes are non-binding and are not retrofitted onto current v1 responses.

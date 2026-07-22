@@ -1,104 +1,42 @@
 ---
-description: The policy and execution control layer for autonomous agents.
+description: Decide whether an autonomous agent may move value before execution.
 ---
 
-# Control what autonomous agents are allowed to execute.
+# Control agent value movement before it happens
 
-**Preview**
+SignGate gives agent runtimes, wallets, and payment clients an evidence-backed decision before a sensitive action executes.
 
-SignGate evaluates sensitive agent actions before execution and returns an action-bound **ALLOW**, **REQUIRE_APPROVAL**, or **DENY** decision.
+{% hint style="info" %}
+The current onboarding path is a credential-free safe sample. It does not call production, issue a sandbox key, or charge a payment.
+{% endhint %}
 
-{% tabs %}
-{% tab title="Get started" %}
-[Integrate the complete decision and consume flow](getting-started/quickstart.md).
-{% endtab %}
+[Start with a safe sample](getting-started/quickstart.md) · [Explore API services](api-reference/overview.md)
 
-{% tab title="API reference" %}
-[Review the two public endpoints](api-reference/overview.md).
-{% endtab %}
-{% endtabs %}
-
-## One decision, three outcomes
+## Five first-release services
 
 <table data-view="cards">
-  <thead>
-    <tr>
-      <th></th>
-      <th></th>
-      <th data-hidden data-card-target data-type="content-ref"></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>ALLOW</strong></td>
-      <td>The exact action may proceed only after atomic consume succeeds.</td>
-      <td><a href="concepts/decision-values.md#allow">concepts/decision-values.md#allow</a></td>
-    </tr>
-    <tr>
-      <td><strong>REQUIRE_APPROVAL</strong></td>
-      <td>Execution is paused until an authorized approval is supplied in a new decision request.</td>
-      <td><a href="concepts/decision-values.md#require_approval">concepts/decision-values.md#require_approval</a></td>
-    </tr>
-    <tr>
-      <td><strong>DENY</strong></td>
-      <td>Execution must not proceed.</td>
-      <td><a href="concepts/decision-values.md#deny">concepts/decision-values.md#deny</a></td>
-    </tr>
-  </tbody>
+<thead><tr><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th></tr></thead>
+<tbody>
+<tr><td><strong>Risk Source API</strong></td><td>Inspect address risk, labels, exposure, behavior, and evidence boundaries.</td><td><a href="api-reference/services/risk-source.md">api-reference/services/risk-source.md</a></td></tr>
+<tr><td><strong>Agent Payment Control</strong></td><td>Decide whether an agent payment may proceed, needs review, or must stop.</td><td><a href="api-reference/services/agent-payment-control.md">api-reference/services/agent-payment-control.md</a></td></tr>
+<tr><td><strong>Agentic Commerce Preflight</strong></td><td>Evaluate an agent-initiated purchase before execution.</td><td><a href="api-reference/services/agentic-commerce.md">api-reference/services/agentic-commerce.md</a></td></tr>
+<tr><td><strong>Approval &amp; Signer Control</strong></td><td>Translate an approved decision into an explicit signer directive.</td><td><a href="api-reference/services/approval-signer-control.md">api-reference/services/approval-signer-control.md</a></td></tr>
+<tr><td><strong>Merchant &amp; x402 Trust</strong></td><td>Assess merchant wallets and payment endpoints before purchase.</td><td><a href="api-reference/services/merchant-x402-trust.md">api-reference/services/merchant-x402-trust.md</a></td></tr>
+</tbody>
 </table>
 
-## How the decision flow works
+## Five-minute safe-sample path
 
-{% stepper %}
-{% step %}
-### Agent submits the exact action
-
-The request includes the target, execution parameters, mandate, and evidence.
-{% endstep %}
-
-{% step %}
-### SignGate evaluates policy and evidence
-
-SignGate authenticates the caller, validates the request, normalizes the action, and applies the active policy.
-{% endstep %}
-
-{% step %}
-### SignGate returns a decision
-
-The response binds the outcome to an action fingerprint, policy version, and expiry.
-{% endstep %}
-
-{% step %}
-### Executor verifies and consumes ALLOW
-
-The executor refuses every other result. It executes only after atomic consume returns a valid receipt.
-{% endstep %}
-{% endstepper %}
-
-## Public endpoints
-
-<table data-view="cards">
-  <thead>
-    <tr>
-      <th></th>
-      <th></th>
-      <th data-hidden data-card-target data-type="content-ref"></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Create a decision</strong></td>
-      <td>POST /v1/decisions</td>
-      <td><a href="api-reference/create-decision.md">api-reference/create-decision.md</a></td>
-    </tr>
-    <tr>
-      <td><strong>Atomically consume an ALLOW</strong></td>
-      <td>POST /v1/decisions/{decision_id}/consume</td>
-      <td><a href="api-reference/consume-decision.md">api-reference/consume-decision.md</a></td>
-    </tr>
-  </tbody>
-</table>
+1. Open the credential-free sample.
+2. View the sample request.
+3. Copy the cURL syntax.
+4. Inspect the static/sample response.
+5. Apply the service's exact decision vocabulary before continuing.
 
 {% hint style="warning" %}
-Production execution is not currently available in this preview.
+No verified sandbox key issuance flow, isolated sandbox Base URL, or authorized production browser Test it exists today.
 {% endhint %}
+
+## Find your next step
+
+[Documentation](documentation/README.md) · [API Reference](api-reference/overview.md) · [Changelog](resources/changelog.md) · [Help Center](help-center/README.md)

@@ -1,21 +1,19 @@
 ---
-description: Track public documentation and contract changes.
+description: External integration changes only.
 ---
 
 # Changelog
 
-Entries describe changes that affect public integration behavior or documentation navigation.
+This page records public contract, availability, security, and documentation changes that affect external developers. Internal project status, review rounds, and unpublished implementation work are excluded.
+
+## Entry format
+
+- Date and effective date
+- Type: Added, Changed, Deprecated, Fixed, or Security
+- Affected public endpoints
+- Breaking change: Yes or No
+- Required migration action
 
 {% hint style="info" %}
-**Primary constraint:** A documentation entry does not imply production availability.
+No public release entry is recorded until the related behavior is verified and publication is authorized.
 {% endhint %}
-
-## Preview v0.1
-
-- Public decision and consume endpoints documented.
-- Action-bound, time-limited, single-use ALLOW semantics documented.
-- English and Traditional Chinese enterprise portal structure introduced.
-
-## Compatibility
-
-Breaking contract changes require a new documented version and migration guidance.
