@@ -492,6 +492,63 @@ async function credentialDigest(rawKey, pepper = "") {
   return sha256Hex(`sgv1:${pepper}:${rawKey}`);
 }
 
+function credentialAuthorityProof(credential, predecessor = null) {
+  const project = value => value ? {
+    credential_id: value.credential_id,
+    organization_id: value.organization_id,
+    principal_id: value.principal_id,
+    principal_type: value.principal_type,
+    key_digest: value.key_digest,
+    digest_version: value.digest_version,
+    status: value.status,
+    scopes_json: value.scopes_json,
+    allowed_agent_id: value.allowed_agent_id || null,
+    allowed_environments_json: value.allowed_environments_json,
+    allowed_action_types_json: value.allowed_action_types_json,
+    allowed_services_json: value.allowed_services_json,
+    rotated_from_credential_id: value.rotated_from_credential_id || null,
+    rotation_started_at: value.rotation_started_at || null,
+    rotation_expires_at: value.rotation_expires_at || null,
+    created_at: value.created_at,
+  } : null;
+  return { credential: project(credential), predecessor: project(predecessor) };
+}
+
+function sameCredentialAuthorityProof(expected, credential, predecessor, issuedAt) {
+  if (!expected?.credential || canonicalize(expected) !== canonicalize(credentialAuthorityProof(credential, predecessor))) return false;
+  const current = expected.credential;
+  if (!["active", "rotating"].includes(current.status)) return false;
+  if (current.status !== "rotating") {
+    return !current.rotated_from_credential_id && !current.rotation_started_at && !current.rotation_expires_at && !expected.predecessor;
+  }
+  const previous = expected.predecessor;
+  const start = Date.parse(current.rotation_started_at || "");
+  const expiry = Date.parse(current.rotation_expires_at || "");
+  const currentCreated = Date.parse(current.created_at || "");
+  const predecessorCreated = Date.parse(previous?.created_at || "");
+  return Boolean(
+    previous &&
+    current.rotated_from_credential_id === previous.credential_id &&
+    previous.organization_id === current.organization_id &&
+    previous.principal_id === current.principal_id &&
+    previous.principal_type === current.principal_type &&
+    previous.credential_id !== current.credential_id &&
+    previous.rotated_from_credential_id !== current.credential_id &&
+    ["active", "rotating"].includes(previous.status) &&
+    previous.digest_version === current.digest_version &&
+    previous.allowed_agent_id === current.allowed_agent_id &&
+    previous.scopes_json === current.scopes_json &&
+    previous.allowed_environments_json === current.allowed_environments_json &&
+    previous.allowed_action_types_json === current.allowed_action_types_json &&
+    previous.allowed_services_json === current.allowed_services_json &&
+    Number.isFinite(start) && Number.isFinite(expiry) &&
+    Number.isFinite(currentCreated) && Number.isFinite(predecessorCreated) &&
+    predecessorCreated < currentCreated && currentCreated <= start &&
+    expiry > start && expiry > Date.parse(issuedAt) &&
+    expiry - start <= CREDENTIAL_ROTATION_MAX_SECONDS * 1000
+  );
+}
+
 async function authenticate(env, requiredScope, requiredPrincipalType) {
   const auth = env.request.headers.get("authorization") || "";
   const match = /^Bearer\s+(.+)$/i.exec(auth);
@@ -511,11 +568,12 @@ async function authenticate(env, requiredScope, requiredPrincipalType) {
   ) {
     throw new SignGateInputError(401, "AUTHENTICATION_FAILED", ["AUTHENTICATION_FAILED"]);
   }
+  let predecessor = null;
   if (credential.status === "rotating") {
     const rotationExpiresMs = Date.parse(credential.rotation_expires_at || "");
     const rotationStartMs = Date.parse(credential.rotation_started_at || "");
     const currentCreatedMs = Date.parse(credential.created_at || "");
-    const predecessor = credential.rotated_from_credential_id && typeof env.store.getCredentialById === "function"
+    predecessor = credential.rotated_from_credential_id && typeof env.store.getCredentialById === "function"
       ? await env.store.getCredentialById(credential.organization_id, credential.rotated_from_credential_id)
       : null;
     const predecessorCreatedMs = Date.parse(predecessor?.created_at || "");
@@ -564,7 +622,12 @@ async function authenticate(env, requiredScope, requiredPrincipalType) {
     throw new SignGateInputError(403, "AUTHORIZATION_FAILED", ["SCOPE_NOT_ALLOWED"], "", credential);
   }
   await env.store.recordCredentialUse(credential.credential_id, nowIso(env.nowMs));
-  return credential;
+  const authenticated = { ...credential };
+  Object.defineProperty(authenticated, "_credential_authority_proof", {
+    value: credentialAuthorityProof(credential, predecessor),
+    enumerable: false,
+  });
+  return authenticated;
 }
 
 function credentialAllowsAction(authenticated, input) {
@@ -692,6 +755,7 @@ async function evaluateDeployChange(input, authenticated, env, actionFingerprint
       mandate: mandate.mandate,
       target: targetAuthorization.target,
       trustedEvidence: evidence.evidence,
+      approvalGrant: structuredClone(grant),
     }];
   }
   return ["ALLOW", ["PREVIEW_DEPLOY_POLICY_PASSED"], null, {
@@ -703,6 +767,10 @@ async function evaluateDeployChange(input, authenticated, env, actionFingerprint
 
 async function decisionAuthorityProvenance(input, authenticated, env, actionFingerprint, capturedAt, decision, evaluatedAuthority = null) {
   const currentCredential = await env.store.getCredentialById(authenticated.organization_id, authenticated.credential_id);
+  const credentialProof = authenticated._credential_authority_proof;
+  const predecessor = credentialProof?.credential?.rotated_from_credential_id
+    ? await env.store.getCredentialById(authenticated.organization_id, credentialProof.credential.rotated_from_credential_id)
+    : null;
   const mandate = await env.store.getMandate(authenticated.organization_id, input.mandate.id);
   const target = await env.store.findAuthorizedTarget(authenticated.organization_id, input.action);
   const ci = input.action.parameters.ci_evidence;
@@ -712,6 +780,7 @@ async function decisionAuthorityProvenance(input, authenticated, env, actionFing
     const exactEvidence = trustedEvidence && trustedEvidence.evidence_id === (testEvidence?.id || ci?.run_id);
     if (
       !currentCredential ||
+      !sameCredentialAuthorityProof(credentialProof, currentCredential, predecessor, capturedAt) ||
       currentCredential.status !== authenticated.status ||
       currentCredential.digest_version !== authenticated.digest_version ||
       currentCredential.scopes_json !== authenticated.scopes_json ||
@@ -765,6 +834,10 @@ async function decisionAuthorityProvenance(input, authenticated, env, actionFing
       allowed_action_types: credentialJsonList(authenticated.allowed_action_types_json, "ALLOWED_ACTION_TYPES_JSON"),
       allowed_services: credentialJsonList(authenticated.allowed_services_json, "ALLOWED_SERVICES_JSON"),
       status_at_decision: authenticated.status,
+      authentication_proof_fingerprint: `sha256:${await sha256Hex(canonicalize(credentialProof))}`,
+      rotated_from_credential_id: authenticated.rotated_from_credential_id || null,
+      rotation_started_at: authenticated.rotation_started_at || null,
+      rotation_expires_at: authenticated.rotation_expires_at || null,
     },
     mandate: {
       mandate_id: mandate?.mandate_id || input.mandate.id,
@@ -803,6 +876,7 @@ async function decisionAuthorityProvenance(input, authenticated, env, actionFing
     evidence_ids: evidenceIds,
     snapshot_json: snapshotJson,
     snapshot_fingerprint: `sha256:${await sha256Hex(snapshotJson)}`,
+    credential_authority_proof: credentialProof,
   };
 }
 
@@ -822,7 +896,7 @@ async function persistDecision(input, authenticated, env, evaluated) {
   const actionFingerprint = await fingerprintDeployChange(input, authenticatedContext);
   const requestFingerprint = await semanticRequestFingerprint(input, authenticated, env, actionFingerprint);
   const boundAction = normalizeDeployChangeAction(input.action);
-  const approvalGrant = approvalGrantId ? await env.store.getApprovalGrant(authenticated.organization_id, approvalGrantId) : null;
+  const approvalGrant = approvalGrantId ? evaluatedAuthority?.approvalGrant || null : null;
   const authority = await decisionAuthorityProvenance(input, authenticated, env, actionFingerprint, issuedAt, decision, evaluatedAuthority);
   const response = {
     contract_version: SIGNGATE_CONTRACT_VERSION,
@@ -867,6 +941,8 @@ async function persistDecision(input, authenticated, env, evaluated) {
     evidence_ids_json: JSON.stringify(authority.evidence_ids),
     authority_snapshot_json: authority.snapshot_json,
     authority_snapshot_fingerprint: authority.snapshot_fingerprint,
+    credential_authority_proof: authority.credential_authority_proof,
+    approval_authority_proof: approvalGrant ? structuredClone(approvalGrant) : null,
     issued_at: issuedAt,
     expires_at: expiresAt,
     delete_after: deleteAfter,
@@ -989,7 +1065,7 @@ async function validateExecutableAuthoritySnapshot(decision) {
   }
 }
 
-function recordAuthorityMatchesCurrentSources(record, { credential, mandate, target, evidence, approvalGrant = null }) {
+function recordAuthorityMatchesCurrentSources(record, { credential, predecessor = null, mandate, target, evidence, approvalGrant = null }) {
   const snapshot = parseJsonObjectForAuthority(record.authority_snapshot_json);
   if (!snapshot) return false;
   const expectedCredential = snapshot.credential || {};
@@ -998,6 +1074,7 @@ function recordAuthorityMatchesCurrentSources(record, { credential, mandate, tar
   const expectedEvidence = Array.isArray(snapshot.trusted_evidence) ? snapshot.trusted_evidence : [];
   const actualEvidence = evidence ? [evidence] : [];
   const credentialCommit = credential &&
+    sameCredentialAuthorityProof(record.credential_authority_proof, credential, predecessor, record.issued_at) &&
     credential.organization_id === record.organization_id &&
     credential.credential_id === expectedCredential.credential_id &&
     credential.principal_id === expectedCredential.principal_id &&
@@ -1045,11 +1122,25 @@ function recordAuthorityMatchesCurrentSources(record, { credential, mandate, tar
     actualEvidence[0].action_fingerprint === expectedEvidence[0].action_fingerprint &&
     actualEvidence[0].observed_at === expectedEvidence[0].observed_at &&
     actualEvidence[0].action_fingerprint === record.action_fingerprint;
+  const expectedApproval = record.approval_authority_proof;
   const approvalCommit = !record.approval_grant_id || (
+    expectedApproval &&
     approvalGrant &&
     approvalGrant.organization_id === record.organization_id &&
-    approvalGrant.approval_grant_id === record.approval_grant_id &&
+    approvalGrant.approval_grant_id === expectedApproval.approval_grant_id &&
+    approvalGrant.approver_principal_id === expectedApproval.approver_principal_id &&
+    approvalGrant.approval_reason === expectedApproval.approval_reason &&
+    approvalGrant.binding_fingerprint === expectedApproval.binding_fingerprint &&
+    approvalGrant.authority_fingerprint === expectedApproval.authority_fingerprint &&
+    approvalGrant.original_decision_id === expectedApproval.original_decision_id &&
+    approvalGrant.action_fingerprint === expectedApproval.action_fingerprint &&
+    approvalGrant.policy_version === expectedApproval.policy_version &&
+    approvalGrant.approver_role === expectedApproval.approver_role &&
+    approvalGrant.expires_at === expectedApproval.expires_at &&
+    approvalGrant.original_decision_expires_at === expectedApproval.original_decision_expires_at &&
+    approvalGrant.status === expectedApproval.status &&
     approvalGrant.status === "AVAILABLE" &&
+    approvalGrant.approval_grant_id === record.approval_grant_id &&
     approvalGrant.original_decision_id === record.original_decision_id &&
     approvalGrant.action_fingerprint === record.action_fingerprint &&
     approvalGrant.policy_version === record.policy_version &&
@@ -1599,6 +1690,9 @@ export class MemorySignGateStore {
       const evidenceId = snapshot?.trusted_evidence?.[0]?.evidence_id;
       const current = {
         credential: [...this.credentials.values()].find(item => item.organization_id === record.organization_id && item.credential_id === record.credential_id) || null,
+        predecessor: record.credential_authority_proof?.credential?.rotated_from_credential_id
+          ? await this.getCredentialById(record.organization_id, record.credential_authority_proof.credential.rotated_from_credential_id)
+          : null,
         mandate: this.mandates.get(this.key(record.organization_id, record.mandate_id)) || null,
         target: this.authorizedTargets.get(this.key(record.organization_id, record.authorized_target_id)) || null,
         evidence: evidenceId ? this.trustedEvidence.get(this.key(record.organization_id, evidenceId)) || null : null,
@@ -1608,19 +1702,6 @@ export class MemorySignGateStore {
         throw new SignGateInputError(409, "AUTHORITY_PROVENANCE_INVALID", ["AUTHORITY_PROVENANCE_INVALID"]);
       }
     }
-    if (record.approval_grant_id && record.decision === "ALLOW") {
-      const grant = this.grants.get(this.key(record.organization_id, record.approval_grant_id));
-      if (!grant || grant.status !== "AVAILABLE") {
-        throw new SignGateInputError(409, "APPROVAL_GRANT_REUSE_MISMATCH", ["APPROVAL_GRANT_INVALID"]);
-      }
-      if (
-        grant.original_decision_id !== record.original_decision_id ||
-        Date.parse(grant.expires_at) <= Date.parse(record.issued_at) ||
-        Date.parse(grant.original_decision_expires_at) <= Date.parse(record.issued_at)
-      ) {
-        throw new SignGateInputError(409, "APPROVAL_GRANT_REUSE_MISMATCH", ["APPROVAL_GRANT_INVALID"]);
-      }
-    }
     if (this.failAudit) throw new Error("injected audit failure");
     if (record.approval_grant_id && record.decision === "ALLOW") {
       const grant = this.grants.get(this.key(record.organization_id, record.approval_grant_id));
@@ -1628,7 +1709,10 @@ export class MemorySignGateStore {
       grant.used_by_decision_id = record.decision_id;
       grant.used_request_id = record.request_id;
     }
-    this.decisions.set(this.key(record.organization_id, record.decision_id), record);
+    const persistedRecord = { ...record };
+    delete persistedRecord.credential_authority_proof;
+    delete persistedRecord.approval_authority_proof;
+    this.decisions.set(this.key(record.organization_id, record.decision_id), persistedRecord);
     this.idempotency.set(this.key(record.organization_id, record.request_id), {
       organization_id: record.organization_id,
       request_id: record.request_id,
@@ -1886,6 +1970,9 @@ export class D1SignGateStore {
   async createDecision(record) {
     const statements = [];
     if (record.decision === "ALLOW") {
+      const credentialProof = record.credential_authority_proof?.credential || {};
+      const predecessorProof = record.credential_authority_proof?.predecessor || {};
+      const approvalProof = record.approval_authority_proof || {};
       statements.push(
         this.db.prepare(
           `INSERT INTO signgate_decisions (organization_id)
@@ -1908,6 +1995,41 @@ export class D1SignGateStore {
                    AND json(c.allowed_action_types_json) = json(json_extract(expected.snapshot, '$.credential.allowed_action_types'))
                    AND json(c.allowed_services_json) = json(json_extract(expected.snapshot, '$.credential.allowed_services'))
                    AND c.allowed_agent_id IS json_extract(expected.snapshot, '$.credential.allowed_agent_id')
+                   AND c.key_digest = ?
+                   AND c.rotated_from_credential_id IS ?
+                   AND c.rotation_started_at IS ?
+                   AND c.rotation_expires_at IS ?
+                   AND c.created_at = ?
+                   AND (
+                     (? IS NULL AND c.status = 'active')
+                     OR (
+                       ? IS NOT NULL AND c.status = 'rotating'
+                       AND EXISTS (
+                         SELECT 1 FROM signgate_api_credentials p
+                         WHERE p.organization_id = ?
+                           AND p.credential_id = ?
+                           AND p.principal_id = ?
+                           AND p.principal_type = ?
+                           AND p.key_digest = ?
+                           AND p.digest_version = ?
+                           AND p.status = ?
+                           AND p.status IN ('active', 'rotating')
+                           AND json(p.scopes_json) = json(?)
+                           AND p.allowed_agent_id IS ?
+                           AND json(p.allowed_environments_json) = json(?)
+                           AND json(p.allowed_action_types_json) = json(?)
+                           AND json(p.allowed_services_json) = json(?)
+                           AND p.rotated_from_credential_id IS ?
+                           AND p.rotation_started_at IS ?
+                           AND p.rotation_expires_at IS ?
+                           AND p.created_at = ?
+                           AND p.created_at < c.created_at
+                           AND c.created_at <= c.rotation_started_at
+                           AND c.rotation_expires_at > c.rotation_started_at
+                           AND c.rotation_expires_at > ?
+                       )
+                     )
+                   )
                )
                AND EXISTS (
                  SELECT 1 FROM signgate_mandates m
@@ -1961,6 +2083,12 @@ export class D1SignGateStore {
                      AND g.action_fingerprint = ?
                      AND g.policy_version = ?
                      AND g.approver_role = 'founder'
+                     AND g.approver_principal_id = ?
+                     AND g.approval_reason = ?
+                     AND g.binding_fingerprint = ?
+                     AND g.authority_fingerprint = ?
+                     AND g.expires_at = ?
+                     AND g.original_decision_expires_at = ?
                      AND g.expires_at > ?
                      AND g.original_decision_expires_at > ?
                  )
@@ -1970,6 +2098,30 @@ export class D1SignGateStore {
           record.authority_snapshot_json,
           record.decision,
           record.organization_id,
+          credentialProof.key_digest,
+          credentialProof.rotated_from_credential_id || null,
+          credentialProof.rotation_started_at || null,
+          credentialProof.rotation_expires_at || null,
+          credentialProof.created_at,
+          credentialProof.rotated_from_credential_id || null,
+          credentialProof.rotated_from_credential_id || null,
+          predecessorProof.organization_id || null,
+          predecessorProof.credential_id || null,
+          predecessorProof.principal_id || null,
+          predecessorProof.principal_type || null,
+          predecessorProof.key_digest || null,
+          predecessorProof.digest_version || null,
+          predecessorProof.status || null,
+          predecessorProof.scopes_json || "[]",
+          predecessorProof.allowed_agent_id || null,
+          predecessorProof.allowed_environments_json || "[]",
+          predecessorProof.allowed_action_types_json || "[]",
+          predecessorProof.allowed_services_json || "[]",
+          predecessorProof.rotated_from_credential_id || null,
+          predecessorProof.rotation_started_at || null,
+          predecessorProof.rotation_expires_at || null,
+          predecessorProof.created_at || null,
+          record.issued_at,
           record.organization_id,
           record.issued_at,
           record.organization_id,
@@ -1983,6 +2135,12 @@ export class D1SignGateStore {
           record.original_decision_id,
           record.action_fingerprint,
           record.policy_version,
+          approvalProof.approver_principal_id || null,
+          approvalProof.approval_reason || null,
+          approvalProof.binding_fingerprint || null,
+          approvalProof.authority_fingerprint || null,
+          approvalProof.expires_at || null,
+          approvalProof.original_decision_expires_at || null,
           record.issued_at,
           record.issued_at,
         ),
@@ -1995,7 +2153,11 @@ export class D1SignGateStore {
            SET status = 'USED', used_by_decision_id = ?, used_request_id = ?
            WHERE organization_id = ? AND approval_grant_id = ? AND status = 'AVAILABLE'
              AND original_decision_id = ? AND action_fingerprint = ? AND policy_version = ?
-             AND approver_role = 'founder' AND expires_at > ? AND original_decision_expires_at > ?`,
+             AND approver_role = 'founder'
+             AND approver_principal_id = ? AND approval_reason = ?
+             AND binding_fingerprint = ? AND authority_fingerprint = ?
+             AND expires_at = ? AND original_decision_expires_at = ?
+             AND expires_at > ? AND original_decision_expires_at > ?`,
         ).bind(
           record.decision_id,
           record.request_id,
@@ -2004,6 +2166,12 @@ export class D1SignGateStore {
           record.original_decision_id,
           record.action_fingerprint,
           record.policy_version,
+          record.approval_authority_proof.approver_principal_id,
+          record.approval_authority_proof.approval_reason,
+          record.approval_authority_proof.binding_fingerprint,
+          record.approval_authority_proof.authority_fingerprint,
+          record.approval_authority_proof.expires_at,
+          record.approval_authority_proof.original_decision_expires_at,
           record.issued_at,
           record.issued_at,
         ),
@@ -2058,10 +2226,17 @@ export class D1SignGateStore {
         record.organization_id, record.decision_id,
       ),
     );
-    await this.db.batch(statements);
+    try {
+      await this.db.batch(statements);
+    } catch (error) {
+      if (/NOT NULL constraint failed:\s*signgate_decisions\.organization_id/i.test(String(error?.message || error))) {
+        throw new SignGateInputError(409, "AUTHORITY_PROVENANCE_INVALID", ["AUTHORITY_PROVENANCE_INVALID"]);
+      }
+      throw error;
+    }
     const created = await this.getDecision(record.organization_id, record.decision_id);
     if (!created) {
-      throw new SignGateInputError(409, "APPROVAL_GRANT_REUSE_MISMATCH", ["APPROVAL_GRANT_INVALID"]);
+      throw new SignGateInputError(409, "AUTHORITY_PROVENANCE_INVALID", ["AUTHORITY_PROVENANCE_INVALID"]);
     }
   }
   async getDecision(org, decisionId) {

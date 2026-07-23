@@ -322,7 +322,10 @@
         "resource_id": { "$ref": "#/$defs/Identifier" },
         "signer_directive": { "$ref": "#/$defs/SignerDirective" },
         "enforcement_requirements": { "$ref": "#/$defs/EnforcementRequirements" },
-        "audit_ref": { "$ref": "#/$defs/Identifier" }
+        "audit_ref": {
+          "$ref": "#/$defs/Identifier",
+          "description": "Exact byte-for-byte projection of the generic SignGate audit_id when adapted from a SignGate decision."
+        }
       },
       "allOf": [
         {

@@ -8,9 +8,11 @@ import {
   PAYMENT_DECISION_ENFORCEMENT_PROFILE_VERSION,
   PAYMENT_DECISION_REASON_REGISTRY,
   PAYMENT_DECISION_SCHEMA_VERSION,
+  SIGNGATE_PAYMENT_REASON_CODE_MAP,
   PaymentDecisionContractError,
   buildPaymentDecisionCompatibilityProjection,
   canonicalPaymentDecisionJson,
+  mapSignGateDecisionResultToPaymentDecision,
   normalizeLegacyPaymentDecision,
   normalizeLegacyPaymentDecisionResponse,
   parsePaymentDecisionJson,
@@ -211,6 +213,42 @@ test("4xx/5xx transport envelopes fail closed and 5xx never masquerades as polic
   const system = paymentDecisionTransportEnvelope(503, { code: "DENY" });
   assert.equal(system.error, "INTERNAL_INVARIANT_FAILED");
   assert.equal("decision" in system, false);
+});
+
+test("SignGate reason and audit mapping is complete, deterministic, and fail-closed", () => {
+  const nonDeny = {
+    PREVIEW_DEPLOY_POLICY_PASSED: "ALLOW",
+    APPROVAL_GRANT_ACCEPTED: "ALLOW",
+    PRODUCTION_GATE_4_REQUIRED: "REQUIRE_APPROVAL",
+    PERMISSION_CHANGE_REQUIRES_APPROVAL: "REQUIRE_APPROVAL",
+    DNS_CHANGE_REQUIRES_APPROVAL: "REQUIRE_APPROVAL",
+    CREDENTIAL_CHANGE_REQUIRES_APPROVAL: "REQUIRE_APPROVAL",
+  };
+  for (const [code, paymentCode] of Object.entries(SIGNGATE_PAYMENT_REASON_CODE_MAP)) {
+    const auditId = `audit_${code.toLowerCase()}`;
+    const mapped = mapSignGateDecisionResultToPaymentDecision({
+      decision: nonDeny[code] || "DENY",
+      reason_codes: [code],
+      audit_id: auditId,
+    });
+    assert.deepEqual(mapped.reason_codes, [paymentCode]);
+    assert.equal(mapped.audit_ref, auditId);
+  }
+  contractError(
+    () => mapSignGateDecisionResultToPaymentDecision({ decision: "DENY", reason_codes: ["UNMAPPED"], audit_id: "audit_1" }),
+    422,
+    "REASON_CODE_MAPPING_UNDEFINED",
+  );
+  contractError(
+    () => mapSignGateDecisionResultToPaymentDecision({ decision: "ALLOW", reason_codes: ["PREVIEW_DEPLOY_POLICY_PASSED"], audit_id: null }),
+    422,
+    "AUDIT_MAPPING_UNDEFINED",
+  );
+  contractError(
+    () => mapSignGateDecisionResultToPaymentDecision({ decision: "DENY", reason_codes: ["PREVIEW_DEPLOY_POLICY_PASSED"], audit_id: "audit_1" }),
+    422,
+    "REASON_CODE_MAPPING_CONTRADICTS_DECISION",
+  );
 });
 
 test("schema, prose, adapter and OpenAPI stay in candidate-unit conformance", () => {

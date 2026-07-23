@@ -110,3 +110,7 @@ components:
           type: string
           const: DENY
         audit_ref: { type: [string, "null"] }
+      x-signgate-adapter-invariants:
+        audit-mapping: "audit_ref equals source audit_id byte-for-byte"
+        unknown-reason: "fail closed with REASON_CODE_MAPPING_UNDEFINED"
+        authority-race: "Memory and D1 return HTTP 409 AUTHORITY_PROVENANCE_INVALID"

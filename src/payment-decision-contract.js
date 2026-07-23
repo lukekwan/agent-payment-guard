@@ -11,6 +11,30 @@ export const PAYMENT_DECISION_ENFORCEMENT_PROFILE_VERSION = "payment_decision_en
 export const PAYMENT_DECISION_REQUEST_DOMAIN = "signgate.payment_decision_contract.v1.candidate.request\n";
 export const PAYMENT_DECISION_EVIDENCE_DOMAIN = "signgate.payment_decision_contract.v1.candidate.evidence\n";
 export const PAYMENT_DECISION_ADAPTER_STATUS = "PREVIEW_PLANNED_NOT_DEPLOYED";
+export const SIGNGATE_PAYMENT_REASON_CODE_MAP = Object.freeze({
+  PREVIEW_DEPLOY_POLICY_PASSED: "POLICY_MATCH",
+  APPROVAL_GRANT_ACCEPTED: "POLICY_MATCH",
+  PRODUCTION_GATE_4_REQUIRED: "APPROVAL_REQUIRED_BY_POLICY",
+  PERMISSION_CHANGE_REQUIRES_APPROVAL: "APPROVAL_REQUIRED_BY_POLICY",
+  DNS_CHANGE_REQUIRES_APPROVAL: "APPROVAL_REQUIRED_BY_POLICY",
+  CREDENTIAL_CHANGE_REQUIRES_APPROVAL: "APPROVAL_REQUIRED_BY_POLICY",
+  MANDATE_REFERENCE_UNKNOWN: "REQUEST_INVALID",
+  MANDATE_ORGANIZATION_MISMATCH: "REQUEST_INVALID",
+  MANDATE_REVOKED: "REQUEST_INVALID",
+  MANDATE_STATUS_INVALID: "REQUEST_INVALID",
+  MANDATE_EXPIRED: "REQUEST_INVALID",
+  MANDATE_SCOPE_INVALID: "REQUEST_INVALID",
+  CREDENTIAL_TARGET_NOT_ALLOWED: "REQUEST_INVALID",
+  TARGET_NOT_AUTHORIZED: "REQUEST_INVALID",
+  SECRET_CHANGE_NOT_SUPPORTED_V0_1: "REQUEST_INVALID",
+  TESTS_FAILED: "EVIDENCE_INVALID",
+  MANDATORY_EVIDENCE_MISSING: "EVIDENCE_INVALID",
+  EVIDENCE_SOURCE_UNSUPPORTED: "EVIDENCE_INVALID",
+  EVIDENCE_COMMIT_MISMATCH: "EVIDENCE_INVALID",
+  EVIDENCE_SUBJECT_MISMATCH: "EVIDENCE_INVALID",
+  EVIDENCE_OBSERVED_IN_FUTURE: "EVIDENCE_INVALID",
+  EVIDENCE_STALE: "EVIDENCE_INVALID",
+});
 
 export const PAYMENT_DECISION_JSON_LIMITS = Object.freeze({
   maxBytes: 64 * 1024,
@@ -360,6 +384,31 @@ export function buildPaymentDecisionCompatibilityProjection(request, { organizat
       context: structuredClone(validated.context),
       authorization: validated.authorization ? structuredClone(validated.authorization) : undefined,
     },
+  };
+}
+
+export function mapSignGateDecisionResultToPaymentDecision({ decision, reason_codes: reasonCodes, audit_id: auditId }) {
+  if (!["ALLOW", "REQUIRE_APPROVAL", "DENY"].includes(decision) || !Array.isArray(reasonCodes) || reasonCodes.length === 0) {
+    throw new PaymentDecisionContractError(422, "SIGNGATE_ADAPTER_INPUT_INVALID", "Decision and reason_codes are required");
+  }
+  const mapped = reasonCodes.map(code => {
+    const paymentCode = SIGNGATE_PAYMENT_REASON_CODE_MAP[code];
+    if (!paymentCode) {
+      throw new PaymentDecisionContractError(422, "REASON_CODE_MAPPING_UNDEFINED", `No Payment Decision mapping for ${code}`);
+    }
+    return paymentCode;
+  });
+  const uniqueMapped = [...new Set(mapped)];
+  if (!uniqueMapped.every(code => DECISION_REASON_CODES[decision].has(code))) {
+    throw new PaymentDecisionContractError(422, "REASON_CODE_MAPPING_CONTRADICTS_DECISION", "Mapped reason contradicts decision");
+  }
+  if (typeof auditId !== "string" || auditId.length === 0) {
+    throw new PaymentDecisionContractError(422, "AUDIT_MAPPING_UNDEFINED", "SignGate audit_id is required");
+  }
+  return {
+    decision,
+    reason_codes: uniqueMapped,
+    audit_ref: auditId,
   };
 }
 

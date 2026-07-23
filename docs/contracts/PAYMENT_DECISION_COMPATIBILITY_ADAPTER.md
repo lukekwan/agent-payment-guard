@@ -57,6 +57,29 @@ loss, policy-version loss, decision-ID loss, or any mapping that discards
 evidence provenance. It never object-spreads unvalidated input into canonical
 output and never invents a production mandate.
 
+## Deterministic reason and audit mapping
+
+The adapter MUST translate every generic SignGate decision reason through this
+closed mapping. Unknown values are an adapter error; they MUST NOT be dropped,
+renamed, or replaced by a fallback.
+
+| Generic SignGate reason | Payment Decision reason |
+| --- | --- |
+| `PREVIEW_DEPLOY_POLICY_PASSED`, `APPROVAL_GRANT_ACCEPTED` | `POLICY_MATCH` |
+| `PRODUCTION_GATE_4_REQUIRED`, `PERMISSION_CHANGE_REQUIRES_APPROVAL`, `DNS_CHANGE_REQUIRES_APPROVAL`, `CREDENTIAL_CHANGE_REQUIRES_APPROVAL` | `APPROVAL_REQUIRED_BY_POLICY` |
+| `MANDATE_REFERENCE_UNKNOWN`, `MANDATE_ORGANIZATION_MISMATCH`, `MANDATE_REVOKED`, `MANDATE_STATUS_INVALID`, `MANDATE_EXPIRED`, `MANDATE_SCOPE_INVALID`, `CREDENTIAL_TARGET_NOT_ALLOWED`, `TARGET_NOT_AUTHORIZED`, `SECRET_CHANGE_NOT_SUPPORTED_V0_1` | `REQUEST_INVALID` |
+| `TESTS_FAILED`, `MANDATORY_EVIDENCE_MISSING`, `EVIDENCE_SOURCE_UNSUPPORTED`, `EVIDENCE_COMMIT_MISMATCH`, `EVIDENCE_SUBJECT_MISMATCH`, `EVIDENCE_OBSERVED_IN_FUTURE`, `EVIDENCE_STALE` | `EVIDENCE_INVALID` |
+
+For a successful generic decision projection, `audit_ref` MUST equal the source
+`audit_id` byte-for-byte. A missing audit identifier, an unmapped reason, or a
+mapped reason that contradicts the decision family is fail-closed.
+
+Authority races at final persistence have the same caller-visible transport in
+Memory and D1: HTTP `409`, error class `AUTHORITY_PROVENANCE_INVALID`, and
+machine-readable reason `AUTHORITY_PROVENANCE_INVALID`. D1 uses an atomic batch
+guard; its sentinel constraint failure is translated to this transport only
+after the whole batch has rolled back.
+
 The code projection returns `deployment_authorized=false` and
 `adapter_status=PREVIEW_PLANNED_NOT_DEPLOYED`. Those values are invariant until
 a separately authorized implementation phase changes the product boundary.

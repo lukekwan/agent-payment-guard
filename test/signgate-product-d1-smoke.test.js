@@ -385,8 +385,9 @@ test("DEV-SG-001 D1 atomic authority boundary rejects every post-provenance/pre-
     const { env, db, mf } = await d1Env({ StoreClass: PreInsertMutatingD1Store, mutateBeforeInsert });
     try {
       const [status, body] = await postDecision(request(`d1_atomic_authority_${name}`), env);
-      assert.equal(status, 500, name);
-      assert.equal(body.error, "INTERNAL_INVARIANT_FAILED", name);
+      assert.equal(status, 409, name);
+      assert.equal(body.error, "AUTHORITY_PROVENANCE_INVALID", name);
+      assert.deepEqual(body.reason_codes, ["AUTHORITY_PROVENANCE_INVALID"], name);
       assert.equal("decision" in body, false, name);
       assert.equal(await tableCount(db, "signgate_decisions"), 0, name);
       assert.equal(await tableCount(db, "signgate_request_idempotency"), 0, name);
@@ -424,14 +425,113 @@ test("DEV-SG-001 D1 atomic authority boundary rejects every post-provenance/pre-
     const [status, body] = await postDecision(request("d1_atomic_approved", { touches_permissions: true }, [
       { id: grant.approval_grant_id, type: "approval_grant", source: "founder", status: "approved", original_decision_id: review.decision_id },
     ]), env);
-    assert.equal(status, 500);
-    assert.equal(body.error, "INTERNAL_INVARIANT_FAILED");
+    assert.equal(status, 409);
+    assert.equal(body.error, "AUTHORITY_PROVENANCE_INVALID");
+    assert.deepEqual(body.reason_codes, ["AUTHORITY_PROVENANCE_INVALID"]);
     assert.equal((await db.prepare("SELECT status FROM signgate_approval_grants WHERE approval_grant_id = ?").bind(grant.approval_grant_id).first()).status, "AVAILABLE");
     assert.equal(await tableCount(db, "signgate_decisions", "approval_grant_id = ?", [grant.approval_grant_id]), 0);
     assert.equal(await tableCount(db, "signgate_request_idempotency", "request_id = 'd1_atomic_approved'"), 0);
     assert.equal(await tableCount(db, "signgate_audit_events", "request_id = 'd1_atomic_approved' AND event_type = 'decision.created'"), 0);
   } finally {
     await mf.dispose();
+  }
+});
+
+test("DEV-SG-001 D1 final persistence binds credential proof and rotation chain with Memory-equivalent transport", async () => {
+  const mutations = {
+    key_digest: (db, record) => db.prepare(
+      "UPDATE signgate_api_credentials SET key_digest = ? WHERE organization_id = ? AND credential_id = ?",
+    ).bind("0".repeat(64), record.organization_id, record.credential_id).run(),
+    rotation_expiry: (db, record) => db.prepare(
+      "UPDATE signgate_api_credentials SET rotation_expires_at = ? WHERE organization_id = ? AND credential_id = ?",
+    ).bind("2026-07-18T23:59:59.000Z", record.organization_id, record.credential_id).run(),
+    predecessor_revocation: (db, record) => db.prepare(
+      "UPDATE signgate_api_credentials SET status = 'revoked' WHERE organization_id = ? AND credential_id = ?",
+    ).bind(record.organization_id, record.credential_authority_proof.predecessor.credential_id).run(),
+    predecessor_replacement: (db, record) => db.prepare(
+      "UPDATE signgate_api_credentials SET principal_id = 'replacement_agent' WHERE organization_id = ? AND credential_id = ?",
+    ).bind(record.organization_id, record.credential_authority_proof.predecessor.credential_id).run(),
+    rotation_constraint_mismatch: (db, record) => db.prepare(
+      "UPDATE signgate_api_credentials SET allowed_services_json = ? WHERE organization_id = ? AND credential_id = ?",
+    ).bind(JSON.stringify(["other-worker"]), record.organization_id, record.credential_authority_proof.predecessor.credential_id).run(),
+  };
+  for (const [name, mutateBeforeInsert] of Object.entries(mutations)) {
+    const { env, db, store, mf } = await d1Env({ StoreClass: PreInsertMutatingD1Store, mutateBeforeInsert });
+    try {
+      const predecessor = await createPreviewCredential({
+        store,
+        rawKey: `sg_previous_${name}_abcdefghijklmnopqrstuvwxyz123456`,
+        organizationId: ORG,
+        principalId: "codex_dev_01",
+        principalType: "agent",
+        scopes: ["decision:create:deploy_change"],
+        nowMs: NOW - 60_000,
+        pepper: env.SIGNGATE_API_KEY_PEPPER,
+      });
+      await db.prepare(
+        `UPDATE signgate_api_credentials
+         SET status = 'rotating', rotated_from_credential_id = ?, rotation_started_at = ?, rotation_expires_at = ?
+         WHERE organization_id = ? AND key_prefix = ?`,
+      ).bind(predecessor.credential_id, "2026-07-19T00:00:00.000Z", "2026-07-19T00:05:00.000Z", ORG, AGENT_KEY.slice(0, 12)).run();
+      const [status, body] = await postDecision(request(`d1_rotation_${name}`), env);
+      assert.equal(status, 409, name);
+      assert.equal(body.error, "AUTHORITY_PROVENANCE_INVALID", name);
+      assert.deepEqual(body.reason_codes, ["AUTHORITY_PROVENANCE_INVALID"], name);
+      assert.equal(await tableCount(db, "signgate_decisions"), 0, name);
+      assert.equal(await tableCount(db, "signgate_request_idempotency"), 0, name);
+      assert.equal(await tableCount(db, "signgate_consume_receipts"), 0, name);
+      assert.equal(await tableCount(db, "signgate_audit_events", "event_type = 'decision.created'"), 0, name);
+    } finally {
+      await mf.dispose();
+    }
+  }
+});
+
+test("DEV-SG-001 D1 final persistence binds every approval authority participant", async () => {
+  const mutations = {
+    approval_revocation: db => db.prepare("UPDATE signgate_approval_grants SET status = 'REVOKED' WHERE status = 'AVAILABLE'").run(),
+    approver_principal_replacement: db => db.prepare("UPDATE signgate_approval_grants SET approver_principal_id = 'founder_replacement' WHERE status = 'AVAILABLE'").run(),
+    approval_reason_replacement: db => db.prepare("UPDATE signgate_approval_grants SET approval_reason = 'FOUNDER_APPROVED_PREVIEW_DNS_CHANGE' WHERE status = 'AVAILABLE'").run(),
+    binding_fingerprint_mutation: db => db.prepare("UPDATE signgate_approval_grants SET binding_fingerprint = ? WHERE status = 'AVAILABLE'").bind(`sha256:${"1".repeat(64)}`).run(),
+    authority_fingerprint_mutation: db => db.prepare("UPDATE signgate_approval_grants SET authority_fingerprint = ? WHERE status = 'AVAILABLE'").bind(`sha256:${"2".repeat(64)}`).run(),
+  };
+  for (const [name, mutateBeforeInsert] of Object.entries(mutations)) {
+    const { env, db, mf } = await d1Env({ StoreClass: PreInsertMutatingD1Store, mutateBeforeInsert });
+    try {
+      const reviewRequest = await bindTrustedEvidence(db, request(`d1_approval_review_${name}`, { touches_permissions: true }));
+      const [, review] = await postDecision(reviewRequest, env);
+      assert.equal(review.decision, "REQUIRE_APPROVAL", name);
+      const grantResponse = await handleFounderApprovalGrantRequest(new Request("https://signgate.test/internal/dogfood/founder-approval-grants", {
+        method: "POST",
+        headers: { authorization: `Bearer ${FOUNDER_KEY}` },
+        body: JSON.stringify({
+          contract_version: SIGNGATE_CONTRACT_VERSION,
+          organization_id: ORG,
+          original_decision_id: review.decision_id,
+          action_fingerprint: review.action_fingerprint,
+          policy_version: SIGNGATE_POLICY_VERSION,
+          approval_reason: "FOUNDER_APPROVED_PREVIEW_PERMISSION_CHANGE",
+          expires_at: GRANT_FUTURE,
+        }),
+      }), env);
+      assert.equal(grantResponse.status, 200, name);
+      const grant = await grantResponse.json();
+      const decisionsBefore = await tableCount(db, "signgate_decisions");
+      const idempotencyBefore = await tableCount(db, "signgate_request_idempotency");
+      const successAuditBefore = await tableCount(db, "signgate_audit_events", "event_type = 'decision.created'");
+      const [status, body] = await postDecision(request(`d1_approval_allow_${name}`, { touches_permissions: true }, [
+        { id: grant.approval_grant_id, type: "approval_grant", source: "founder", status: "approved", original_decision_id: review.decision_id },
+      ]), env);
+      assert.equal(status, 409, name);
+      assert.equal(body.error, "AUTHORITY_PROVENANCE_INVALID", name);
+      assert.deepEqual(body.reason_codes, ["AUTHORITY_PROVENANCE_INVALID"], name);
+      assert.equal(await tableCount(db, "signgate_decisions"), decisionsBefore, name);
+      assert.equal(await tableCount(db, "signgate_request_idempotency"), idempotencyBefore, name);
+      assert.equal(await tableCount(db, "signgate_audit_events", "event_type = 'decision.created'"), successAuditBefore, name);
+      assert.equal(await tableCount(db, "signgate_consume_receipts"), 0, name);
+    } finally {
+      await mf.dispose();
+    }
   }
 });
 

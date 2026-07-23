@@ -91,6 +91,12 @@ Every response carries independent `decision_id`, trusted-clock
 fingerprints, minimal mandate/merchant/resource references, reason registry and
 policy versions, signer directive, and enforcement requirements.
 
+Compatibility projections use the closed reason mapping defined in
+`PAYMENT_DECISION_COMPATIBILITY_ADAPTER.md`. They preserve generic `audit_id` as
+Payment Decision `audit_ref` exactly. Missing or unknown mappings are contract
+errors, never silent fallbacks. Final-persistence authority races are exposed
+consistently by Memory and D1 as HTTP 409 `AUTHORITY_PROVENANCE_INVALID`.
+
 `ALLOW` requires:
 
 - `signer_directive.action=ALLOW_SIGNING_AFTER_ENFORCEMENT`;
