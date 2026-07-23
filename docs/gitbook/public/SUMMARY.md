@@ -15,7 +15,7 @@
 ## API REFERENCE
 
 * [API Reference overview](en/api-reference/overview.md)
-* [Public OpenAPI JSON](openapi/signgate-public-v0.1.openapi.json)
+* [Public OpenAPI JSON](https://raw.githubusercontent.com/lukekwan/agent-payment-guard/docs/doc-sg-001-api-docs/docs/gitbook/public/openapi/signgate-public-v0.1.openapi.json)
 * [Risk Source API](en/api-reference/services/risk-source.md)
 * [Agent Payment Control](en/api-reference/services/agent-payment-control.md)
 * [Agentic Commerce Preflight](en/api-reference/services/agentic-commerce.md)

@@ -39,4 +39,4 @@ No verified sandbox key issuance flow, isolated sandbox Base URL, or authorized 
 
 ## Find your next step
 
-[Documentation](documentation/README.md) · [API Reference](api-reference/overview.md) · [Public OpenAPI JSON](../openapi/signgate-public-v0.1.openapi.json) · [Changelog](resources/changelog.md) · [Help Center](help-center/README.md) · [Contact us](resources/support.md#contact-us)
+[Documentation](documentation/README.md) · [API Reference](api-reference/overview.md) · [Public OpenAPI JSON](https://raw.githubusercontent.com/lukekwan/agent-payment-guard/docs/doc-sg-001-api-docs/docs/gitbook/public/openapi/signgate-public-v0.1.openapi.json) · [Changelog](resources/changelog.md) · [Help Center](help-center/README.md) · [Contact us](resources/support.md#contact-us)

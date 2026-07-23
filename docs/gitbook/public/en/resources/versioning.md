@@ -20,4 +20,4 @@ The response policy version must be included unchanged in consume and validated 
 
 ## OpenAPI
 
-The [public OpenAPI 3.1 specification](../../openapi/signgate-public-v0.1.openapi.json) is the machine-readable source for public schemas and operations.
+The [public OpenAPI 3.1 specification](https://raw.githubusercontent.com/lukekwan/agent-payment-guard/docs/doc-sg-001-api-docs/docs/gitbook/public/openapi/signgate-public-v0.1.openapi.json) is the machine-readable source for public schemas and operations.

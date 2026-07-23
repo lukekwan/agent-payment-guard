@@ -20,7 +20,7 @@ Browse and copy safe samples now. Sandbox keys, an isolated sandbox Base URL, an
 
 ## OpenAPI
 
-- [Public OpenAPI JSON](../../openapi/signgate-public-v0.1.openapi.json)
+- [Public OpenAPI JSON](https://raw.githubusercontent.com/lukekwan/agent-payment-guard/docs/doc-sg-001-api-docs/docs/gitbook/public/openapi/signgate-public-v0.1.openapi.json)
 
 The public OpenAPI file is readable as JSON and only describes developer-facing contract surfaces.
 

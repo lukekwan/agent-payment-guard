@@ -55,4 +55,4 @@ Authorization: Bearer <SIGNGATE_API_KEY>
 - [Response schemas](response-schemas.md)
 - [Error responses](errors.md)
 - [Reason codes](reason-codes.md)
-- [Public OpenAPI JSON](../../openapi/signgate-public-v0.1.openapi.json)
+- [Public OpenAPI JSON](https://raw.githubusercontent.com/lukekwan/agent-payment-guard/docs/doc-sg-001-api-docs/docs/gitbook/public/openapi/signgate-public-v0.1.openapi.json)
