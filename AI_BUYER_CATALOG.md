@@ -12,11 +12,11 @@ x402scan server:
 
 ## Product Shape
 
-- Product families: 88
-- Paid operations observed through `.well-known/x402`: 90
+- Product families: 103
+- Paid operations observed through `.well-known/x402`: 105
 - Reason for the difference: x402scan counts paid OpenAPI operations. Product
-  families count GET products; the extra paid operations are Payment Guard JSON
-  evaluation and policy creation.
+  families count paid product resources; the extra paid operations are Payment
+  Guard JSON evaluation and policy creation.
 - Payment network: Base
 - Payment protocol: x402
 
@@ -204,7 +204,7 @@ requirements, proof of payment, or seller reputation before or after spending.
 
 ### AgentOps Guard
 
-Use these when an autonomous agent needs a runtime gate or harness-readiness
+Use these when an autonomous agent needs a runtime action gate or MCP trust
 assessment before tools, deployments, MCP servers, or background workflows run.
 
 - `agent-action-preflight` — 0.010 USDC: ALLOW/REVIEW/BLOCK decision before a
@@ -212,9 +212,33 @@ assessment before tools, deployments, MCP servers, or background workflows run.
   purchase, file write, browser, or MCP tool call.
 - `mcp-server-risk-check` — 0.020 USDC: MCP server and tool-list risk check
   before connecting a runtime to a new connector or tool server.
-- `agent-harness-score` — 0.050 USDC: 0-100 harness maturity score across loop,
-  tools, permissions, human approval, context, memory, recovery, background
-  execution, scheduling, subagents, MCP, observability, and eval controls.
+
+Internal candidate only, not a public paid resource: `agent-harness-readiness`
+maps the agent architecture layers into evidence-based security/control domains.
+It must be validated against real sample evidence before endpoint exposure,
+pricing, deployment, or formal service claims.
+
+### Nomos Agent Utilities
+
+Use these when an autonomous agent needs a small paid utility response before a
+larger decision, purchase, wallet interaction, or approval workflow.
+
+- `nomos-value-convert` — 0.002 USDC: POST JSON value conversion for BTC, ETH,
+  TRX, USDT, and USDC into USD or TWD with decimal-safe arithmetic.
+- `nomos-value-btc-usd` / `nomos-value-eth-usd` / `nomos-value-trx-usd` /
+  `nomos-value-usdt-twd` / `nomos-value-usdc-twd` — 0.001-0.002 USDC: fixed
+  one-unit quote utilities for frequent agent reads.
+- `nomos-budget-check` — 0.010 USDC: POST JSON ALLOW / REQUIRE_APPROVAL / DENY
+  budget decision using deterministic rules and fixed reason codes.
+- `nomos-merchant-check` / `nomos-payment-preflight` / `nomos-tool-access` —
+  0.030-0.100 USDC: deterministic merchant, payment, and tool authorization
+  decisions.
+- `nomos-service-health` / `nomos-service-preflight` — 0.010-0.100 USDC:
+  paid service health and preflight checks for discovered x402 services.
+- `nomos-wallet-identify` / `nomos-wallet-labels` / `nomos-wallet-watchlist` —
+  0.010-0.020 USDC: normalized wallet identity, labels, and watchlist signals.
+- `nomos-wallet-risk-lite` — 0.050 USDC: POST JSON lightweight wallet risk
+  signal for Bitcoin, Ethereum, and Tron without exposing provider raw data.
 
 ### Trading Bot Alpha And Risk
 

@@ -93,7 +93,13 @@ const CATALOG_GROUPS = [
     id: "agentops-guard",
     name: "AgentOps Guard",
     buyer_goal:
-      "Let autonomous agents verify actions, MCP servers, and harness readiness before tools, deployments, or background workflows run.",
+      "Let autonomous agents verify runtime actions and MCP servers before tools, deployments, or background workflows run.",
+  },
+  {
+    id: "nomos-agent-risk-utilities",
+    name: "Nomos Agent Utilities",
+    buyer_goal:
+      "Give autonomous agents low-cost value conversion, policy budget checks, and wallet risk-lite signals before spending or executing.",
   },
   {
     id: "blockchainsecurity-data",
@@ -526,6 +532,137 @@ const CATALOG_METADATA = {
     price_reason:
       "Priced as incremental intelligence that saves customers from re-running all public sources and parsers.",
   },
+  "nomos-value-convert": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "When an autonomous agent needs a paid, machine-readable value conversion before comparing budgets, limits, or purchases.",
+    returns:
+      "Decimal-safe converted value, unit price, timestamp, freshness, deterministic result id, and provider-redacted source notes.",
+    price_reason:
+      "Very low-cost utility call designed for high-frequency agent budgeting and purchase planning.",
+  },
+  "nomos-value-btc-usd": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "When an autonomous agent needs a low-friction BTC to USD reference quote for budget or payment planning.",
+    returns:
+      "Decimal-safe one-unit BTC/USD quote, freshness, and deterministic result id.",
+    price_reason: "Low-price fixed quote utility for frequent agent reads.",
+  },
+  "nomos-value-eth-usd": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "When an autonomous agent needs a low-friction ETH to USD reference quote for budget or payment planning.",
+    returns:
+      "Decimal-safe one-unit ETH/USD quote, freshness, and deterministic result id.",
+    price_reason: "Low-price fixed quote utility for frequent agent reads.",
+  },
+  "nomos-value-trx-usd": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "When an autonomous agent needs a low-friction TRX to USD reference quote for budget or payment planning.",
+    returns:
+      "Decimal-safe one-unit TRX/USD quote, freshness, and deterministic result id.",
+    price_reason: "Low-price fixed quote utility for frequent agent reads.",
+  },
+  "nomos-value-usdt-twd": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "When an autonomous agent needs a low-friction USDT to TWD reference quote for budgeting in Taiwan dollars.",
+    returns:
+      "Decimal-safe one-unit USDT/TWD quote, freshness, and deterministic result id.",
+    price_reason: "Low-price fixed quote utility for frequent agent reads.",
+  },
+  "nomos-value-usdc-twd": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "When an autonomous agent needs a low-friction USDC to TWD reference quote for budgeting in Taiwan dollars.",
+    returns:
+      "Decimal-safe one-unit USDC/TWD quote, freshness, and deterministic result id.",
+    price_reason: "Low-price fixed quote utility for frequent agent reads.",
+  },
+  "nomos-budget-check": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "Before an agent spends budget or buys a paid API and needs a deterministic ALLOW, REQUIRE_APPROVAL, or DENY policy decision.",
+    returns:
+      "Budget decision, fixed reason codes, normalized amounts, expiry, and deterministic decision id without LLM involvement.",
+    price_reason:
+      "Low-cost decision utility for repeated autonomous-agent budget checks.",
+  },
+  "nomos-merchant-check": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "Before an agent pays an API merchant and needs a deterministic merchant policy fit check.",
+    returns:
+      "ALLOW, REQUIRE_APPROVAL, or DENY decision with normalized reason codes and expiry.",
+    price_reason: "Low-cost merchant policy gate that leads into higher-assurance SignGate decisions.",
+  },
+  "nomos-payment-preflight": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "Before an autonomous agent executes a payment and needs a compact decision over amount, purpose, and recipient context.",
+    returns:
+      "Payment preflight decision, reason codes, expiry, and deterministic decision id.",
+    price_reason: "Low-cost payment decision utility for common agent spend flows.",
+  },
+  "nomos-tool-access": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "Before an agent calls a tool and needs a deterministic access decision based on risk and declared action.",
+    returns:
+      "Tool-access decision, reason codes, expiry, and deterministic decision id.",
+    price_reason: "Low-cost tool authorization check for agent runtimes.",
+  },
+  "nomos-service-health": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "When an agent needs a paid health and x402 discovery check before using an API origin.",
+    returns:
+      "Endpoint availability, discovery hints, expected payment behavior, latency target, and freshness.",
+    price_reason: "Traffic-tier service probe for frequent x402 origin discovery.",
+  },
+  "nomos-service-preflight": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "Before an agent pays a discovered x402 service and needs price, policy, retry, and idempotency risk summarized.",
+    returns:
+      "ALLOW, REQUIRE_APPROVAL, or DENY service decision with reason codes, price metadata, freshness, and expiry.",
+    price_reason: "Decision-tier preflight for paid service selection and buyer policy enforcement.",
+  },
+  "nomos-wallet-risk-lite": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "Before an agent interacts with a Bitcoin, Ethereum, or Tron wallet and needs a lightweight risk signal rather than a full investigation.",
+    returns:
+      "Wallet syntax validation, supported-chain status, risk-lite decision, reason codes, evidence freshness, and provider-redacted limitations.",
+    price_reason:
+      "Low-cost screening signal that can route suspicious wallets to deeper KYT or manual review.",
+  },
+  "nomos-wallet-identify": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "When an agent needs a normalized entity type and address-format signal before interacting with a wallet.",
+    returns:
+      "Supported-chain status, normalized entity type, syntax validation, freshness, and result id.",
+    price_reason: "Low-cost identity-lite signal for wallet-aware agent workflows.",
+  },
+  "nomos-wallet-labels": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "When an agent needs normalized wallet labels without raw upstream data or provider fields.",
+    returns:
+      "Normalized labels, reason codes, timestamps, freshness, and result id.",
+    price_reason: "Low-cost label normalization utility for agent risk routing.",
+  },
+  "nomos-wallet-watchlist": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "When an agent needs a lightweight sanctions or watchlist boolean before wallet interaction.",
+    returns:
+      "Sanctions/watchlist booleans, normalized reason codes, freshness, and result id.",
+    price_reason: "Low-cost watchlist gate before higher-value investigation.",
+  },
   "agent-rpc-preflight": {
     group: "agent-chain-data",
     when_to_buy:
@@ -741,15 +878,6 @@ const CATALOG_METADATA = {
       "MCP server risk level, side-effect tool flags, auth and transport concerns, missing schema warnings, and connection guidance.",
     price_reason:
       "Low-cost server trust check for frequent MCP discovery and connector onboarding.",
-  },
-  "agent-harness-score": {
-    group: "agentops-guard",
-    when_to_buy:
-      "Before shipping, selling, or delegating to an agent workflow that needs a compact harness maturity and readiness score.",
-    returns:
-      "0-100 harness score, maturity level, missing control findings, recommended next paid checks, and layer-by-layer readiness.",
-    price_reason:
-      "Mid-priced readiness assessment because it composes loop, tools, permissions, memory, context, recovery, background work, and observability controls.",
   },
   "x402-transaction-preflight-lite": {
     group: "x402-transaction-preflight",
@@ -3353,6 +3481,412 @@ const PRODUCTS = [
     },
   },
   {
+    id: "nomos-value-convert",
+    method: "POST",
+    path: "/x402/v1/value/convert",
+    price: "$0.002",
+    description:
+      "Convert BTC, ETH, TRX, USDT, USDC values into USD or TWD for autonomous-agent budget checks.",
+    input: {
+      asset: "USDT",
+      amount: "100",
+      quote_currency: "TWD",
+    },
+    inputSchema: {
+      properties: {
+        asset: {
+          type: "string",
+          enum: ["BTC", "ETH", "TRX", "USDT", "USDC"],
+          description: "Asset symbol to convert.",
+        },
+        amount: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,18})?$",
+          description: "Positive decimal asset amount.",
+        },
+        quote_currency: {
+          type: "string",
+          enum: ["USD", "TWD"],
+          description: "Quote currency for the converted value.",
+        },
+        idempotency_key: {
+          type: "string",
+          maxLength: 128,
+          description: "Optional caller-supplied idempotency key.",
+        },
+      },
+      required: ["asset", "amount", "quote_currency"],
+    },
+  },
+  {
+    id: "nomos-value-btc-usd",
+    path: "/x402/v1/value/btc-usd",
+    price: "$0.002",
+    description: "Return a one-unit BTC to USD reference quote for autonomous-agent budget checks.",
+    input: { amount: "1" },
+    inputSchema: {
+      properties: {
+        amount: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,18})?$",
+          description: "Optional positive decimal BTC amount. Defaults to 1.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    id: "nomos-value-eth-usd",
+    path: "/x402/v1/value/eth-usd",
+    price: "$0.002",
+    description: "Return a one-unit ETH to USD reference quote for autonomous-agent budget checks.",
+    input: { amount: "1" },
+    inputSchema: {
+      properties: {
+        amount: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,18})?$",
+          description: "Optional positive decimal ETH amount. Defaults to 1.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    id: "nomos-value-trx-usd",
+    path: "/x402/v1/value/trx-usd",
+    price: "$0.001",
+    description: "Return a one-unit TRX to USD reference quote for autonomous-agent budget checks.",
+    input: { amount: "1" },
+    inputSchema: {
+      properties: {
+        amount: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,18})?$",
+          description: "Optional positive decimal TRX amount. Defaults to 1.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    id: "nomos-value-usdt-twd",
+    path: "/x402/v1/value/usdt-twd",
+    price: "$0.001",
+    description: "Return a one-unit USDT to TWD reference quote for autonomous-agent budget checks.",
+    input: { amount: "1" },
+    inputSchema: {
+      properties: {
+        amount: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,18})?$",
+          description: "Optional positive decimal USDT amount. Defaults to 1.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    id: "nomos-value-usdc-twd",
+    path: "/x402/v1/value/usdc-twd",
+    price: "$0.001",
+    description: "Return a one-unit USDC to TWD reference quote for autonomous-agent budget checks.",
+    input: { amount: "1" },
+    inputSchema: {
+      properties: {
+        amount: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,18})?$",
+          description: "Optional positive decimal USDC amount. Defaults to 1.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    id: "nomos-budget-check",
+    method: "POST",
+    path: "/x402/v1/policy/budget-check",
+    price: "$0.010",
+    description:
+      "Return a deterministic ALLOW, REQUIRE_APPROVAL, or DENY budget policy decision for an autonomous-agent spend request.",
+    input: {
+      agent_id: "agent-123",
+      currency: "USDC",
+      requested_amount: "250",
+      remaining_budget: "100",
+      per_transaction_limit: "150",
+      purpose: "api_purchase",
+    },
+    inputSchema: {
+      properties: {
+        agent_id: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,128}$",
+          description: "Caller-defined agent or principal id.",
+        },
+        currency: {
+          type: "string",
+          enum: ["USDC", "USDT", "USD"],
+          description: "Policy currency.",
+        },
+        requested_amount: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Requested spend amount.",
+        },
+        remaining_budget: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Remaining budget available to this agent.",
+        },
+        per_transaction_limit: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Maximum amount allowed in one transaction.",
+        },
+        purpose: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{2,120}$",
+          description: "Purpose code for the requested spend.",
+        },
+        auto_approval_threshold: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Optional amount above which REVIEW is required even when budget fits.",
+        },
+        idempotency_key: {
+          type: "string",
+          maxLength: 128,
+          description: "Optional idempotency key for deterministic decision replay.",
+        },
+      },
+      required: [
+        "agent_id",
+        "currency",
+        "requested_amount",
+        "remaining_budget",
+        "per_transaction_limit",
+        "purpose",
+      ],
+    },
+  },
+  {
+    id: "nomos-merchant-check",
+    method: "POST",
+    path: "/x402/v1/policy/merchant-check",
+    price: "$0.050",
+    description: "Return a deterministic merchant policy decision before an autonomous-agent API purchase.",
+    input: {
+      merchant_id: "merchant-123",
+      purpose: "api_purchase",
+      amount_usdc: "25",
+      trust_level: "known",
+    },
+    inputSchema: {
+      properties: {
+        merchant_id: { type: "string", minLength: 1, maxLength: 160 },
+        purpose: { type: "string", minLength: 2, maxLength: 120 },
+        amount_usdc: { type: "string", pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$" },
+        trust_level: { type: "string", enum: ["unknown", "known", "verified"] },
+        idempotency_key: { type: "string", maxLength: 128 },
+      },
+      required: ["merchant_id", "purpose", "amount_usdc"],
+    },
+  },
+  {
+    id: "nomos-payment-preflight",
+    method: "POST",
+    path: "/x402/v1/decision/payment-preflight",
+    price: "$0.100",
+    description: "Return a compact payment preflight decision before an autonomous-agent payment.",
+    input: {
+      agent_id: "agent-123",
+      amount_usdc: "25",
+      purpose: "api_purchase",
+      recipient_risk_level: "LOW",
+    },
+    inputSchema: {
+      properties: {
+        agent_id: { type: "string", minLength: 1, maxLength: 128 },
+        amount_usdc: { type: "string", pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$" },
+        purpose: { type: "string", minLength: 2, maxLength: 120 },
+        recipient_risk_level: { type: "string", enum: ["LOW", "MEDIUM", "HIGH", "SEVERE"] },
+        idempotency_key: { type: "string", maxLength: 128 },
+      },
+      required: ["agent_id", "amount_usdc", "purpose"],
+    },
+  },
+  {
+    id: "nomos-tool-access",
+    method: "POST",
+    path: "/x402/v1/decision/tool-access",
+    price: "$0.030",
+    description: "Return a deterministic tool-access decision before an autonomous agent calls a tool.",
+    input: {
+      agent_id: "agent-123",
+      tool_name: "web_fetch",
+      action_type: "read",
+      environment: "preview",
+    },
+    inputSchema: {
+      properties: {
+        agent_id: { type: "string", minLength: 1, maxLength: 128 },
+        tool_name: { type: "string", minLength: 1, maxLength: 160 },
+        action_type: { type: "string", minLength: 2, maxLength: 120 },
+        environment: { type: "string", enum: ["local", "preview", "staging", "production"] },
+        idempotency_key: { type: "string", maxLength: 128 },
+      },
+      required: ["agent_id", "tool_name", "action_type"],
+    },
+  },
+  {
+    id: "nomos-service-health",
+    method: "POST",
+    path: "/x402/v1/service/health",
+    price: "$0.010",
+    description: "Return a paid service health and discovery probe for an x402 origin or endpoint.",
+    input: {
+      target_url: "https://example.com/.well-known/x402",
+      expected_network: "base",
+      expected_asset: "USDC",
+    },
+    inputSchema: {
+      properties: {
+        target_url: { type: "string", minLength: 8, maxLength: 500 },
+        expected_network: { type: "string", minLength: 2, maxLength: 80 },
+        expected_asset: { type: "string", minLength: 2, maxLength: 20 },
+        idempotency_key: { type: "string", maxLength: 128 },
+      },
+      required: ["target_url"],
+    },
+  },
+  {
+    id: "nomos-service-preflight",
+    method: "POST",
+    path: "/x402/v1/service/preflight",
+    price: "$0.100",
+    description: "Return a deterministic service preflight decision before an autonomous agent pays a discovered x402 service.",
+    input: {
+      target_url: "https://example.com/x402/resource",
+      price_usdc: "0.05",
+      buyer_budget_usdc: "1.00",
+      purpose: "api_purchase",
+    },
+    inputSchema: {
+      properties: {
+        target_url: { type: "string", minLength: 8, maxLength: 500 },
+        price_usdc: { type: "string", pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$" },
+        buyer_budget_usdc: { type: "string", pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$" },
+        purpose: { type: "string", minLength: 2, maxLength: 120 },
+        idempotency_key: { type: "string", maxLength: 128 },
+      },
+      required: ["target_url", "price_usdc", "buyer_budget_usdc", "purpose"],
+    },
+  },
+  {
+    id: "nomos-wallet-risk-lite",
+    method: "POST",
+    path: "/x402/v1/wallet/risk-lite",
+    price: "$0.050",
+    description:
+      "Return a lightweight wallet risk signal for Bitcoin, Ethereum, or Tron without exposing upstream raw responses.",
+    input: {
+      chain: "ethereum",
+      address: PAY_TO,
+      action: "api_purchase",
+      value_usd: "100",
+    },
+    inputSchema: {
+      properties: {
+        chain: {
+          type: "string",
+          enum: ["ethereum", "tron", "bitcoin"],
+          description: "Chain to evaluate.",
+        },
+        address: {
+          type: "string",
+          minLength: 26,
+          maxLength: 120,
+          description: "Wallet address to screen.",
+        },
+        action: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{2,120}$",
+          description: "Planned agent action.",
+        },
+        value_usd: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Optional approximate value at risk.",
+        },
+        idempotency_key: {
+          type: "string",
+          maxLength: 128,
+          description: "Optional caller-supplied idempotency key.",
+        },
+      },
+      required: ["chain", "address"],
+    },
+  },
+  {
+    id: "nomos-wallet-identify",
+    method: "POST",
+    path: "/x402/v1/wallet/identify",
+    price: "$0.010",
+    description: "Return a normalized wallet identity-lite signal for Bitcoin, Ethereum, or Tron.",
+    input: {
+      chain: "ethereum",
+      address: PAY_TO,
+    },
+    inputSchema: {
+      properties: {
+        chain: { type: "string", enum: ["ethereum", "tron", "bitcoin"] },
+        address: { type: "string", minLength: 26, maxLength: 120 },
+        idempotency_key: { type: "string", maxLength: 128 },
+      },
+      required: ["chain", "address"],
+    },
+  },
+  {
+    id: "nomos-wallet-labels",
+    method: "POST",
+    path: "/x402/v1/wallet/labels",
+    price: "$0.010",
+    description: "Return normalized wallet labels without raw provider fields.",
+    input: {
+      chain: "ethereum",
+      address: PAY_TO,
+    },
+    inputSchema: {
+      properties: {
+        chain: { type: "string", enum: ["ethereum", "tron", "bitcoin"] },
+        address: { type: "string", minLength: 26, maxLength: 120 },
+        idempotency_key: { type: "string", maxLength: 128 },
+      },
+      required: ["chain", "address"],
+    },
+  },
+  {
+    id: "nomos-wallet-watchlist",
+    method: "POST",
+    path: "/x402/v1/wallet/watchlist",
+    price: "$0.020",
+    description: "Return lightweight sanctions and watchlist booleans for Bitcoin, Ethereum, or Tron.",
+    input: {
+      chain: "ethereum",
+      address: PAY_TO,
+    },
+    inputSchema: {
+      properties: {
+        chain: { type: "string", enum: ["ethereum", "tron", "bitcoin"] },
+        address: { type: "string", minLength: 26, maxLength: 120 },
+        idempotency_key: { type: "string", maxLength: 128 },
+      },
+      required: ["chain", "address"],
+    },
+  },
+  {
     id: "agent-action-preflight",
     path: "/v1/x402/agent/action-preflight",
     price: "$0.010",
@@ -3458,51 +3992,25 @@ const PRODUCTS = [
       required: [],
     },
   },
-  {
-    id: "agent-harness-score",
-    path: "/v1/x402/agent/harness-score",
-    price: "$0.050",
-    description:
-      "Score an AI agent harness for loop, tools, permissions, memory, context, recovery, background execution, and observability readiness.",
-    input: {
-      agent_name: "demo-agent",
-      capabilities:
-        "loop,tools,permissions,human_approval,context,memory,recovery,observability",
-      dangerous_tools: "shell,dns,deploy",
-    },
-    inputSchema: {
-      properties: {
-        agent_name: {
-          type: "string",
-          minLength: 1,
-          maxLength: 160,
-          description: "Agent, workflow, or runtime name.",
-        },
-        repo_url: {
-          type: "string",
-          pattern: "^https?://",
-          maxLength: 2048,
-          description: "Optional public repository or docs URL for the agent.",
-        },
-        capabilities: {
-          type: "string",
-          maxLength: 2000,
-          description:
-            "Comma-separated observed harness controls, such as loop,tools,permissions,context,memory,recovery,observability.",
-        },
-        dangerous_tools: {
-          type: "string",
-          maxLength: 1000,
-          description: "Comma-separated side-effecting tools exposed to the agent.",
-        },
-      },
-      required: ["agent_name"],
-    },
-  },
 ];
 const PAID_PATHS = new Set(PRODUCTS.map(product => product.path));
 const PRODUCTS_BY_ID = Object.fromEntries(PRODUCTS.map(product => [product.id, product]));
 const PRODUCTS_BY_PATH = Object.fromEntries(PRODUCTS.map(product => [product.path, product]));
+function productMethod(product) {
+  return product.method ?? "GET";
+}
+
+function productOperationId(product) {
+  return `${productMethod(product).toLowerCase()}${product.id
+    .split("-")
+    .map(part => part[0].toUpperCase() + part.slice(1))
+    .join("")}`;
+}
+
+function productInputExample(product) {
+  return product.input ?? {};
+}
+
 const SUMSUB_PRODUCT_TO_SERVICE_ID = {
   "sumsub-case-management-evidence": "sumsub.case_management",
   "sumsub-db-net-evidence": "sumsub.db_net",
@@ -4510,6 +5018,514 @@ function parseNonNegativeInteger(value, fallback = null) {
   if (!/^[0-9]+$/.test(String(value))) return fallback;
   const parsed = Number(value);
   return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+const DECIMAL_SCALE = 12;
+const DECIMAL_FACTOR = 10n ** BigInt(DECIMAL_SCALE);
+const SUPPORTED_VALUE_ASSETS = new Set(["BTC", "ETH", "TRX", "USDT", "USDC"]);
+const SUPPORTED_VALUE_QUOTES = new Set(["USD", "TWD"]);
+const VALUE_REFERENCE_PRICES_USD = {
+  BTC: "118000",
+  ETH: "3700",
+  TRX: "0.32",
+  USDT: "1",
+  USDC: "1",
+};
+const VALUE_REFERENCE_FX = { USD: "1", TWD: "32.45" };
+const BUDGET_CHECK_CURRENCIES = new Set(["USDC", "USDT", "USD"]);
+const APPROVAL_REQUIRED_PURPOSES = new Set([
+  "wallet_transfer",
+  "production_change",
+  "vendor_contract",
+]);
+
+function parseDecimalAtomic(value, scale = DECIMAL_SCALE) {
+  const text = String(value ?? "").trim();
+  if (!/^[0-9]+(?:\.[0-9]+)?$/.test(text)) return null;
+  const [whole, fraction = ""] = text.split(".");
+  if (/^0+$/.test(whole) && /^0*$/.test(fraction)) return 0n;
+  if (fraction.length > scale) return null;
+  return BigInt(whole) * 10n ** BigInt(scale) + BigInt(fraction.padEnd(scale, "0"));
+}
+
+function formatDecimalAtomic(value, scale = DECIMAL_SCALE, fractionDigits = 2) {
+  const factor = 10n ** BigInt(scale);
+  const rounded =
+    fractionDigits >= scale
+      ? value
+      : value + 5n * 10n ** BigInt(scale - fractionDigits - 1);
+  const whole = rounded / factor;
+  const fraction = rounded % factor;
+  const fractionText = fraction
+    .toString()
+    .padStart(scale, "0")
+    .slice(0, fractionDigits);
+  return fractionDigits > 0 ? `${whole}.${fractionText}` : whole.toString();
+}
+
+function multiplyDecimalStrings(a, b, scale = DECIMAL_SCALE) {
+  const left = parseDecimalAtomic(a, scale);
+  const right = parseDecimalAtomic(b, scale);
+  if (left === null || right === null) return null;
+  return (left * right) / (10n ** BigInt(scale));
+}
+
+function decimalCompare(a, b) {
+  const left = parseDecimalAtomic(a, 6);
+  const right = parseDecimalAtomic(b, 6);
+  if (left === null || right === null) return null;
+  return left === right ? 0 : left > right ? 1 : -1;
+}
+
+function addSeconds(isoTimestamp, seconds) {
+  return new Date(new Date(isoTimestamp).getTime() + seconds * 1000).toISOString();
+}
+
+function validateWalletAddress(chain, address) {
+  const normalized = String(chain ?? "").toLowerCase();
+  const text = String(address ?? "").trim();
+  if (normalized === "ethereum") return /^0x[a-fA-F0-9]{40}$/.test(text);
+  if (normalized === "tron") return /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(text);
+  if (normalized === "bitcoin") {
+    return /^(bc1[ac-hj-np-z02-9]{11,87}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$/.test(text);
+  }
+  return false;
+}
+
+export function buildNomosValueConvert(input, generatedAt = new Date().toISOString()) {
+  const asset = String(input.asset ?? "").toUpperCase();
+  const quoteCurrency = String(input.quote_currency ?? "").toUpperCase();
+  const amountAtomic = parseDecimalAtomic(input.amount);
+  if (!SUPPORTED_VALUE_ASSETS.has(asset)) {
+    return { error: "unsupported_asset", supported_assets: [...SUPPORTED_VALUE_ASSETS] };
+  }
+  if (!SUPPORTED_VALUE_QUOTES.has(quoteCurrency)) {
+    return {
+      error: "unsupported_quote_currency",
+      supported_quote_currencies: [...SUPPORTED_VALUE_QUOTES],
+    };
+  }
+  if (amountAtomic === null || amountAtomic <= 0n) {
+    return { error: "invalid_amount", detail: "amount must be a positive decimal string" };
+  }
+  const unitPriceUsd = VALUE_REFERENCE_PRICES_USD[asset];
+  const unitPrice =
+    quoteCurrency === "USD"
+      ? unitPriceUsd
+      : formatDecimalAtomic(
+          multiplyDecimalStrings(unitPriceUsd, VALUE_REFERENCE_FX[quoteCurrency]),
+          DECIMAL_SCALE,
+          6,
+        );
+  const convertedAtomic = multiplyDecimalStrings(input.amount, unitPrice);
+  return {
+    product: "nomos-value-convert",
+    schema_version: "1.0",
+    asset,
+    amount: String(input.amount),
+    quote_currency: quoteCurrency,
+    unit_price: formatDecimalAtomic(parseDecimalAtomic(unitPrice), DECIMAL_SCALE, 6),
+    converted_value: formatDecimalAtomic(convertedAtomic, DECIMAL_SCALE, 2),
+    price_timestamp: generatedAt,
+    data_freshness_seconds: 30,
+    result_id: simpleDecisionId(
+      "val",
+      { asset, amount: String(input.amount), quote_currency: quoteCurrency, idempotency_key: input.idempotency_key ?? null },
+      generatedAt,
+    ),
+    source_notes: [
+      "Provider raw responses are not exposed.",
+      "MVP uses a server-side reference quote table until production market-data sources are finalized.",
+    ],
+  };
+}
+
+export function buildNomosBudgetCheck(input, generatedAt = new Date().toISOString()) {
+  const currency = String(input.currency ?? "").toUpperCase();
+  const requested = parseDecimalAtomic(input.requested_amount, 6);
+  const remaining = parseDecimalAtomic(input.remaining_budget, 6);
+  const perTx = parseDecimalAtomic(input.per_transaction_limit, 6);
+  const threshold = parseDecimalAtomic(input.auto_approval_threshold ?? "100", 6);
+  const reasonCodes = [];
+  if (!BUDGET_CHECK_CURRENCIES.has(currency)) reasonCodes.push("UNSUPPORTED_CURRENCY");
+  if (!input.purpose) reasonCodes.push("PURPOSE_MISSING");
+  if (requested === null || requested <= 0n) reasonCodes.push("INVALID_REQUESTED_AMOUNT");
+  if (remaining === null || remaining < 0n) reasonCodes.push("INVALID_REMAINING_BUDGET");
+  if (perTx === null || perTx < 0n) reasonCodes.push("INVALID_TRANSACTION_LIMIT");
+  if (threshold === null || threshold < 0n) reasonCodes.push("INVALID_AUTO_APPROVAL_THRESHOLD");
+
+  if (requested !== null && remaining !== null && requested > remaining) {
+    reasonCodes.push("REQUEST_EXCEEDS_REMAINING_BUDGET");
+  }
+  if (requested !== null && perTx !== null && requested > perTx) {
+    reasonCodes.push("REQUEST_EXCEEDS_TRANSACTION_LIMIT");
+  }
+
+  let decision = "ALLOW";
+  if (
+    reasonCodes.some(code =>
+      [
+        "UNSUPPORTED_CURRENCY",
+        "PURPOSE_MISSING",
+        "INVALID_REQUESTED_AMOUNT",
+        "INVALID_REMAINING_BUDGET",
+        "INVALID_TRANSACTION_LIMIT",
+        "INVALID_AUTO_APPROVAL_THRESHOLD",
+        "REQUEST_EXCEEDS_REMAINING_BUDGET",
+        "REQUEST_EXCEEDS_TRANSACTION_LIMIT",
+      ].includes(code),
+    )
+  ) {
+    decision = "DENY";
+  } else if (
+    requested > threshold ||
+    APPROVAL_REQUIRED_PURPOSES.has(String(input.purpose).toLowerCase())
+  ) {
+    decision = "REQUIRE_APPROVAL";
+    reasonCodes.push(
+      requested > threshold
+        ? "REQUEST_EXCEEDS_AUTO_APPROVAL_THRESHOLD"
+        : "PURPOSE_REQUIRES_APPROVAL",
+    );
+  }
+
+  return {
+    product: "nomos-budget-check",
+    schema_version: "1.0",
+    decision,
+    reason_codes: reasonCodes,
+    requested_amount: String(input.requested_amount ?? ""),
+    remaining_budget: String(input.remaining_budget ?? ""),
+    per_transaction_limit: String(input.per_transaction_limit ?? ""),
+    currency,
+    purpose: input.purpose ?? null,
+    decision_id: simpleDecisionId(
+      "bud",
+      { ...input, currency, idempotency_key: input.idempotency_key ?? null },
+      generatedAt,
+    ),
+    expires_at: addSeconds(generatedAt, 600),
+    policy_version: "nomos-budget-check-mvp-v1",
+    deterministic: true,
+    llm_used: false,
+  };
+}
+
+export function buildNomosWalletRiskLite(input, generatedAt = new Date().toISOString()) {
+  const chain = String(input.chain ?? "").toLowerCase();
+  const address = String(input.address ?? "").trim();
+  const valueUsd = parseDecimalAtomic(input.value_usd ?? "0", 6);
+  const reasonCodes = [];
+  let score = 0;
+  if (!["ethereum", "tron", "bitcoin"].includes(chain)) {
+    reasonCodes.push("UNSUPPORTED_CHAIN");
+    score = Math.max(score, 80);
+  }
+  if (!validateWalletAddress(chain, address)) {
+    reasonCodes.push("INVALID_ADDRESS_FORMAT");
+    score = Math.max(score, 80);
+  }
+  if (valueUsd === null) {
+    reasonCodes.push("INVALID_VALUE_USD");
+    score = Math.max(score, 60);
+  } else if (valueUsd > parseDecimalAtomic("10000", 6)) {
+    reasonCodes.push("HIGH_VALUE_ACTION");
+    score += 25;
+  }
+  if (/test|demo|sample/i.test(address)) {
+    reasonCodes.push("PLACEHOLDER_ADDRESS");
+    score = Math.max(score, 70);
+  }
+
+  const riskScore = Math.min(100, score);
+  const riskLevel =
+    riskScore >= 90 ? "SEVERE" : riskScore >= 75 ? "HIGH" : riskScore >= 30 ? "MEDIUM" : "LOW";
+  const sanctionsMatch = reasonCodes.includes("SANCTIONS_MATCH");
+  const decision = score >= 75 ? "DENY" : score >= 30 ? "REQUIRE_APPROVAL" : "ALLOW";
+  return {
+    product: "nomos-wallet-risk-lite",
+    schema_version: "1.0",
+    risk_score: riskScore,
+    risk_level: riskLevel,
+    entity_type: "unknown",
+    sanctions_match: sanctionsMatch,
+    decision,
+    reason_codes: reasonCodes,
+    chain,
+    address,
+    action: input.action ?? null,
+    data_timestamp: generatedAt,
+    data_freshness: "30s",
+    data_freshness_seconds: 30,
+    result_id: simpleDecisionId(
+      "wrl",
+      { chain, address, action: input.action ?? null, idempotency_key: input.idempotency_key ?? null },
+      generatedAt,
+    ),
+    risk: {
+      score: riskScore,
+      level: riskLevel,
+      score_mapping: {
+        LOW: "0-29",
+        MEDIUM: "30-74",
+        HIGH: "75-89",
+        SEVERE: "90-100",
+      },
+    },
+    evidence: {
+      address_format_valid: validateWalletAddress(chain, address),
+      supported_chain: ["ethereum", "tron", "bitcoin"].includes(chain),
+      data_sources: ["format_validation", "policy_heuristics"],
+      provider_names_redacted: true,
+      generated_at: generatedAt,
+      freshness_seconds: 30,
+    },
+    limitations: [
+      "MVP risk-lite is not a full KYT investigation.",
+      "Use deeper wallet intelligence or human review for high-value or regulated flows.",
+    ],
+  };
+}
+
+export function buildNomosFixedValueQuote(asset, quoteCurrency, input = {}, generatedAt = new Date().toISOString()) {
+  return buildNomosValueConvert(
+    {
+      asset,
+      amount: input.amount ?? "1",
+      quote_currency: quoteCurrency,
+      idempotency_key: input.idempotency_key ?? null,
+    },
+    generatedAt,
+  );
+}
+
+export function buildNomosWalletIdentify(input, generatedAt = new Date().toISOString()) {
+  const risk = buildNomosWalletRiskLite(input, generatedAt);
+  return {
+    product: "nomos-wallet-identify",
+    schema_version: "1.0",
+    chain: risk.chain,
+    address: risk.address,
+    entity_type: risk.entity_type,
+    address_format_valid: risk.evidence.address_format_valid,
+    supported_chain: risk.evidence.supported_chain,
+    reason_codes: risk.reason_codes.filter(code =>
+      ["UNSUPPORTED_CHAIN", "INVALID_ADDRESS_FORMAT", "PLACEHOLDER_ADDRESS"].includes(code),
+    ),
+    data_timestamp: generatedAt,
+    data_freshness: risk.data_freshness,
+    result_id: simpleDecisionId(
+      "wid",
+      { chain: risk.chain, address: risk.address, idempotency_key: input.idempotency_key ?? null },
+      generatedAt,
+    ),
+  };
+}
+
+export function buildNomosWalletLabels(input, generatedAt = new Date().toISOString()) {
+  const risk = buildNomosWalletRiskLite(input, generatedAt);
+  const labels = [];
+  if (!risk.evidence.address_format_valid) labels.push("invalid_address_format");
+  if (!risk.evidence.supported_chain) labels.push("unsupported_chain");
+  if (risk.reason_codes.includes("HIGH_VALUE_ACTION")) labels.push("high_value_action");
+  return {
+    product: "nomos-wallet-labels",
+    schema_version: "1.0",
+    chain: risk.chain,
+    address: risk.address,
+    labels,
+    reason_codes: risk.reason_codes,
+    data_timestamp: generatedAt,
+    data_freshness: risk.data_freshness,
+    result_id: simpleDecisionId(
+      "wlb",
+      { chain: risk.chain, address: risk.address, idempotency_key: input.idempotency_key ?? null },
+      generatedAt,
+    ),
+    provider_names_redacted: true,
+  };
+}
+
+export function buildNomosWalletWatchlist(input, generatedAt = new Date().toISOString()) {
+  const risk = buildNomosWalletRiskLite(input, generatedAt);
+  return {
+    product: "nomos-wallet-watchlist",
+    schema_version: "1.0",
+    chain: risk.chain,
+    address: risk.address,
+    sanctions_match: risk.sanctions_match,
+    watchlist_match: risk.sanctions_match,
+    reason_codes: risk.reason_codes,
+    data_timestamp: generatedAt,
+    data_freshness: risk.data_freshness,
+    result_id: simpleDecisionId(
+      "wwl",
+      { chain: risk.chain, address: risk.address, idempotency_key: input.idempotency_key ?? null },
+      generatedAt,
+    ),
+    provider_names_redacted: true,
+  };
+}
+
+export function buildNomosMerchantCheck(input, generatedAt = new Date().toISOString()) {
+  const amount = parseDecimalAtomic(input.amount_usdc ?? "0", 6);
+  const trustLevel = String(input.trust_level ?? "unknown").toLowerCase();
+  const reasonCodes = [];
+  if (!input.merchant_id) reasonCodes.push("MERCHANT_ID_MISSING");
+  if (!input.purpose) reasonCodes.push("PURPOSE_MISSING");
+  if (amount === null || amount <= 0n) reasonCodes.push("INVALID_AMOUNT");
+  if (!["unknown", "known", "verified"].includes(trustLevel)) reasonCodes.push("INVALID_TRUST_LEVEL");
+  if (trustLevel === "unknown") reasonCodes.push("MERCHANT_TRUST_UNKNOWN");
+  let decision = "ALLOW";
+  if (reasonCodes.some(code => code.startsWith("INVALID") || code.endsWith("MISSING"))) {
+    decision = "DENY";
+  } else if (reasonCodes.length > 0) {
+    decision = "REQUIRE_APPROVAL";
+  }
+  return {
+    product: "nomos-merchant-check",
+    schema_version: "1.0",
+    decision,
+    reason_codes: reasonCodes,
+    merchant_id: input.merchant_id ?? null,
+    purpose: input.purpose ?? null,
+    amount_usdc: String(input.amount_usdc ?? ""),
+    trust_level: trustLevel,
+    decision_id: simpleDecisionId("mer", { ...input, idempotency_key: input.idempotency_key ?? null }, generatedAt),
+    expires_at: addSeconds(generatedAt, 600),
+    deterministic: true,
+    llm_used: false,
+  };
+}
+
+export function buildNomosPaymentPreflight(input, generatedAt = new Date().toISOString()) {
+  const amount = parseDecimalAtomic(input.amount_usdc ?? "0", 6);
+  const riskLevel = String(input.recipient_risk_level ?? "LOW").toUpperCase();
+  const reasonCodes = [];
+  if (!input.agent_id) reasonCodes.push("AGENT_ID_MISSING");
+  if (!input.purpose) reasonCodes.push("PURPOSE_MISSING");
+  if (amount === null || amount <= 0n) reasonCodes.push("INVALID_AMOUNT");
+  if (!["LOW", "MEDIUM", "HIGH", "SEVERE"].includes(riskLevel)) reasonCodes.push("INVALID_RECIPIENT_RISK_LEVEL");
+  if (riskLevel === "HIGH" || riskLevel === "SEVERE") reasonCodes.push("RECIPIENT_RISK_REQUIRES_REVIEW");
+  if (amount !== null && amount > parseDecimalAtomic("100", 6)) reasonCodes.push("AMOUNT_EXCEEDS_AUTO_APPROVAL_THRESHOLD");
+  let decision = "ALLOW";
+  if (reasonCodes.some(code => code.startsWith("INVALID") || code.endsWith("MISSING"))) {
+    decision = "DENY";
+  } else if (reasonCodes.length > 0) {
+    decision = "REQUIRE_APPROVAL";
+  }
+  return {
+    product: "nomos-payment-preflight",
+    schema_version: "1.0",
+    decision,
+    reason_codes: reasonCodes,
+    agent_id: input.agent_id ?? null,
+    amount_usdc: String(input.amount_usdc ?? ""),
+    purpose: input.purpose ?? null,
+    recipient_risk_level: riskLevel,
+    decision_id: simpleDecisionId("pay", { ...input, idempotency_key: input.idempotency_key ?? null }, generatedAt),
+    expires_at: addSeconds(generatedAt, 600),
+    deterministic: true,
+    llm_used: false,
+  };
+}
+
+export function buildNomosToolAccess(input, generatedAt = new Date().toISOString()) {
+  const environment = String(input.environment ?? "preview").toLowerCase();
+  const actionType = String(input.action_type ?? "").toLowerCase();
+  const reasonCodes = [];
+  if (!input.agent_id) reasonCodes.push("AGENT_ID_MISSING");
+  if (!input.tool_name) reasonCodes.push("TOOL_NAME_MISSING");
+  if (!actionType) reasonCodes.push("ACTION_TYPE_MISSING");
+  if (!["local", "preview", "staging", "production"].includes(environment)) reasonCodes.push("INVALID_ENVIRONMENT");
+  if (environment === "production" || ["write", "deploy", "payment", "wallet", "dns"].includes(actionType)) {
+    reasonCodes.push("TOOL_ACCESS_REQUIRES_APPROVAL");
+  }
+  let decision = "ALLOW";
+  if (reasonCodes.some(code => code.startsWith("INVALID") || code.endsWith("MISSING"))) {
+    decision = "DENY";
+  } else if (reasonCodes.length > 0) {
+    decision = "REQUIRE_APPROVAL";
+  }
+  return {
+    product: "nomos-tool-access",
+    schema_version: "1.0",
+    decision,
+    reason_codes: reasonCodes,
+    agent_id: input.agent_id ?? null,
+    tool_name: input.tool_name ?? null,
+    action_type: actionType || null,
+    environment,
+    decision_id: simpleDecisionId("toa", { ...input, idempotency_key: input.idempotency_key ?? null }, generatedAt),
+    expires_at: addSeconds(generatedAt, 600),
+    deterministic: true,
+    llm_used: false,
+  };
+}
+
+export function buildNomosServiceHealth(input, generatedAt = new Date().toISOString()) {
+  const targetUrl = String(input.target_url ?? "").trim();
+  const reasonCodes = [];
+  let parsed = null;
+  try {
+    parsed = new URL(targetUrl);
+  } catch {
+    reasonCodes.push("INVALID_TARGET_URL");
+  }
+  if (parsed && !["http:", "https:"].includes(parsed.protocol)) reasonCodes.push("UNSUPPORTED_TARGET_PROTOCOL");
+  return {
+    product: "nomos-service-health",
+    schema_version: "1.0",
+    target_url: targetUrl,
+    status: reasonCodes.length ? "UNAVAILABLE" : "CHECK_READY",
+    reason_codes: reasonCodes,
+    checks: {
+      endpoint_availability: reasonCodes.length ? "not_checked_invalid_input" : "ready_for_probe",
+      x402_challenge_expected: true,
+      openapi_discovery_expected: true,
+      supported_network: input.expected_network ?? "base",
+      supported_asset: input.expected_asset ?? "USDC",
+      latency_target_ms: 1500,
+      price_metadata_consistency: "not_checked_without_live_probe",
+    },
+    data_timestamp: generatedAt,
+    data_freshness: "30s",
+    result_id: simpleDecisionId("svc", { ...input, idempotency_key: input.idempotency_key ?? null }, generatedAt),
+  };
+}
+
+export function buildNomosServicePreflight(input, generatedAt = new Date().toISOString()) {
+  const health = buildNomosServiceHealth(input, generatedAt);
+  const price = parseDecimalAtomic(input.price_usdc ?? "0", 6);
+  const budget = parseDecimalAtomic(input.buyer_budget_usdc ?? "0", 6);
+  const reasonCodes = [...health.reason_codes];
+  if (!input.purpose) reasonCodes.push("PURPOSE_MISSING");
+  if (price === null || price <= 0n) reasonCodes.push("INVALID_PRICE");
+  if (budget === null || budget < 0n) reasonCodes.push("INVALID_BUYER_BUDGET");
+  if (price !== null && budget !== null && price > budget) reasonCodes.push("PRICE_EXCEEDS_BUYER_BUDGET");
+  if (price !== null && price > parseDecimalAtomic("0.25", 6)) reasonCodes.push("PRICE_REQUIRES_APPROVAL");
+  let decision = "ALLOW";
+  if (reasonCodes.some(code => code.startsWith("INVALID") || code.endsWith("MISSING") || code.includes("EXCEEDS"))) {
+    decision = "DENY";
+  } else if (reasonCodes.length > 0) {
+    decision = "REQUIRE_APPROVAL";
+  }
+  return {
+    product: "nomos-service-preflight",
+    schema_version: "1.0",
+    decision,
+    reason_codes: reasonCodes,
+    target_url: health.target_url,
+    price_usdc: String(input.price_usdc ?? ""),
+    buyer_budget_usdc: String(input.buyer_budget_usdc ?? ""),
+    purpose: input.purpose ?? null,
+    service_health: health.status,
+    retry_idempotency_risk: "review_required_if_endpoint_lacks_idempotency_key_support",
+    decision_id: simpleDecisionId("spf", { ...input, idempotency_key: input.idempotency_key ?? null }, generatedAt),
+    expires_at: addSeconds(generatedAt, 600),
+    deterministic: true,
+    llm_used: false,
+  };
 }
 
 function parseChainList(value) {
@@ -9154,6 +10170,15 @@ function extractPaymentMetadata(paymentHeader) {
   const decoded = decodePaymentRequirement(paymentHeader) ?? {};
   const payload = decoded.payload ?? decoded;
   const authorization = decoded.authorization ?? payload.authorization ?? {};
+  const requirements =
+    decoded.requirements ??
+    decoded.paymentRequirements ??
+    payload.requirements ??
+    payload.paymentRequirements ??
+    {};
+  const selectedRequirement = Array.isArray(requirements)
+    ? requirements[0] ?? {}
+    : requirements;
   const payerAddress =
     authorization.from ??
     authorization.payer ??
@@ -9178,6 +10203,93 @@ function extractPaymentMetadata(paymentHeader) {
       typeof paymentHash === "string" && /^0x[a-fA-F0-9]{64}$/.test(paymentHash)
         ? paymentHash
         : null,
+    scheme:
+      typeof (decoded.scheme ?? payload.scheme ?? selectedRequirement.scheme) === "string"
+        ? (decoded.scheme ?? payload.scheme ?? selectedRequirement.scheme).slice(0, 80)
+        : null,
+    network:
+      typeof (decoded.network ?? payload.network ?? selectedRequirement.network) === "string"
+        ? (decoded.network ?? payload.network ?? selectedRequirement.network).slice(0, 80)
+        : null,
+    asset:
+      typeof (decoded.asset ?? payload.asset ?? selectedRequirement.asset) === "string"
+        ? (decoded.asset ?? payload.asset ?? selectedRequirement.asset).slice(0, 160)
+        : null,
+  };
+}
+
+function cleanAttributionToken(value, maxLength = 160) {
+  return String(value ?? "")
+    .trim()
+    .replace(/[^A-Za-z0-9._:/@+-]/g, "-")
+    .slice(0, maxLength);
+}
+
+function inferPurchaseAttributionSource({
+  campaign,
+  referrer,
+  originHeader,
+  userAgent,
+  x402Client,
+  facilitatorHint,
+}) {
+  const haystack = [
+    campaign,
+    referrer,
+    originHeader,
+    userAgent,
+    x402Client,
+    facilitatorHint,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  if (/dexter/.test(haystack)) {
+    return {
+      source: "dexter_verifier",
+      confidence: "high",
+      reason: "user-agent or client hint identifies Dexter verifier traffic",
+    };
+  }
+  if (/x402scan/.test(haystack)) {
+    return {
+      source: "x402scan",
+      confidence: "high",
+      reason: "referrer, campaign, origin, user-agent, or client hint references x402scan",
+    };
+  }
+  if (/coinbase|bazaar/.test(haystack)) {
+    return {
+      source: "coinbase_bazaar",
+      confidence: "medium",
+      reason: "referrer, origin, user-agent, or client hint references Coinbase/Bazaar",
+    };
+  }
+  if (/agent|sdk|framework|verifier|crawler|scanner|bot|monitor/.test(haystack)) {
+    return {
+      source: "agent_or_verifier",
+      confidence: "medium",
+      reason: "headers look like automated agent, SDK, verifier, crawler, or monitoring traffic",
+    };
+  }
+  if (campaign) {
+    return {
+      source: `campaign:${campaign}`,
+      confidence: "medium",
+      reason: "campaign or UTM parameter supplied by the caller",
+    };
+  }
+  if (referrer || originHeader) {
+    return {
+      source: "external_referrer",
+      confidence: "low",
+      reason: "referrer or origin header was present without a recognized source",
+    };
+  }
+  return {
+    source: "unknown",
+    confidence: "low",
+    reason: "no referrer, origin, campaign, user-agent source, or x402 client hint was available",
   };
 }
 
@@ -9285,17 +10397,43 @@ async function recordX402PurchaseEvent(db, c) {
   const campaign = (
     url.searchParams.get("campaign") ??
     url.searchParams.get("utm_campaign") ??
+    url.searchParams.get("utm_source") ??
     url.searchParams.get("ref") ??
     ""
-  )
-    .replace(/[^A-Za-z0-9._:-]/g, "-")
-    .slice(0, 120);
+  );
   const referrer = (
     c.req.header("referer") ??
     c.req.header("referrer") ??
     url.searchParams.get("utm_source") ??
     ""
   ).slice(0, 500);
+  const cleanCampaign = cleanAttributionToken(campaign, 120);
+  const originHeader = (c.req.header("origin") ?? "").slice(0, 500);
+  const x402Client = cleanAttributionToken(
+    c.req.header("x402-client") ??
+      c.req.header("x-x402-client") ??
+      c.req.header("x-agent-client") ??
+      c.req.header("x-agent-framework") ??
+      url.searchParams.get("x402_client") ??
+      "",
+    160,
+  );
+  const facilitatorHint = cleanAttributionToken(
+    c.req.header("x402-facilitator") ??
+      c.req.header("x-payment-facilitator") ??
+      c.req.header("x-facilitator") ??
+      url.searchParams.get("facilitator") ??
+      FACILITATOR,
+    300,
+  );
+  const sourceAttribution = inferPurchaseAttributionSource({
+    campaign: cleanCampaign,
+    referrer,
+    originHeader,
+    userAgent,
+    x402Client,
+    facilitatorHint,
+  });
   const queryStringHash = url.search
     ? await sha256Hex(url.search.slice(0, 4096))
     : null;
@@ -9308,8 +10446,10 @@ async function recordX402PurchaseEvent(db, c) {
         pricing_version, quoted_price, paid_amount, currency, network,
         payment_hash, payer_address, buyer_id_hash, request_id, sequence_id,
         user_agent_hash, response_status, decision, latency_ms, cache_status,
-        internal_test)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        internal_test, attribution_source, source_confidence, source_reason,
+        origin_header, x402_client, facilitator_hint, payment_scheme,
+        payment_network, payment_asset)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       product.id,
@@ -9318,10 +10458,10 @@ async function recordX402PurchaseEvent(db, c) {
       productPriceNumber(product),
       PAY_TO,
       paymentHeaderHash,
-      null,
+      userAgent || null,
       country || null,
       responseStatus,
-      campaign || null,
+      cleanCampaign || null,
       referrer || null,
       queryStringHash,
       purchasedAt,
@@ -9345,6 +10485,15 @@ async function recordX402PurchaseEvent(db, c) {
       latencyMs,
       cacheStatus,
       internalTest,
+      sourceAttribution.source,
+      sourceAttribution.confidence,
+      sourceAttribution.reason,
+      originHeader || null,
+      x402Client || null,
+      facilitatorHint || null,
+      paymentMetadata.scheme,
+      paymentMetadata.network,
+      paymentMetadata.asset,
     )
     .run();
 }
@@ -11073,20 +12222,160 @@ const MCP_SIDE_EFFECT_PATTERNS = [
   /create/i,
   /update/i,
 ];
-const HARNESS_LAYERS = [
-  "loop",
-  "tools",
-  "permissions",
-  "human_approval",
-  "context",
-  "memory",
-  "recovery",
-  "observability",
-  "background_tasks",
-  "scheduling",
-  "subagents",
-  "mcp",
-  "evals",
+const AGENT_HARNESS_CONTROL_DOMAINS = [
+  {
+    id: "runtime_action_governance",
+    mapped_layers: ["agent_loop", "tool_runtime", "permissions_sandbox", "hooks"],
+    control_objective:
+      "Every side-effecting runtime action is classified, policy-checked, and either allowed, reviewed, or blocked before execution.",
+    required_evidence: [
+      "PreToolUse or equivalent enforcement point",
+      "ALLOW/REVIEW/BLOCK policy decision log",
+      "sandbox or blast-radius control for shell/browser/deploy tools",
+      "human approval reference for elevated actions",
+    ],
+    failure_mode:
+      "A model-issued tool call reaches shell, deploy, DNS, email, wallet, or browser execution without an enforceable gate.",
+    severity: "critical",
+    test_method:
+      "Replay high-impact sample actions and verify the gate blocks or escalates them before tool execution.",
+    remediation:
+      "Route side-effecting actions through agent-action-preflight and enforce the returned directive in the caller runtime.",
+  },
+  {
+    id: "mcp_tool_supply_chain",
+    mapped_layers: ["tool_runtime", "mcp_plugins_channels"],
+    control_objective:
+      "External MCP servers and tools are authenticated, namespaced, schema-checked, and constrained before joining the tool pool.",
+    required_evidence: [
+      "MCP server URL or manifest",
+      "tool list with read/write/destructive annotations",
+      "auth and transport declaration",
+      "runtime allowlist for side-effecting tools",
+    ],
+    failure_mode:
+      "A connector exposes destructive tools or misleading read-only hints and the agent treats them as trusted built-ins.",
+    severity: "high",
+    test_method:
+      "Run a manifest/tool-list assessment and attempt to connect sample write/send/delete tools without auth or allowlist.",
+    remediation:
+      "Run mcp-server-risk-check, require auth, namespace tools, and explicitly gate side-effecting tool names.",
+  },
+  {
+    id: "policy_approval_escalation",
+    mapped_layers: ["planning_todos", "permissions_sandbox", "protocols"],
+    control_objective:
+      "High-risk work has an approval handshake, reviewer identity, and escalation path that the model cannot bypass.",
+    required_evidence: [
+      "approval mode or plan-approval record",
+      "reviewer or ticket reference",
+      "policy thresholds for production, external, or value-at-risk actions",
+      "denial feedback behavior",
+    ],
+    failure_mode:
+      "Approval fatigue, broad remembered approvals, or bypass mode lets later risky actions run silently.",
+    severity: "high",
+    test_method:
+      "Exercise production deploy, DNS, wallet, and email samples with and without approval references.",
+    remediation:
+      "Scope remembered approvals narrowly and require explicit review artifacts for elevated action classes.",
+  },
+  {
+    id: "context_memory_privacy",
+    mapped_layers: ["context_management", "memory", "system_prompt_assembly"],
+    control_objective:
+      "Only relevant, authorized, and non-secret context enters the prompt or durable memory for the current run.",
+    required_evidence: [
+      "context selection policy",
+      "memory recall log",
+      "secret/private-data redaction checks",
+      "prompt assembly boundaries",
+    ],
+    failure_mode:
+      "Secrets, private chat context, stale memory, or irrelevant long-term data is injected into a run or saved durably.",
+    severity: "high",
+    test_method:
+      "Submit transcript and memory samples containing secrets/private context and verify selection, redaction, and omission.",
+    remediation:
+      "Add context budgets, memory source labels, redaction, and explicit recall rules before each sensitive run.",
+  },
+  {
+    id: "resilience_task_continuity",
+    mapped_layers: ["error_recovery", "task_system", "background_execution"],
+    control_objective:
+      "Long-running work survives tool errors, context overflow, retries, restarts, and partial completion without losing state.",
+    required_evidence: [
+      "task record with state transitions",
+      "retry/backoff policy",
+      "resume checkpoint",
+      "failure notification or escalation path",
+    ],
+    failure_mode:
+      "A timeout, failed deploy, or context compaction leaves the user-facing task half-done with no reliable recovery point.",
+    severity: "medium",
+    test_method:
+      "Inject tool failure and context-resume samples, then verify checkpoint, retry ceiling, and final status reporting.",
+    remediation:
+      "Persist task records, cap retries, emit status transitions, and escalate when the budget is spent.",
+  },
+  {
+    id: "execution_isolation_scheduling",
+    mapped_layers: ["scheduling", "worktree_isolation", "background_execution"],
+    control_objective:
+      "Parallel, scheduled, or unattended runs are isolated by workspace, credentials, locks, and time/budget ceilings.",
+    required_evidence: [
+      "worktree or sandbox binding",
+      "lock or ownership record",
+      "cron/schedule definition",
+      "time/token/spend budget",
+    ],
+    failure_mode:
+      "Two runs collide in the same worktree, reuse unsafe credentials, or continue acting after their intended window.",
+    severity: "medium",
+    test_method:
+      "Run concurrent task samples and scheduled triggers; verify cwd isolation, lock behavior, and budget stop.",
+    remediation:
+      "Bind each run to an isolated workspace, enforce locks, and stop on harness-side budgets.",
+  },
+  {
+    id: "multi_agent_coordination",
+    mapped_layers: ["subagents", "coordination", "autonomy"],
+    control_objective:
+      "Delegated agents have scoped context, bounded tools, parent-visible prompts, and clear handoff/stop contracts.",
+    required_evidence: [
+      "subagent scope and tool policy",
+      "mailbox or handoff record",
+      "permission bubbling behavior",
+      "shutdown or completion contract",
+    ],
+    failure_mode:
+      "A child agent acts with hidden context, silently fails to ask for approval, or keeps running after the parent assumes completion.",
+    severity: "medium",
+    test_method:
+      "Delegate a sample risky task and verify prompt isolation, permission bubbling, and completion signaling.",
+    remediation:
+      "Give subagents fresh context, constrained tools, explicit parent escalation, and stop handshakes.",
+  },
+  {
+    id: "observability_verification_evidence",
+    mapped_layers: ["observability_evaluation", "loop_engineering"],
+    control_objective:
+      "Agent outputs and side effects are traced, scrubbed, independently verified, and reported before being treated as complete.",
+    required_evidence: [
+      "tool trace or run log",
+      "sensitive-field scrub policy",
+      "checker/rubric verdict",
+      "cost and budget record",
+      "delivery evidence package",
+    ],
+    failure_mode:
+      "The worker marks itself done, no independent checker reviews the output, and no trace explains what happened.",
+    severity: "high",
+    test_method:
+      "Run a maker/checker sample with forced failure and verify retry feedback, budget ceiling, and evidence output.",
+    remediation:
+      "Wrap high-value runs in a verification loop with a fixed rubric, separate checker, trace scrubber, and escalation.",
+  },
 ];
 
 function splitList(value) {
@@ -11276,87 +12565,40 @@ export function buildMcpServerRiskCheck(input, generatedAt = new Date().toISOStr
   };
 }
 
-export function buildAgentHarnessScore(input, generatedAt = new Date().toISOString()) {
-  const capabilities = new Set(splitList(input.capabilities).map(item => item.toLowerCase()));
-  const dangerousTools = splitList(input.dangerous_tools);
-  const missing = HARNESS_LAYERS.filter(layer => !capabilities.has(layer));
-  const present = HARNESS_LAYERS.filter(layer => capabilities.has(layer));
-  const findings = [];
-  let score = Math.round((present.length / HARNESS_LAYERS.length) * 100);
-
-  for (const layer of ["permissions", "human_approval", "observability", "recovery"]) {
-    if (!capabilities.has(layer)) {
-      score -= 8;
-      findings.push({
-        code: `MISSING_${layer.toUpperCase()}`,
-        severity: "high",
-        layer,
-        detail: `${layer} is a required control for production agent side effects.`,
-      });
-    }
-  }
-  if (dangerousTools.length > 0 && !capabilities.has("permissions")) {
-    score -= 15;
-    findings.push({
-      code: "DANGEROUS_TOOLS_WITHOUT_PERMISSIONS",
-      severity: "high",
-      layer: "tools",
-      detail: `Dangerous tools supplied without a permissions layer: ${dangerousTools.slice(0, 8).join(", ")}.`,
-    });
-  }
-  if (capabilities.has("background_tasks") && !capabilities.has("recovery")) {
-    score -= 10;
-    findings.push({
-      code: "BACKGROUND_WITHOUT_RECOVERY",
-      severity: "medium",
-      layer: "background_tasks",
-      detail: "Long-running tasks need retry, resume, and failure-state handling.",
-    });
-  }
-  if (capabilities.has("memory") && !capabilities.has("context")) {
-    score -= 8;
-    findings.push({
-      code: "MEMORY_WITHOUT_CONTEXT_POLICY",
-      severity: "medium",
-      layer: "memory",
-      detail: "Durable memory should be paired with context selection and privacy rules.",
-    });
-  }
-
-  score = Math.max(0, Math.min(100, score));
+export function buildAgentHarnessReadinessCandidate(
+  input,
+  generatedAt = new Date().toISOString(),
+) {
+  const suppliedEvidence = new Set(
+    splitList(input.evidence_domains || input.evidence).map(item => item.toLowerCase()),
+  );
+  const domains = AGENT_HARNESS_CONTROL_DOMAINS.map(domain => {
+    const evidenceProvided = suppliedEvidence.has(domain.id);
+    return {
+      ...domain,
+      evidence_status: evidenceProvided ? "sample_provided" : "sample_required",
+      validation_status: "candidate_unvalidated",
+    };
+  });
   return {
-    product: "agent-harness-score",
-    schema_version: "1.0",
+    product: "agent-harness-readiness",
+    exposure: "internal_candidate_only",
+    schema_version: "0.1-candidate",
     agent: {
-      name: input.agent_name,
+      name: input.agent_name || null,
       repo_url: input.repo_url || null,
-      dangerous_tools: dangerousTools,
     },
-    score,
-    maturity:
-      score >= 85
-        ? "production_ready"
-        : score >= 65
-          ? "controlled_beta"
-          : score >= 40
-            ? "prototype_with_gaps"
-            : "not_ready",
-    decision_hint:
-      score >= 85
-        ? "The harness has the core controls expected before production use."
-        : score >= 65
-          ? "Use behind tighter limits and close high-severity findings before broad rollout."
-          : "Do not rely on this harness for autonomous side effects without additional controls.",
-    layers: {
-      present,
-      missing,
-    },
-    findings,
-    recommended_next_checks: [
-      "agent-action-preflight",
-      "mcp-server-risk-check",
-      "agent-capability-security-preflight",
+    assessment_method:
+      "Evidence-based control-domain review. This candidate deliberately avoids equal-weight layer scoring and must be validated against real sample evidence before any public endpoint, deployment, or formal service claim.",
+    domains,
+    validation_required_before_public_release: [
+      "collect representative real agent harness evidence",
+      "calibrate severity against observed failures",
+      "define pass/fail test fixtures per domain",
+      "review remediation language with implementers",
+      "approve pricing and endpoint exposure separately",
     ],
+    public_endpoint_authorized: false,
     pricing_version: PRICING_VERSION,
     generated_at: generatedAt,
   };
@@ -13836,41 +15078,56 @@ function openApi(origin) {
     paths: {},
   };
   for (const product of PRODUCTS) {
-    document.paths[product.path] = {
-      get: {
-        operationId: `buy${product.id
-          .split("-")
-          .map(part => part[0].toUpperCase() + part.slice(1))
-          .join("")}`,
-        summary: product.description,
-        parameters: Object.entries(product.inputSchema.properties).map(
-          ([name, schema]) => ({
-            name,
-            in: "query",
-            required: product.inputSchema.required?.includes(name) ?? false,
-            schema,
-          }),
-        ),
-        security: [],
-        "x-payment-protocol": "x402",
-        "x-pricing-version": PRICING_VERSION,
-        "x-price-usdc": product.price,
-        "x-payment-info": {
-          pricing_version: PRICING_VERSION,
-          price: {
-            mode: "fixed",
-            currency: "USD",
-            amount: product.price.replace("$", ""),
-          },
-          protocols: [{ x402: {} }],
+    const method = productMethod(product).toLowerCase();
+    const operation = {
+      operationId: productOperationId(product),
+      summary: product.description,
+      security: [],
+      "x-payment-protocol": "x402",
+      "x-pricing-version": PRICING_VERSION,
+      "x-price-usdc": product.price,
+      "x-payment-info": {
+        pricing_version: PRICING_VERSION,
+        price: {
+          mode: "fixed",
+          currency: "USD",
+          amount: product.price.replace("$", ""),
         },
-        responses: {
-          200: { description: "Paid safety intelligence response" },
-          400: { description: "Invalid input" },
-          402: { description: "x402 payment required" },
-          502: { description: "Public-chain data provider unavailable" },
-        },
+        protocols: [{ x402: {} }],
       },
+      responses: {
+        200: { description: "Paid safety intelligence response" },
+        400: { description: "Invalid input" },
+        402: { description: "x402 payment required" },
+        502: { description: "Public data provider unavailable" },
+      },
+    };
+    if (method === "get") {
+      operation.parameters = Object.entries(product.inputSchema.properties).map(
+        ([name, schema]) => ({
+          name,
+          in: "query",
+          required: product.inputSchema.required?.includes(name) ?? false,
+          schema,
+        }),
+      );
+    } else {
+      operation.requestBody = {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: product.inputSchema.properties,
+              required: product.inputSchema.required ?? [],
+            },
+            example: productInputExample(product),
+          },
+        },
+      };
+    }
+    document.paths[product.path] = {
+      [method]: operation,
     };
   }
   document.paths[PRODUCTS[25].path].post = {
@@ -14337,7 +15594,7 @@ function serviceManifest(origin) {
     },
     products: orderedProducts.map(product => ({
         id: product.id,
-        method: "GET",
+        method: productMethod(product),
         path: product.path,
         price_usdc: product.price,
         pricing_version: PRICING_VERSION,
@@ -14347,6 +15604,7 @@ function serviceManifest(origin) {
 }
 
 function productExampleUrl(origin, product) {
+  if (productMethod(product) !== "GET") return `${origin}${product.path}`;
   const query = new URLSearchParams(product.input);
   return `${origin}${product.path}?${query.toString()}`;
 }
@@ -14370,7 +15628,7 @@ function buyerCatalogProduct(origin, product) {
     id: product.id,
     title: productTitle(product),
     group: metadata.group,
-    method: "GET",
+    method: productMethod(product),
     path: product.path,
     price_usdc: product.price,
     pricing_version: PRICING_VERSION,
@@ -14383,6 +15641,8 @@ function buyerCatalogProduct(origin, product) {
       name => !required.includes(name),
     ),
     example_url: productExampleUrl(origin, product),
+    example_body:
+      productMethod(product) === "GET" ? undefined : productInputExample(product),
     payment: {
       protocol: "x402",
       network: BASE_MAINNET,
@@ -14544,7 +15804,7 @@ function paidDiscoveryOperations(origin) {
     };
     return {
       id: product.id,
-      method: "GET",
+      method: productMethod(product),
       path: product.path,
       url: `${origin}${product.path}`,
       price_usdc: product.price,
@@ -14553,6 +15813,8 @@ function paidDiscoveryOperations(origin) {
       description: product.description,
       required_inputs: product.inputSchema.required ?? [],
       example_url: productExampleUrl(origin, product),
+      example_body:
+        productMethod(product) === "GET" ? undefined : productInputExample(product),
       input_schema: product.inputSchema,
     };
   });
@@ -15293,7 +16555,7 @@ function createPaidApp() {
   const app = new Hono();
   const routes = {};
   for (const product of PRODUCTS) {
-    routes[`GET ${product.path}`] = {
+    routes[`${productMethod(product)} ${product.path}`] = {
       accepts: [
         {
           scheme: "exact",
@@ -16212,35 +17474,165 @@ function createPaidApp() {
     return c.json(buildMcpServerRiskCheck(input));
   });
 
-  app.get(PRODUCTS_BY_ID["agent-harness-score"].path, async c => {
-    const input = {
-      agent_name: c.req.query("agent_name") ?? "",
-      repo_url: c.req.query("repo_url") ?? "",
-      capabilities: c.req.query("capabilities") ?? "",
-      dangerous_tools: c.req.query("dangerous_tools") ?? "",
-    };
-    if (input.repo_url) {
-      try {
-        validatePublicUrl(input.repo_url);
-      } catch (error) {
-        return c.json(
-          {
-            error: "invalid_agent_harness_repo_url",
-            message: error instanceof Error ? error.message : String(error),
-          },
-          400,
-        );
-      }
+  app.post(PRODUCTS_BY_ID["nomos-value-convert"].path, async c => {
+    let input;
+    try {
+      input = await c.req.json();
+    } catch {
+      return c.json({ error: "invalid_json_body" }, 400);
     }
-    if (
-      !input.agent_name ||
-      input.agent_name.length > 160 ||
-      input.capabilities.length > 2000 ||
-      input.dangerous_tools.length > 1000
-    ) {
-      return c.json({ error: "invalid_agent_harness_score_input" }, 400);
+    const result = buildNomosValueConvert(input);
+    if (result.error) return c.json(result, 400);
+    return c.json(result);
+  });
+
+  [
+    ["nomos-value-btc-usd", "BTC", "USD"],
+    ["nomos-value-eth-usd", "ETH", "USD"],
+    ["nomos-value-trx-usd", "TRX", "USD"],
+    ["nomos-value-usdt-twd", "USDT", "TWD"],
+    ["nomos-value-usdc-twd", "USDC", "TWD"],
+  ].forEach(([productId, asset, quoteCurrency]) => {
+    app.get(PRODUCTS_BY_ID[productId].path, async c => {
+      const result = buildNomosFixedValueQuote(asset, quoteCurrency, {
+        amount: c.req.query("amount") ?? "1",
+        idempotency_key: c.req.query("idempotency_key") ?? null,
+      });
+      if (result.error) return c.json(result, 400);
+      return c.json({ ...result, product: productId });
+    });
+  });
+
+  app.post(PRODUCTS_BY_ID["nomos-budget-check"].path, async c => {
+    let input;
+    try {
+      input = await c.req.json();
+    } catch {
+      return c.json({ error: "invalid_json_body" }, 400);
     }
-    return c.json(buildAgentHarnessScore(input));
+    const result = buildNomosBudgetCheck(input);
+    if (result.reason_codes?.some(code => code.startsWith("INVALID_"))) {
+      return c.json(result, 400);
+    }
+    return c.json(result);
+  });
+
+  app.post(PRODUCTS_BY_ID["nomos-merchant-check"].path, async c => {
+    let input;
+    try {
+      input = await c.req.json();
+    } catch {
+      return c.json({ error: "invalid_json_body" }, 400);
+    }
+    const result = buildNomosMerchantCheck(input);
+    if (result.reason_codes?.some(code => code.startsWith("INVALID") || code.endsWith("MISSING"))) {
+      return c.json(result, 400);
+    }
+    return c.json(result);
+  });
+
+  app.post(PRODUCTS_BY_ID["nomos-payment-preflight"].path, async c => {
+    let input;
+    try {
+      input = await c.req.json();
+    } catch {
+      return c.json({ error: "invalid_json_body" }, 400);
+    }
+    const result = buildNomosPaymentPreflight(input);
+    if (result.reason_codes?.some(code => code.startsWith("INVALID") || code.endsWith("MISSING"))) {
+      return c.json(result, 400);
+    }
+    return c.json(result);
+  });
+
+  app.post(PRODUCTS_BY_ID["nomos-tool-access"].path, async c => {
+    let input;
+    try {
+      input = await c.req.json();
+    } catch {
+      return c.json({ error: "invalid_json_body" }, 400);
+    }
+    const result = buildNomosToolAccess(input);
+    if (result.reason_codes?.some(code => code.startsWith("INVALID") || code.endsWith("MISSING"))) {
+      return c.json(result, 400);
+    }
+    return c.json(result);
+  });
+
+  app.post(PRODUCTS_BY_ID["nomos-service-health"].path, async c => {
+    let input;
+    try {
+      input = await c.req.json();
+    } catch {
+      return c.json({ error: "invalid_json_body" }, 400);
+    }
+    const result = buildNomosServiceHealth(input);
+    if (result.reason_codes?.some(code => code.startsWith("INVALID") || code.startsWith("UNSUPPORTED"))) {
+      return c.json(result, 400);
+    }
+    return c.json(result);
+  });
+
+  app.post(PRODUCTS_BY_ID["nomos-service-preflight"].path, async c => {
+    let input;
+    try {
+      input = await c.req.json();
+    } catch {
+      return c.json({ error: "invalid_json_body" }, 400);
+    }
+    const result = buildNomosServicePreflight(input);
+    if (result.reason_codes?.some(code => code.startsWith("INVALID") || code.endsWith("MISSING"))) {
+      return c.json(result, 400);
+    }
+    return c.json(result);
+  });
+
+  app.post(PRODUCTS_BY_ID["nomos-wallet-risk-lite"].path, async c => {
+    let input;
+    try {
+      input = await c.req.json();
+    } catch {
+      return c.json({ error: "invalid_json_body" }, 400);
+    }
+    const result = buildNomosWalletRiskLite(input);
+    if (result.reason_codes.includes("UNSUPPORTED_CHAIN")) return c.json(result, 400);
+    return c.json(result);
+  });
+
+  app.post(PRODUCTS_BY_ID["nomos-wallet-identify"].path, async c => {
+    let input;
+    try {
+      input = await c.req.json();
+    } catch {
+      return c.json({ error: "invalid_json_body" }, 400);
+    }
+    const result = buildNomosWalletIdentify(input);
+    if (result.reason_codes.includes("UNSUPPORTED_CHAIN")) return c.json(result, 400);
+    return c.json(result);
+  });
+
+  app.post(PRODUCTS_BY_ID["nomos-wallet-labels"].path, async c => {
+    let input;
+    try {
+      input = await c.req.json();
+    } catch {
+      return c.json({ error: "invalid_json_body" }, 400);
+    }
+    const result = buildNomosWalletLabels(input);
+    if (result.reason_codes.includes("UNSUPPORTED_CHAIN")) return c.json(result, 400);
+    return c.json(result);
+  });
+
+  app.post(PRODUCTS_BY_ID["nomos-wallet-watchlist"].path, async c => {
+    let input;
+    try {
+      input = await c.req.json();
+    } catch {
+      return c.json({ error: "invalid_json_body" }, 400);
+    }
+    const result = buildNomosWalletWatchlist(input);
+    if (result.reason_codes.includes("UNSUPPORTED_CHAIN")) return c.json(result, 400);
+    return c.json(result);
   });
 
   app.get(PRODUCTS[25].path, async c => {
@@ -18186,6 +19578,7 @@ async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
     mostPurchased,
     highestRevenue,
     byPricingVersion,
+    sourceAttributionBreakdown,
     workflows,
     buyerAttribution,
     buyerCohorts,
@@ -18273,6 +19666,29 @@ async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
     bindAll(
       db.prepare(
         `SELECT
+           COALESCE(attribution_source, 'unknown') AS attribution_source,
+           COALESCE(source_confidence, 'unknown') AS source_confidence,
+           COUNT(*) AS purchase_count,
+           COUNT(DISTINCT buyer_id_hash) AS unique_buyers,
+           COALESCE(SUM(CAST(COALESCE(paid_amount, price_usdc) AS REAL)), 0) AS revenue,
+           MAX(COALESCE(purchased_at, created_at)) AS latest_purchase,
+           GROUP_CONCAT(DISTINCT source_reason) AS source_reasons,
+           GROUP_CONCAT(DISTINCT campaign) AS campaigns,
+           GROUP_CONCAT(DISTINCT referrer) AS referrers,
+           GROUP_CONCAT(DISTINCT origin_header) AS origins,
+           GROUP_CONCAT(DISTINCT x402_client) AS x402_clients,
+           GROUP_CONCAT(DISTINCT facilitator_hint) AS facilitator_hints,
+           GROUP_CONCAT(DISTINCT user_agent) AS user_agents
+         FROM x402_purchase_events
+         WHERE ${payable.where}
+         GROUP BY COALESCE(attribution_source, 'unknown'), COALESCE(source_confidence, 'unknown')
+         ORDER BY purchase_count DESC, revenue DESC, latest_purchase DESC`,
+      ),
+      payable.binds,
+    ).all(),
+    bindAll(
+      db.prepare(
+        `SELECT
            sequence_id,
            GROUP_CONCAT(COALESCE(operation_id, product_id), ' -> ') AS sequence,
            COUNT(*) AS purchase_count,
@@ -18298,6 +19714,14 @@ async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
            COUNT(DISTINCT user_agent_hash) AS unique_user_agent_hashes,
            GROUP_CONCAT(DISTINCT user_agent) AS user_agents,
            country,
+           GROUP_CONCAT(DISTINCT attribution_source) AS attribution_sources,
+           GROUP_CONCAT(DISTINCT source_confidence) AS source_confidences,
+           GROUP_CONCAT(DISTINCT source_reason) AS source_reasons,
+           GROUP_CONCAT(DISTINCT campaign) AS campaigns,
+           GROUP_CONCAT(DISTINCT referrer) AS referrers,
+           GROUP_CONCAT(DISTINCT origin_header) AS origins,
+           GROUP_CONCAT(DISTINCT x402_client) AS x402_clients,
+           GROUP_CONCAT(DISTINCT facilitator_hint) AS facilitator_hints,
            COUNT(*) AS purchase_count,
            SUM(CASE WHEN internal_test IS NOT NULL AND internal_test != 'unknown' THEN 1 ELSE 0 END) AS internal_test_count,
            COALESCE(SUM(CAST(COALESCE(paid_amount, price_usdc) AS REAL)), 0) AS revenue,
@@ -18386,7 +19810,16 @@ async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
            campaign,
            referrer,
            user_agent,
-           user_agent_hash
+           user_agent_hash,
+           attribution_source,
+           source_confidence,
+           source_reason,
+           origin_header,
+           x402_client,
+           facilitator_hint,
+           payment_scheme,
+           payment_network,
+           payment_asset
        FROM x402_purchase_events
        WHERE ${payable.where}
        ORDER BY COALESCE(purchased_at, created_at) DESC
@@ -18444,6 +19877,7 @@ async function purchaseDashboardData(db, searchParams = new URLSearchParams()) {
     revenue_by_service: highestRevenue.results ?? [],
     purchases_by_service: mostPurchased.results ?? [],
     purchases_by_pricing_version: byPricingVersion.results ?? [],
+    source_attribution_breakdown: sourceAttributionBreakdown.results ?? [],
     repeated_workflows: (workflows.results ?? []).map(row => {
       const sequence = String(row.sequence ?? "");
       const capabilityBundleMatch =
@@ -18558,6 +19992,11 @@ function purchaseDashboardHtml(data) {
       row => `<tr><td>${escapeHtml(row.pricing_version)}</td><td>${row.purchase_count}</td><td>$${Number(row.revenue ?? 0).toFixed(3)}</td></tr>`,
     )
     .join("");
+  const sourceRows = data.source_attribution_breakdown
+    .map(
+      row => `<tr><td>${escapeHtml(row.attribution_source)}</td><td>${escapeHtml(row.source_confidence)}</td><td>${row.purchase_count}</td><td>${row.unique_buyers}</td><td>$${Number(row.revenue ?? 0).toFixed(3)}</td><td>${escapeHtml(row.latest_purchase)}</td><td><code>${escapeHtml(String(row.source_reasons ?? "").slice(0, 140))}</code></td><td><code>${escapeHtml(String(row.campaigns ?? "").slice(0, 100))}</code></td><td><code>${escapeHtml(String(row.referrers ?? row.origins ?? "").slice(0, 140))}</code></td><td><code>${escapeHtml(String(row.x402_clients ?? "").slice(0, 100))}</code></td><td><code>${escapeHtml(String(row.facilitator_hints ?? "").slice(0, 120))}</code></td><td><code>${escapeHtml(String(row.user_agents ?? "").slice(0, 120))}</code></td></tr>`,
+    )
+    .join("");
   const workflowRows = data.repeated_workflows
     .map(
       row => `<tr><td><code>${escapeHtml(row.sequence)}</code></td><td>${row.purchase_count}</td><td>${row.unique_buyers}</td><td>${row.bundle_replacement_count}</td><td>$${Number(row.separate_purchase_total ?? 0).toFixed(3)}</td><td>${escapeHtml(row.bundle_price)}</td></tr>`,
@@ -18570,7 +20009,7 @@ function purchaseDashboardHtml(data) {
     .join("");
   const buyerRows = data.buyer_attribution
     .map(
-      row => `<tr><td>${escapeHtml(row.classification)}</td><td>${escapeHtml(row.confidence)}</td><td>${escapeHtml(row.reason)}</td><td><code>${escapeHtml(row.payer_address === "unknown" ? "" : row.payer_address)}</code></td><td><code>${escapeHtml(String(row.buyer_id_hash ?? "").slice(0, 24))}</code></td><td>${escapeHtml(row.country ?? "")}</td><td>${row.purchase_count}</td><td>$${Number(row.revenue ?? 0).toFixed(3)}</td><td>${escapeHtml(row.first_seen_at)}</td><td>${escapeHtml(row.last_seen_at)}</td><td><code>${escapeHtml(row.operations ?? "")}</code></td><td><code>${escapeHtml(String(row.user_agents ?? "").slice(0, 80))}</code></td><td><code>${escapeHtml(String(row.sequence_ids ?? "").slice(0, 80))}</code></td></tr>`,
+      row => `<tr><td>${escapeHtml(row.classification)}</td><td>${escapeHtml(row.confidence)}</td><td>${escapeHtml(row.reason)}</td><td><code>${escapeHtml(row.payer_address === "unknown" ? "" : row.payer_address)}</code></td><td><code>${escapeHtml(String(row.buyer_id_hash ?? "").slice(0, 24))}</code></td><td>${escapeHtml(row.country ?? "")}</td><td>${row.purchase_count}</td><td>$${Number(row.revenue ?? 0).toFixed(3)}</td><td>${escapeHtml(row.first_seen_at)}</td><td>${escapeHtml(row.last_seen_at)}</td><td><code>${escapeHtml(String(row.attribution_sources ?? "").slice(0, 100))}</code></td><td><code>${escapeHtml(String(row.source_reasons ?? "").slice(0, 140))}</code></td><td><code>${escapeHtml(String(row.campaigns ?? "").slice(0, 80))}</code></td><td><code>${escapeHtml(String(row.referrers ?? row.origins ?? "").slice(0, 120))}</code></td><td><code>${escapeHtml(row.operations ?? "")}</code></td><td><code>${escapeHtml(String(row.user_agents ?? "").slice(0, 80))}</code></td><td><code>${escapeHtml(String(row.sequence_ids ?? "").slice(0, 80))}</code></td></tr>`,
     )
     .join("");
   const cohortRows = data.buyer_cohorts
@@ -18585,7 +20024,7 @@ function purchaseDashboardHtml(data) {
     .join("");
   const recentRows = data.recent
     .map(
-      row => `<tr><td>${escapeHtml(row.purchased_at)}</td><td>${escapeHtml(row.operation_id)}</td><td><code>${escapeHtml(row.path)}</code></td><td>$${Number(row.paid_amount ?? 0).toFixed(3)}</td><td>${escapeHtml(row.pricing_version ?? "legacy")}</td><td><code>${escapeHtml(row.payer_address ?? row.payer_address_short ?? "")}</code></td><td><code>${escapeHtml(String(row.buyer_id_hash ?? "").slice(0, 16))}</code></td><td><code>${escapeHtml(row.sequence_id ?? "")}</code></td><td>${escapeHtml(row.internal_test ?? "unknown")}</td><td><code>${escapeHtml(String(row.user_agent ?? "").slice(0, 80))}</code></td></tr>`,
+      row => `<tr><td>${escapeHtml(row.purchased_at)}</td><td>${escapeHtml(row.operation_id)}</td><td><code>${escapeHtml(row.path)}</code></td><td>$${Number(row.paid_amount ?? 0).toFixed(3)}</td><td>${escapeHtml(row.pricing_version ?? "legacy")}</td><td><code>${escapeHtml(row.payer_address ?? row.payer_address_short ?? "")}</code></td><td><code>${escapeHtml(String(row.buyer_id_hash ?? "").slice(0, 16))}</code></td><td><code>${escapeHtml(row.sequence_id ?? "")}</code></td><td>${escapeHtml(row.internal_test ?? "unknown")}</td><td>${escapeHtml(row.attribution_source ?? "unknown")}</td><td>${escapeHtml(row.source_confidence ?? "")}</td><td><code>${escapeHtml(String(row.source_reason ?? "").slice(0, 120))}</code></td><td><code>${escapeHtml(String(row.campaign ?? "").slice(0, 80))}</code></td><td><code>${escapeHtml(String(row.referrer ?? row.origin_header ?? "").slice(0, 120))}</code></td><td><code>${escapeHtml(String(row.x402_client ?? "").slice(0, 80))}</code></td><td><code>${escapeHtml(String(row.facilitator_hint ?? "").slice(0, 100))}</code></td><td><code>${escapeHtml(String(row.user_agent ?? "").slice(0, 80))}</code></td></tr>`,
     )
     .join("");
   const probeRows = data.recent_probes
@@ -18642,20 +20081,23 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
 <table><thead><tr><th>Operation</th><th>Revenue</th><th>Purchases</th><th>Unique Buyers</th><th>Average Paid</th><th>Latest Purchase</th></tr></thead><tbody>${revenueRows || '<tr><td colspan="6">No purchases recorded yet.</td></tr>'}</tbody></table>
 <h2>Purchases by Pricing Version</h2>
 <table><thead><tr><th>Pricing Version</th><th>Purchases</th><th>Revenue</th></tr></thead><tbody>${pricingRows || '<tr><td colspan="3">No purchases recorded yet.</td></tr>'}</tbody></table>
+<h2>Source Attribution</h2>
+<p class="muted">Best-effort source inference from campaign, referrer, origin, user-agent, x402 client, and facilitator hints. Use this for triage, not billing.</p>
+<table><thead><tr><th>Source</th><th>Confidence</th><th>Purchases</th><th>Unique Buyers</th><th>Revenue</th><th>Latest Purchase</th><th>Reason</th><th>Campaigns</th><th>Referrers/Origins</th><th>x402 Clients</th><th>Facilitators</th><th>User Agents</th></tr></thead><tbody>${sourceRows || '<tr><td colspan="12">No source attribution recorded yet.</td></tr>'}</tbody></table>
 <h2>Repeated Workflows</h2>
 <table><thead><tr><th>Sequence</th><th>Sequence Count</th><th>Unique Buyers</th><th>Bundle Replaceable</th><th>Separate Total</th><th>Bundle Price</th></tr></thead><tbody>${workflowRows || '<tr><td colspan="6">No repeated workflows recorded yet.</td></tr>'}</tbody></table>
 <h2>Buyer Classification</h2>
 <p class="muted">Heuristic labels separate verifier/crawler-style traffic from repeat buyers. Labels are evidence for triage, not billing or access-control decisions.</p>
 <table><thead><tr><th>Classification</th><th>Attribution Groups</th><th>Purchases</th><th>Revenue</th></tr></thead><tbody>${classificationRows || '<tr><td colspan="4">No classified buyers recorded yet.</td></tr>'}</tbody></table>
 <h2>Buyer Attribution</h2>
-<table><thead><tr><th>Class</th><th>Confidence</th><th>Reason</th><th>Payer Address</th><th>Buyer Hash</th><th>Country</th><th>Purchases</th><th>Revenue</th><th>First Seen</th><th>Last Seen</th><th>Operations</th><th>User Agents</th><th>Sequences</th></tr></thead><tbody>${buyerRows || '<tr><td colspan="13">No attributed buyers recorded yet.</td></tr>'}</tbody></table>
+<table><thead><tr><th>Class</th><th>Confidence</th><th>Reason</th><th>Payer Address</th><th>Buyer Hash</th><th>Country</th><th>Purchases</th><th>Revenue</th><th>First Seen</th><th>Last Seen</th><th>Sources</th><th>Source Reasons</th><th>Campaigns</th><th>Referrers/Origins</th><th>Operations</th><th>User Agents</th><th>Sequences</th></tr></thead><tbody>${buyerRows || '<tr><td colspan="17">No attributed buyers recorded yet.</td></tr>'}</tbody></table>
 <h2>Repeat Buyer Cohorts</h2>
 <table><thead><tr><th>Cohort Date</th><th>Buyers</th><th>Repeat Buyers</th><th>Purchases</th><th>Revenue</th><th>Latest Purchase</th></tr></thead><tbody>${cohortRows || '<tr><td colspan="6">No cohorts recorded yet.</td></tr>'}</tbody></table>
 <h2>Transaction Preflight Conversion</h2>
 <p class="muted">Admin-only inference by sequence id. A payment is counted after a check when the same sequence later includes payment-proof or USDC receipt evidence.</p>
 <table><thead><tr><th>Sequence</th><th>Purchases</th><th>Preflights</th><th>Payment Evidence</th><th>Payment After Check</th><th>First Seen</th><th>Last Seen</th><th>Endpoint Sequence</th></tr></thead><tbody>${conversionRows || '<tr><td colspan="8">No transaction preflight conversion yet.</td></tr>'}</tbody></table>
 <h2>Recent Attributed Paid Calls</h2>
-<table><thead><tr><th>Time</th><th>Operation</th><th>Path</th><th>Paid</th><th>Pricing Version</th><th>Payer</th><th>Buyer Hash</th><th>Sequence</th><th>Internal/Test</th><th>User Agent</th></tr></thead><tbody>${recentRows || '<tr><td colspan="10">No purchases recorded yet.</td></tr>'}</tbody></table>
+<table><thead><tr><th>Time</th><th>Operation</th><th>Path</th><th>Paid</th><th>Pricing Version</th><th>Payer</th><th>Buyer Hash</th><th>Sequence</th><th>Internal/Test</th><th>Source</th><th>Confidence</th><th>Source Reason</th><th>Campaign</th><th>Referrer/Origin</th><th>x402 Client</th><th>Facilitator</th><th>User Agent</th></tr></thead><tbody>${recentRows || '<tr><td colspan="17">No purchases recorded yet.</td></tr>'}</tbody></table>
 <h2>Recent Route Probes / Discovery Calls</h2>
 <p class="muted">These are successful HEAD/OPTIONS/discovery executions or calls without payment evidence. They are useful for x402scan registration and route interest, but they are not revenue.</p>
 <table><thead><tr><th>Time</th><th>Product</th><th>Method</th><th>Path</th><th>List Price</th><th>Country</th><th>Status</th></tr></thead><tbody>${probeRows || '<tr><td colspan="7">No route probes recorded yet.</td></tr>'}</tbody></table>
@@ -19123,6 +20565,34 @@ export default {
           url: `${origin}${PAYMENT_GUARD_MCP_PATH}`,
         },
         tools: ["evaluate_payment"],
+        paid_tool_definitions: [
+          "nomos-value-convert",
+          "nomos-value-btc-usd",
+          "nomos-value-eth-usd",
+          "nomos-value-trx-usd",
+          "nomos-value-usdt-twd",
+          "nomos-value-usdc-twd",
+          "nomos-budget-check",
+          "nomos-merchant-check",
+          "nomos-payment-preflight",
+          "nomos-tool-access",
+          "nomos-service-health",
+          "nomos-service-preflight",
+          "nomos-wallet-identify",
+          "nomos-wallet-labels",
+          "nomos-wallet-watchlist",
+          "nomos-wallet-risk-lite",
+        ].map(productId => ({
+          name: productId.replaceAll("-", "_"),
+          method: productMethod(PRODUCTS_BY_ID[productId]),
+          url: `${origin}${PRODUCTS_BY_ID[productId].path}`,
+          x402_required: true,
+          price: PRODUCTS_BY_ID[productId].price,
+          expected_latency: "p95 < 500ms local policy path",
+          error_behavior: "HTTP 402 before payment; HTTP 400 for malformed input; structured JSON response after payment.",
+          example_call: productInputExample(PRODUCTS_BY_ID[productId]),
+          input_schema: PRODUCTS_BY_ID[productId].inputSchema,
+        })),
       });
     } else if (url.pathname === "/verification.json") {
       response = json(await verificationData(origin), 200, {

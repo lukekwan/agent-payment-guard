@@ -194,6 +194,39 @@ Intended product shape:
 
 ## Underlying tools
 
+## Nomos Agent Utilities
+
+`POST /x402/v1/value/convert` — 0.002 USDC
+
+Pay-per-request value conversion for BTC, ETH, TRX, USDT, and USDC into USD or
+TWD. Responses use decimal-safe arithmetic, include timestamp/freshness, and do
+not expose provider raw responses.
+
+Fixed low-friction quote routes are also exposed at 0.001-0.002 USDC:
+`/x402/v1/value/btc-usd`, `/x402/v1/value/eth-usd`,
+`/x402/v1/value/trx-usd`, `/x402/v1/value/usdt-twd`, and
+`/x402/v1/value/usdc-twd`.
+
+`POST /x402/v1/policy/budget-check` — 0.010 USDC
+
+Deterministic ALLOW / REQUIRE_APPROVAL / DENY budget decision for autonomous
+agents. This is a pure policy function with fixed reason codes, idempotency-key
+support, and no LLM decisioning.
+
+Additional deterministic policy and decision utilities are exposed for merchant
+checks, payment preflight, tool-access checks, service health, and service
+preflight.
+
+`POST /x402/v1/wallet/risk-lite` — 0.050 USDC
+
+Lightweight wallet risk signal for Bitcoin, Ethereum, and Tron before an agent
+interacts with a wallet. It is a low-cost screening utility, not a full KYT
+investigation.
+
+Identity-lite, normalized labels, and watchlist booleans are also exposed as
+low-price wallet utilities. Deeper risk-360 and counterparty graph products are
+not exposed in this MVP until data licensing and validation gates pass.
+
 ## Featured growth endpoint
 
 `GET /v1/x402/base/alpha-risk?subject=0x...&kind=auto` — 0.003 USDC

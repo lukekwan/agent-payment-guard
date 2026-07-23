@@ -1,0 +1,277 @@
+openapi: 3.1.0
+info:
+  title: Nomos Agent Utilities
+  version: 0.1.0-preview
+  description: Pay-per-request value conversion, policy checks, and wallet risk signals for autonomous agents.
+servers:
+  - url: https://preview.example
+    description: Preview origin to be assigned after review.
+paths:
+  /health:
+    get:
+      summary: Service health
+      operationId: health
+      responses:
+        "200":
+          description: Service is healthy.
+  /x402/v1/value/convert:
+    post:
+      summary: Convert value for agent budgeting
+      operationId: nomosValueConvert
+      x-x402:
+        price: "0.002"
+        asset: USDC
+        network: Base
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [asset, amount, quote_currency]
+              properties:
+                asset:
+                  type: string
+                  enum: [BTC, ETH, TRX, USDT, USDC]
+                amount:
+                  type: string
+                  pattern: "^[0-9]+(?:\\.[0-9]{1,18})?$"
+                quote_currency:
+                  type: string
+                  enum: [USD, TWD]
+                idempotency_key:
+                  type: string
+                  maxLength: 128
+            examples:
+              default:
+                value:
+                  asset: USDT
+                  amount: "100"
+                  quote_currency: TWD
+      responses:
+        "200":
+          description: Decimal-safe conversion result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValueConvertResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "402":
+          $ref: "#/components/responses/PaymentRequired"
+  /x402/v1/policy/budget-check:
+    post:
+      summary: Deterministic budget policy check
+      operationId: nomosBudgetCheck
+      x-x402:
+        price: "0.010"
+        asset: USDC
+        network: Base
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - agent_id
+                - currency
+                - requested_amount
+                - remaining_budget
+                - per_transaction_limit
+                - purpose
+              properties:
+                agent_id:
+                  type: string
+                  minLength: 1
+                  maxLength: 120
+                currency:
+                  type: string
+                  enum: [USDC, USDT, USD]
+                requested_amount:
+                  type: string
+                  pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$"
+                remaining_budget:
+                  type: string
+                  pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$"
+                per_transaction_limit:
+                  type: string
+                  pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$"
+                purpose:
+                  type: string
+                  minLength: 2
+                  maxLength: 120
+                auto_approval_threshold:
+                  type: string
+                idempotency_key:
+                  type: string
+                  maxLength: 128
+            examples:
+              deny:
+                value:
+                  agent_id: agent-123
+                  currency: USDC
+                  requested_amount: "250"
+                  remaining_budget: "100"
+                  per_transaction_limit: "150"
+                  purpose: api_purchase
+      responses:
+        "200":
+          description: Deterministic budget decision.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BudgetCheckResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "402":
+          $ref: "#/components/responses/PaymentRequired"
+  /x402/v1/wallet/risk-lite:
+    post:
+      summary: Lightweight wallet risk signal
+      operationId: nomosWalletRiskLite
+      x-x402:
+        price: "0.050"
+        asset: USDC
+        network: Base
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [chain, address]
+              properties:
+                chain:
+                  type: string
+                  enum: [ethereum, tron, bitcoin]
+                address:
+                  type: string
+                  minLength: 26
+                  maxLength: 120
+                action:
+                  type: string
+                  maxLength: 120
+                value_usd:
+                  type: string
+                  pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$"
+                idempotency_key:
+                  type: string
+                  maxLength: 128
+            examples:
+              default:
+                value:
+                  chain: ethereum
+                  address: "0x0000000000000000000000000000000000000000"
+                  action: api_purchase
+                  value_usd: "100"
+      responses:
+        "200":
+          description: Normalized risk-lite signal without raw provider data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletRiskLiteResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "402":
+          $ref: "#/components/responses/PaymentRequired"
+components:
+  responses:
+    BadRequest:
+      description: Malformed input, unsupported value, or fail-closed validation.
+    PaymentRequired:
+      description: x402 payment required; response includes payment requirements.
+  schemas:
+    ValueConvertResponse:
+      type: object
+      required:
+        - asset
+        - amount
+        - quote_currency
+        - unit_price
+        - converted_value
+        - price_timestamp
+        - data_freshness_seconds
+        - result_id
+      properties:
+        asset:
+          type: string
+        amount:
+          type: string
+        quote_currency:
+          type: string
+        unit_price:
+          type: string
+        converted_value:
+          type: string
+        price_timestamp:
+          type: string
+          format: date-time
+        data_freshness_seconds:
+          type: integer
+        result_id:
+          type: string
+    BudgetCheckResponse:
+      type: object
+      required:
+        - decision
+        - reason_codes
+        - requested_amount
+        - remaining_budget
+        - per_transaction_limit
+        - decision_id
+        - expires_at
+      properties:
+        decision:
+          type: string
+          enum: [ALLOW, REQUIRE_APPROVAL, DENY]
+        reason_codes:
+          type: array
+          items:
+            type: string
+        requested_amount:
+          type: string
+        remaining_budget:
+          type: string
+        per_transaction_limit:
+          type: string
+        decision_id:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+    WalletRiskLiteResponse:
+      type: object
+      required:
+        - risk_score
+        - risk_level
+        - entity_type
+        - sanctions_match
+        - reason_codes
+        - data_timestamp
+        - data_freshness
+        - result_id
+      properties:
+        risk_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        risk_level:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, SEVERE]
+        entity_type:
+          type: string
+        sanctions_match:
+          type: boolean
+        reason_codes:
+          type: array
+          items:
+            type: string
+        data_timestamp:
+          type: string
+          format: date-time
+        data_freshness:
+          type: string
+        result_id:
+          type: string

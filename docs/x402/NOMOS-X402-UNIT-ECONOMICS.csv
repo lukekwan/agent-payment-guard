@@ -1,0 +1,17 @@
+endpoint,nomos_compute_cost,upstream_cost,cache_hit_assumption,payment_facilitator_cost,expected_failure_rate,gross_price,estimated_gross_margin,rate_limit,fallback,license_status
+POST /x402/v1/value/convert,0.00005,0.00000,95%,0.00020,1%,0.00200,87.5%,60/min/ip,server-side reference quote table,MVP internal reference; production market-data source pending review
+GET /x402/v1/value/btc-usd,0.00004,0.00000,95%,0.00020,1%,0.00200,88.0%,120/min/ip,server-side reference quote table,MVP internal reference; production market-data source pending review
+GET /x402/v1/value/eth-usd,0.00004,0.00000,95%,0.00020,1%,0.00200,88.0%,120/min/ip,server-side reference quote table,MVP internal reference; production market-data source pending review
+GET /x402/v1/value/trx-usd,0.00004,0.00000,95%,0.00020,1%,0.00100,76.0%,120/min/ip,server-side reference quote table,MVP internal reference; production market-data source pending review
+GET /x402/v1/value/usdt-twd,0.00004,0.00000,95%,0.00020,1%,0.00100,76.0%,120/min/ip,server-side reference quote table,MVP internal reference; production market-data source pending review
+GET /x402/v1/value/usdc-twd,0.00004,0.00000,95%,0.00020,1%,0.00100,76.0%,120/min/ip,server-side reference quote table,MVP internal reference; production market-data source pending review
+POST /x402/v1/policy/budget-check,0.00002,0.00000,N/A,0.00020,1%,0.01000,97.8%,120/min/ip,fail closed deterministic policy,pure internal policy logic
+POST /x402/v1/policy/merchant-check,0.00002,0.00000,N/A,0.00020,1%,0.05000,99.6%,120/min/ip,fail closed deterministic policy,pure internal policy logic
+POST /x402/v1/decision/payment-preflight,0.00003,0.00000,N/A,0.00020,1%,0.10000,99.8%,120/min/ip,fail closed deterministic policy,pure internal policy logic
+POST /x402/v1/decision/tool-access,0.00002,0.00000,N/A,0.00020,1%,0.03000,99.3%,120/min/ip,fail closed deterministic policy,pure internal policy logic
+POST /x402/v1/service/health,0.00003,0.00000,50%,0.00020,2%,0.01000,97.7%,60/min/ip,structured health readiness response,derived service telemetry only
+POST /x402/v1/service/preflight,0.00004,0.00000,50%,0.00020,2%,0.10000,99.8%,60/min/ip,fail closed deterministic service policy,derived service telemetry and policy logic only
+POST /x402/v1/wallet/risk-lite,0.00005,0.00000,80%,0.00020,2%,0.05000,99.5%,60/min/ip,format validation and policy heuristics,MVP normalized signal only; deeper licensed data integration requires separate review
+POST /x402/v1/wallet/identify,0.00004,0.00000,80%,0.00020,2%,0.01000,97.6%,60/min/ip,format validation and identity-lite normalization,MVP normalized signal only; deeper licensed data integration requires separate review
+POST /x402/v1/wallet/labels,0.00004,0.00000,80%,0.00020,2%,0.01000,97.6%,60/min/ip,format validation and label normalization,MVP normalized signal only; deeper licensed data integration requires separate review
+POST /x402/v1/wallet/watchlist,0.00004,0.00000,80%,0.00020,2%,0.02000,98.8%,60/min/ip,format validation and watchlist-lite normalization,MVP normalized signal only; deeper licensed data integration requires separate review
