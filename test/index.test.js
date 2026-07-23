@@ -32,8 +32,20 @@ import worker, {
   sampleAgenticCommercePreflightInput,
   buildAgentPaymentAuthorization,
   buildAgentCapabilitySecurityPreflight,
-  buildAgentHarnessScore,
+  buildAgentHarnessReadinessCandidate,
   buildMcpServerRiskCheck,
+  buildNomosBudgetCheck,
+  buildNomosValueConvert,
+  buildNomosFixedValueQuote,
+  buildNomosMerchantCheck,
+  buildNomosPaymentPreflight,
+  buildNomosToolAccess,
+  buildNomosServiceHealth,
+  buildNomosServicePreflight,
+  buildNomosWalletIdentify,
+  buildNomosWalletLabels,
+  buildNomosWalletWatchlist,
+  buildNomosWalletRiskLite,
   buildStablecoinBalance,
   buildTokenPreflight,
   buildTokenExitRisk,
@@ -204,7 +216,10 @@ test("worker exposes discovery documents", async () => {
   assert.ok(document.paths["/v1/x402/sumsub/crypto-transfer-compliance-bundle"]);
   assert.ok(document.paths["/v1/x402/agent/action-preflight"]);
   assert.ok(document.paths["/v1/x402/agent/mcp-server-risk-check"]);
-  assert.ok(document.paths["/v1/x402/agent/harness-score"]);
+  assert.ok(document.paths["/x402/v1/value/convert"].post);
+  assert.ok(document.paths["/x402/v1/policy/budget-check"].post);
+  assert.ok(document.paths["/x402/v1/wallet/risk-lite"].post);
+  assert.equal(document.paths["/v1/x402/agent/harness-score"], undefined);
   assert.ok(document.paths["/v1/agentic-commerce/preflight/sample"]);
   assert.ok(document.paths["/v1/agentic-commerce/preflight"].post);
   assert.ok(
@@ -224,8 +239,8 @@ test("worker exposes discovery documents", async () => {
     new Request("https://example.test/catalog.json"),
   );
   const catalogDocument = await catalog.json();
-  assert.equal(catalogDocument.product_families, 88);
-  assert.equal(catalogDocument.paid_operations_observed_on_x402scan, 90);
+  assert.equal(catalogDocument.product_families, 103);
+  assert.equal(catalogDocument.paid_operations_observed_on_x402scan, 105);
   assert.equal(catalogDocument.pricing_version, "x402-pricing-v1-20260720");
   assert.ok(
     catalogDocument.products.find(
@@ -271,15 +286,25 @@ test("worker exposes discovery documents", async () => {
   const card = await worker.fetch(
     new Request("https://example.test/.well-known/agent-card.json"),
   );
-  assert.equal((await card.json()).skills.length, 88);
+  assert.equal((await card.json()).skills.length, 103);
+
+  const mcpDiscovery = await worker.fetch(
+    new Request("https://example.test/.well-known/mcp.json"),
+  );
+  const mcpDiscoveryDocument = await mcpDiscovery.json();
+  assert.ok(
+    mcpDiscoveryDocument.paid_tool_definitions.find(
+      tool => tool.name === "nomos_value_convert" && tool.x402_required === true,
+    ),
+  );
 
   const x402Discovery = await worker.fetch(
     new Request("https://example.test/.well-known/x402"),
   );
   const x402DiscoveryDocument = await x402Discovery.json();
-  assert.equal(x402DiscoveryDocument.resources.length, 88);
-  assert.equal(x402DiscoveryDocument.operation_count, 90);
-  assert.equal(x402DiscoveryDocument.paid_operations.length, 90);
+  assert.equal(x402DiscoveryDocument.resources.length, 103);
+  assert.equal(x402DiscoveryDocument.operation_count, 105);
+  assert.equal(x402DiscoveryDocument.paid_operations.length, 105);
   assert.ok(
     x402DiscoveryDocument.paid_operations.find(
       operation =>
@@ -332,6 +357,55 @@ test("worker exposes discovery documents", async () => {
   assert.ok(
     x402DiscoveryDocument.paid_operations.find(
       operation =>
+        operation.id === "nomos-value-convert" &&
+        operation.method === "POST" &&
+        operation.price_usdc === "$0.002",
+    ),
+  );
+  assert.ok(
+    x402DiscoveryDocument.paid_operations.find(
+      operation =>
+        operation.id === "nomos-budget-check" &&
+        operation.method === "POST" &&
+        operation.price_usdc === "$0.010",
+    ),
+  );
+  assert.ok(
+    x402DiscoveryDocument.paid_operations.find(
+      operation =>
+        operation.id === "nomos-wallet-risk-lite" &&
+        operation.method === "POST" &&
+        operation.price_usdc === "$0.050",
+    ),
+  );
+  [
+    ["nomos-value-btc-usd", "GET", "$0.002"],
+    ["nomos-value-eth-usd", "GET", "$0.002"],
+    ["nomos-value-trx-usd", "GET", "$0.001"],
+    ["nomos-value-usdt-twd", "GET", "$0.001"],
+    ["nomos-value-usdc-twd", "GET", "$0.001"],
+    ["nomos-wallet-identify", "POST", "$0.010"],
+    ["nomos-wallet-labels", "POST", "$0.010"],
+    ["nomos-wallet-watchlist", "POST", "$0.020"],
+    ["nomos-merchant-check", "POST", "$0.050"],
+    ["nomos-payment-preflight", "POST", "$0.100"],
+    ["nomos-tool-access", "POST", "$0.030"],
+    ["nomos-service-health", "POST", "$0.010"],
+    ["nomos-service-preflight", "POST", "$0.100"],
+  ].forEach(([id, method, price]) => {
+    assert.ok(
+      x402DiscoveryDocument.paid_operations.find(
+        operation =>
+          operation.id === id &&
+          operation.method === method &&
+          operation.price_usdc === price,
+      ),
+      `missing paid operation ${id}`,
+    );
+  });
+  assert.ok(
+    x402DiscoveryDocument.paid_operations.find(
+      operation =>
         operation.id === "agent-buyer-policy-kit" &&
         operation.price_usdc === "$49.00",
     ),
@@ -341,8 +415,8 @@ test("worker exposes discovery documents", async () => {
     new Request("https://example.test/registry.json"),
   );
   const registryDocument = await registry.json();
-  assert.equal(registryDocument.counts.product_families, 88);
-  assert.equal(registryDocument.counts.paid_operations, 90);
+  assert.equal(registryDocument.counts.product_families, 103);
+  assert.equal(registryDocument.counts.paid_operations, 105);
   assert.equal(registryDocument.pricing_version, "x402-pricing-v1-20260720");
   assert.ok(
     registryDocument.operations.find(
@@ -1718,23 +1792,196 @@ test("MCP server risk check flags unauthenticated side-effect tools", () => {
   assert.ok(result.assessment.reason_codes.includes("SIDE_EFFECT_TOOLS_WITHOUT_AUTH"));
 });
 
-test("agent harness score reflects missing production controls", () => {
-  const result = buildAgentHarnessScore(
+test("Nomos Agent Utilities provide decimal-safe MVP responses", () => {
+  const converted = buildNomosValueConvert(
+    { asset: "USDT", amount: "100", quote_currency: "TWD" },
+    "2026-07-24T00:00:00.000Z",
+  );
+  assert.equal(converted.product, "nomos-value-convert");
+  assert.equal(converted.converted_value, "3245.00");
+  assert.equal(converted.data_freshness_seconds, 30);
+  assert.match(converted.result_id, /^val_/);
+
+  const invalid = buildNomosValueConvert({
+    asset: "DOGE",
+    amount: "1",
+    quote_currency: "USD",
+  });
+  assert.equal(invalid.error, "unsupported_asset");
+
+  const denied = buildNomosBudgetCheck(
+    {
+      agent_id: "agent-123",
+      currency: "USDC",
+      requested_amount: "250",
+      remaining_budget: "100",
+      per_transaction_limit: "150",
+      purpose: "api_purchase",
+    },
+    "2026-07-24T00:00:00.000Z",
+  );
+  assert.equal(denied.product, "nomos-budget-check");
+  assert.equal(denied.decision, "DENY");
+  assert.deepEqual(denied.reason_codes, [
+    "REQUEST_EXCEEDS_REMAINING_BUDGET",
+    "REQUEST_EXCEEDS_TRANSACTION_LIMIT",
+  ]);
+
+  const review = buildNomosBudgetCheck(
+    {
+      agent_id: "agent-123",
+      currency: "USDC",
+      requested_amount: "75",
+      remaining_budget: "100",
+      per_transaction_limit: "150",
+      purpose: "api_purchase",
+      auto_approval_threshold: "50",
+    },
+    "2026-07-24T00:00:00.000Z",
+  );
+  assert.equal(review.decision, "REQUIRE_APPROVAL");
+  assert.ok(review.reason_codes.includes("REQUEST_EXCEEDS_AUTO_APPROVAL_THRESHOLD"));
+
+  const wallet = buildNomosWalletRiskLite(
+    {
+      chain: "bitcoin",
+      address: "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kg3g4ty",
+      value_usd: "25",
+      action: "api_purchase",
+    },
+    "2026-07-24T00:00:00.000Z",
+  );
+  assert.equal(wallet.product, "nomos-wallet-risk-lite");
+  assert.equal(wallet.decision, "ALLOW");
+  assert.equal(wallet.risk_score, 0);
+  assert.equal(wallet.risk_level, "LOW");
+  assert.equal(wallet.entity_type, "unknown");
+  assert.equal(wallet.sanctions_match, false);
+  assert.equal(wallet.data_timestamp, "2026-07-24T00:00:00.000Z");
+  assert.equal(wallet.data_freshness_seconds, 30);
+  assert.equal(wallet.evidence.provider_names_redacted, true);
+
+  const severeWallet = buildNomosWalletRiskLite(
+    {
+      chain: "ethereum",
+      address: "not-a-wallet",
+      value_usd: "25000",
+      action: "wallet_transfer",
+    },
+    "2026-07-24T00:00:00.000Z",
+  );
+  assert.equal(severeWallet.risk_score, 100);
+  assert.equal(severeWallet.risk_level, "SEVERE");
+  assert.ok(severeWallet.reason_codes.includes("INVALID_ADDRESS_FORMAT"));
+  assert.ok(severeWallet.reason_codes.includes("HIGH_VALUE_ACTION"));
+
+  const fixedQuote = buildNomosFixedValueQuote(
+    "ETH",
+    "USD",
+    { amount: "2" },
+    "2026-07-24T00:00:00.000Z",
+  );
+  assert.equal(fixedQuote.asset, "ETH");
+  assert.equal(fixedQuote.converted_value, "7400.00");
+
+  const merchantReview = buildNomosMerchantCheck(
+    {
+      merchant_id: "merchant-123",
+      purpose: "api_purchase",
+      amount_usdc: "10",
+      trust_level: "unknown",
+    },
+    "2026-07-24T00:00:00.000Z",
+  );
+  assert.equal(merchantReview.decision, "REQUIRE_APPROVAL");
+
+  const paymentReview = buildNomosPaymentPreflight(
+    {
+      agent_id: "agent-123",
+      amount_usdc: "125",
+      purpose: "api_purchase",
+      recipient_risk_level: "LOW",
+    },
+    "2026-07-24T00:00:00.000Z",
+  );
+  assert.equal(paymentReview.decision, "REQUIRE_APPROVAL");
+
+  const toolReview = buildNomosToolAccess(
+    {
+      agent_id: "agent-123",
+      tool_name: "wrangler_deploy",
+      action_type: "deploy",
+      environment: "production",
+    },
+    "2026-07-24T00:00:00.000Z",
+  );
+  assert.equal(toolReview.decision, "REQUIRE_APPROVAL");
+
+  const serviceHealth = buildNomosServiceHealth(
+    { target_url: "https://example.com/.well-known/x402" },
+    "2026-07-24T00:00:00.000Z",
+  );
+  assert.equal(serviceHealth.status, "CHECK_READY");
+
+  const servicePreflight = buildNomosServicePreflight(
+    {
+      target_url: "https://example.com/x402/resource",
+      price_usdc: "0.50",
+      buyer_budget_usdc: "1.00",
+      purpose: "api_purchase",
+    },
+    "2026-07-24T00:00:00.000Z",
+  );
+  assert.equal(servicePreflight.decision, "REQUIRE_APPROVAL");
+
+  const identify = buildNomosWalletIdentify(
+    { chain: "ethereum", address: "0x0000000000000000000000000000000000000000" },
+    "2026-07-24T00:00:00.000Z",
+  );
+  assert.equal(identify.entity_type, "unknown");
+
+  const labels = buildNomosWalletLabels(
+    { chain: "ethereum", address: "bad-address" },
+    "2026-07-24T00:00:00.000Z",
+  );
+  assert.ok(labels.labels.includes("invalid_address_format"));
+
+  const watchlist = buildNomosWalletWatchlist(
+    { chain: "ethereum", address: "0x0000000000000000000000000000000000000000" },
+    "2026-07-24T00:00:00.000Z",
+  );
+  assert.equal(watchlist.watchlist_match, false);
+});
+
+test("agent harness readiness candidate is evidence based and internal only", () => {
+  const result = buildAgentHarnessReadinessCandidate(
     {
       agent_name: "demo-agent",
-      capabilities: "loop,tools,memory,background_tasks",
-      dangerous_tools: "shell,deploy",
+      evidence_domains: "runtime_action_governance,mcp_tool_supply_chain",
     },
     "2026-07-23T00:00:00.000Z",
   );
 
-  assert.equal(result.product, "agent-harness-score");
-  assert.equal(result.maturity, "not_ready");
-  assert.ok(result.score < 40);
+  assert.equal(result.product, "agent-harness-readiness");
+  assert.equal(result.exposure, "internal_candidate_only");
+  assert.equal(result.public_endpoint_authorized, false);
+  assert.equal("score" in result, false);
+  assert.ok(result.domains.length <= 10);
   assert.ok(
-    result.findings.some(
-      finding => finding.code === "DANGEROUS_TOOLS_WITHOUT_PERMISSIONS",
+    result.domains.every(
+      domain =>
+        domain.control_objective &&
+        Array.isArray(domain.required_evidence) &&
+        domain.failure_mode &&
+        domain.severity &&
+        domain.test_method &&
+        domain.remediation,
     ),
+  );
+  assert.equal(
+    result.domains.find(domain => domain.id === "runtime_action_governance")
+      .evidence_status,
+    "sample_provided",
   );
 });
 
@@ -1908,10 +2155,6 @@ test("paid routes advertise their exact Base USDC prices", async () => {
     [
       "/v1/x402/agent/mcp-server-risk-check?server_url=https%3A%2F%2Fexample.com%2Fmcp&tools=read_file%2Cwrite_file%2Csend_email&auth=bearer&transport=http",
       "20000",
-    ],
-    [
-      "/v1/x402/agent/harness-score?agent_name=demo-agent&capabilities=loop%2Ctools%2Cpermissions%2Chuman_approval%2Ccontext%2Cmemory%2Crecovery%2Cobservability&dangerous_tools=shell%2Cdeploy",
-      "50000",
     ],
   ];
 

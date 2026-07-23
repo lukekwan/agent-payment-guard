@@ -106,9 +106,9 @@ curl -fsS 'https://base-agent-preflight.bytoken2023.workers.dev/registry.json?cb
 
 Expected x402 regression values after either normal deploy or rollback:
 
-- product_families: 88
-- paid_operations: 90
-- .well-known/x402 operation_count: 90
+- product_families: 103
+- paid_operations: 105
+- .well-known/x402 operation_count: 105
 
 To remove `evaluate_payment` discovery without rolling back all source changes:
 
