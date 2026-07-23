@@ -233,6 +233,22 @@ async function postConsume(decision, env, attempt = "exec_attempt_001", override
   );
 }
 
+class PreInsertMutatingMemoryStore extends MemorySignGateStore {
+  constructor(mutate) {
+    super();
+    this.mutateBeforeInsert = mutate;
+    this.mutated = false;
+  }
+
+  async createDecision(record) {
+    if (record.decision === "ALLOW" && !this.mutated) {
+      this.mutated = true;
+      this.mutateBeforeInsert(this, record);
+    }
+    return super.createDecision(record);
+  }
+}
+
 async function bindDefaultTrustedEvidence(env, request) {
   const evidence = env.SIGNGATE_TEST_STORE.trustedEvidence.get(`${ORG}:evidence_tests_001`);
   evidence.action_fingerprint = await fingerprintDeployChange(request, {
@@ -240,6 +256,45 @@ async function bindDefaultTrustedEvidence(env, request) {
     principal_id: "codex_dev_01",
   });
   return request;
+}
+
+async function buildApprovedMemoryRequest(env, suffix) {
+  const reviewRequest = await bindDefaultTrustedEvidence(env, baseRequest({
+    request_id: `req_review_${suffix}`,
+    action: { parameters: { touches_permissions: true } },
+  }));
+  const review = await (await postDecision(reviewRequest, env)).json();
+  assert.equal(review.decision, "REQUIRE_APPROVAL");
+  const grantResponse = await handleFounderApprovalGrantRequest(
+    new Request("https://signgate.test/internal/dogfood/founder-approval-grants", {
+      method: "POST",
+      headers: { authorization: `Bearer ${FOUNDER_KEY}` },
+      body: JSON.stringify({
+        contract_version: SIGNGATE_CONTRACT_VERSION,
+        organization_id: ORG,
+        original_decision_id: review.decision_id,
+        action_fingerprint: review.action_fingerprint,
+        policy_version: SIGNGATE_POLICY_VERSION,
+        approval_reason: "FOUNDER_APPROVED_PREVIEW_PERMISSION_CHANGE",
+        expires_at: GRANT_FUTURE,
+      }),
+    }),
+    env,
+  );
+  assert.equal(grantResponse.status, 200);
+  const grant = await grantResponse.json();
+  const approved = baseRequest({
+    request_id: `req_approved_${suffix}`,
+    action: { parameters: { touches_permissions: true } },
+  });
+  approved.evidence.push({
+    id: grant.approval_grant_id,
+    type: "approval_grant",
+    source: "founder",
+    status: "approved",
+    original_decision_id: review.decision_id,
+  });
+  return bindDefaultTrustedEvidence(env, approved);
 }
 
 test("DEV-SG-001 strict JSON intake rejects malformed input before evaluation", async () => {
@@ -562,12 +617,130 @@ test("DEV-SG-001 trusted evidence requires exact server action binding", async (
   }
 });
 
+test("DEV-SG-001 memory persistence fails closed for every post-provenance authority mutation", async () => {
+  const mutations = {
+    credential(store, record) {
+      const credential = [...store.credentials.values()].find(item => item.credential_id === record.credential_id);
+      credential.status = "revoked";
+    },
+    mandate(store, record) {
+      store.mandates.get(store.key(record.organization_id, record.mandate_id)).status = "revoked";
+    },
+    authorized_target(store, record) {
+      store.authorizedTargets.get(store.key(record.organization_id, record.authorized_target_id)).revision += 1;
+    },
+    trusted_evidence(store, record) {
+      const evidenceId = JSON.parse(record.evidence_ids_json)[0];
+      store.trustedEvidence.get(store.key(record.organization_id, evidenceId)).status = "revoked";
+    },
+  };
+  for (const [name, mutate] of Object.entries(mutations)) {
+    const store = new PreInsertMutatingMemoryStore(mutate);
+    const env = await testEnv({ store });
+    const response = await postDecision(baseRequest({ request_id: `req_memory_toctou_${name}` }), env);
+    const body = await response.json();
+    assert.equal(response.status, 409, name);
+    assert.equal(body.error, "AUTHORITY_PROVENANCE_INVALID", name);
+    assert.equal(store.decisions.size, 0, name);
+    assert.equal(store.idempotency.size, 0, name);
+    assert.equal(store.auditEvents.filter(event => event.event_type === "decision.created").length, 0, name);
+    assert.equal(store.receipts.size, 0, name);
+  }
+});
+
+test("DEV-SG-001 memory final persistence binds credential proof and the complete rotation chain", async () => {
+  const mutations = {
+    key_digest(store, record) {
+      const current = [...store.credentials.values()].find(item => item.credential_id === record.credential_id);
+      current.key_digest = "0".repeat(64);
+    },
+    rotation_expiry(store, record) {
+      const current = [...store.credentials.values()].find(item => item.credential_id === record.credential_id);
+      current.rotation_expires_at = "2026-07-18T23:59:59.000Z";
+    },
+    predecessor_revocation(store, record) {
+      const current = [...store.credentials.values()].find(item => item.credential_id === record.credential_id);
+      [...store.credentials.values()].find(item => item.credential_id === current.rotated_from_credential_id).status = "revoked";
+    },
+    predecessor_replacement(store, record) {
+      const current = [...store.credentials.values()].find(item => item.credential_id === record.credential_id);
+      [...store.credentials.values()].find(item => item.credential_id === current.rotated_from_credential_id).principal_id = "replacement_agent";
+    },
+    rotation_constraint_mismatch(store, record) {
+      const current = [...store.credentials.values()].find(item => item.credential_id === record.credential_id);
+      [...store.credentials.values()].find(item => item.credential_id === current.rotated_from_credential_id).allowed_services_json = JSON.stringify(["other-worker"]);
+    },
+  };
+  for (const [name, mutate] of Object.entries(mutations)) {
+    const store = new PreInsertMutatingMemoryStore(mutate);
+    const env = await testEnv({ store });
+    const predecessor = await createPreviewCredential({
+      store,
+      rawKey: `${AGENT_PREVIOUS_KEY}_${name}`,
+      organizationId: ORG,
+      principalId: "codex_dev_01",
+      principalType: "agent",
+      scopes: ["decision:create:deploy_change"],
+      nowMs: NOW - 60_000,
+      pepper: env.SIGNGATE_API_KEY_PEPPER,
+    });
+    const current = store.credentials.get(AGENT_KEY.slice(0, 12));
+    current.status = "rotating";
+    current.rotated_from_credential_id = predecessor.credential_id;
+    current.rotation_started_at = "2026-07-19T00:00:00.000Z";
+    current.rotation_expires_at = "2026-07-19T00:05:00.000Z";
+    const response = await postDecision(baseRequest({ request_id: `req_memory_rotation_${name}` }), env);
+    const body = await response.json();
+    assert.equal(response.status, 409, name);
+    assert.equal(body.error, "AUTHORITY_PROVENANCE_INVALID", name);
+    assert.deepEqual(body.reason_codes, ["AUTHORITY_PROVENANCE_INVALID"], name);
+    assert.equal(store.decisions.size, 0, name);
+    assert.equal(store.idempotency.size, 0, name);
+    assert.equal(store.auditEvents.filter(event => event.event_type === "decision.created").length, 0, name);
+    assert.equal(store.receipts.size, 0, name);
+  }
+});
+
+test("DEV-SG-001 memory final persistence binds every approval authority participant", async () => {
+  const mutations = {
+    approval_revocation: grant => { grant.status = "REVOKED"; },
+    approver_principal_replacement: grant => { grant.approver_principal_id = "founder_replacement"; },
+    approval_reason_replacement: grant => { grant.approval_reason = "FOUNDER_APPROVED_PREVIEW_DNS_CHANGE"; },
+    binding_fingerprint_mutation: grant => { grant.binding_fingerprint = `sha256:${"1".repeat(64)}`; },
+    authority_fingerprint_mutation: grant => { grant.authority_fingerprint = `sha256:${"2".repeat(64)}`; },
+  };
+  for (const [name, mutateGrant] of Object.entries(mutations)) {
+    const store = new PreInsertMutatingMemoryStore(currentStore => {
+      const grant = [...currentStore.grants.values()].find(item => item.status === "AVAILABLE");
+      mutateGrant(grant);
+    });
+    const env = await testEnv({ store });
+    const approvedRequest = await buildApprovedMemoryRequest(env, name);
+    const createdBefore = store.decisions.size;
+    const idempotencyBefore = store.idempotency.size;
+    const successAuditBefore = store.auditEvents.filter(event => event.event_type === "decision.created").length;
+    const response = await postDecision(approvedRequest, env);
+    const body = await response.json();
+    assert.equal(response.status, 409, name);
+    assert.equal(body.error, "AUTHORITY_PROVENANCE_INVALID", name);
+    assert.equal(store.decisions.size, createdBefore, name);
+    assert.equal(store.idempotency.size, idempotencyBefore, name);
+    assert.equal(store.auditEvents.filter(event => event.event_type === "decision.created").length, successAuditBefore, name);
+    assert.equal(store.receipts.size, 0, name);
+  }
+});
+
 test("DEV-SG-001 idempotency and Founder grant lifecycle match frozen dogfood flow", async () => {
   const env = await testEnv();
   const request = baseRequest({ request_id: "req_idempotent" });
   const first = await (await postDecision(request, env)).json();
   const retry = await (await postDecision(request, env)).json();
   assert.equal(retry.decision_id, first.decision_id);
+  const persistedFirst = await env.SIGNGATE_TEST_STORE.getDecision(ORG, first.decision_id);
+  assert.equal("credential_authority_proof" in persistedFirst, false);
+  assert.equal("approval_authority_proof" in persistedFirst, false);
+  assert.doesNotMatch(JSON.stringify(persistedFirst), /"key_digest"\s*:|sg_agent_/i);
+  assert.match(JSON.parse(persistedFirst.authority_snapshot_json).credential.authentication_proof_fingerprint, /^sha256:[a-f0-9]{64}$/);
   const mismatch = await postDecision(baseRequest({ request_id: "req_idempotent", action: { parameters: { changed_routes: ["/v1/decisions", "/changed"] } } }), env);
   assert.equal(mismatch.status, 409);
 

@@ -1,0 +1,377 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specs.signgate.dev/payment-decision-contract/v1/candidate/schema.json",
+  "title": "SignGate Payment Decision Contract Reconciliation Candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["request", "response"],
+  "properties": {
+    "request": { "$ref": "#/$defs/PaymentDecisionRequest" },
+    "response": { "$ref": "#/$defs/PaymentDecisionResponse" }
+  },
+  "$defs": {
+    "Identifier": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$"
+    },
+    "Ulid": {
+      "type": "string",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "Sha256": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "DateTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "AtomicValue": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]*$",
+      "maxLength": 78,
+      "description": "Positive integer atomic units; JSON numbers, zero, decimals, negatives, and exponent forms are forbidden."
+    },
+    "Decision": {
+      "type": "string",
+      "enum": ["ALLOW", "REQUIRE_APPROVAL", "DENY"]
+    },
+    "ReasonCode": {
+      "type": "string",
+      "enum": [
+        "POLICY_MATCH",
+        "APPROVAL_REQUIRED_BY_POLICY",
+        "MERCHANT_DENIED",
+        "NETWORK_NOT_ALLOWED",
+        "AMOUNT_EXCEEDS_LIMIT",
+        "ASSET_METADATA_UNVERIFIED",
+        "EVIDENCE_INVALID",
+        "REQUEST_INVALID"
+      ]
+    },
+    "Agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "type": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "authenticated_by": { "type": "string", "minLength": 1, "maxLength": 64 }
+      }
+    },
+    "Buyer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "wallet_address": { "type": "string", "pattern": "^0x[a-fA-F0-9]{40}$" },
+        "country": { "type": "string", "pattern": "^[A-Z]{2}$" }
+      }
+    },
+    "Mandate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "scope", "expires_at"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "scope": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "uniqueItems": true
+        },
+        "issued_by": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "expires_at": { "$ref": "#/$defs/DateTime" }
+      }
+    },
+    "Merchant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "wallet_address": { "type": "string", "pattern": "^0x[a-fA-F0-9]{40}$" },
+        "domain": { "type": "string", "minLength": 1, "maxLength": 255 }
+      }
+    },
+    "Resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "type": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "uri": { "type": "string", "minLength": 1, "maxLength": 2048 }
+      }
+    },
+    "Network": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["namespace", "reference"],
+      "properties": {
+        "namespace": { "type": "string", "enum": ["eip155"] },
+        "reference": { "type": "string", "pattern": "^[0-9]+$" }
+      }
+    },
+    "Asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "enum": ["native", "erc20"] },
+        "address": { "type": "string", "pattern": "^0x[a-fA-F0-9]{40}$" },
+        "symbol": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "description": "Display metadata only; never asset identity or validation authority."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "erc20" } }, "required": ["type"] },
+          "then": { "required": ["address"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "native" } }, "required": ["type"] },
+          "then": { "not": { "required": ["address"] } }
+        }
+      ]
+    },
+    "Amount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["atomic_value"],
+      "properties": { "atomic_value": { "$ref": "#/$defs/AtomicValue" } }
+    },
+    "PaymentIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intent_id", "scheme", "network", "asset", "amount"],
+      "properties": {
+        "intent_id": { "$ref": "#/$defs/Identifier" },
+        "scheme": { "type": "string", "enum": ["x402", "direct_transfer"] },
+        "network": { "$ref": "#/$defs/Network" },
+        "asset": { "$ref": "#/$defs/Asset" },
+        "amount": { "$ref": "#/$defs/Amount" }
+      }
+    },
+    "EvidenceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "source", "fingerprint", "observed_at"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "type": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "source": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "fingerprint": { "$ref": "#/$defs/Sha256" },
+        "observed_at": { "$ref": "#/$defs/DateTime" },
+        "attestation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["issuer", "expires_at", "fingerprint"],
+          "properties": {
+            "issuer": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "expires_at": { "$ref": "#/$defs/DateTime" },
+            "fingerprint": { "$ref": "#/$defs/Sha256" }
+          }
+        }
+      }
+    },
+    "Authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approval_ref", "origin_request_fingerprint"],
+      "properties": {
+        "approval_ref": { "$ref": "#/$defs/Identifier" },
+        "origin_request_fingerprint": { "$ref": "#/$defs/Sha256" },
+        "origin_decision_id": { "$ref": "#/$defs/Ulid" }
+      }
+    },
+    "EvaluationContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requested_at"],
+      "properties": {
+        "requested_at": { "$ref": "#/$defs/DateTime" },
+        "workflow_id": { "$ref": "#/$defs/Identifier" },
+        "campaign": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "referrer": { "type": "string", "minLength": 1, "maxLength": 2048 }
+      }
+    },
+    "PaymentDecisionRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "request_id",
+        "agent",
+        "buyer",
+        "mandate",
+        "merchant",
+        "resource",
+        "payment_intent",
+        "evidence",
+        "context"
+      ],
+      "properties": {
+        "schema_version": { "type": "string", "const": "payment_decision_contract.v1.candidate" },
+        "request_id": { "$ref": "#/$defs/Identifier" },
+        "agent": { "$ref": "#/$defs/Agent" },
+        "buyer": { "$ref": "#/$defs/Buyer" },
+        "mandate": { "$ref": "#/$defs/Mandate" },
+        "merchant": { "$ref": "#/$defs/Merchant" },
+        "resource": { "$ref": "#/$defs/Resource" },
+        "payment_intent": { "$ref": "#/$defs/PaymentIntent" },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/EvidenceRef" }
+        },
+        "context": { "$ref": "#/$defs/EvaluationContext" },
+        "authorization": { "$ref": "#/$defs/Authorization" }
+      }
+    },
+    "PolicyRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy_version"],
+      "properties": {
+        "policy_version": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "policy_fingerprint": { "$ref": "#/$defs/Sha256" },
+        "reason_code_registry_version": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "SignerDirective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "max_uses"],
+      "properties": {
+        "action": { "type": "string", "enum": ["ALLOW_SIGNING_AFTER_ENFORCEMENT", "DO_NOT_SIGN"] },
+        "max_uses": { "type": "integer", "minimum": 0, "maximum": 1 },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "EnforcementRequirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "profile_version", "required_before_execution"],
+      "properties": {
+        "profile": {
+          "type": "string",
+          "enum": [
+            "sg.enforcement.v1.atomic_single_use_authority_revalidation",
+            "sg.enforcement.v1.non_executable_fresh_evaluation"
+          ]
+        },
+        "profile_version": { "type": "string", "const": "payment_decision_enforcement_profiles.v1.candidate" },
+        "required_before_execution": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "PaymentDecisionResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "decision_id",
+        "decision",
+        "reason_codes",
+        "reason_code_registry_version",
+        "policy_version",
+        "evaluated_at",
+        "expires_at",
+        "request_fingerprint",
+        "evidence_fingerprint",
+        "authorization_subject_fingerprint",
+        "mandate_id",
+        "merchant_id",
+        "resource_id",
+        "signer_directive",
+        "enforcement_requirements"
+      ],
+      "properties": {
+        "schema_version": { "type": "string", "const": "payment_decision_contract.v1.candidate" },
+        "decision_id": { "$ref": "#/$defs/Ulid" },
+        "decision": { "$ref": "#/$defs/Decision" },
+        "reason_codes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/ReasonCode" },
+          "uniqueItems": true
+        },
+        "reason_code_registry_version": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "policy_version": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "policy": { "$ref": "#/$defs/PolicyRef" },
+        "evaluated_at": { "$ref": "#/$defs/DateTime" },
+        "expires_at": { "$ref": "#/$defs/DateTime" },
+        "request_fingerprint": { "$ref": "#/$defs/Sha256" },
+        "evidence_fingerprint": { "$ref": "#/$defs/Sha256" },
+        "authorization_subject_fingerprint": { "$ref": "#/$defs/Sha256" },
+        "approval_ref": { "$ref": "#/$defs/Identifier" },
+        "mandate_id": { "$ref": "#/$defs/Identifier" },
+        "merchant_id": { "$ref": "#/$defs/Identifier" },
+        "resource_id": { "$ref": "#/$defs/Identifier" },
+        "signer_directive": { "$ref": "#/$defs/SignerDirective" },
+        "enforcement_requirements": { "$ref": "#/$defs/EnforcementRequirements" },
+        "audit_ref": {
+          "$ref": "#/$defs/Identifier",
+          "description": "Exact byte-for-byte projection of the generic SignGate audit_id when adapted from a SignGate decision."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "decision": { "const": "ALLOW" } }, "required": ["decision"] },
+          "then": {
+            "properties": {
+              "signer_directive": {
+                "properties": {
+                  "action": { "const": "ALLOW_SIGNING_AFTER_ENFORCEMENT" },
+                  "max_uses": { "const": 1 }
+                },
+                "required": ["action", "max_uses"]
+              },
+              "enforcement_requirements": {
+                "properties": {
+                  "profile": { "const": "sg.enforcement.v1.atomic_single_use_authority_revalidation" }
+                },
+                "required": ["profile"]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "decision": { "enum": ["REQUIRE_APPROVAL", "DENY"] } },
+            "required": ["decision"]
+          },
+          "then": {
+            "properties": {
+              "signer_directive": {
+                "properties": {
+                  "action": { "const": "DO_NOT_SIGN" },
+                  "max_uses": { "const": 0 }
+                },
+                "required": ["action", "max_uses"]
+              },
+              "enforcement_requirements": {
+                "properties": {
+                  "profile": { "const": "sg.enforcement.v1.non_executable_fresh_evaluation" }
+                },
+                "required": ["profile"]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
