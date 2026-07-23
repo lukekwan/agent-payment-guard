@@ -90,6 +90,12 @@ const CATALOG_GROUPS = [
       "Check tools, packages, domains, OpenAPI specs, feeds, and agent cards before an AI runtime depends on them.",
   },
   {
+    id: "agentops-guard",
+    name: "AgentOps Guard",
+    buyer_goal:
+      "Let autonomous agents verify actions, MCP servers, and harness readiness before tools, deployments, or background workflows run.",
+  },
+  {
     id: "blockchainsecurity-data",
     name: "Wallet risk and BlockchainSecurity intelligence",
     buyer_goal:
@@ -717,6 +723,33 @@ const CATALOG_METADATA = {
       "Unified ALLOW/REVIEW/DENY decision with Agent Card, repository, package, domain, OpenAPI, and x402 endpoint checks when those underlying capabilities are available.",
     price_reason:
       "Bundle-priced security decision that replaces repeated separate preflight purchases for the same capability workflow.",
+  },
+  "agent-action-preflight": {
+    group: "agentops-guard",
+    when_to_buy:
+      "Immediately before an autonomous agent runs a high-impact tool call, deployment, DNS change, email, shell command, MCP call, or wallet action.",
+    returns:
+      "ALLOW/REVIEW/BLOCK decision, action risk score, required evidence, signer/tool directive, and audit-friendly reason codes.",
+    price_reason:
+      "Low-cost runtime gate designed for repeated agent action checks before side effects occur.",
+  },
+  "mcp-server-risk-check": {
+    group: "agentops-guard",
+    when_to_buy:
+      "Before an AI runtime connects a new MCP server or exposes its tools to a coding, browser, wallet, or operations agent.",
+    returns:
+      "MCP server risk level, side-effect tool flags, auth and transport concerns, missing schema warnings, and connection guidance.",
+    price_reason:
+      "Low-cost server trust check for frequent MCP discovery and connector onboarding.",
+  },
+  "agent-harness-score": {
+    group: "agentops-guard",
+    when_to_buy:
+      "Before shipping, selling, or delegating to an agent workflow that needs a compact harness maturity and readiness score.",
+    returns:
+      "0-100 harness score, maturity level, missing control findings, recommended next paid checks, and layer-by-layer readiness.",
+    price_reason:
+      "Mid-priced readiness assessment because it composes loop, tools, permissions, memory, context, recovery, background work, and observability controls.",
   },
   "x402-transaction-preflight-lite": {
     group: "x402-transaction-preflight",
@@ -3317,6 +3350,153 @@ const PRODUCTS = [
         },
       },
       required: ["request_id", "pay_to", "amount_usdc", "owner"],
+    },
+  },
+  {
+    id: "agent-action-preflight",
+    path: "/v1/x402/agent/action-preflight",
+    price: "$0.010",
+    description:
+      "Return an AgentOps Guard ALLOW/REVIEW/BLOCK decision before a side-effecting agent action runs.",
+    input: {
+      action_type: "deploy",
+      target: "production worker",
+      agent_id: "demo-agent",
+      environment: "production",
+      risk_score: "35",
+      amount_usdc: "0.00",
+    },
+    inputSchema: {
+      properties: {
+        action_type: {
+          type: "string",
+          enum: [
+            "tool_call",
+            "shell",
+            "deploy",
+            "dns",
+            "email",
+            "mcp_call",
+            "wallet",
+            "x402_purchase",
+            "file_write",
+            "browser",
+          ],
+          description: "Side-effecting action the agent wants to run.",
+        },
+        target: {
+          type: "string",
+          minLength: 1,
+          maxLength: 500,
+          description: "Human-readable target, command, endpoint, domain, or resource.",
+        },
+        agent_id: {
+          type: "string",
+          pattern: "^[A-Za-z0-9._:-]{1,128}$",
+          description: "Caller-defined agent or principal id.",
+        },
+        environment: {
+          type: "string",
+          enum: ["local", "dev", "staging", "production", "external"],
+          description: "Execution environment for the action.",
+        },
+        risk_score: {
+          type: "string",
+          pattern: "^[0-9]{1,3}$",
+          description: "Optional caller-supplied 0-100 risk score.",
+        },
+        amount_usdc: {
+          type: "string",
+          pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$",
+          description: "Optional payment, spend, or value at risk.",
+        },
+        human_approval_ref: {
+          type: "string",
+          maxLength: 160,
+          description: "Human approval or ticket reference for elevated actions.",
+        },
+      },
+      required: ["action_type", "target"],
+    },
+  },
+  {
+    id: "mcp-server-risk-check",
+    path: "/v1/x402/agent/mcp-server-risk-check",
+    price: "$0.020",
+    description:
+      "Score an MCP server manifest or tool list before an agent connects it to a runtime.",
+    input: {
+      server_url: "https://example.com/mcp",
+      tools: "read_file,write_file,send_email",
+      auth: "bearer",
+      transport: "http",
+    },
+    inputSchema: {
+      properties: {
+        server_url: {
+          type: "string",
+          pattern: "^https?://",
+          maxLength: 2048,
+          description: "Public MCP server, manifest, or connector URL.",
+        },
+        tools: {
+          type: "string",
+          maxLength: 2000,
+          description: "Comma-separated MCP tool names when a manifest URL is unavailable.",
+        },
+        auth: {
+          type: "string",
+          enum: ["none", "api_key", "bearer", "oauth", "mTLS", "unknown"],
+          description: "Authentication mode exposed by the MCP server.",
+        },
+        transport: {
+          type: "string",
+          enum: ["stdio", "http", "sse", "websocket", "unknown"],
+          description: "MCP transport mode.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    id: "agent-harness-score",
+    path: "/v1/x402/agent/harness-score",
+    price: "$0.050",
+    description:
+      "Score an AI agent harness for loop, tools, permissions, memory, context, recovery, background execution, and observability readiness.",
+    input: {
+      agent_name: "demo-agent",
+      capabilities:
+        "loop,tools,permissions,human_approval,context,memory,recovery,observability",
+      dangerous_tools: "shell,dns,deploy",
+    },
+    inputSchema: {
+      properties: {
+        agent_name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 160,
+          description: "Agent, workflow, or runtime name.",
+        },
+        repo_url: {
+          type: "string",
+          pattern: "^https?://",
+          maxLength: 2048,
+          description: "Optional public repository or docs URL for the agent.",
+        },
+        capabilities: {
+          type: "string",
+          maxLength: 2000,
+          description:
+            "Comma-separated observed harness controls, such as loop,tools,permissions,context,memory,recovery,observability.",
+        },
+        dangerous_tools: {
+          type: "string",
+          maxLength: 1000,
+          description: "Comma-separated side-effecting tools exposed to the agent.",
+        },
+      },
+      required: ["agent_name"],
     },
   },
 ];
@@ -10853,6 +11033,335 @@ async function agentCapabilitySecurityPreflight(input, fetchImpl = fetch) {
   });
 }
 
+const AGENTOPS_ACTION_TYPES = new Set([
+  "tool_call",
+  "shell",
+  "deploy",
+  "dns",
+  "email",
+  "mcp_call",
+  "wallet",
+  "x402_purchase",
+  "file_write",
+  "browser",
+]);
+const AGENTOPS_ENVIRONMENTS = new Set([
+  "local",
+  "dev",
+  "staging",
+  "production",
+  "external",
+]);
+const HIGH_IMPACT_ACTIONS = new Set(["shell", "deploy", "dns", "email", "wallet"]);
+const MONEY_ACTIONS = new Set(["wallet", "x402_purchase"]);
+const MCP_SIDE_EFFECT_PATTERNS = [
+  /write/i,
+  /delete/i,
+  /remove/i,
+  /send/i,
+  /email/i,
+  /pay/i,
+  /transfer/i,
+  /wallet/i,
+  /sign/i,
+  /shell/i,
+  /exec/i,
+  /deploy/i,
+  /dns/i,
+  /browser/i,
+  /post/i,
+  /create/i,
+  /update/i,
+];
+const HARNESS_LAYERS = [
+  "loop",
+  "tools",
+  "permissions",
+  "human_approval",
+  "context",
+  "memory",
+  "recovery",
+  "observability",
+  "background_tasks",
+  "scheduling",
+  "subagents",
+  "mcp",
+  "evals",
+];
+
+function splitList(value) {
+  return String(value ?? "")
+    .split(",")
+    .map(item => item.trim())
+    .filter(Boolean);
+}
+
+function simpleDecisionId(prefix, payload, generatedAt) {
+  const sum = JSON.stringify(payload)
+    .split("")
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return `${prefix}_${generatedAt.replace(/[^0-9]/g, "").slice(0, 14)}_${sum.toString(36)}`;
+}
+
+export function buildAgentActionPreflight(input, generatedAt = new Date().toISOString()) {
+  const actionType = input.action_type;
+  const environment = input.environment || "external";
+  const amountUsdc = parseNonNegativeNumber(input.amount_usdc ?? "0", 0) ?? 0;
+  const callerRisk = Math.min(
+    100,
+    Math.max(0, Number.parseInt(String(input.risk_score ?? "0"), 10) || 0),
+  );
+  const reasons = [];
+  let score = callerRisk;
+
+  if (HIGH_IMPACT_ACTIONS.has(actionType)) {
+    score += 25;
+    reasons.push({
+      code: "HIGH_IMPACT_ACTION",
+      severity: "medium",
+      detail: `${actionType} can create external side effects and should be gated.`,
+    });
+  }
+  if (environment === "production" || environment === "external") {
+    score += 20;
+    reasons.push({
+      code: "EXTERNAL_OR_PRODUCTION_TARGET",
+      severity: "medium",
+      detail: "The action targets production or an external system.",
+    });
+  }
+  if (MONEY_ACTIONS.has(actionType) || amountUsdc > 0) {
+    score += amountUsdc > 0.1 ? 35 : 20;
+    reasons.push({
+      code: "VALUE_AT_RISK",
+      severity: amountUsdc > 0.1 ? "high" : "medium",
+      detail: "The action can move money or consume a paid resource.",
+    });
+  }
+  if (!input.human_approval_ref && score >= 45) {
+    score += 15;
+    reasons.push({
+      code: "HUMAN_APPROVAL_MISSING",
+      severity: "medium",
+      detail: "Elevated actions should carry a human approval or ticket reference.",
+    });
+  }
+  if (/rm\s+-rf|delete\s+zone|drop\s+table|private[_ -]?key|seed phrase/i.test(input.target)) {
+    score = Math.max(score, 90);
+    reasons.push({
+      code: "DESTRUCTIVE_OR_SECRET_TARGET",
+      severity: "high",
+      detail: "The target text looks destructive or secret-bearing.",
+    });
+  }
+
+  score = Math.min(100, score);
+  const decision = score >= 80 ? "BLOCK" : score >= 45 ? "REVIEW" : "ALLOW";
+  return {
+    product: "agent-action-preflight",
+    schema_version: "1.0",
+    decision,
+    decision_id: simpleDecisionId("act", input, generatedAt),
+    policy_version: "agentops-action-preflight-v1",
+    pricing_version: PRICING_VERSION,
+    action: {
+      type: actionType,
+      target: input.target,
+      agent_id: input.agent_id || null,
+      environment,
+      amount_usdc: amountUsdc,
+    },
+    assessment: {
+      risk_score: score,
+      risk_level: score >= 80 ? "high" : score >= 45 ? "medium" : "low",
+      reason_codes: reasons.map(reason => reason.code),
+      reasons,
+    },
+    directive: {
+      proceed: decision === "ALLOW",
+      require_human_review: decision === "REVIEW",
+      block_execution: decision === "BLOCK",
+      required_evidence:
+        decision === "ALLOW"
+          ? []
+          : [
+              "human_approval_ref",
+              "idempotency_key",
+              "execution_log_destination",
+              "rollback_or_recovery_plan",
+            ],
+    },
+    generated_at: generatedAt,
+  };
+}
+
+export function buildMcpServerRiskCheck(input, generatedAt = new Date().toISOString()) {
+  const tools = splitList(input.tools).slice(0, 100);
+  const sideEffectTools = tools.filter(tool =>
+    MCP_SIDE_EFFECT_PATTERNS.some(pattern => pattern.test(tool)),
+  );
+  const reasons = [];
+  let score = 0;
+
+  if (!input.server_url && tools.length === 0) {
+    score += 45;
+    reasons.push({
+      code: "MCP_TARGET_UNSPECIFIED",
+      severity: "medium",
+      detail: "No MCP server URL or tool list was supplied.",
+    });
+  }
+  if (sideEffectTools.length > 0) {
+    score += Math.min(45, 10 + sideEffectTools.length * 7);
+    reasons.push({
+      code: "SIDE_EFFECT_TOOLS_EXPOSED",
+      severity: "medium",
+      detail: `Side-effecting tools detected: ${sideEffectTools.slice(0, 8).join(", ")}.`,
+    });
+  }
+  if ((input.auth || "unknown") === "none" && sideEffectTools.length > 0) {
+    score += 45;
+    reasons.push({
+      code: "SIDE_EFFECT_TOOLS_WITHOUT_AUTH",
+      severity: "high",
+      detail: "The server exposes side-effecting tools without declared authentication.",
+    });
+  }
+  if ((input.transport || "unknown") === "stdio" && input.server_url) {
+    score += 10;
+    reasons.push({
+      code: "STDIO_REMOTE_MISMATCH",
+      severity: "info",
+      detail: "stdio transport is usually local; verify the server URL is only metadata.",
+    });
+  }
+  if ((input.auth || "unknown") === "unknown") {
+    score += 10;
+    reasons.push({
+      code: "AUTH_MODE_UNKNOWN",
+      severity: "info",
+      detail: "Authentication mode was not declared.",
+    });
+  }
+
+  score = Math.min(100, score);
+  const decision = score >= 75 ? "BLOCK" : score >= 30 ? "REVIEW" : "ALLOW";
+  return {
+    product: "mcp-server-risk-check",
+    schema_version: "1.0",
+    decision,
+    policy_version: "agentops-mcp-risk-v1",
+    pricing_version: PRICING_VERSION,
+    server: {
+      url: input.server_url || null,
+      auth: input.auth || "unknown",
+      transport: input.transport || "unknown",
+      tool_count: tools.length,
+      side_effect_tool_count: sideEffectTools.length,
+    },
+    assessment: {
+      risk_score: score,
+      risk_level: score >= 75 ? "high" : score >= 30 ? "medium" : "low",
+      reason_codes: reasons.map(reason => reason.code),
+      reasons,
+      side_effect_tools: sideEffectTools,
+    },
+    connection_guidance:
+      decision === "ALLOW"
+        ? "Connect with normal runtime limits and log tool calls."
+        : decision === "REVIEW"
+          ? "Require explicit tool allowlists, auth verification, and audit logging before connecting."
+          : "Do not connect until authentication, tool schemas, and side-effect permissions are constrained.",
+    generated_at: generatedAt,
+  };
+}
+
+export function buildAgentHarnessScore(input, generatedAt = new Date().toISOString()) {
+  const capabilities = new Set(splitList(input.capabilities).map(item => item.toLowerCase()));
+  const dangerousTools = splitList(input.dangerous_tools);
+  const missing = HARNESS_LAYERS.filter(layer => !capabilities.has(layer));
+  const present = HARNESS_LAYERS.filter(layer => capabilities.has(layer));
+  const findings = [];
+  let score = Math.round((present.length / HARNESS_LAYERS.length) * 100);
+
+  for (const layer of ["permissions", "human_approval", "observability", "recovery"]) {
+    if (!capabilities.has(layer)) {
+      score -= 8;
+      findings.push({
+        code: `MISSING_${layer.toUpperCase()}`,
+        severity: "high",
+        layer,
+        detail: `${layer} is a required control for production agent side effects.`,
+      });
+    }
+  }
+  if (dangerousTools.length > 0 && !capabilities.has("permissions")) {
+    score -= 15;
+    findings.push({
+      code: "DANGEROUS_TOOLS_WITHOUT_PERMISSIONS",
+      severity: "high",
+      layer: "tools",
+      detail: `Dangerous tools supplied without a permissions layer: ${dangerousTools.slice(0, 8).join(", ")}.`,
+    });
+  }
+  if (capabilities.has("background_tasks") && !capabilities.has("recovery")) {
+    score -= 10;
+    findings.push({
+      code: "BACKGROUND_WITHOUT_RECOVERY",
+      severity: "medium",
+      layer: "background_tasks",
+      detail: "Long-running tasks need retry, resume, and failure-state handling.",
+    });
+  }
+  if (capabilities.has("memory") && !capabilities.has("context")) {
+    score -= 8;
+    findings.push({
+      code: "MEMORY_WITHOUT_CONTEXT_POLICY",
+      severity: "medium",
+      layer: "memory",
+      detail: "Durable memory should be paired with context selection and privacy rules.",
+    });
+  }
+
+  score = Math.max(0, Math.min(100, score));
+  return {
+    product: "agent-harness-score",
+    schema_version: "1.0",
+    agent: {
+      name: input.agent_name,
+      repo_url: input.repo_url || null,
+      dangerous_tools: dangerousTools,
+    },
+    score,
+    maturity:
+      score >= 85
+        ? "production_ready"
+        : score >= 65
+          ? "controlled_beta"
+          : score >= 40
+            ? "prototype_with_gaps"
+            : "not_ready",
+    decision_hint:
+      score >= 85
+        ? "The harness has the core controls expected before production use."
+        : score >= 65
+          ? "Use behind tighter limits and close high-severity findings before broad rollout."
+          : "Do not rely on this harness for autonomous side effects without additional controls.",
+    layers: {
+      present,
+      missing,
+    },
+    findings,
+    recommended_next_checks: [
+      "agent-action-preflight",
+      "mcp-server-risk-check",
+      "agent-capability-security-preflight",
+    ],
+    pricing_version: PRICING_VERSION,
+    generated_at: generatedAt,
+  };
+}
+
 export function buildPypiPackagePreflight({
   packageName,
   requestedVersion,
@@ -15646,6 +16155,92 @@ function createPaidApp() {
       return c.json({ error: "invalid_agent_capability_security_target" }, 400);
     }
     return c.json(await agentCapabilitySecurityPreflight(input));
+  });
+
+  app.get(PRODUCTS_BY_ID["agent-action-preflight"].path, async c => {
+    const input = {
+      action_type: c.req.query("action_type") ?? "",
+      target: c.req.query("target") ?? "",
+      agent_id: c.req.query("agent_id") ?? "",
+      environment: c.req.query("environment") ?? "external",
+      risk_score: c.req.query("risk_score") ?? "0",
+      amount_usdc: c.req.query("amount_usdc") ?? "0",
+      human_approval_ref: c.req.query("human_approval_ref") ?? "",
+    };
+    if (
+      !AGENTOPS_ACTION_TYPES.has(input.action_type) ||
+      !input.target ||
+      input.target.length > 500 ||
+      (input.agent_id && !/^[A-Za-z0-9._:-]{1,128}$/.test(input.agent_id)) ||
+      !AGENTOPS_ENVIRONMENTS.has(input.environment) ||
+      !/^[0-9]{1,3}$/.test(input.risk_score) ||
+      parseNonNegativeNumber(input.amount_usdc) === null ||
+      input.human_approval_ref.length > 160
+    ) {
+      return c.json({ error: "invalid_agent_action_preflight_input" }, 400);
+    }
+    return c.json(buildAgentActionPreflight(input));
+  });
+
+  app.get(PRODUCTS_BY_ID["mcp-server-risk-check"].path, async c => {
+    const input = {
+      server_url: c.req.query("server_url") ?? "",
+      tools: c.req.query("tools") ?? "",
+      auth: c.req.query("auth") ?? "unknown",
+      transport: c.req.query("transport") ?? "unknown",
+    };
+    if (input.server_url) {
+      try {
+        validatePublicUrl(input.server_url);
+      } catch (error) {
+        return c.json(
+          {
+            error: "invalid_mcp_server_url",
+            message: error instanceof Error ? error.message : String(error),
+          },
+          400,
+        );
+      }
+    }
+    if (
+      input.tools.length > 2000 ||
+      !["none", "api_key", "bearer", "oauth", "mTLS", "unknown"].includes(input.auth) ||
+      !["stdio", "http", "sse", "websocket", "unknown"].includes(input.transport)
+    ) {
+      return c.json({ error: "invalid_mcp_server_risk_input" }, 400);
+    }
+    return c.json(buildMcpServerRiskCheck(input));
+  });
+
+  app.get(PRODUCTS_BY_ID["agent-harness-score"].path, async c => {
+    const input = {
+      agent_name: c.req.query("agent_name") ?? "",
+      repo_url: c.req.query("repo_url") ?? "",
+      capabilities: c.req.query("capabilities") ?? "",
+      dangerous_tools: c.req.query("dangerous_tools") ?? "",
+    };
+    if (input.repo_url) {
+      try {
+        validatePublicUrl(input.repo_url);
+      } catch (error) {
+        return c.json(
+          {
+            error: "invalid_agent_harness_repo_url",
+            message: error instanceof Error ? error.message : String(error),
+          },
+          400,
+        );
+      }
+    }
+    if (
+      !input.agent_name ||
+      input.agent_name.length > 160 ||
+      input.capabilities.length > 2000 ||
+      input.dangerous_tools.length > 1000
+    ) {
+      return c.json({ error: "invalid_agent_harness_score_input" }, 400);
+    }
+    return c.json(buildAgentHarnessScore(input));
   });
 
   app.get(PRODUCTS[25].path, async c => {

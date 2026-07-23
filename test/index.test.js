@@ -27,10 +27,13 @@ import worker, {
   buildAgenticCommercePreflight,
   buildAgentPaymentExecutionReadiness,
   buildAgentSpendRoutePlan,
+  buildAgentActionPreflight,
   buildSumsubEvidenceServiceResponse,
   sampleAgenticCommercePreflightInput,
   buildAgentPaymentAuthorization,
   buildAgentCapabilitySecurityPreflight,
+  buildAgentHarnessScore,
+  buildMcpServerRiskCheck,
   buildStablecoinBalance,
   buildTokenPreflight,
   buildTokenExitRisk,
@@ -199,6 +202,9 @@ test("worker exposes discovery documents", async () => {
   assert.ok(document.paths["/v1/x402/quicknode/wallet-execution-readiness"]);
   assert.ok(document.paths["/v1/x402/sumsub/counterparty-compliance-bundle"]);
   assert.ok(document.paths["/v1/x402/sumsub/crypto-transfer-compliance-bundle"]);
+  assert.ok(document.paths["/v1/x402/agent/action-preflight"]);
+  assert.ok(document.paths["/v1/x402/agent/mcp-server-risk-check"]);
+  assert.ok(document.paths["/v1/x402/agent/harness-score"]);
   assert.ok(document.paths["/v1/agentic-commerce/preflight/sample"]);
   assert.ok(document.paths["/v1/agentic-commerce/preflight"].post);
   assert.ok(
@@ -218,8 +224,8 @@ test("worker exposes discovery documents", async () => {
     new Request("https://example.test/catalog.json"),
   );
   const catalogDocument = await catalog.json();
-  assert.equal(catalogDocument.product_families, 85);
-  assert.equal(catalogDocument.paid_operations_observed_on_x402scan, 87);
+  assert.equal(catalogDocument.product_families, 88);
+  assert.equal(catalogDocument.paid_operations_observed_on_x402scan, 90);
   assert.equal(catalogDocument.pricing_version, "x402-pricing-v1-20260720");
   assert.ok(
     catalogDocument.products.find(
@@ -265,15 +271,15 @@ test("worker exposes discovery documents", async () => {
   const card = await worker.fetch(
     new Request("https://example.test/.well-known/agent-card.json"),
   );
-  assert.equal((await card.json()).skills.length, 85);
+  assert.equal((await card.json()).skills.length, 88);
 
   const x402Discovery = await worker.fetch(
     new Request("https://example.test/.well-known/x402"),
   );
   const x402DiscoveryDocument = await x402Discovery.json();
-  assert.equal(x402DiscoveryDocument.resources.length, 85);
-  assert.equal(x402DiscoveryDocument.operation_count, 87);
-  assert.equal(x402DiscoveryDocument.paid_operations.length, 87);
+  assert.equal(x402DiscoveryDocument.resources.length, 88);
+  assert.equal(x402DiscoveryDocument.operation_count, 90);
+  assert.equal(x402DiscoveryDocument.paid_operations.length, 90);
   assert.ok(
     x402DiscoveryDocument.paid_operations.find(
       operation =>
@@ -335,8 +341,8 @@ test("worker exposes discovery documents", async () => {
     new Request("https://example.test/registry.json"),
   );
   const registryDocument = await registry.json();
-  assert.equal(registryDocument.counts.product_families, 85);
-  assert.equal(registryDocument.counts.paid_operations, 87);
+  assert.equal(registryDocument.counts.product_families, 88);
+  assert.equal(registryDocument.counts.paid_operations, 90);
   assert.equal(registryDocument.pricing_version, "x402-pricing-v1-20260720");
   assert.ok(
     registryDocument.operations.find(
@@ -1675,6 +1681,63 @@ test("buildSumsubEvidenceServiceResponse returns fail-closed evidence contract",
   );
 });
 
+test("AgentOps action preflight gates production side effects", () => {
+  const result = buildAgentActionPreflight(
+    {
+      action_type: "dns",
+      target: "update apex production DNS record",
+      agent_id: "demo-agent",
+      environment: "production",
+      risk_score: "20",
+      amount_usdc: "0",
+    },
+    "2026-07-23T00:00:00.000Z",
+  );
+
+  assert.equal(result.product, "agent-action-preflight");
+  assert.equal(result.decision, "BLOCK");
+  assert.equal(result.directive.block_execution, true);
+  assert.ok(result.assessment.reason_codes.includes("HIGH_IMPACT_ACTION"));
+  assert.ok(result.assessment.reason_codes.includes("HUMAN_APPROVAL_MISSING"));
+});
+
+test("MCP server risk check flags unauthenticated side-effect tools", () => {
+  const result = buildMcpServerRiskCheck(
+    {
+      server_url: "https://example.com/mcp",
+      tools: "read_file,write_file,send_email,transfer_usdc",
+      auth: "none",
+      transport: "http",
+    },
+    "2026-07-23T00:00:00.000Z",
+  );
+
+  assert.equal(result.product, "mcp-server-risk-check");
+  assert.equal(result.decision, "BLOCK");
+  assert.equal(result.server.side_effect_tool_count, 3);
+  assert.ok(result.assessment.reason_codes.includes("SIDE_EFFECT_TOOLS_WITHOUT_AUTH"));
+});
+
+test("agent harness score reflects missing production controls", () => {
+  const result = buildAgentHarnessScore(
+    {
+      agent_name: "demo-agent",
+      capabilities: "loop,tools,memory,background_tasks",
+      dangerous_tools: "shell,deploy",
+    },
+    "2026-07-23T00:00:00.000Z",
+  );
+
+  assert.equal(result.product, "agent-harness-score");
+  assert.equal(result.maturity, "not_ready");
+  assert.ok(result.score < 40);
+  assert.ok(
+    result.findings.some(
+      finding => finding.code === "DANGEROUS_TOOLS_WITHOUT_PERMISSIONS",
+    ),
+  );
+});
+
 test("paid routes advertise their exact Base USDC prices", async () => {
   const cases = [
     [
@@ -1837,6 +1900,18 @@ test("paid routes advertise their exact Base USDC prices", async () => {
     [
       "/v1/x402/base/token-exit-risk?token=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       "3000",
+    ],
+    [
+      "/v1/x402/agent/action-preflight?action_type=deploy&target=production%20worker&agent_id=demo-agent&environment=production&risk_score=35",
+      "10000",
+    ],
+    [
+      "/v1/x402/agent/mcp-server-risk-check?server_url=https%3A%2F%2Fexample.com%2Fmcp&tools=read_file%2Cwrite_file%2Csend_email&auth=bearer&transport=http",
+      "20000",
+    ],
+    [
+      "/v1/x402/agent/harness-score?agent_name=demo-agent&capabilities=loop%2Ctools%2Cpermissions%2Chuman_approval%2Ccontext%2Cmemory%2Crecovery%2Cobservability&dangerous_tools=shell%2Cdeploy",
+      "50000",
     ],
   ];
 

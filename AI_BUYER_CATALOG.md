@@ -12,8 +12,8 @@ x402scan server:
 
 ## Product Shape
 
-- Product families: 73
-- Paid operations observed through `.well-known/x402`: 75
+- Product families: 88
+- Paid operations observed through `.well-known/x402`: 90
 - Reason for the difference: x402scan counts paid OpenAPI operations. Product
   families count GET products; the extra paid operations are Payment Guard JSON
   evaluation and policy creation.
@@ -201,6 +201,20 @@ requirements, proof of payment, or seller reputation before or after spending.
 - `base-gas-fee-quote` — 0.003 USDC: transaction cost context.
 - `base-nonce-readiness` — 0.003 USDC: pending/confirmed nonce readiness.
 - `base-stablecoin-balance` — 0.003 USDC: USDC, USDT, and DAI balances.
+
+### AgentOps Guard
+
+Use these when an autonomous agent needs a runtime gate or harness-readiness
+assessment before tools, deployments, MCP servers, or background workflows run.
+
+- `agent-action-preflight` — 0.010 USDC: ALLOW/REVIEW/BLOCK decision before a
+  side-effecting action such as shell, deploy, DNS, email, wallet, x402
+  purchase, file write, browser, or MCP tool call.
+- `mcp-server-risk-check` — 0.020 USDC: MCP server and tool-list risk check
+  before connecting a runtime to a new connector or tool server.
+- `agent-harness-score` — 0.050 USDC: 0-100 harness maturity score across loop,
+  tools, permissions, human approval, context, memory, recovery, background
+  execution, scheduling, subagents, MCP, observability, and eval controls.
 
 ### Trading Bot Alpha And Risk
 
