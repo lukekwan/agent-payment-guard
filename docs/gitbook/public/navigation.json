@@ -433,9 +433,5 @@
       ]
     }
   ],
-  "publicOpenApi": "../../openapi/signgate-public-v0.1.openapi.json",
-  "excludedRoots": [
-    "../internal",
-    "../../openapi/internal"
-  ]
+  "publicOpenApi": "openapi/signgate-public-v0.1.openapi.json"
 }

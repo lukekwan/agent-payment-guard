@@ -15,6 +15,7 @@
 ## API REFERENCE
 
 * [API Reference overview](en/api-reference/overview.md)
+* [Public OpenAPI JSON](openapi/signgate-public-v0.1.openapi.json)
 * [Risk Source API](en/api-reference/services/risk-source.md)
 * [Agent Payment Control](en/api-reference/services/agent-payment-control.md)
 * [Agentic Commerce Preflight](en/api-reference/services/agentic-commerce.md)
@@ -34,3 +35,7 @@
 ## LANGUAGE
 
 * [繁體中文內容狀態](zh-TW/README.md)
+* [繁體中文快速開始](zh-TW/getting-started/quickstart.md)
+* [繁體中文 API 參考](zh-TW/api-reference/overview.md)
+* [繁體中文更新紀錄](zh-TW/resources/changelog.md)
+* [繁體中文支援入口](zh-TW/resources/support.md)

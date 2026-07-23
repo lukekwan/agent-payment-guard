@@ -20,4 +20,4 @@ Public API 使用 strict JSON objects；可能影響 execution semantics 的 unk
 
 ## Source of truth
 
-下載 [public OpenAPI 3.1 specification](../../../../openapi/signgate-public-v0.1.openapi.json)。
+下載 [public OpenAPI 3.1 specification](../../openapi/signgate-public-v0.1.openapi.json)。

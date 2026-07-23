@@ -18,6 +18,12 @@ Browse and copy safe samples now. Sandbox keys, an isolated sandbox Base URL, an
 - [Approval & Signer Control](services/approval-signer-control.md) — one candidate endpoint; not deployed.
 - [Merchant & x402 Trust](services/merchant-x402-trust.md) — two verified x402 wrappers.
 
+## OpenAPI
+
+- [Public OpenAPI JSON](../../openapi/signgate-public-v0.1.openapi.json)
+
+The public OpenAPI file is readable as JSON and only describes developer-facing contract surfaces.
+
 ## Contract rule
 
 OpenAPI-generated material never overrides the human-readable availability, authentication, billing, evidence, retry, and security notes. Candidate envelopes are non-binding and are not retrofitted onto current v1 responses.

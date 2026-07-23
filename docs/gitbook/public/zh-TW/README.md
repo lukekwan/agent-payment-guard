@@ -18,4 +18,4 @@ description: SignGate 繁體中文內容狀態與對照入口。
 目前可用的是不需憑證的安全範例：查看 request、複製 cURL、檢視 sample response。尚無已驗證的 sandbox key、獨立 sandbox Base URL 或 production Test it。
 {% endhint %}
 
-[返回英文首頁](../en/README.md)
+[快速開始](getting-started/quickstart.md) · [API 參考](api-reference/overview.md) · [Request access](resources/support.md#request-access) · [Contact us](resources/support.md#contact-us) · [返回英文首頁](../en/README.md)

@@ -20,4 +20,4 @@ Response policy version 必須原樣包含在 consume，並由 executor 驗證�
 
 ## OpenAPI
 
-[Public OpenAPI 3.1 specification](../../../../openapi/signgate-public-v0.1.openapi.json) 是 public schemas 與 operations 的 machine-readable source。
+[Public OpenAPI 3.1 specification](../../openapi/signgate-public-v0.1.openapi.json) 是 public schemas 與 operations 的 machine-readable source。

@@ -10,7 +10,7 @@ SignGate gives agent runtimes, wallets, and payment clients an evidence-backed d
 The current onboarding path is a credential-free safe sample. It does not call production, issue a sandbox key, or charge a payment.
 {% endhint %}
 
-[Start with a safe sample](getting-started/quickstart.md) · [Explore API services](api-reference/overview.md)
+[Start with a safe sample](getting-started/quickstart.md) · [Explore API services](api-reference/overview.md) · [Request access](resources/support.md#request-access) · [Contact us](resources/support.md#contact-us)
 
 ## Five first-release services
 
@@ -39,4 +39,4 @@ No verified sandbox key issuance flow, isolated sandbox Base URL, or authorized 
 
 ## Find your next step
 
-[Documentation](documentation/README.md) · [API Reference](api-reference/overview.md) · [Changelog](resources/changelog.md) · [Help Center](help-center/README.md)
+[Documentation](documentation/README.md) · [API Reference](api-reference/overview.md) · [Public OpenAPI JSON](../openapi/signgate-public-v0.1.openapi.json) · [Changelog](resources/changelog.md) · [Help Center](help-center/README.md) · [Contact us](resources/support.md#contact-us)
