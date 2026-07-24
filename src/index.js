@@ -541,6 +541,24 @@ const CATALOG_METADATA = {
     price_reason:
       "Very low-cost utility call designed for high-frequency agent budgeting and purchase planning.",
   },
+  "nomos-wallet-risk-360": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "Before a high-value or regulated wallet interaction where an agent needs a fuller normalized risk decision without raw supplier data.",
+    returns:
+      "Normalized risk score, risk level, decision, reason codes, evidence references, freshness, and provider-redacted control metadata.",
+    price_reason:
+      "Higher-value derived-only wallet assessment for workflows that need more context than risk-lite without exposing upstream responses.",
+  },
+  "nomos-merchant-trust": {
+    group: "nomos-agent-risk-utilities",
+    when_to_buy:
+      "Before an autonomous agent pays a merchant, API origin, or x402 service and needs a provider-neutral trust decision.",
+    returns:
+      "Merchant trust decision, normalized score/classification, reason codes, evidence references, freshness, and expiry.",
+    price_reason:
+      "Decision-tier merchant trust endpoint priced for high-value payment preflight and service selection workflows.",
+  },
   "nomos-value-btc-usd": {
     group: "nomos-agent-risk-utilities",
     when_to_buy:
@@ -3484,7 +3502,7 @@ const PRODUCTS = [
     id: "nomos-value-convert",
     method: "POST",
     path: "/x402/v1/value/convert",
-    price: "$0.002",
+    price: "$0.005",
     description:
       "Convert BTC, ETH, TRX, USDT, USDC values into USD or TWD for autonomous-agent budget checks.",
     input: {
@@ -3607,7 +3625,7 @@ const PRODUCTS = [
     id: "nomos-budget-check",
     method: "POST",
     path: "/x402/v1/policy/budget-check",
-    price: "$0.010",
+    price: "$0.020",
     description:
       "Return a deterministic ALLOW, REQUIRE_APPROVAL, or DENY budget policy decision for an autonomous-agent spend request.",
     input: {
@@ -3698,7 +3716,7 @@ const PRODUCTS = [
     id: "nomos-payment-preflight",
     method: "POST",
     path: "/x402/v1/decision/payment-preflight",
-    price: "$0.100",
+    price: "$0.200",
     description: "Return a compact payment preflight decision before an autonomous-agent payment.",
     input: {
       agent_id: "agent-123",
@@ -3744,7 +3762,7 @@ const PRODUCTS = [
     id: "nomos-service-health",
     method: "POST",
     path: "/x402/v1/service/health",
-    price: "$0.010",
+    price: "$0.020",
     description: "Return a paid service health and discovery probe for an x402 origin or endpoint.",
     input: {
       target_url: "https://example.com/.well-known/x402",
@@ -3788,7 +3806,7 @@ const PRODUCTS = [
     id: "nomos-wallet-risk-lite",
     method: "POST",
     path: "/x402/v1/wallet/risk-lite",
-    price: "$0.050",
+    price: "$0.040",
     description:
       "Return a lightweight wallet risk signal for Bitcoin, Ethereum, or Tron without exposing upstream raw responses.",
     input: {
@@ -3827,6 +3845,63 @@ const PRODUCTS = [
         },
       },
       required: ["chain", "address"],
+    },
+  },
+  {
+    id: "nomos-wallet-risk-360",
+    method: "POST",
+    path: "/x402/v1/wallet/risk-360",
+    price: "$0.100",
+    description:
+      "Return a provider-neutral wallet risk-360 decision with normalized evidence references and no raw upstream responses.",
+    input: {
+      chain: "ethereum",
+      address: PAY_TO,
+      action: "api_purchase",
+      value_usd: "5000",
+      counterparty_type: "api_merchant",
+    },
+    inputSchema: {
+      properties: {
+        chain: { type: "string", enum: ["ethereum", "tron", "bitcoin"] },
+        address: { type: "string", minLength: 26, maxLength: 120 },
+        action: { type: "string", pattern: "^[A-Za-z0-9._:-]{2,120}$" },
+        value_usd: { type: "string", pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$" },
+        counterparty_type: {
+          type: "string",
+          enum: ["api_merchant", "exchange", "wallet", "contract", "unknown"],
+        },
+        idempotency_key: { type: "string", maxLength: 128 },
+      },
+      required: ["chain", "address"],
+    },
+  },
+  {
+    id: "nomos-merchant-trust",
+    method: "POST",
+    path: "/x402/v1/merchant/trust",
+    price: "$0.200",
+    description:
+      "Return a provider-neutral merchant trust decision before an autonomous-agent x402 payment.",
+    input: {
+      merchant_id: "merchant-123",
+      origin: "https://api.example.com",
+      wallet: PAY_TO,
+      amount_usdc: "25",
+      purpose: "api_purchase",
+      trust_level: "known",
+    },
+    inputSchema: {
+      properties: {
+        merchant_id: { type: "string", minLength: 1, maxLength: 160 },
+        origin: { type: "string", minLength: 8, maxLength: 500 },
+        wallet: { type: "string", minLength: 26, maxLength: 120 },
+        amount_usdc: { type: "string", pattern: "^[0-9]+(?:\\.[0-9]{1,6})?$" },
+        purpose: { type: "string", minLength: 2, maxLength: 120 },
+        trust_level: { type: "string", enum: ["unknown", "known", "verified"] },
+        idempotency_key: { type: "string", maxLength: 128 },
+      },
+      required: ["merchant_id", "origin", "amount_usdc", "purpose"],
     },
   },
   {
@@ -5367,6 +5442,66 @@ export function buildNomosWalletWatchlist(input, generatedAt = new Date().toISOS
   };
 }
 
+export function buildNomosWalletRisk360(input, generatedAt = new Date().toISOString()) {
+  const lite = buildNomosWalletRiskLite(input, generatedAt);
+  const counterpartyType = String(input.counterparty_type ?? "unknown").toLowerCase();
+  const reasonCodes = [...new Set(lite.reason_codes)];
+  let adjustedScore = lite.risk_score;
+  if (!["api_merchant", "exchange", "wallet", "contract", "unknown"].includes(counterpartyType)) {
+    reasonCodes.push("INVALID_COUNTERPARTY_TYPE");
+    adjustedScore = Math.max(adjustedScore, 60);
+  }
+  if (counterpartyType === "unknown") {
+    reasonCodes.push("COUNTERPARTY_TYPE_UNKNOWN");
+    adjustedScore = Math.max(adjustedScore, 20);
+  }
+  if (counterpartyType === "contract") {
+    reasonCodes.push("CONTRACT_COUNTERPARTY_REQUIRES_REVIEW");
+    adjustedScore = Math.max(adjustedScore, 35);
+  }
+  const riskScore = Math.min(100, adjustedScore);
+  const riskLevel =
+    riskScore >= 90 ? "SEVERE" : riskScore >= 75 ? "HIGH" : riskScore >= 30 ? "MEDIUM" : "LOW";
+  const decision = riskScore >= 75 ? "DENY" : riskScore >= 30 ? "REQUIRE_APPROVAL" : "ALLOW";
+  return {
+    product: "nomos-wallet-risk-360",
+    schema_version: "1.0",
+    chain: lite.chain,
+    address: lite.address,
+    normalized_score: riskScore,
+    normalized_classification: riskLevel,
+    risk_score: riskScore,
+    risk_level: riskLevel,
+    decision,
+    sanctions_match: lite.sanctions_match,
+    boolean_match: lite.sanctions_match,
+    reason_codes: reasonCodes,
+    evidence_reference: {
+      risk_lite_result_id: lite.result_id,
+      controls: ["address_format", "chain_support", "value_threshold", "counterparty_type"],
+      supplier_raw_response_exposed: false,
+      provider_names_redacted: true,
+    },
+    freshness: {
+      data_timestamp: generatedAt,
+      data_freshness_seconds: 30,
+    },
+    result_id: simpleDecisionId(
+      "wr3",
+      {
+        chain: lite.chain,
+        address: lite.address,
+        action: input.action ?? null,
+        value_usd: input.value_usd ?? null,
+        counterparty_type: counterpartyType,
+        idempotency_key: input.idempotency_key ?? null,
+      },
+      generatedAt,
+    ),
+    output_boundary: "nomos_derived_only_no_raw_supplier_response",
+  };
+}
+
 export function buildNomosMerchantCheck(input, generatedAt = new Date().toISOString()) {
   const amount = parseDecimalAtomic(input.amount_usdc ?? "0", 6);
   const trustLevel = String(input.trust_level ?? "unknown").toLowerCase();
@@ -5395,6 +5530,61 @@ export function buildNomosMerchantCheck(input, generatedAt = new Date().toISOStr
     expires_at: addSeconds(generatedAt, 600),
     deterministic: true,
     llm_used: false,
+  };
+}
+
+export function buildNomosMerchantTrust(input, generatedAt = new Date().toISOString()) {
+  const base = buildNomosMerchantCheck(input, generatedAt);
+  const reasonCodes = [...new Set(base.reason_codes)];
+  const origin = String(input.origin ?? "").trim();
+  const wallet = String(input.wallet ?? "").trim();
+  let parsed = null;
+  try {
+    parsed = new URL(origin);
+  } catch {
+    reasonCodes.push("INVALID_ORIGIN");
+  }
+  if (parsed && parsed.protocol !== "https:") reasonCodes.push("ORIGIN_NOT_HTTPS");
+  if (wallet && !validateWalletAddress("ethereum", wallet)) reasonCodes.push("INVALID_WALLET_FORMAT");
+
+  let score = base.trust_level === "verified" ? 85 : base.trust_level === "known" ? 65 : 35;
+  if (reasonCodes.includes("MERCHANT_TRUST_UNKNOWN")) score = Math.min(score, 45);
+  if (reasonCodes.includes("ORIGIN_NOT_HTTPS")) score = Math.min(score, 30);
+  if (reasonCodes.some(code => code.startsWith("INVALID") || code.endsWith("MISSING"))) score = 0;
+
+  const classification = score >= 80 ? "HIGH_TRUST" : score >= 60 ? "MEDIUM_TRUST" : score >= 35 ? "LOW_TRUST" : "UNTRUSTED";
+  let decision = "ALLOW";
+  if (score === 0) decision = "DENY";
+  else if (score < 60 || reasonCodes.length > 0) decision = "REQUIRE_APPROVAL";
+
+  return {
+    product: "nomos-merchant-trust",
+    schema_version: "1.0",
+    merchant_id: base.merchant_id,
+    origin,
+    wallet: wallet || null,
+    amount_usdc: base.amount_usdc,
+    purpose: base.purpose,
+    normalized_score: score,
+    normalized_classification: classification,
+    decision,
+    boolean_match: decision === "ALLOW",
+    reason_codes: reasonCodes,
+    evidence_reference: {
+      merchant_check_decision_id: base.decision_id,
+      controls: ["merchant_identity", "https_origin", "declared_trust_level", "optional_wallet_format"],
+      supplier_raw_response_exposed: false,
+      provider_names_redacted: true,
+    },
+    freshness: {
+      data_timestamp: generatedAt,
+      data_freshness_seconds: 30,
+    },
+    decision_id: simpleDecisionId("mtr", { ...input, idempotency_key: input.idempotency_key ?? null }, generatedAt),
+    expires_at: addSeconds(generatedAt, 600),
+    deterministic: true,
+    llm_used: false,
+    output_boundary: "nomos_derived_only_no_raw_supplier_response",
   };
 }
 
@@ -17599,6 +17789,34 @@ function createPaidApp() {
     return c.json(result);
   });
 
+  app.post(PRODUCTS_BY_ID["nomos-wallet-risk-360"].path, async c => {
+    let input;
+    try {
+      input = await c.req.json();
+    } catch {
+      return c.json({ error: "invalid_json_body" }, 400);
+    }
+    const result = buildNomosWalletRisk360(input);
+    if (result.reason_codes.includes("UNSUPPORTED_CHAIN") || result.reason_codes.includes("INVALID_COUNTERPARTY_TYPE")) {
+      return c.json(result, 400);
+    }
+    return c.json(result);
+  });
+
+  app.post(PRODUCTS_BY_ID["nomos-merchant-trust"].path, async c => {
+    let input;
+    try {
+      input = await c.req.json();
+    } catch {
+      return c.json({ error: "invalid_json_body" }, 400);
+    }
+    const result = buildNomosMerchantTrust(input);
+    if (result.reason_codes?.some(code => code.startsWith("INVALID") || code.endsWith("MISSING"))) {
+      return c.json(result, 400);
+    }
+    return c.json(result);
+  });
+
   app.post(PRODUCTS_BY_ID["nomos-wallet-identify"].path, async c => {
     let input;
     try {
@@ -20582,6 +20800,8 @@ export default {
           "nomos-wallet-labels",
           "nomos-wallet-watchlist",
           "nomos-wallet-risk-lite",
+          "nomos-wallet-risk-360",
+          "nomos-merchant-trust",
         ].map(productId => ({
           name: productId.replaceAll("-", "_"),
           method: productMethod(PRODUCTS_BY_ID[productId]),

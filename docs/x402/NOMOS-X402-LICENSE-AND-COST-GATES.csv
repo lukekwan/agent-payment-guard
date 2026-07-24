@@ -1,0 +1,11 @@
+endpoint,status,license_boundary,direct_cost_usdc,price_usdc,margin_note
+POST /x402/v1/value/convert,cleared,Nomos reference quote output only no raw provider response,0.00005,0.00500,price adjusted to founder candidate
+POST /x402/v1/policy/budget-check,cleared,Nomos deterministic policy logic,0.00002,0.02000,price adjusted to founder candidate
+POST /x402/v1/service/health,cleared,Nomos service probe schema and derived metadata,0.00003,0.02000,price adjusted to founder candidate
+POST /x402/v1/wallet/identify,cleared,Nomos derived wallet format and classification only,0.00004,0.01000,founder candidate retained
+POST /x402/v1/wallet/watchlist,cleared,Nomos derived boolean and reason-code output only,0.00004,0.02000,founder candidate retained
+POST /x402/v1/wallet/risk-lite,cleared,Nomos derived risk-lite output only no raw provider response,0.00005,0.04000,price adjusted down to founder candidate
+POST /x402/v1/wallet/risk-360,cleared,Nomos derived risk-360 output only no raw provider response,0.00006,0.10000,founder candidate retained
+POST /x402/v1/merchant/trust,cleared,Nomos derived merchant trust output only no raw provider response,0.00004,0.20000,founder candidate retained
+POST /x402/v1/decision/payment-preflight,cleared,Nomos deterministic payment policy logic,0.00003,0.20000,price adjusted to founder candidate
+POST /x402/v1/service/preflight,cleared,Nomos deterministic service policy logic,0.00004,0.10000,founder candidate retained

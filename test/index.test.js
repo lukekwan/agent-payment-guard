@@ -38,6 +38,7 @@ import worker, {
   buildNomosValueConvert,
   buildNomosFixedValueQuote,
   buildNomosMerchantCheck,
+  buildNomosMerchantTrust,
   buildNomosPaymentPreflight,
   buildNomosToolAccess,
   buildNomosServiceHealth,
@@ -46,6 +47,7 @@ import worker, {
   buildNomosWalletLabels,
   buildNomosWalletWatchlist,
   buildNomosWalletRiskLite,
+  buildNomosWalletRisk360,
   buildStablecoinBalance,
   buildTokenPreflight,
   buildTokenExitRisk,
@@ -219,6 +221,8 @@ test("worker exposes discovery documents", async () => {
   assert.ok(document.paths["/x402/v1/value/convert"].post);
   assert.ok(document.paths["/x402/v1/policy/budget-check"].post);
   assert.ok(document.paths["/x402/v1/wallet/risk-lite"].post);
+  assert.ok(document.paths["/x402/v1/wallet/risk-360"].post);
+  assert.ok(document.paths["/x402/v1/merchant/trust"].post);
   assert.equal(document.paths["/v1/x402/agent/harness-score"], undefined);
   assert.ok(document.paths["/v1/agentic-commerce/preflight/sample"]);
   assert.ok(document.paths["/v1/agentic-commerce/preflight"].post);
@@ -239,8 +243,8 @@ test("worker exposes discovery documents", async () => {
     new Request("https://example.test/catalog.json"),
   );
   const catalogDocument = await catalog.json();
-  assert.equal(catalogDocument.product_families, 103);
-  assert.equal(catalogDocument.paid_operations_observed_on_x402scan, 105);
+  assert.equal(catalogDocument.product_families, 105);
+  assert.equal(catalogDocument.paid_operations_observed_on_x402scan, 107);
   assert.equal(catalogDocument.pricing_version, "x402-pricing-v1-20260720");
   assert.ok(
     catalogDocument.products.find(
@@ -286,7 +290,7 @@ test("worker exposes discovery documents", async () => {
   const card = await worker.fetch(
     new Request("https://example.test/.well-known/agent-card.json"),
   );
-  assert.equal((await card.json()).skills.length, 103);
+  assert.equal((await card.json()).skills.length, 105);
 
   const mcpDiscovery = await worker.fetch(
     new Request("https://example.test/.well-known/mcp.json"),
@@ -302,9 +306,9 @@ test("worker exposes discovery documents", async () => {
     new Request("https://example.test/.well-known/x402"),
   );
   const x402DiscoveryDocument = await x402Discovery.json();
-  assert.equal(x402DiscoveryDocument.resources.length, 103);
-  assert.equal(x402DiscoveryDocument.operation_count, 105);
-  assert.equal(x402DiscoveryDocument.paid_operations.length, 105);
+  assert.equal(x402DiscoveryDocument.resources.length, 105);
+  assert.equal(x402DiscoveryDocument.operation_count, 107);
+  assert.equal(x402DiscoveryDocument.paid_operations.length, 107);
   assert.ok(
     x402DiscoveryDocument.paid_operations.find(
       operation =>
@@ -359,7 +363,7 @@ test("worker exposes discovery documents", async () => {
       operation =>
         operation.id === "nomos-value-convert" &&
         operation.method === "POST" &&
-        operation.price_usdc === "$0.002",
+        operation.price_usdc === "$0.005",
     ),
   );
   assert.ok(
@@ -367,7 +371,7 @@ test("worker exposes discovery documents", async () => {
       operation =>
         operation.id === "nomos-budget-check" &&
         operation.method === "POST" &&
-        operation.price_usdc === "$0.010",
+        operation.price_usdc === "$0.020",
     ),
   );
   assert.ok(
@@ -375,7 +379,7 @@ test("worker exposes discovery documents", async () => {
       operation =>
         operation.id === "nomos-wallet-risk-lite" &&
         operation.method === "POST" &&
-        operation.price_usdc === "$0.050",
+        operation.price_usdc === "$0.040",
     ),
   );
   [
@@ -387,10 +391,12 @@ test("worker exposes discovery documents", async () => {
     ["nomos-wallet-identify", "POST", "$0.010"],
     ["nomos-wallet-labels", "POST", "$0.010"],
     ["nomos-wallet-watchlist", "POST", "$0.020"],
+    ["nomos-wallet-risk-360", "POST", "$0.100"],
     ["nomos-merchant-check", "POST", "$0.050"],
-    ["nomos-payment-preflight", "POST", "$0.100"],
+    ["nomos-merchant-trust", "POST", "$0.200"],
+    ["nomos-payment-preflight", "POST", "$0.200"],
     ["nomos-tool-access", "POST", "$0.030"],
-    ["nomos-service-health", "POST", "$0.010"],
+    ["nomos-service-health", "POST", "$0.020"],
     ["nomos-service-preflight", "POST", "$0.100"],
   ].forEach(([id, method, price]) => {
     assert.ok(
@@ -415,8 +421,8 @@ test("worker exposes discovery documents", async () => {
     new Request("https://example.test/registry.json"),
   );
   const registryDocument = await registry.json();
-  assert.equal(registryDocument.counts.product_families, 103);
-  assert.equal(registryDocument.counts.paid_operations, 105);
+  assert.equal(registryDocument.counts.product_families, 105);
+  assert.equal(registryDocument.counts.paid_operations, 107);
   assert.equal(registryDocument.pricing_version, "x402-pricing-v1-20260720");
   assert.ok(
     registryDocument.operations.find(
@@ -1875,6 +1881,21 @@ test("Nomos Agent Utilities provide decimal-safe MVP responses", () => {
   assert.ok(severeWallet.reason_codes.includes("INVALID_ADDRESS_FORMAT"));
   assert.ok(severeWallet.reason_codes.includes("HIGH_VALUE_ACTION"));
 
+  const risk360 = buildNomosWalletRisk360(
+    {
+      chain: "ethereum",
+      address: "0x0000000000000000000000000000000000000000",
+      value_usd: "5000",
+      action: "api_purchase",
+      counterparty_type: "contract",
+    },
+    "2026-07-24T00:00:00.000Z",
+  );
+  assert.equal(risk360.product, "nomos-wallet-risk-360");
+  assert.equal(risk360.decision, "REQUIRE_APPROVAL");
+  assert.equal(risk360.evidence_reference.supplier_raw_response_exposed, false);
+  assert.equal(risk360.output_boundary, "nomos_derived_only_no_raw_supplier_response");
+
   const fixedQuote = buildNomosFixedValueQuote(
     "ETH",
     "USD",
@@ -1894,6 +1915,22 @@ test("Nomos Agent Utilities provide decimal-safe MVP responses", () => {
     "2026-07-24T00:00:00.000Z",
   );
   assert.equal(merchantReview.decision, "REQUIRE_APPROVAL");
+
+  const merchantTrust = buildNomosMerchantTrust(
+    {
+      merchant_id: "merchant-123",
+      origin: "https://api.example.com",
+      wallet: "0x0000000000000000000000000000000000000000",
+      amount_usdc: "10",
+      purpose: "api_purchase",
+      trust_level: "verified",
+    },
+    "2026-07-24T00:00:00.000Z",
+  );
+  assert.equal(merchantTrust.product, "nomos-merchant-trust");
+  assert.equal(merchantTrust.decision, "ALLOW");
+  assert.equal(merchantTrust.normalized_classification, "HIGH_TRUST");
+  assert.equal(merchantTrust.evidence_reference.provider_names_redacted, true);
 
   const paymentReview = buildNomosPaymentPreflight(
     {
