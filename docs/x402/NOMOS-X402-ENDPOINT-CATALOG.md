@@ -1,20 +1,20 @@
 # Nomos x402 Endpoint Catalog
 
-Status: review-ready MVP artifact. Public listing and production deployment are
-not authorized here.
+Status: rolling catalog source-ready artifact. Public production deployment is
+blocked until the Cloudflare Worker credential is accepted.
 
 ## Nomos Agent Utilities
 
 Pay-per-request identity, blockchain intelligence, policy and decision APIs for
 autonomous agents.
 
-Validated Phase 1 exposes 14 low-risk endpoints. Deeper wallet risk-360 and
-counterparty graph endpoints remain blocked until data licensing and sample
-evidence validation pass.
+Validated rolling catalog exposes the 10 Founder/CMO-authorized endpoints below.
+Wallet risk-360 and merchant trust use Nomos-derived output only and do not
+return raw supplier responses or provider names.
 
 ### POST /x402/v1/value/convert
 
-Price: 0.002 USDC
+Price: 0.005 USDC
 
 Purpose: convert a supported digital asset amount into USD or TWD for agent
 budgeting, limit checks, or purchase planning.
@@ -60,9 +60,29 @@ Fixed quote routes:
 - `GET /x402/v1/value/usdt-twd` — 0.001 USDC
 - `GET /x402/v1/value/usdc-twd` — 0.001 USDC
 
+## Authorized Rolling Catalog
+
+| Method | Path | Price | Status |
+| --- | --- | ---: | --- |
+| POST | `/x402/v1/value/convert` | 0.005 USDC | ready |
+| POST | `/x402/v1/policy/budget-check` | 0.020 USDC | ready |
+| POST | `/x402/v1/service/health` | 0.020 USDC | ready |
+| POST | `/x402/v1/wallet/identify` | 0.010 USDC | ready |
+| POST | `/x402/v1/wallet/watchlist` | 0.020 USDC | ready |
+| POST | `/x402/v1/wallet/risk-lite` | 0.040 USDC | ready |
+| POST | `/x402/v1/wallet/risk-360` | 0.100 USDC | ready |
+| POST | `/x402/v1/merchant/trust` | 0.200 USDC | ready |
+| POST | `/x402/v1/decision/payment-preflight` | 0.200 USDC | ready |
+| POST | `/x402/v1/service/preflight` | 0.100 USDC | ready |
+
+All ready endpoints include OpenAPI request schema, response status metadata,
+price metadata, x402 402 response metadata, examples, and freshness semantics in
+the runtime response. Runtime unpaid behavior is enforced by the existing x402
+middleware before business logic.
+
 ### POST /x402/v1/policy/budget-check
 
-Price: 0.010 USDC
+Price: 0.020 USDC
 
 Purpose: return a deterministic spend decision before an agent buys a paid API,
 uses budget, or initiates a consequential workflow.

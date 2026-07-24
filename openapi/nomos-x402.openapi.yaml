@@ -1,0 +1,5788 @@
+openapi: 3.1.0
+info:
+  title: SignGate - Agent Policy & Execution Control
+  version: 2.0.0
+  description: SignGate is Nomos Labs' agent policy and execution control product.
+    It evaluates authority, mandates, approval requirements, signer boundaries,
+    and evidence before autonomous agents buy, pay, call infrastructure, or
+    trigger money movement. x402 is a supported protocol and commerce use case,
+    not the product category.
+  contact:
+    email: hello@signgate.dev
+  x-guidance: Use /v1/agentic-commerce/preflight for the unified decision
+    contract. Treat x402, wallet-risk, RPC, chain-data, and buyer-identity
+    endpoints as supported evidence providers and commerce surfaces, not as the
+    whole SignGate product identity.
+servers:
+  - url: https://base-agent-preflight.bytoken2023.workers.dev
+paths:
+  /v1/x402/base/address-preflight:
+    get:
+      operationId: getBaseAddressPreflight
+      summary: Inspect a Base address before an autonomous payment or contract
+        interaction.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.075
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.075"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base address to inspect before an autonomous payment.
+  /v1/x402/base/token-preflight:
+    get:
+      operationId: getBaseTokenPreflight
+      summary: Inspect a Base token contract, public reputation, holder count, and DEX
+        liquidity before trading.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.075
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.075"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base ERC-20 token contract to inspect.
+  /v1/x402/base/merchant-trust:
+    get:
+      operationId: getX402MerchantTrust
+      summary: Summarize a Base merchant's public USDC receipt history and payer
+        concentration.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.100
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.100"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base merchant payment recipient address.
+  /v1/x402/base/payment-proof:
+    get:
+      operationId: getBasePaymentProof
+      summary: Verify a Base transaction contains the expected canonical USDC payment.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.030
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.030"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: tx
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{64}$
+            description: Base transaction hash.
+        - name: recipient
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Expected USDC recipient.
+        - name: amount
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Expected USDC amount in decimal units.
+  /v1/x402/base/wallet-activity-delta:
+    get:
+      operationId: getBaseWalletActivityDelta
+      summary: Return recent Base ERC-20 activity for a wallet after a caller-supplied
+        timestamp.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.030
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.030"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base wallet to monitor.
+        - name: since
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^\d{4}-\d{2}-\d{2}T.+Z$
+            description: Return transfers observed at or after this timestamp.
+  /v1/x402/base/approval-risk:
+    get:
+      operationId: getBaseApprovalRisk
+      summary: Read a live ERC-20 allowance on Base and flag unlimited or unusually
+        large approvals.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.005
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.005"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: ERC-20 token contract.
+        - name: owner
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Token owner that granted the allowance.
+        - name: spender
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Address authorized to spend the owner's tokens.
+  /v1/x402/base/contract-verification:
+    get:
+      operationId: getBaseContractVerification
+      summary: Inspect Base source verification, compiler metadata, proxy type, and
+        resolved implementations.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.005
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.005"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base contract address to verify.
+  /v1/x402/base/usdc-receipt:
+    get:
+      operationId: getBaseUsdcReceipt
+      summary: Extract canonical Base USDC transfers and transaction finality from a
+        transaction hash.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.003
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.003"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: tx
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{64}$
+            description: Base transaction hash.
+  /v1/x402/base/wallet-counterparty:
+    get:
+      operationId: getBaseWalletCounterparty
+      summary: Rank counterparties in a Base wallet's recent transactions and ERC-20
+        transfers.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.020
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.020"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base wallet or contract to analyze.
+  /v1/x402/base/event-log-monitor:
+    get:
+      operationId: getBaseEventLogMonitor
+      summary: Return recent decoded Base event logs at or after a caller-supplied
+        block.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.003
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.003"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base address whose emitted logs should be monitored.
+        - name: from_block
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+            description: Return logs from this Base block onward.
+  /v1/x402/base/gas-fee-quote:
+    get:
+      operationId: getBaseGasFeeQuote
+      summary: Return live Base gas fees and an estimated transaction cost for a
+        caller-supplied gas limit.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.003
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.003"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: gas_limit
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+            description: Expected transaction gas limit.
+  /v1/x402/base/nonce-readiness:
+    get:
+      operationId: getBaseNonceReadiness
+      summary: Compare confirmed and pending Base nonces before an autonomous
+        transaction is signed.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.003
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.003"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base account whose transaction nonce should be checked.
+  /v1/x402/base/stablecoin-balance:
+    get:
+      operationId: getBaseStablecoinBalance
+      summary: Return live Base USDC, USDT, and DAI balances with public USD reference
+        rates.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.003
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.003"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base wallet or contract whose stablecoin balances should be read.
+  /v1/x402/base/dex-market-monitor:
+    get:
+      operationId: getBaseDexMarketMonitor
+      summary: Monitor Base DEX price, liquidity, volume, and trade activity for a
+        token.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.005
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.005"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base token contract to monitor across DEX pairs.
+  /v1/x402/prediction/market-snapshot:
+    get:
+      operationId: getPredictionMarketSnapshot
+      summary: Return a public Kalshi prediction-market quote, volume, open interest,
+        and orderbook snapshot.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.005
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.005"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: ticker
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._-]{3,160}$
+            description: Kalshi market ticker.
+  /v1/x402/web/endpoint-preflight:
+    get:
+      operationId: getX402EndpointPreflight
+      summary: Inspect an unpaid x402 endpoint, decode its payment requirements, and
+        flag unsafe or malformed commerce metadata.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.015
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.015"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^https?://
+            maxLength: 2048
+            description: Public HTTP(S) x402 resource URL to inspect without paying.
+  /v1/x402/software/npm-package-preflight:
+    get:
+      operationId: getNpmPackagePreflight
+      summary: Check npm package metadata, maintenance signals, deprecation, license,
+        dependencies, and OSV vulnerabilities.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.015
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.015"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: package
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 214
+            description: npm package name, including an optional scope.
+        - name: version
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 80
+            description: Exact npm version or latest. Defaults to latest.
+  /v1/x402/software/github-repository-health:
+    get:
+      operationId: getGithubRepositoryHealth
+      summary: Score a public GitHub repository using maintenance, release, license,
+        archive, issue, and popularity signals.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.020
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.020"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: owner
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$
+            description: GitHub repository owner or organization.
+        - name: repo
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._-]{1,100}$
+            description: Public GitHub repository name.
+  /v1/x402/web/url-change-fingerprint:
+    get:
+      operationId: getUrlChangeFingerprint
+      summary: Fetch a public URL and return redirect, metadata, cache validators, and
+        a SHA-256 content fingerprint.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.003
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.003"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^https?://
+            maxLength: 2048
+            description: Public HTTP(S) document URL to fingerprint.
+  /v1/x402/web/feed-snapshot:
+    get:
+      operationId: getFeedSnapshot
+      summary: Normalize the latest entries from a public RSS or Atom feed with stable
+        item fingerprints.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.003
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.003"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^https?://
+            maxLength: 2048
+            description: Public RSS or Atom feed URL.
+  /v1/x402/base/transaction-intent:
+    get:
+      operationId: getEvmTransactionIntent
+      summary: Decode Base transaction calldata before signing and flag token
+        transfers, approvals, unlimited spending, and unknown selectors.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.005
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.005"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base destination contract or account.
+        - name: data
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x(?:[a-fA-F0-9]{2})*$
+            maxLength: 8194
+            description: Hex-encoded EVM calldata.
+        - name: value
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+            description: Native ETH value in wei. Defaults to zero.
+  /v1/x402/agent/a2a-card-preflight:
+    get:
+      operationId: getA2aAgentCardPreflight
+      summary: Discover and validate a public A2A Agent Card, its skills, provider,
+        authentication, endpoint consistency, and unsafe URLs.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.020
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.020"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^https?://
+            maxLength: 2048
+            description: Public agent origin or direct Agent Card URL.
+  /v1/x402/web/openapi-preflight:
+    get:
+      operationId: getOpenapiSpecPreflight
+      summary: Validate a public OpenAPI JSON or YAML document, server URLs,
+        authentication declarations, operation coverage, and content
+        fingerprint.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.015
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.015"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^https?://
+            maxLength: 2048
+            description: Public OpenAPI JSON or YAML document URL.
+  /v1/x402/web/domain-trust-preflight:
+    get:
+      operationId: getDomainTrustPreflight
+      summary: Inspect public DNS, DNSSEC, mail, CNAME resolution, RDAP registration
+        age, expiration, and domain trust signals.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.015
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.015"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: domain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$
+            description: Registrable or delegated public DNS domain name.
+  /v1/x402/software/pypi-package-preflight:
+    get:
+      operationId: getPypiPackagePreflight
+      summary: Check PyPI package metadata, release age, yanked status, Python
+        requirements, dependencies, license, and OSV vulnerabilities.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.005
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.005"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: package
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,198}[A-Za-z0-9])?$
+            description: PyPI project name.
+        - name: version
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^(?:latest|[A-Za-z0-9][A-Za-z0-9._+!-]{0,99})$
+            description: Exact PyPI version or latest. Defaults to latest.
+  /v1/x402/payment-guard/evaluate:
+    get:
+      operationId: getAgentPaymentGuard
+      summary: "AI agent x402 payment firewall: enforce budgets and mandates, simulate
+        transactions, score merchant and domain risk, prevent replay, require
+        human approval, and audit delivery before autonomous spending."
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.10
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.10"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^https?://
+            maxLength: 2048
+            description: Public x402 resource URL to evaluate before payment.
+        - name: session_id
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,96}$
+            description: Caller-defined budget and audit scope.
+        - name: request_id
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+            description: Caller-defined idempotency key.
+        - name: max_single_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Maximum allowed price for one payment.
+        - name: session_budget_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Maximum reserved spend for this session.
+        - name: daily_budget_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Maximum reserved spend for this session in one UTC day.
+        - name: allow_pay_to
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 2048
+            description: Optional comma-separated recipient allowlist.
+        - name: block_pay_to
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 2048
+            description: Optional comma-separated recipient blocklist.
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Optional transaction destination for intent decoding.
+        - name: data
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x(?:[a-fA-F0-9]{2})*$
+            maxLength: 8194
+            description: Optional EVM calldata.
+        - name: value
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+            description: Optional native ETH value in wei.
+    post:
+      operationId: evaluateAgentPaymentGuardJson
+      summary: Evaluate a payment using a JSON body and an optional owner-controlled
+        policy profile.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                session_id:
+                  type: string
+                request_id:
+                  type: string
+                profile_id:
+                  type: string
+                agent_token:
+                  type: string
+                max_single_usdc:
+                  type: string
+                session_budget_usdc:
+                  type: string
+                daily_budget_usdc:
+                  type: string
+                reservation_ttl_seconds:
+                  type: integer
+                  minimum: 30
+                  maximum: 3600
+                retention_days:
+                  type: integer
+                  minimum: 1
+                  maximum: 365
+                human_review_above_usdc:
+                  type: string
+                fail_closed:
+                  type: boolean
+                  default: true
+                allowed_domains:
+                  oneOf:
+                    - type: string
+                    - type: array
+                      items:
+                        type: string
+                allowed_tools:
+                  oneOf:
+                    - type: string
+                    - type: array
+                      items:
+                        type: string
+                allowed_purposes:
+                  oneOf:
+                    - type: string
+                    - type: array
+                      items:
+                        type: string
+                active_from_hour_utc:
+                  type: integer
+                  minimum: 0
+                  maximum: 23
+                active_until_hour_utc:
+                  type: integer
+                  minimum: 1
+                  maximum: 24
+                tool_id:
+                  type: string
+                purpose:
+                  type: string
+                allow_pay_to:
+                  type: string
+                block_pay_to:
+                  type: string
+                to:
+                  type: string
+                data:
+                  type: string
+                value:
+                  type: string
+              required:
+                - url
+                - session_id
+                - request_id
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.10
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.10"
+        protocols:
+          - x402: {}
+      security: []
+      responses:
+        "200":
+          description: Signed Payment Guard decision
+        "400":
+          description: Invalid request
+        "402":
+          description: x402 payment required
+        "403":
+          description: Policy authentication failed
+  /v1/x402/base/alpha-risk:
+    get:
+      operationId: getBaseAlphaRiskContext
+      summary: High-frequency Base wallet or token risk and alpha context for trading
+        bots before copying, buying, or interacting.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.003
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.003"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: subject
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base wallet, contract, or ERC-20 token address to score.
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - auto
+              - wallet
+              - token
+            description: Optional interpretation hint. Defaults to auto detection.
+  /v1/x402/base/token-alpha-snapshot:
+    get:
+      operationId: getBaseTokenAlphaSnapshot
+      summary: "Fast Base token alpha snapshot for trading bots: liquidity, volume,
+        buy/sell imbalance, risk flags, and bot-ready trade bias."
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.003
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.003"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base ERC-20 token address to score.
+  /v1/x402/base/wallet-copytrade-risk:
+    get:
+      operationId: getBaseWalletCopytradeRisk
+      summary: "Copytrade risk snapshot for a Base wallet: public risk, activity,
+        counterparty quality, and whether a bot should follow, monitor, or
+        avoid."
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.003
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.003"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base wallet to evaluate before copytrading.
+  /v1/x402/base/new-pool-risk:
+    get:
+      operationId: getBaseNewPoolRisk
+      summary: "New Base pool risk snapshot for bots: pair age, liquidity, activity
+        imbalance, contract flags, and launch-stage risk score."
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.003
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.003"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base token address whose deepest pool should be checked.
+  /v1/x402/x402/server-trust:
+    get:
+      operationId: getX402ServerTrust
+      summary: Score an x402 API server using public payment volume, transaction
+        count, buyer concentration, seller address, freshness, and chain
+        coverage.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.01
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.01"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: server_url
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^https?://
+            maxLength: 2048
+            description: Public x402 server origin or endpoint URL.
+        - name: seller
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Optional Base seller or payment recipient address.
+        - name: volume_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Observed public x402 volume in USDC.
+        - name: txns
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+            description: Observed public x402 transaction count.
+        - name: buyers
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+            description: Observed public unique buyer count.
+        - name: latest_seen_hours
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,2})?$
+            description: Hours since the latest observed payment.
+        - name: chains
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9, _-]{1,120}$
+            description: Comma-separated chain names reported by the marketplace.
+  /v1/x402/x402/origin-due-diligence:
+    get:
+      operationId: getX402OriginDueDiligence
+      summary: "Run x402 origin due diligence for an AI buyer: resources, payment
+        consistency, metadata quality, seller risk, and next checks."
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.01
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.01"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: server_url
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^https?://
+            maxLength: 2048
+            description: x402scan server URL, x402 server origin, or x402 endpoint URL.
+        - name: seller
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Optional expected seller/payment recipient address.
+        - name: resources
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+            description: Optional observed resource count from a marketplace page.
+        - name: txns
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+            description: Optional observed public x402 transaction count.
+        - name: buyers
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+            description: Optional observed unique buyer count.
+  /v1/x402/x402/resource-compare:
+    get:
+      operationId: getX402ResourceCompare
+      summary: Compare two to five x402 resources or servers by price, payment
+        metadata, schema quality, seller consistency, and budget fit.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.01
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.01"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: resources
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^https?://
+            maxLength: 4096
+            description: Comma-separated list of two to five public x402 resource or server
+              URLs.
+        - name: budget_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Optional maximum acceptable spend for one chosen resource.
+  /v1/x402/agent/spend-route-plan:
+    get:
+      operationId: getAgentSpendRoutePlan
+      summary: Plan which Agent Payment Guard x402 resources an autonomous agent
+        should buy for a task, budget, and risk tolerance.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.05
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.05"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: task
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 500
+            description: Natural-language task the agent wants to complete.
+        - name: budget_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Maximum planned spend for the route.
+        - name: risk_tolerance
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - low
+              - medium
+              - high
+            description: How much uncertainty the buyer can tolerate.
+  /v1/x402/agent/buyer-identity-preflight:
+    get:
+      operationId: getAgentBuyerIdentityPreflight
+      summary: Check whether an AI agent's role, purpose, authority, and spend limit
+        fit the x402 service or data product it wants to buy.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.05
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.05"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: agent_role
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - research_agent
+              - writer_agent
+              - accounting_agent
+              - finance_agent
+              - operator_agent
+            description: Declared or credential-mapped buyer agent role.
+        - name: product_category
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-z0-9_-]{2,80}$
+            description: Normalized category of the x402 service, such as wallet_risk,
+              invoice_verification, or market_intelligence.
+        - name: purpose
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[a-z0-9_-]{2,80}$
+            description: Normalized intended use for the purchase.
+        - name: price_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Quoted x402 price for this purchase.
+        - name: data_sensitivity
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - low
+              - medium
+              - high
+              - restricted
+            description: Sensitivity level of the service or returned data.
+        - name: agent_status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - active
+              - paused
+              - disabled
+            description: Lifecycle state of the buyer agent.
+        - name: approval_ref
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 160
+            description: Optional human approval reference for elevated purchases.
+  /v1/x402/agent/buyer-policy-kit:
+    get:
+      operationId: getAgentBuyerPolicyKit
+      summary: "Buy the SignGate Agent Buyer Policy Kit: starter roles, product
+        taxonomy, role-product matrix, JS/Python evaluator guidance, and
+        self-host integration terms."
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $49.00
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "49.00"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - manifest
+              - policy
+              - quickstart
+            description: Delivery format. manifest returns the full kit manifest.
+        - name: buyer_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - developer
+              - startup
+              - enterprise
+            description: Buyer segment for install and integration guidance.
+  /v1/x402/base/token-exit-risk:
+    get:
+      operationId: getBaseTokenExitRisk
+      summary: Estimate Base token exit risk for bots using liquidity depth,
+        volume/liquidity pressure, sell imbalance, pair age, and token flags.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.003
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.003"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base ERC-20 token address to evaluate for exit risk.
+  /v1/x402/bcs/labels:
+    get:
+      operationId: getBcsAddressLabels
+      summary: Proxy BlockchainSecurity address labels for AI agents using a paid x402
+        call and a server-side API key.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.02
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.02"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: chain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-z0-9_-]{2,32}$
+            description: BlockchainSecurity chain slug, such as ethereum, bsc, or tron.
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_-]{3,128}$
+            description: Address to label on the selected chain.
+        - name: sources
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9,_-]{1,80}$
+            description: Optional BlockchainSecurity sources selector, such as misttrack or
+              all.
+        - name: refresh
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^(?:true|false)$
+            description: Optional true to bypass upstream cache when supported.
+  /v1/x402/bcs/assets:
+    get:
+      operationId: getBcsAssets
+      summary: Return BlockchainSecurity asset specs for a chain through an x402-paid
+        AI-friendly wrapper.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.003
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.003"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: chain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-z0-9_-]{2,32}$
+            description: BlockchainSecurity chain slug.
+  /v1/x402/bcs/chains:
+    get:
+      operationId: getBcsChains
+      summary: Return BlockchainSecurity supported chains and native/token entries for
+        AI agents.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.003
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.003"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters: []
+  /v1/x402/bcs/registry:
+    get:
+      operationId: getBcsTokenRegistry
+      summary: Return the BlockchainSecurity token registry through an x402 paid
+        resource.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.005
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.005"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters: []
+  /v1/x402/bcs/resolve:
+    get:
+      operationId: getBcsAssetResolve
+      summary: Resolve BlockchainSecurity asset symbols or contracts into asset specs
+        through an x402 paid wrapper.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.005
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.005"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: blockchain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-z0-9_-]{2,32}$
+            description: BlockchainSecurity blockchain slug.
+        - name: symbols
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9,._-]{1,240}$
+            description: Comma-separated symbols to resolve.
+        - name: contracts
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9,:._-]{1,1000}$
+            description: Optional comma-separated contract addresses to resolve.
+  /v1/x402/bcs/address-risk:
+    get:
+      operationId: getBcsAddressRiskScore
+      summary: Run BlockchainSecurity behavior-based address risk scoring for Ethereum
+        or Tron through an x402 paid wrapper.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.15
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.15"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: blockchain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^(?:ethereum|tron)$
+            description: BlockchainSecurity chain slug. Address risk currently supports
+              ethereum or tron.
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_-]{3,128}$
+            description: Address to risk-score.
+        - name: symbols
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9,._-]{1,240}$
+            description: Optional comma-separated asset symbols to include.
+        - name: contracts
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9,:._-]{1,1000}$
+            description: Optional comma-separated token contracts to include.
+  /v1/x402/bcs/address-classify:
+    get:
+      operationId: getBcsAddressClassify
+      summary: Classify one or more blockchain addresses by likely entity type using
+        BlockchainSecurity ML classification.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.10
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.10"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: blockchain
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^(?:ethereum|tron|bitcoin)$
+            description: BlockchainSecurity chain slug. Defaults upstream to tron when
+              omitted.
+        - name: addresses
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9,:._-]{3,4000}$
+            description: Comma-separated addresses to classify, up to 100.
+  /v1/x402/bcs/wallet-overview:
+    get:
+      operationId: getBcsWalletOverview
+      summary: Fetch a BlockchainSecurity wallet activity and balance overview through
+        an x402 paid wrapper.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.08
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.08"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: blockchain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-z0-9_-]{2,32}$
+            description: BlockchainSecurity chain slug.
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_-]{3,128}$
+            description: Address to summarize.
+        - name: symbols
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9,._-]{1,240}$
+            description: Optional comma-separated asset symbols to include.
+        - name: contracts
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9,:._-]{1,1000}$
+            description: Optional comma-separated token contracts to include.
+        - name: output_asset
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._-]{1,40}$
+            description: Optional output asset for valuation where supported.
+  /v1/x402/bcs/trace:
+    get:
+      operationId: getBcsFundTrace
+      summary: Run BlockchainSecurity multi-hop fund-flow tracing from a starting
+        address through an x402 paid wrapper.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.49
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.49"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: blockchain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^(?:ethereum|tron|bitcoin)$
+            description: BlockchainSecurity chain slug.
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_-]{3,128}$
+            description: Starting address for tracing.
+        - name: direction
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - in
+              - out
+              - both
+            description: Trace direction hint mapped into track_setting.
+        - name: depth
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[1-5]$
+            description: Trace depth hint mapped into track_setting.
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[1-9][0-9]{0,2}$
+            description: Maximum path or transaction items requested.
+        - name: symbols
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9,._-]{1,240}$
+            description: Optional comma-separated asset symbols to filter.
+        - name: min_value
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]+)?$
+            description: Optional minimum value filter.
+  /v1/x402/bcs/cross-chain:
+    get:
+      operationId: getBcsCrossChainTrack
+      summary: Track a bridge transaction across chains using BlockchainSecurity
+        cross-chain intelligence.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.29
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.29"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: txhash
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_-]{16,160}$
+            description: Source transaction hash.
+        - name: label
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9_-]{2,40}$
+            description: Bridge protocol label, such as across, axelar, celer, or wormhole.
+  /v1/x402/agent/payment-risk-gateway:
+    get:
+      operationId: getAgentPaymentRiskGateway
+      summary: "x402-discoverable AI agent stablecoin payment firewall: verify intent,
+        enforce dynamic limits, score recipient risk, and return a signer
+        directive before payment execution."
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.15
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.15"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: request_id
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+            description: Caller-defined idempotency key for the intent.
+        - name: agent_id
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,96}$
+            description: AI agent or runtime requesting payment authorization.
+        - name: purpose
+          in: query
+          required: true
+          schema:
+            type: string
+            maxLength: 80
+            description: Short audit purpose for the payment.
+        - name: pay_to
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Recipient address.
+        - name: amount_usdc
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Stablecoin amount in USDC.
+        - name: invoice_id
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 160
+            description: Commercial context binding the payment to an invoice or order.
+        - name: invoice_hash
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{64}$
+            description: Optional invoice or order hash.
+        - name: nonce
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{8,128}$
+            description: Replay-prevention nonce.
+        - name: max_single_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Maximum allowed amount for one payment.
+        - name: human_review_above_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Amount at or above which the decision becomes review.
+        - name: allow_pay_to
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 2048
+            description: Optional comma-separated recipient allowlist.
+        - name: block_pay_to
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 2048
+            description: Optional comma-separated recipient blocklist.
+        - name: risk_score
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]{1,3}$
+            description: Caller-supplied recipient risk score from 0 to 100.
+        - name: risk_labels
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 512
+            description: Optional comma-separated risk labels.
+  /v1/x402/agent/rpc-preflight:
+    get:
+      operationId: getAgentRpcPreflight
+      summary: "Preflight an agent RPC or x402 chain-data request before payment:
+        endpoint origin, method risk, chain fit, price, and budget checks."
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.005
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.005"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: endpoint_url
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^https?://
+            maxLength: 2048
+            description: RPC, x402, REST, or indexed chain-data endpoint URL.
+        - name: chain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_ -]{2,80}$
+            description: Requested chain or CAIP-2 network label.
+        - name: method
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9_.:-]{2,80}$
+            description: RPC method, REST operation, or query action.
+        - name: max_price_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Maximum acceptable price for this request.
+        - name: session_budget_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Remaining session budget available to the agent.
+  /v1/x402/chain/rpc-capability-probe:
+    get:
+      operationId: getRpcCapabilityProbe
+      summary: "Score whether an RPC route likely fits agent chain-data work: logs,
+        storage, historical reads, trace, WebSocket, and local-fork research."
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.005
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.005"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: chain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_ -]{2,80}$
+            description: Requested chain or CAIP-2 network label.
+        - name: methods
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9_.,:-]{2,400}$
+            description: Comma-separated RPC methods the workflow needs.
+        - name: historical_block
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]{1,12}$
+            description: Optional historical block number needed by the workflow.
+        - name: requires_trace
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^(?:true|false)$
+            description: Whether debug/trace methods are required.
+        - name: requires_websocket
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^(?:true|false)$
+            description: Whether subscription/WebSocket support is required.
+  /v1/x402/agent/chain-data-route-plan:
+    get:
+      operationId: getAgentChainDataRoutePlan
+      summary: Plan a budget-aware route for agent chain-data tasks across RPC reads,
+        indexed data, cached intelligence, and payment review.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.005
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.005"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: task
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 500
+            description: Natural-language chain-data task.
+        - name: chain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_ -]{2,80}$
+            description: Requested chain or CAIP-2 network label.
+        - name: data_need
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - rpc
+              - logs
+              - storage
+              - trace
+              - indexed
+              - sql
+              - fork
+              - mixed
+            description: Primary data access shape.
+        - name: budget_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Maximum planned spend for this route.
+        - name: risk_tolerance
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - low
+              - medium
+              - high
+            description: How much uncertainty the buyer can tolerate.
+  /v1/x402/chain/indexed-query-preflight:
+    get:
+      operationId: getIndexedChainQueryPreflight
+      summary: "Preflight an indexed chain-data query before payment: schema
+        discovery, query type, estimated rows, cost fit, and safety flags."
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.005
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.005"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: chain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_ -]{2,80}$
+            description: Requested chain or CAIP-2 network label.
+        - name: query_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - schema
+              - event_logs
+              - transfers
+              - balances
+              - transactions
+              - sql
+              - protocol_timeline
+            description: Indexed data query family.
+        - name: estimated_rows
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]{1,10}$
+            description: Caller-estimated row count or result size.
+        - name: max_price_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Maximum acceptable query price.
+  /v1/x402/agent/rpc-payment-guard:
+    get:
+      operationId: getX402RpcPaymentGuard
+      summary: Guard an agent payment for RPC or indexed chain-data access with
+        endpoint, recipient, amount, budget, and signer-directive checks.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.10
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.10"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: request_id
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+            description: Caller-defined idempotency key for this RPC purchase.
+        - name: endpoint_url
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^https?://
+            maxLength: 2048
+            description: RPC, x402, REST, or indexed chain-data endpoint URL.
+        - name: chain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_ -]{2,80}$
+            description: Requested chain or CAIP-2 network label.
+        - name: method
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9_.:-]{2,80}$
+            description: RPC method, REST operation, or query action.
+        - name: pay_to
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Payment recipient address.
+        - name: amount_usdc
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Requested stablecoin payment amount.
+        - name: max_single_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Maximum allowed amount for one RPC/data purchase.
+        - name: session_budget_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Remaining budget for this agent session.
+  /v1/x402/agent-risk/address-risk:
+    get:
+      operationId: getAddressRisk
+      summary: Return an agent-ready risk decision before paying, allowlisting, or
+        interacting with an address.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.01
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.01"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: chain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_ -]{2,80}$
+            description: Chain or network label for the address.
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Wallet or contract address to screen.
+        - name: action
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9_.:-]{2,80}$
+            description: Planned agent action, such as payment, approval, onboarding, or
+              call.
+  /v1/x402/agent-risk/token-risk:
+    get:
+      operationId: getTokenRisk
+      summary: Return token safety flags for honeypot, tax, proxy, authority,
+        liquidity, concentration, and approval risk.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.01
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.01"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: chain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_ -]{2,80}$
+            description: Chain or network label for the token.
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Token contract to screen.
+        - name: action
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9_.:-]{2,80}$
+            description: Planned agent action, such as swap, approve, bridge, or hold.
+  /v1/x402/agent-risk/transaction-decode-risk:
+    get:
+      operationId: getTransactionDecodeRisk
+      summary: Decode an EVM transaction shape and return pre-signing risk flags for
+        transfers, approvals, and unknown calldata.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.01
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.01"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: chain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_ -]{2,80}$
+            description: Chain or network label for the transaction.
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Transaction recipient or contract.
+        - name: value_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Approximate value at risk in USDC.
+        - name: calldata
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]*$
+            maxLength: 4096
+            description: EVM calldata or 0x for a simple transfer.
+  /v1/x402/agent-risk/wallet-dossier:
+    get:
+      operationId: getWalletDossier
+      summary: Return a compact wallet dossier with risk, exposure, counterparty,
+        behavior, and next-check guidance.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.03
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.03"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: chain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_ -]{2,80}$
+            description: Chain or network label for the wallet dossier.
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Wallet or contract address to summarize.
+  /v1/x402/agent-risk/safe-transaction-review:
+    get:
+      operationId: getSafeTransactionReview
+      summary: Review a planned payment, approval, swap, bridge, or contract call
+        before an agent signs.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.25
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.25"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: chain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_ -]{2,80}$
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9_.:-]{2,80}$
+        - name: amount_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+  /v1/x402/agent-risk/swap-preflight:
+    get:
+      operationId: getSwapPreflight
+      summary: Preflight a token swap route for token safety, liquidity, slippage,
+        route, and policy risk.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.01
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.01"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: chain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_ -]{2,80}$
+        - name: token_in
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: token_out
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: amount_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+        - name: max_slippage_bps
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]{1,5}$
+  /v1/x402/agent-risk/stablecoin-health:
+    get:
+      operationId: getStablecoinHealth
+      summary: Check stablecoin payment suitability, issuer controls, blacklist/freeze
+        risk, and treasury policy fit.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.01
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.01"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: chain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_ -]{2,80}$
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: use_case
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9_.:-]{2,80}$
+  /v1/x402/agent-risk/policy-decide:
+    get:
+      operationId: getPolicyDecide
+      summary: Return a normalized ALLOW/REVIEW/BLOCK policy decision for an agent
+        payment, signing, or tool-call request.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.10
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.10"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: request_id
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9_.:-]{2,80}$
+        - name: amount_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+        - name: risk_score
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]{1,3}$
+  /v1/x402/address-risk/lookup:
+    get:
+      operationId: getPublicWalletRiskLookup
+      summary: Look up one wallet against a curated public-source sanctions, scam,
+        ransomware, and stablecoin blacklist intelligence feed.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.10
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.10"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: chain
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - ETH
+            description: Chain namespace for the address. Current hosted feed supports
+              ETH/EVM labels.
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Wallet or contract address to screen.
+  /v1/x402/address-risk/snapshot:
+    get:
+      operationId: getPublicWalletRiskSnapshot
+      summary: Download the full source-attributed public wallet risk intelligence
+        snapshot as JSONL.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $499.00
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "499.00"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters: []
+  /v1/x402/address-risk/sample:
+    get:
+      operationId: getPublicWalletRiskSample
+      summary: Return a small paid sample of the public wallet risk intelligence
+        schema, provenance, and label format before buying lookup or dataset
+        downloads.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.005
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.005"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[1-9]$|^10$
+            description: Number of sample JSONL records to return, from 1 to 10. Defaults to
+              5.
+  /v1/x402/address-risk/delta:
+    get:
+      operationId: getPublicWalletRiskDelta
+      summary: Download the latest or requested wallet risk intelligence batch delta
+        as JSONL.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $99.00
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "99.00"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: batch_key
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^20[0-9]{2}-W[0-9]{2}$
+            description: Batch key to download. Defaults to the latest available batch.
+  /v1/x402/sumsub/case-management-evidence:
+    get:
+      operationId: getSumsubCaseManagementEvidence
+      summary: Return the Sumsub case-management evidence contract for review state,
+        escalation, and audit workflows.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.05
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.05"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: case_id
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+            description: Sumsub case id or sandbox fixture reference.
+        - name: reference_id
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+            description: Internal SignGate request, applicant, or transaction reference.
+  /v1/x402/sumsub/db-net-evidence:
+    get:
+      operationId: getSumsubDbNetEvidence
+      summary: Return the Sumsub DB_NET identity database evidence contract for
+        verified-principal and mandate checks.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.03
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.03"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: applicant_id
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+            description: Sumsub applicant id or sandbox fixture reference.
+        - name: principal_reference
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+            description: Buyer, merchant, or responsible principal reference.
+  /v1/x402/sumsub/kyt-evidence:
+    get:
+      operationId: getSumsubKytEvidence
+      summary: Return the Sumsub KYT transaction evidence contract for crypto
+        transaction and counterparty risk.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.03
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.03"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: transaction_id
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+            description: Sumsub transaction id, SignGate transaction reference, or sandbox
+              fixture id.
+        - name: asset
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{2,32}$
+        - name: chain
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{2,64}$
+  /v1/x402/sumsub/payment-method-crypto-evidence:
+    get:
+      operationId: getSumsubPaymentMethodCryptoEvidence
+      summary: Return the Sumsub crypto payment-method evidence contract for wallet
+        ownership and payment method risk.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.03
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.03"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: applicant_id
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+            description: Sumsub applicant id or sandbox fixture reference.
+        - name: wallet
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Crypto wallet/payment method address.
+  /v1/x402/sumsub/poa-evidence:
+    get:
+      operationId: getSumsubPoaEvidence
+      summary: Return the Sumsub proof-of-address evidence contract for residency,
+        jurisdiction, and onboarding policy gates.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.03
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.03"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: applicant_id
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+            description: Sumsub applicant id or sandbox fixture reference.
+        - name: jurisdiction
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Z]{2}$
+            description: ISO-3166 country code used by the policy gate.
+  /v1/x402/sumsub/crystal-crypto-risk-evidence:
+    get:
+      operationId: getSumsubCrystalCryptoRiskEvidence
+      summary: Return the Sumsub Crystal crypto risk scoring evidence contract for
+        high-impact crypto transfers.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.05
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.05"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: wallet
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Wallet or crypto counterparty address.
+        - name: transaction_reference
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+            description: Crypto transaction or SignGate request reference.
+  /v1/x402/sumsub/travel-rule-evidence:
+    get:
+      operationId: getSumsubTravelRuleEvidence
+      summary: Return the Sumsub Travel Rule evidence contract for originator,
+        beneficiary, and VASP compliance checks.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.05
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.05"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: transfer_reference
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+            description: Crypto transfer, VASP, or SignGate payment reference.
+        - name: originator
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+        - name: beneficiary
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+  /v1/x402/sumsub/watchlist-aml-evidence:
+    get:
+      operationId: getSumsubWatchlistAmlEvidence
+      summary: Return the Sumsub watchlist and AML evidence contract for sanctions,
+        PEP, watchlist, and adverse-media screening.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.05
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.05"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: applicant_id
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+            description: Sumsub applicant id or sandbox fixture reference.
+        - name: counterparty_reference
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+            description: Merchant, buyer, VASP, or counterparty reference.
+  /v1/x402/agent/capability-security-preflight:
+    get:
+      operationId: getAgentCapabilitySecurityPreflight
+      summary: Bundle Agent Card, repository, package, domain, OpenAPI, and x402
+        endpoint preflight checks before an agent installs or delegates to a
+        capability.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.100
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.100"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: target_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - agent
+              - package
+              - repository
+              - api
+              - capability
+            description: Capability type being evaluated.
+        - name: identifier
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 512
+            description: Human-readable package, repository, agent, API, or capability
+              identifier.
+        - name: agent_card_url
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^https?://
+            maxLength: 2048
+        - name: github_owner
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$
+        - name: github_repo
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._-]{1,100}$
+        - name: npm_package
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 214
+        - name: npm_version
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 80
+        - name: domain
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$
+        - name: openapi_url
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^https?://
+            maxLength: 2048
+        - name: x402_url
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^https?://
+            maxLength: 2048
+  /v1/x402/transaction/preflight-lite:
+    get:
+      operationId: getX402TransactionPreflightLite
+      summary: Low-friction x402 transaction preflight price test with one explainable
+        decision and bundled Base evidence.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.150
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.150"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: merchant_address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Merchant or payment recipient to trust-score.
+        - name: wallet_address
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Buyer, merchant, or workflow wallet to inspect.
+        - name: tx
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{64}$
+            description: Optional Base transaction hash for receipt and payment proof
+              checks.
+        - name: expected_recipient
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Expected USDC recipient for payment proof.
+        - name: expected_amount
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Expected USDC amount for payment proof.
+        - name: token
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: owner
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: spender
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: contract_address
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: from_block
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+        - name: gas_limit
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+        - name: since
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^\d{4}-\d{2}-\d{2}T.+Z$
+            description: Wallet activity lower bound. Defaults to 30 days ago.
+  /v1/x402/transaction/preflight:
+    get:
+      operationId: getX402TransactionPreflight
+      summary: "Explainable x402 transaction preflight: return ALLOW, REQUIRE_REVIEW,
+        or DENY with bundled Base evidence before an agent pays."
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.250
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.250"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: merchant_address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: wallet_address
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: tx
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{64}$
+        - name: expected_recipient
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: expected_amount
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+        - name: token
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: owner
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: spender
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: contract_address
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: from_block
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+        - name: gas_limit
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+        - name: since
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^\d{4}-\d{2}-\d{2}T.+Z$
+  /v1/x402/transaction/preflight-plus:
+    get:
+      operationId: getX402TransactionPreflightPlus
+      summary: Higher-assurance x402 transaction preflight price test for enterprise,
+        compliance, or high-value agent payments.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.500
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.500"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: merchant_address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: wallet_address
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: tx
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{64}$
+        - name: expected_recipient
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: expected_amount
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+        - name: token
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: owner
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: spender
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: contract_address
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: from_block
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+        - name: gas_limit
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+        - name: since
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^\d{4}-\d{2}-\d{2}T.+Z$
+  /v1/x402/bcs/wallet-risk-bundle:
+    get:
+      operationId: getBcsWalletRiskBundle
+      summary: Bundle BlockchainSecurity labels, risk score, classification, and
+        wallet overview for one address.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.250
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.250"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: blockchain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-z0-9_-]{2,32}$
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_-]{3,128}$
+        - name: symbols
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9.,_-]{0,240}$
+        - name: contracts
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:.,_-]{0,800}$
+  /v1/x402/bcs/investigation-pack:
+    get:
+      operationId: getBcsInvestigationPack
+      summary: Run BlockchainSecurity wallet overview plus fund-flow tracing and
+        optional cross-chain tracking for investigations.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.750
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.750"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: blockchain
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[a-z0-9_-]{2,32}$
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_-]{3,128}$
+        - name: direction
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - in
+              - out
+              - both
+        - name: depth
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[1-5]$
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]{1,3}$
+        - name: txhash
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9:_-]{0,160}$
+        - name: label
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9_-]{0,40}$
+  /v1/x402/quicknode/rpc-health:
+    get:
+      operationId: getQuicknodeRpcHealth
+      summary: Probe a QuickNode/Base JSON-RPC endpoint for chain id, latest block,
+        method availability, latency, and route readiness.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.025
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.025"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: endpoint_url
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^https?://
+            maxLength: 2048
+        - name: methods
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9_.,:-]{1,300}$
+  /v1/x402/quicknode/wallet-execution-readiness:
+    get:
+      operationId: getQuicknodeWalletExecutionReadiness
+      summary: Check Base wallet execution readiness using RPC-backed nonce, gas, and
+        stablecoin balance evidence.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.050
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.050"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: gas_limit
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+  /v1/x402/sumsub/counterparty-compliance-bundle:
+    get:
+      operationId: getSumsubCounterpartyComplianceBundle
+      summary: Bundle Sumsub DB_NET, watchlist/AML, case-management, and
+        proof-of-address evidence for counterparty review.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.150
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.150"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: applicant_id
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+        - name: case_id
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+        - name: counterparty_reference
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+        - name: jurisdiction
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Z]{2}$
+  /v1/x402/sumsub/crypto-transfer-compliance-bundle:
+    get:
+      operationId: getSumsubCryptoTransferComplianceBundle
+      summary: Bundle Sumsub KYT, crypto payment-method, Travel Rule, and Crystal
+        crypto-risk evidence for one transfer.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.200
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.200"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: transaction_id
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+        - name: wallet
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+        - name: transfer_reference
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+        - name: asset
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{2,32}$
+        - name: chain
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{2,64}$
+  /v1/x402/base/payment-due-diligence-bundle:
+    get:
+      operationId: getBasePaymentDueDiligenceBundle
+      summary: Bundle merchant trust, payment proof, wallet activity, counterparty,
+        receipt, and event evidence before or after an agent payment.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.075
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.075"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: merchant_address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base merchant or API payment recipient address.
+        - name: wallet_address
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Base buyer or agent wallet to analyze.
+        - name: tx
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{64}$
+            description: Optional transaction hash for payment proof and receipt evidence.
+        - name: expected_recipient
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Expected USDC recipient for payment-proof verification.
+        - name: expected_amount
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Expected USDC amount for payment-proof verification.
+        - name: since
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^\d{4}-\d{2}-\d{2}T.+Z$
+            description: Return wallet activity observed at or after this timestamp.
+        - name: contract_address
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Contract or address whose event logs should be monitored.
+        - name: from_block
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+            description: Return event logs from this Base block onward.
+  /v1/x402/agent/payment-execution-readiness:
+    get:
+      operationId: getAgentPaymentExecutionReadiness
+      summary: Return a real-time agent payment readiness decision using mandate,
+        recipient, approval, receipt, nonce, gas, and stablecoin evidence.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.050
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.050"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: request_id
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+            description: Idempotent payment intent or policy request id.
+        - name: agent_id
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 120
+            description: Agent identity or internal principal.
+        - name: purpose
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 160
+            description: Business purpose for the payment.
+        - name: pay_to
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Recipient or API merchant payment address.
+        - name: amount_usdc
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Requested payment amount in USDC.
+        - name: owner
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Wallet or token owner expected to execute payment.
+        - name: spender
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: Address approved or expected to spend the owner's token.
+        - name: token
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{40}$
+            description: ERC-20 token used for the payment or approval check.
+        - name: tx
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^0x[a-fA-F0-9]{64}$
+            description: Optional prior transaction hash for receipt evidence.
+        - name: gas_limit
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+            description: Expected transaction gas limit.
+        - name: max_single_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Policy max single payment.
+        - name: session_budget_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Policy session budget.
+        - name: daily_budget_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Policy daily budget.
+        - name: human_review_above_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Policy threshold that requires human review.
+  /x402/v1/value/convert:
+    post:
+      operationId: postNomosValueConvert
+      summary: Convert BTC, ETH, TRX, USDT, USDC values into USD or TWD for
+        autonomous-agent budget checks.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.005
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.005"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                asset:
+                  type: string
+                  enum:
+                    - BTC
+                    - ETH
+                    - TRX
+                    - USDT
+                    - USDC
+                  description: Asset symbol to convert.
+                amount:
+                  type: string
+                  pattern: ^[0-9]+(?:\.[0-9]{1,18})?$
+                  description: Positive decimal asset amount.
+                quote_currency:
+                  type: string
+                  enum:
+                    - USD
+                    - TWD
+                  description: Quote currency for the converted value.
+                idempotency_key:
+                  type: string
+                  maxLength: 128
+                  description: Optional caller-supplied idempotency key.
+              required:
+                - asset
+                - amount
+                - quote_currency
+            example:
+              asset: USDT
+              amount: "100"
+              quote_currency: TWD
+  /x402/v1/value/btc-usd:
+    get:
+      operationId: getNomosValueBtcUsd
+      summary: Return a one-unit BTC to USD reference quote for autonomous-agent
+        budget checks.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.002
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.002"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: amount
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,18})?$
+            description: Optional positive decimal BTC amount. Defaults to 1.
+  /x402/v1/value/eth-usd:
+    get:
+      operationId: getNomosValueEthUsd
+      summary: Return a one-unit ETH to USD reference quote for autonomous-agent
+        budget checks.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.002
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.002"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: amount
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,18})?$
+            description: Optional positive decimal ETH amount. Defaults to 1.
+  /x402/v1/value/trx-usd:
+    get:
+      operationId: getNomosValueTrxUsd
+      summary: Return a one-unit TRX to USD reference quote for autonomous-agent
+        budget checks.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.001
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.001"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: amount
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,18})?$
+            description: Optional positive decimal TRX amount. Defaults to 1.
+  /x402/v1/value/usdt-twd:
+    get:
+      operationId: getNomosValueUsdtTwd
+      summary: Return a one-unit USDT to TWD reference quote for autonomous-agent
+        budget checks.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.001
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.001"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: amount
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,18})?$
+            description: Optional positive decimal USDT amount. Defaults to 1.
+  /x402/v1/value/usdc-twd:
+    get:
+      operationId: getNomosValueUsdcTwd
+      summary: Return a one-unit USDC to TWD reference quote for autonomous-agent
+        budget checks.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.001
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.001"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: amount
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,18})?$
+            description: Optional positive decimal USDC amount. Defaults to 1.
+  /x402/v1/policy/budget-check:
+    post:
+      operationId: postNomosBudgetCheck
+      summary: Return a deterministic ALLOW, REQUIRE_APPROVAL, or DENY budget policy
+        decision for an autonomous-agent spend request.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.020
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.020"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent_id:
+                  type: string
+                  pattern: ^[A-Za-z0-9._:-]{1,128}$
+                  description: Caller-defined agent or principal id.
+                currency:
+                  type: string
+                  enum:
+                    - USDC
+                    - USDT
+                    - USD
+                  description: Policy currency.
+                requested_amount:
+                  type: string
+                  pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+                  description: Requested spend amount.
+                remaining_budget:
+                  type: string
+                  pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+                  description: Remaining budget available to this agent.
+                per_transaction_limit:
+                  type: string
+                  pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+                  description: Maximum amount allowed in one transaction.
+                purpose:
+                  type: string
+                  pattern: ^[A-Za-z0-9._:-]{2,120}$
+                  description: Purpose code for the requested spend.
+                auto_approval_threshold:
+                  type: string
+                  pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+                  description: Optional amount above which REVIEW is required even when budget
+                    fits.
+                idempotency_key:
+                  type: string
+                  maxLength: 128
+                  description: Optional idempotency key for deterministic decision replay.
+              required:
+                - agent_id
+                - currency
+                - requested_amount
+                - remaining_budget
+                - per_transaction_limit
+                - purpose
+            example:
+              agent_id: agent-123
+              currency: USDC
+              requested_amount: "250"
+              remaining_budget: "100"
+              per_transaction_limit: "150"
+              purpose: api_purchase
+  /x402/v1/policy/merchant-check:
+    post:
+      operationId: postNomosMerchantCheck
+      summary: Return a deterministic merchant policy decision before an
+        autonomous-agent API purchase.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.050
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.050"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                merchant_id:
+                  type: string
+                  minLength: 1
+                  maxLength: 160
+                purpose:
+                  type: string
+                  minLength: 2
+                  maxLength: 120
+                amount_usdc:
+                  type: string
+                  pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+                trust_level:
+                  type: string
+                  enum:
+                    - unknown
+                    - known
+                    - verified
+                idempotency_key:
+                  type: string
+                  maxLength: 128
+              required:
+                - merchant_id
+                - purpose
+                - amount_usdc
+            example:
+              merchant_id: merchant-123
+              purpose: api_purchase
+              amount_usdc: "25"
+              trust_level: known
+  /x402/v1/decision/payment-preflight:
+    post:
+      operationId: postNomosPaymentPreflight
+      summary: Return a compact payment preflight decision before an autonomous-agent
+        payment.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.200
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.200"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent_id:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                amount_usdc:
+                  type: string
+                  pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+                purpose:
+                  type: string
+                  minLength: 2
+                  maxLength: 120
+                recipient_risk_level:
+                  type: string
+                  enum:
+                    - LOW
+                    - MEDIUM
+                    - HIGH
+                    - SEVERE
+                idempotency_key:
+                  type: string
+                  maxLength: 128
+              required:
+                - agent_id
+                - amount_usdc
+                - purpose
+            example:
+              agent_id: agent-123
+              amount_usdc: "25"
+              purpose: api_purchase
+              recipient_risk_level: LOW
+  /x402/v1/decision/tool-access:
+    post:
+      operationId: postNomosToolAccess
+      summary: Return a deterministic tool-access decision before an autonomous agent
+        calls a tool.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.030
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.030"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent_id:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                tool_name:
+                  type: string
+                  minLength: 1
+                  maxLength: 160
+                action_type:
+                  type: string
+                  minLength: 2
+                  maxLength: 120
+                environment:
+                  type: string
+                  enum:
+                    - local
+                    - preview
+                    - staging
+                    - production
+                idempotency_key:
+                  type: string
+                  maxLength: 128
+              required:
+                - agent_id
+                - tool_name
+                - action_type
+            example:
+              agent_id: agent-123
+              tool_name: web_fetch
+              action_type: read
+              environment: preview
+  /x402/v1/service/health:
+    post:
+      operationId: postNomosServiceHealth
+      summary: Return a paid service health and discovery probe for an x402 origin or
+        endpoint.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.020
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.020"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_url:
+                  type: string
+                  minLength: 8
+                  maxLength: 500
+                expected_network:
+                  type: string
+                  minLength: 2
+                  maxLength: 80
+                expected_asset:
+                  type: string
+                  minLength: 2
+                  maxLength: 20
+                idempotency_key:
+                  type: string
+                  maxLength: 128
+              required:
+                - target_url
+            example:
+              target_url: https://example.com/.well-known/x402
+              expected_network: base
+              expected_asset: USDC
+  /x402/v1/service/preflight:
+    post:
+      operationId: postNomosServicePreflight
+      summary: Return a deterministic service preflight decision before an autonomous
+        agent pays a discovered x402 service.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.100
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.100"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_url:
+                  type: string
+                  minLength: 8
+                  maxLength: 500
+                price_usdc:
+                  type: string
+                  pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+                buyer_budget_usdc:
+                  type: string
+                  pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+                purpose:
+                  type: string
+                  minLength: 2
+                  maxLength: 120
+                idempotency_key:
+                  type: string
+                  maxLength: 128
+              required:
+                - target_url
+                - price_usdc
+                - buyer_budget_usdc
+                - purpose
+            example:
+              target_url: https://example.com/x402/resource
+              price_usdc: "0.05"
+              buyer_budget_usdc: "1.00"
+              purpose: api_purchase
+  /x402/v1/wallet/risk-lite:
+    post:
+      operationId: postNomosWalletRiskLite
+      summary: Return a lightweight wallet risk signal for Bitcoin, Ethereum, or Tron
+        without exposing upstream raw responses.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.040
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.040"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                chain:
+                  type: string
+                  enum:
+                    - ethereum
+                    - tron
+                    - bitcoin
+                  description: Chain to evaluate.
+                address:
+                  type: string
+                  minLength: 26
+                  maxLength: 120
+                  description: Wallet address to screen.
+                action:
+                  type: string
+                  pattern: ^[A-Za-z0-9._:-]{2,120}$
+                  description: Planned agent action.
+                value_usd:
+                  type: string
+                  pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+                  description: Optional approximate value at risk.
+                idempotency_key:
+                  type: string
+                  maxLength: 128
+                  description: Optional caller-supplied idempotency key.
+              required:
+                - chain
+                - address
+            example:
+              chain: ethereum
+              address: "0x94F751f04b98507D31b500b7Ed50bE68A1514873"
+              action: api_purchase
+              value_usd: "100"
+  /x402/v1/wallet/risk-360:
+    post:
+      operationId: postNomosWalletRisk360
+      summary: Return a provider-neutral wallet risk-360 decision with normalized
+        evidence references and no raw upstream responses.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.100
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.100"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                chain:
+                  type: string
+                  enum:
+                    - ethereum
+                    - tron
+                    - bitcoin
+                address:
+                  type: string
+                  minLength: 26
+                  maxLength: 120
+                action:
+                  type: string
+                  pattern: ^[A-Za-z0-9._:-]{2,120}$
+                value_usd:
+                  type: string
+                  pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+                counterparty_type:
+                  type: string
+                  enum:
+                    - api_merchant
+                    - exchange
+                    - wallet
+                    - contract
+                    - unknown
+                idempotency_key:
+                  type: string
+                  maxLength: 128
+              required:
+                - chain
+                - address
+            example:
+              chain: ethereum
+              address: "0x94F751f04b98507D31b500b7Ed50bE68A1514873"
+              action: api_purchase
+              value_usd: "5000"
+              counterparty_type: api_merchant
+  /x402/v1/merchant/trust:
+    post:
+      operationId: postNomosMerchantTrust
+      summary: Return a provider-neutral merchant trust decision before an
+        autonomous-agent x402 payment.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.200
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.200"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                merchant_id:
+                  type: string
+                  minLength: 1
+                  maxLength: 160
+                origin:
+                  type: string
+                  minLength: 8
+                  maxLength: 500
+                wallet:
+                  type: string
+                  minLength: 26
+                  maxLength: 120
+                amount_usdc:
+                  type: string
+                  pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+                purpose:
+                  type: string
+                  minLength: 2
+                  maxLength: 120
+                trust_level:
+                  type: string
+                  enum:
+                    - unknown
+                    - known
+                    - verified
+                idempotency_key:
+                  type: string
+                  maxLength: 128
+              required:
+                - merchant_id
+                - origin
+                - amount_usdc
+                - purpose
+            example:
+              merchant_id: merchant-123
+              origin: https://api.example.com
+              wallet: "0x94F751f04b98507D31b500b7Ed50bE68A1514873"
+              amount_usdc: "25"
+              purpose: api_purchase
+              trust_level: known
+  /x402/v1/wallet/identify:
+    post:
+      operationId: postNomosWalletIdentify
+      summary: Return a normalized wallet identity-lite signal for Bitcoin, Ethereum,
+        or Tron.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.010
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.010"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                chain:
+                  type: string
+                  enum:
+                    - ethereum
+                    - tron
+                    - bitcoin
+                address:
+                  type: string
+                  minLength: 26
+                  maxLength: 120
+                idempotency_key:
+                  type: string
+                  maxLength: 128
+              required:
+                - chain
+                - address
+            example:
+              chain: ethereum
+              address: "0x94F751f04b98507D31b500b7Ed50bE68A1514873"
+  /x402/v1/wallet/labels:
+    post:
+      operationId: postNomosWalletLabels
+      summary: Return normalized wallet labels without raw provider fields.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.010
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.010"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                chain:
+                  type: string
+                  enum:
+                    - ethereum
+                    - tron
+                    - bitcoin
+                address:
+                  type: string
+                  minLength: 26
+                  maxLength: 120
+                idempotency_key:
+                  type: string
+                  maxLength: 128
+              required:
+                - chain
+                - address
+            example:
+              chain: ethereum
+              address: "0x94F751f04b98507D31b500b7Ed50bE68A1514873"
+  /x402/v1/wallet/watchlist:
+    post:
+      operationId: postNomosWalletWatchlist
+      summary: Return lightweight sanctions and watchlist booleans for Bitcoin,
+        Ethereum, or Tron.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.020
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.020"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                chain:
+                  type: string
+                  enum:
+                    - ethereum
+                    - tron
+                    - bitcoin
+                address:
+                  type: string
+                  minLength: 26
+                  maxLength: 120
+                idempotency_key:
+                  type: string
+                  maxLength: 128
+              required:
+                - chain
+                - address
+            example:
+              chain: ethereum
+              address: "0x94F751f04b98507D31b500b7Ed50bE68A1514873"
+  /v1/x402/agent/action-preflight:
+    get:
+      operationId: getAgentActionPreflight
+      summary: Return an AgentOps Guard ALLOW/REVIEW/BLOCK decision before a
+        side-effecting agent action runs.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.010
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.010"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: action_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - tool_call
+              - shell
+              - deploy
+              - dns
+              - email
+              - mcp_call
+              - wallet
+              - x402_purchase
+              - file_write
+              - browser
+            description: Side-effecting action the agent wants to run.
+        - name: target
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 500
+            description: Human-readable target, command, endpoint, domain, or resource.
+        - name: agent_id
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9._:-]{1,128}$
+            description: Caller-defined agent or principal id.
+        - name: environment
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - local
+              - dev
+              - staging
+              - production
+              - external
+            description: Execution environment for the action.
+        - name: risk_score
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]{1,3}$
+            description: Optional caller-supplied 0-100 risk score.
+        - name: amount_usdc
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9]+(?:\.[0-9]{1,6})?$
+            description: Optional payment, spend, or value at risk.
+        - name: human_approval_ref
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 160
+            description: Human approval or ticket reference for elevated actions.
+  /v1/x402/agent/mcp-server-risk-check:
+    get:
+      operationId: getMcpServerRiskCheck
+      summary: Score an MCP server manifest or tool list before an agent connects it
+        to a runtime.
+      security: []
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.020
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.020"
+        protocols:
+          - x402: {}
+      responses:
+        "200":
+          description: Paid safety intelligence response
+        "400":
+          description: Invalid input
+        "402":
+          description: x402 payment required
+        "502":
+          description: Public data provider unavailable
+      parameters:
+        - name: server_url
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: ^https?://
+            maxLength: 2048
+            description: Public MCP server, manifest, or connector URL.
+        - name: tools
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 2000
+            description: Comma-separated MCP tool names when a manifest URL is unavailable.
+        - name: auth
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - none
+              - api_key
+              - bearer
+              - oauth
+              - mTLS
+              - unknown
+            description: Authentication mode exposed by the MCP server.
+        - name: transport
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - stdio
+              - http
+              - sse
+              - websocket
+              - unknown
+            description: MCP transport mode.
+  /v1/x402/payment-guard/policies:
+    post:
+      operationId: createPaymentGuardPolicy
+      summary: Create an owner-controlled policy profile and one-time owner and agent
+        tokens.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                max_single_usdc:
+                  type: string
+                session_budget_usdc:
+                  type: string
+                daily_budget_usdc:
+                  type: string
+                reservation_ttl_seconds:
+                  type: integer
+                  minimum: 30
+                  maximum: 3600
+                human_review_above_usdc:
+                  type: string
+                fail_closed:
+                  type: boolean
+                retention_days:
+                  type: integer
+                  minimum: 1
+                  maximum: 365
+                allowed_domains:
+                  oneOf:
+                    - type: string
+                    - type: array
+                      items:
+                        type: string
+                allowed_tools:
+                  oneOf:
+                    - type: string
+                    - type: array
+                      items:
+                        type: string
+                allowed_purposes:
+                  oneOf:
+                    - type: string
+                    - type: array
+                      items:
+                        type: string
+                active_from_hour_utc:
+                  type: integer
+                  minimum: 0
+                  maximum: 23
+                active_until_hour_utc:
+                  type: integer
+                  minimum: 1
+                  maximum: 24
+                webhook_url:
+                  type: string
+                  format: uri
+      x-payment-protocol: x402
+      x-pricing-version: x402-pricing-v1-20260720
+      x-price-usdc: $0.10
+      x-payment-info:
+        pricing_version: x402-pricing-v1-20260720
+        price:
+          mode: fixed
+          currency: USD
+          amount: "0.10"
+        protocols:
+          - x402: {}
+      security: []
+      responses:
+        "200":
+          description: Policy profile and one-time tokens
+        "402":
+          description: x402 payment required
+  /v1/agentic-commerce/preflight/sample:
+    get:
+      operationId: getAgenticCommercePreflightSample
+      summary: Return a sample request and deterministic response for Agentic Commerce
+        Preflight.
+      security: []
+      responses:
+        "200":
+          description: Sample request and response for mandate, merchant, and
+            signer-directive evaluation.
+  /v1/agentic-commerce/preflight:
+    post:
+      operationId: evaluateAgenticCommercePreflight
+      summary: Evaluate whether an autonomous agent action is authorized before
+        payment or signer execution.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                buyer_id:
+                  type: string
+                agent_id:
+                  type: string
+                agent_role:
+                  type: string
+                action:
+                  type: string
+                  default: payment_execution
+                product_category:
+                  type: string
+                  default: payment_execution
+                amount_usdc:
+                  type: string
+                asset:
+                  type: string
+                  default: USDC
+                chain:
+                  type: string
+                  default: base
+                merchant_domain:
+                  type: string
+                merchant_wallet:
+                  type: string
+                mandate:
+                  type: object
+                merchant:
+                  type: object
+              required:
+                - agent_role
+                - product_category
+                - amount_usdc
+            example:
+              buyer_id: buyer.acme
+              agent_id: agent.finance.001
+              agent_role: finance_agent
+              action: payment_execution
+              product_category: payment_execution
+              amount_usdc: "0.25"
+              asset: USDC
+              chain: base
+              merchant_domain: pay.vendor.example
+              merchant_wallet: "0xabc0000000000000000000000000000000000001"
+              mandate:
+                id: mandate-001
+                type: payment
+                status: active
+                buyer_id: buyer.acme
+                agent_id: agent.finance.001
+                agent_role: finance_agent
+                merchant_domains:
+                  - pay.vendor.example
+                merchant_wallets:
+                  - "0xabc0000000000000000000000000000000000001"
+                allowed_categories:
+                  - payment_execution
+                max_amount_usdc: "1.00"
+                assets:
+                  - USDC
+                chains:
+                  - base
+                expires_at: 2099-01-01T00:00:00.000Z
+              merchant:
+                domain: pay.vendor.example
+                wallet: "0xabc0000000000000000000000000000000000001"
+                expected_wallet: "0xabc0000000000000000000000000000000000001"
+                openapi_domain: pay.vendor.example
+                agent_card_domain: pay.vendor.example
+                category: payment_execution
+                kyt_risk: low
+      security: []
+      responses:
+        "200":
+          description: ALLOW, REQUIRE_APPROVAL, or DENY decision with reason codes,
+            evidence, and signer directive.
+        "400":
+          description: Invalid JSON body
