@@ -3,10 +3,18 @@ import {
   x402HTTPResourceServer,
   x402ResourceServer,
 } from "@x402/core/server";
+import { x402Client } from "@x402/core/client";
+import {
+  ExactEvmScheme as ExactEvmClientScheme,
+  authorizationTypes,
+  toClientEvmSigner,
+} from "@x402/evm";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
 import { declareDiscoveryExtension } from "@x402/extensions/bazaar";
 import { paymentMiddlewareFromHTTPServer } from "@x402/hono";
 import { Hono } from "hono";
+import { getAddress, recoverTypedDataAddress } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 import { parse as parseYaml } from "yaml";
 import {
   buildSumsubEvidenceManifest,
@@ -43,6 +51,15 @@ const STATIC_FACILITATOR_SUPPORT = {
 };
 const PAY_TO = "0x94F751f04b98507D31b500b7Ed50bE68A1514873";
 const USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+const FARE_DEMO_PATH = "/fare";
+const FARE_DEMO_API_BRIEF_PATH = "/fare/api/brief";
+const FARE_DEMO_API_AUTHORIZE_PATH = "/fare/api/demo-authorize";
+const FARE_DEMO_API_RESET_PATH = "/fare/api/reset";
+const FARE_DEMO_MERCHANT = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
+const FARE_DEMO_EPHEMERAL_PRIVATE_KEY = `0x${[...crypto.getRandomValues(new Uint8Array(32))]
+  .map(byte => byte.toString(16).padStart(2, "0"))
+  .join("")}`;
+const fareDemoNonceState = new Map();
 const STABLECOINS = [
   { symbol: "USDC", address: USDC, decimals: 6 },
   {
@@ -10703,6 +10720,422 @@ function decodePaymentRequirement(value) {
   }
 }
 
+function fareDemoSessionId(requestUrl, explicitSessionId = null) {
+  const url = new URL(requestUrl);
+  const candidate =
+    explicitSessionId ??
+    url.searchParams.get("session") ??
+    url.searchParams.get("session_id") ??
+    "";
+  return /^[A-Za-z0-9._:-]{1,128}$/.test(candidate) ? candidate : "default";
+}
+
+function fareDemoRequirement(origin) {
+  return {
+    x402Version: 2,
+    error: "PAYMENT_REQUIRED",
+    resource: {
+      url: `${origin}${FARE_DEMO_API_BRIEF_PATH}`,
+      mimeType: "application/json",
+    },
+    accepts: [
+      {
+        scheme: "exact",
+        network: BASE_MAINNET,
+        asset: USDC,
+        amount: "10000",
+        payTo: FARE_DEMO_MERCHANT,
+        maxTimeoutSeconds: 300,
+        extra: {
+          name: "USD Coin",
+          version: "2",
+        },
+      },
+    ],
+  };
+}
+
+function fareDemoTypedData(authorization, accepted) {
+  const chainId = Number(String(accepted.network ?? "").split(":")[1] ?? 0);
+  return {
+    domain: {
+      name: accepted.extra?.name ?? "USD Coin",
+      version: accepted.extra?.version ?? "2",
+      chainId,
+      verifyingContract: getAddress(accepted.asset),
+    },
+    types: authorizationTypes,
+    primaryType: "TransferWithAuthorization",
+    message: {
+      from: getAddress(authorization.from),
+      to: getAddress(authorization.to),
+      value: BigInt(authorization.value),
+      validAfter: BigInt(authorization.validAfter),
+      validBefore: BigInt(authorization.validBefore),
+      nonce: authorization.nonce,
+    },
+  };
+}
+
+function fareDemoTypedDataForJson(typedData) {
+  return {
+    ...typedData,
+    message: {
+      ...typedData.message,
+      value: String(typedData.message.value),
+      validAfter: String(typedData.message.validAfter),
+      validBefore: String(typedData.message.validBefore),
+    },
+  };
+}
+
+function fareDemoSignerPrivateKey(env = {}) {
+  const candidate = String(
+    env.FARE_DEMO_PRIVATE_KEY ?? FARE_DEMO_EPHEMERAL_PRIVATE_KEY,
+  ).trim();
+  return /^0x[a-fA-F0-9]{64}$/.test(candidate)
+    ? candidate
+    : FARE_DEMO_EPHEMERAL_PRIVATE_KEY;
+}
+
+function fareDemoSignerAddress(env = {}) {
+  return privateKeyToAccount(fareDemoSignerPrivateKey(env)).address;
+}
+
+async function createFareDemoPayload(origin, env = {}) {
+  const account = privateKeyToAccount(fareDemoSignerPrivateKey(env));
+  const client = new x402Client().register(
+    "eip155:*",
+    new ExactEvmClientScheme(toClientEvmSigner(account)),
+  );
+  const requirement = fareDemoRequirement(origin);
+  const payload = await client.createPaymentPayload(requirement);
+  return {
+    requirement,
+    payload,
+    typedData: fareDemoTypedData(
+      payload.payload.authorization,
+      requirement.accepts[0],
+    ),
+  };
+}
+
+async function verifyFareDemoPayload(origin, encodedPayload, sessionId) {
+  const decoded = decodePaymentRequirement(encodedPayload);
+  const requirement = fareDemoRequirement(origin);
+  const accepted = requirement.accepts[0];
+  const payload = decoded?.payload ?? decoded;
+  const authorization = payload?.authorization ?? null;
+  const signature = payload?.signature ?? null;
+  if (!authorization || typeof signature !== "string") {
+    return {
+      ok: false,
+      status: 400,
+      error: "invalid_payment_signature",
+      invalidReason: "invalid_exact_evm_payload_shape",
+    };
+  }
+  const authFrom = String(authorization.from ?? "");
+  const authTo = String(authorization.to ?? "");
+  const authValue = String(authorization.value ?? "");
+  const authValidAfter = String(authorization.validAfter ?? "");
+  const authValidBefore = String(authorization.validBefore ?? "");
+  const authNonce = String(authorization.nonce ?? "");
+  if (
+    !ADDRESS_PATTERN.test(authFrom) ||
+    !ADDRESS_PATTERN.test(authTo) ||
+    !/^0x[a-fA-F0-9]{64}$/.test(authNonce) ||
+    !/^\d+$/.test(authValue) ||
+    !/^\d+$/.test(authValidAfter) ||
+    !/^\d+$/.test(authValidBefore)
+  ) {
+    return {
+      ok: false,
+      status: 400,
+      error: "invalid_payment_signature",
+      invalidReason: "invalid_exact_evm_authorization_fields",
+    };
+  }
+  if (getAddress(authTo) !== getAddress(FARE_DEMO_MERCHANT)) {
+    return {
+      ok: false,
+      status: 400,
+      error: "invalid_payment_signature",
+      invalidReason: "invalid_exact_evm_recipient_mismatch",
+    };
+  }
+  if (authValue !== "10000") {
+    return {
+      ok: false,
+      status: 400,
+      error: "invalid_payment_signature",
+      invalidReason: "invalid_exact_evm_amount_mismatch",
+    };
+  }
+  const typedData = fareDemoTypedData(authorization, accepted);
+  let recovered;
+  try {
+    recovered = await recoverTypedDataAddress({
+      domain: typedData.domain,
+      types: typedData.types,
+      primaryType: typedData.primaryType,
+      message: typedData.message,
+      signature,
+    });
+  } catch {
+    return {
+      ok: false,
+      status: 400,
+      error: "invalid_payment_signature",
+      invalidReason: "invalid_exact_evm_signature",
+    };
+  }
+  if (getAddress(recovered) !== getAddress(authFrom)) {
+    return {
+      ok: false,
+      status: 400,
+      error: "invalid_payment_signature",
+      invalidReason: "invalid_exact_evm_signer_mismatch",
+    };
+  }
+  const now = Math.floor(Date.now() / 1000);
+  if (BigInt(authValidBefore) <= BigInt(now)) {
+    return {
+      ok: false,
+      status: 400,
+      error: "invalid_payment_signature",
+      invalidReason: "invalid_exact_evm_expired",
+    };
+  }
+  const verification = {
+    recovered_signer: recovered,
+    signer_match: getAddress(recovered) === getAddress(authFrom),
+    pay_to_match: getAddress(authTo) === getAddress(FARE_DEMO_MERCHANT),
+    exact_amount: authValue === "10000",
+    time_window_result: BigInt(authValidBefore) > BigInt(now) ? "valid" : "expired",
+    nonce_result: "accepted",
+  };
+  const state = fareDemoNonceState.get(sessionId) ?? new Set();
+  if (state.has(authNonce.toLowerCase())) {
+    return {
+      ok: false,
+      status: 409,
+      error: "invalid_payment_signature",
+      invalidReason: "invalid_exact_evm_nonce_already_used",
+      replay: true,
+      verification: { ...verification, nonce_result: "reused" },
+    };
+  }
+  state.add(authNonce.toLowerCase());
+  fareDemoNonceState.set(sessionId, state);
+  return {
+    ok: true,
+    status: 200,
+    payload: decoded,
+    paymentResponse: {
+      ok: true,
+      demo_mode: true,
+      settlement: "local_verification_only",
+      onchain_transfer_performed: false,
+      verification_result: "valid_authorization",
+      nonce_status: "accepted",
+      verification,
+      session_id: sessionId,
+      verified_at: new Date().toISOString(),
+    },
+  };
+}
+
+function fareDemoPageHtml(origin) {
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FARE x402 Demo</title>
+<style>
+body{margin:0;background:#0b1120;color:#e5eefc;font:16px/1.55 Inter,ui-sans-serif,system-ui,sans-serif}
+main{max-width:1080px;margin:0 auto;padding:24px}
+.banner{position:sticky;top:0;z-index:10;margin:-24px -24px 24px;padding:14px 24px;background:#7c2d12;color:#ffedd5;border-bottom:1px solid #fdba74}
+.banner strong{display:block;font-size:13px;letter-spacing:.08em}
+.card,.panel{background:#111827;border:1px solid #334155;border-radius:10px;padding:18px}
+.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
+.buttons{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}
+button{border:1px solid #60a5fa;background:#1d4ed8;color:#fff;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}
+button.secondary{background:transparent;color:#dbeafe}
+button:disabled{opacity:.6;cursor:not-allowed}
+pre{overflow:auto;background:#020617;border:1px solid #334155;border-radius:8px;padding:12px;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}
+.muted{color:#94a3b8}
+.ok{color:#86efac}.bad{color:#fca5a5}.warn{color:#fde68a}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <div class="banner"><strong>DEMO MODE</strong>Real EIP-3009 authorization · Local verification only · No on-chain USDC transfer</div>
+  <div class="grid">
+    <section class="card">
+      <h1>FARE Base USDC x402 preview</h1>
+      <p class="muted">Request brief → HTTP 402 → Authorize $0.01 USDC → Verify authorization → Unlock brief</p>
+      <div class="buttons">
+        <button id="request-brief">Request brief</button>
+        <button id="demo-authorize" disabled>Demo authorize</button>
+        <button id="wallet-authorize" class="secondary" disabled>Wallet authorize</button>
+        <button id="retry-request" disabled>Retry with PAYMENT-SIGNATURE</button>
+        <button id="replay-authorization" class="secondary" disabled>Replay authorization</button>
+        <button id="reset-demo" class="secondary">Reset Demo</button>
+      </div>
+      <div class="panel">
+        <h2>Status</h2>
+        <p id="status">Ready.</p>
+        <p id="result-copy" class="muted"></p>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <h2>Current requirement</h2>
+        <p class="muted">Base · <code>eip155:8453</code> · Base USDC · exact · <code>10000</code> atomic · USD Coin / version 2</p>
+        <p class="muted">Demo merchant: <code>${escapeHtml(FARE_DEMO_MERCHANT)}</code> · Anvil/demo only · not production payTo</p>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <h2>Demo signer</h2>
+        <p class="muted">Demo-only signer address: <code>${escapeHtml(fareDemoSignerAddress())}</code>. No automatic transaction broadcast. No on-chain settlement.</p>
+      </div>
+    </section>
+    <aside class="card">
+      <h2>Inspector</h2>
+      <p class="muted">PAYMENT-REQUIRED</p>
+      <pre id="payment-required-view">null</pre>
+      <p class="muted">EIP-712 domain</p>
+      <pre id="payment-domain-view">null</pre>
+      <p class="muted">Authorization</p>
+      <pre id="payment-authorization-view">null</pre>
+      <p class="muted">Verification</p>
+      <pre id="payment-verification-view">null</pre>
+      <p class="muted">LOCAL DEMO RESPONSE<br>NO ON-CHAIN SETTLEMENT</p>
+      <pre id="payment-response-view">null</pre>
+      <p class="muted">Replay protection is demo/local unless chain state is independently queried.</p>
+    </aside>
+  </div>
+</main>
+<script>
+const state = { sessionId: sessionStorage.getItem("fare-demo-session") || crypto.randomUUID(), paymentRequired: null, paymentPayload: null, paymentResponse: null };
+sessionStorage.setItem("fare-demo-session", state.sessionId);
+const els = {
+  status: document.getElementById("status"),
+  resultCopy: document.getElementById("result-copy"),
+  requestBrief: document.getElementById("request-brief"),
+  demoAuthorize: document.getElementById("demo-authorize"),
+  walletAuthorize: document.getElementById("wallet-authorize"),
+  retryRequest: document.getElementById("retry-request"),
+  replayAuthorization: document.getElementById("replay-authorization"),
+  resetDemo: document.getElementById("reset-demo"),
+  requiredView: document.getElementById("payment-required-view"),
+  domainView: document.getElementById("payment-domain-view"),
+  authorizationView: document.getElementById("payment-authorization-view"),
+  verificationView: document.getElementById("payment-verification-view"),
+  responseView: document.getElementById("payment-response-view"),
+};
+function decodeHeader(value) {
+  if (!value) return null;
+  try { return JSON.parse(value); } catch {}
+  try {
+    const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    return JSON.parse(atob(padded));
+  } catch { return null; }
+}
+function encodeHeader(value) { return btoa(JSON.stringify(value)); }
+function inspectorRequired(value) {
+  if (!value) return null;
+  const accepted = value.accepts?.[0] || {};
+  return { x402Version: value.x402Version ?? null, scheme: accepted.scheme ?? null, network: accepted.network ?? null, asset: accepted.asset === "${USDC}" ? "Base USDC" : accepted.asset ?? null, amount: accepted.amount ?? null, payTo: accepted.payTo ?? null, extra: { name: accepted.extra?.name ?? null, version: accepted.extra?.version ?? null } };
+}
+function inspectorDomain(value) { return value?.typedData?.domain ?? null; }
+function inspectorAuthorization(value) { return value?.payload?.authorization ?? null; }
+function inspectorVerification(value) { return value?.verification ?? null; }
+function render() {
+  els.requiredView.textContent = JSON.stringify(inspectorRequired(state.paymentRequired), null, 2);
+  els.domainView.textContent = JSON.stringify(inspectorDomain(state.paymentRequired), null, 2);
+  els.authorizationView.textContent = JSON.stringify(inspectorAuthorization(state.paymentPayload), null, 2);
+  els.verificationView.textContent = JSON.stringify(inspectorVerification(state.paymentResponse), null, 2);
+  els.responseView.textContent = JSON.stringify(state.paymentResponse ? { demo_mode: state.paymentResponse.demo_mode, settlement: state.paymentResponse.settlement, onchain_transfer_performed: state.paymentResponse.onchain_transfer_performed, verification_result: state.paymentResponse.verification_result, nonce_status: state.paymentResponse.nonce_status } : null, null, 2);
+  els.demoAuthorize.disabled = !state.paymentRequired;
+  els.retryRequest.disabled = !state.paymentPayload;
+  els.replayAuthorization.disabled = !state.paymentPayload;
+  els.walletAuthorize.disabled = !state.paymentRequired || !window.ethereum;
+}
+async function requestBrief() {
+  const response = await fetch("${FARE_DEMO_API_BRIEF_PATH}?session=" + encodeURIComponent(state.sessionId), { headers: { accept: "application/json" } });
+  const header = response.headers.get("payment-required") || response.headers.get("x-payment-required");
+  state.paymentRequired = decodeHeader(header);
+  if (state.paymentRequired?.typedData?.domain == null && state.paymentRequired?.accepts?.[0]) {
+    state.paymentRequired.typedData = state.paymentRequired.typedData || {};
+    state.paymentRequired.typedData.domain = {
+      name: state.paymentRequired.accepts[0].extra?.name ?? null,
+      version: state.paymentRequired.accepts[0].extra?.version ?? null,
+      chainId: 8453,
+      verifyingContract: state.paymentRequired.accepts[0].asset ?? null,
+    };
+  }
+  state.paymentPayload = null;
+  state.paymentResponse = null;
+  els.status.innerHTML = response.status === 402 ? '<span class="ok">HTTP 402 PAYMENT-REQUIRED received.</span>' : '<span class="bad">Unexpected response.</span>';
+  els.resultCopy.textContent = "";
+  render();
+}
+async function demoAuthorize() {
+  const response = await fetch("${FARE_DEMO_API_AUTHORIZE_PATH}?session=" + encodeURIComponent(state.sessionId), { method: "POST" });
+  const body = await response.json();
+  state.paymentPayload = body.payment_payload;
+  state.paymentResponse = null;
+  els.status.innerHTML = response.ok ? '<span class="ok">Demo authorization created.</span>' : '<span class="bad">Demo authorization failed.</span>';
+  els.resultCopy.textContent = response.ok ? "Valid EIP-3009 signature generated with demo-only signer material." : "";
+  render();
+}
+async function walletAuthorize() {
+  const account = (await window.ethereum.request({ method: "eth_requestAccounts" }))[0];
+  const accepted = state.paymentRequired.accepts[0];
+  const typedData = { domain: state.paymentRequired.typedData.domain, types: { EIP712Domain: [{ name: "name", type: "string" }, { name: "version", type: "string" }, { name: "chainId", type: "uint256" }, { name: "verifyingContract", type: "address" }], ...state.paymentRequired.typedData.types }, primaryType: state.paymentRequired.typedData.primaryType, message: { ...state.paymentRequired.typedData.message, from: account } };
+  const signature = await window.ethereum.request({ method: "eth_signTypedData_v4", params: [account, JSON.stringify(typedData)] });
+  state.paymentPayload = { x402Version: 2, payload: { authorization: { ...typedData.message, value: String(typedData.message.value), validAfter: String(typedData.message.validAfter), validBefore: String(typedData.message.validBefore) }, signature }, resource: state.paymentRequired.resource, accepted };
+  els.status.innerHTML = '<span class="ok">Wallet authorization signed locally.</span>';
+  els.resultCopy.textContent = "Wallet path signs the same EIP-712 typed data and does not broadcast any transaction.";
+  render();
+}
+async function retryRequest() {
+  const response = await fetch("${FARE_DEMO_API_BRIEF_PATH}?session=" + encodeURIComponent(state.sessionId), { headers: { accept: "application/json", "payment-signature": encodeHeader(state.paymentPayload) } });
+  const body = await response.json();
+  const paymentResponseHeader = response.headers.get("payment-response");
+  state.paymentResponse = decodeHeader(paymentResponseHeader) || body.local_demo_response || { verification: body.verification ?? null, ...body };
+  if (response.ok) {
+    els.status.innerHTML = '<span class="ok">Brief unlocked.</span>';
+    els.resultCopy.textContent = "You authorized a $0.01 USDC payment. The demo server verified the authorization locally and unlocked the brief. No on-chain transfer was performed.";
+  } else {
+    els.status.innerHTML = '<span class="bad">' + (body.invalidReason || body.error || "Request failed") + '</span>';
+    els.resultCopy.textContent = body.invalidReason === "invalid_exact_evm_nonce_already_used" ? "Replay authorization rejected: nonce already used. Demo/local replay protection only." : "";
+  }
+  render();
+}
+async function resetDemo() {
+  await fetch("${FARE_DEMO_API_RESET_PATH}?session=" + encodeURIComponent(state.sessionId), { method: "POST" });
+  state.paymentRequired = null;
+  state.paymentPayload = null;
+  state.paymentResponse = null;
+  els.status.innerHTML = '<span class="warn">Demo state reset.</span>';
+  els.resultCopy.textContent = "";
+  render();
+}
+els.requestBrief.addEventListener("click", requestBrief);
+els.demoAuthorize.addEventListener("click", demoAuthorize);
+els.walletAuthorize.addEventListener("click", walletAuthorize);
+els.retryRequest.addEventListener("click", retryRequest);
+els.replayAuthorization.addEventListener("click", retryRequest);
+els.resetDemo.addEventListener("click", resetDemo);
+render();
+</script>
+</body>
+</html>`;
+}
+
 export function buildX402EndpointPreflight({
   url,
   status,
@@ -20663,6 +21096,122 @@ export default {
           400,
         );
       }
+    }
+    if (url.pathname === FARE_DEMO_PATH) {
+      const page = new Response(fareDemoPageHtml(url.origin), {
+        headers: {
+          "content-type": "text/html; charset=utf-8",
+          "cache-control": "no-store",
+        },
+      });
+      return request.method === "HEAD"
+        ? new Response(null, { status: page.status, headers: page.headers })
+        : page;
+    }
+    if (url.pathname === FARE_DEMO_API_RESET_PATH && request.method === "POST") {
+      fareDemoNonceState.delete(fareDemoSessionId(request.url));
+      return json(
+        {
+          ok: true,
+          demo_mode: true,
+          reset: true,
+          session_id: fareDemoSessionId(request.url),
+        },
+        200,
+        { "cache-control": "no-store" },
+      );
+    }
+    if (
+      url.pathname === FARE_DEMO_API_AUTHORIZE_PATH &&
+      request.method === "POST"
+    ) {
+      const generated = await createFareDemoPayload(url.origin, env);
+      return json(
+        {
+          ok: true,
+          demo_mode: true,
+          signer_address: generated.payload.payload.authorization.from,
+          payment_payload: generated.payload,
+          typed_data: fareDemoTypedDataForJson(generated.typedData),
+          no_onchain_transfer: true,
+        },
+        200,
+        { "cache-control": "no-store" },
+      );
+    }
+    if (
+      url.pathname === FARE_DEMO_API_BRIEF_PATH &&
+      (request.method === "GET" || request.method === "HEAD")
+    ) {
+      const sessionId = fareDemoSessionId(request.url);
+      const encodedPayment =
+        request.headers.get("payment-signature") ??
+        request.headers.get("x-payment") ??
+        request.headers.get("payment") ??
+        "";
+      if (!encodedPayment) {
+        const previewPayload = await createFareDemoPayload(url.origin, env);
+        const requirement = {
+          ...previewPayload.requirement,
+          typedData: {
+            domain: previewPayload.typedData.domain,
+            types: previewPayload.typedData.types,
+            primaryType: previewPayload.typedData.primaryType,
+            message: {
+              ...previewPayload.payload.payload.authorization,
+            },
+          },
+        };
+        const unpaid = json(
+          {
+            error: "PAYMENT_REQUIRED",
+            demo_mode: true,
+            message: "Request requires an x402 authorization before the brief unlocks.",
+          },
+          402,
+          {
+            "cache-control": "no-store",
+            "payment-required": btoa(JSON.stringify(requirement)),
+          },
+        );
+        return request.method === "HEAD"
+          ? new Response(null, { status: unpaid.status, headers: unpaid.headers })
+          : unpaid;
+      }
+      const verified = await verifyFareDemoPayload(url.origin, encodedPayment, sessionId);
+      if (!verified.ok) {
+        return json(
+          {
+            error: verified.error,
+            invalidReason: verified.invalidReason,
+            demo_mode: true,
+            local_verification_only: true,
+            no_onchain_transfer: true,
+            verification: verified.verification ?? null,
+          },
+          verified.status,
+          { "cache-control": "no-store" },
+        );
+      }
+      const unlocked = json(
+        {
+          ok: true,
+          demo_mode: true,
+          brief_unlocked: true,
+          title: "FARE technical brief",
+          summary:
+            "You authorized a $0.01 USDC payment. The demo server verified the authorization locally and unlocked the brief. No on-chain transfer was performed.",
+          local_demo_response: verified.paymentResponse,
+        },
+        200,
+        {
+          "cache-control": "no-store",
+          "payment-response": btoa(JSON.stringify(verified.paymentResponse)),
+        },
+      );
+      return request.method === "HEAD"
+        ? new Response(null, { status: unlocked.status, headers: unlocked.headers })
+        : unlocked;
     }
     if (url.pathname === "/admin/login") {
       if (request.method === "GET" || request.method === "HEAD") {
