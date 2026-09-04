@@ -575,11 +575,15 @@ test("fare demo page shows demo mode and accurate copy", async () => {
   const response = await worker.fetch(new Request("https://example.test/fare"));
   assert.equal(response.status, 200);
   const html = await response.text();
+  assert.match(html, /Agents pay USDC over HTTP 402\. One cent\. Exact\. Base\./);
   assert.match(html, /DEMO MODE/);
   assert.match(
     html,
     /Real EIP-3009 authorization · Local verification only · No on-chain USDC transfer/,
   );
+  assert.match(html, /Primary path: no wallet needed\./);
+  assert.match(html, /Wallet authorize stays optional/);
+  assert.match(html, /"phase": "awaiting_request"/);
   assert.doesNotMatch(html, /You just paid \\$0\\.01/);
   assert.match(html, /LOCAL DEMO RESPONSE/);
   assert.match(html, /NO ON-CHAIN SETTLEMENT/);
@@ -591,6 +595,14 @@ test("fare demo page shows demo mode and accurate copy", async () => {
 });
 
 async function runFareDemoFlow(sessionId) {
+  const page = await worker.fetch(new Request("https://example.test/fare"));
+  const html = await page.text();
+  assert.match(html, /Agents pay USDC over HTTP 402\. One cent\. Exact\. Base\./);
+  assert.match(html, /Primary path: no wallet needed\./);
+  assert.match(html, /Wallet authorize stays optional/);
+  assert.match(html, /"http_status": null/);
+  assert.match(html, /"phase": "awaiting_request"/);
+
   const unpaid = await worker.fetch(
     new Request(`https://example.test/fare/api/brief?session=${sessionId}`),
   );
@@ -610,6 +622,24 @@ async function runFareDemoFlow(sessionId) {
   );
   assert.equal(requirement.accepts[0].extra.name, "USD Coin");
   assert.equal(requirement.accepts[0].extra.version, "2");
+  const inspector402State = {
+    http_status: 402,
+    phase: "PAYMENT-REQUIRED",
+    accepts_0: {
+      x402Version: requirement.x402Version,
+      scheme: requirement.accepts[0].scheme,
+      network: requirement.accepts[0].network,
+      asset: "Base USDC",
+      amount: requirement.accepts[0].amount,
+      payTo: requirement.accepts[0].payTo,
+      extra: requirement.accepts[0].extra,
+    },
+  };
+  assert.equal(inspector402State.phase, "PAYMENT-REQUIRED");
+  assert.equal(inspector402State.http_status, 402);
+  assert.equal(inspector402State.accepts_0.scheme, "exact");
+  assert.equal(inspector402State.accepts_0.network, "eip155:8453");
+  assert.equal(inspector402State.accepts_0.amount, "10000");
 
   const authorization = await worker.fetch(
     new Request(
@@ -658,6 +688,14 @@ async function runFareDemoFlow(sessionId) {
   assert.equal(paymentResponse.verification.exact_amount, true);
   assert.equal(paymentResponse.verification.time_window_result, "valid");
   assert.equal(paymentResponse.verification.nonce_result, "accepted");
+  const inspector200State = {
+    http_status: 200,
+    phase: "PAYMENT-RESPONSE",
+    mode: "local_verification_only",
+  };
+  assert.equal(inspector200State.http_status, 200);
+  assert.equal(inspector200State.phase, "PAYMENT-RESPONSE");
+  assert.equal(inspector200State.mode, "local_verification_only");
 
   const replay = await worker.fetch(
     new Request(`https://example.test/fare/api/brief?session=${sessionId}`, {
@@ -679,6 +717,10 @@ async function runFareDemoFlow(sessionId) {
   );
   assert.equal(reset.status, 200);
   assert.equal((await reset.json()).reset, true);
+  const unpaidAgain = await worker.fetch(
+    new Request(`https://example.test/fare/api/brief?session=${sessionId}`),
+  );
+  assert.equal(unpaidAgain.status, 402);
 }
 
 test("fare demo flow is repeatable for five consecutive runs", async () => {

@@ -10976,7 +10976,9 @@ pre{overflow:auto;background:#020617;border:1px solid #334155;border-radius:8px;
   <div class="grid">
     <section class="card">
       <h1>FARE Base USDC x402 preview</h1>
-      <p class="muted">Request brief → HTTP 402 → Authorize $0.01 USDC → Verify authorization → Unlock brief</p>
+      <p>Agents pay USDC over HTTP 402. One cent. Exact. Base.</p>
+      <p class="muted">Primary path: no wallet needed. Request brief → HTTP 402 → Demo authorize → Retry with PAYMENT-SIGNATURE → Unlock brief.</p>
+      <p class="muted">Wallet authorize stays optional for extension testing.</p>
       <div class="buttons">
         <button id="request-brief">Request brief</button>
         <button id="demo-authorize" disabled>Demo authorize</button>
@@ -11002,6 +11004,11 @@ pre{overflow:auto;background:#020617;border:1px solid #334155;border-radius:8px;
     </section>
     <aside class="card">
       <h2>Inspector</h2>
+      <p class="muted">Current state</p>
+      <pre id="payment-state-view">{
+  "http_status": null,
+  "phase": "awaiting_request"
+}</pre>
       <p class="muted">PAYMENT-REQUIRED</p>
       <pre id="payment-required-view">null</pre>
       <p class="muted">EIP-712 domain</p>
@@ -11028,12 +11035,33 @@ const els = {
   retryRequest: document.getElementById("retry-request"),
   replayAuthorization: document.getElementById("replay-authorization"),
   resetDemo: document.getElementById("reset-demo"),
+  stateView: document.getElementById("payment-state-view"),
   requiredView: document.getElementById("payment-required-view"),
   domainView: document.getElementById("payment-domain-view"),
   authorizationView: document.getElementById("payment-authorization-view"),
   verificationView: document.getElementById("payment-verification-view"),
   responseView: document.getElementById("payment-response-view"),
 };
+function inspectorState() {
+  if (state.paymentResponse) {
+    return {
+      http_status: 200,
+      phase: "PAYMENT-RESPONSE",
+      mode: "local_verification_only",
+    };
+  }
+  if (state.paymentRequired) {
+    return {
+      http_status: 402,
+      phase: "PAYMENT-REQUIRED",
+      accepts_0: inspectorRequired(state.paymentRequired),
+    };
+  }
+  return {
+    http_status: null,
+    phase: "awaiting_request",
+  };
+}
 function decodeHeader(value) {
   if (!value) return null;
   try { return JSON.parse(value); } catch {}
@@ -11053,6 +11081,7 @@ function inspectorDomain(value) { return value?.typedData?.domain ?? null; }
 function inspectorAuthorization(value) { return value?.payload?.authorization ?? null; }
 function inspectorVerification(value) { return value?.verification ?? null; }
 function render() {
+  els.stateView.textContent = JSON.stringify(inspectorState(), null, 2);
   els.requiredView.textContent = JSON.stringify(inspectorRequired(state.paymentRequired), null, 2);
   els.domainView.textContent = JSON.stringify(inspectorDomain(state.paymentRequired), null, 2);
   els.authorizationView.textContent = JSON.stringify(inspectorAuthorization(state.paymentPayload), null, 2);
