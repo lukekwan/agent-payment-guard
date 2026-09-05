@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { privateKeyToAccount } from "viem/accounts";
 
 import worker, {
   buildApprovalRisk,
@@ -582,14 +583,15 @@ test("fare demo page shows demo mode and accurate copy", async () => {
     /Real EIP-3009 authorization · Local verification only · No on-chain USDC transfer/,
   );
   assert.match(html, /Primary path: no wallet needed\./);
-  assert.match(html, /Wallet authorize stays optional/);
+  assert.match(html, /never requests a real wallet signature/);
   assert.match(html, /"phase": "awaiting_request"/);
   assert.doesNotMatch(html, /You just paid \\$0\\.01/);
   assert.match(html, /LOCAL DEMO RESPONSE/);
   assert.match(html, /NO ON-CHAIN SETTLEMENT/);
   assert.match(html, /Reset Demo/);
   assert.match(html, /Replay authorization/);
-  assert.match(html, /Coinbase|MetaMask|Wallet authorize/);
+  assert.doesNotMatch(html, /Coinbase|MetaMask|Wallet authorize/);
+  assert.match(html, /process-local demo memory only/);
   assert.match(html, /0x70997970C51812dc3A010C7d01b50e0d17dc79C8/);
   assert.match(html, /Anvil\/demo only · not production payTo/);
 });
@@ -599,7 +601,7 @@ async function runFareDemoFlow(sessionId) {
   const html = await page.text();
   assert.match(html, /Agents pay USDC over HTTP 402\. One cent\. Exact\. Base\./);
   assert.match(html, /Primary path: no wallet needed\./);
-  assert.match(html, /Wallet authorize stays optional/);
+  assert.match(html, /ephemeral zero-value demo identity/);
   assert.match(html, /"http_status": null/);
   assert.match(html, /"phase": "awaiting_request"/);
 
@@ -727,6 +729,218 @@ test("fare demo flow is repeatable for five consecutive runs", async () => {
   for (let index = 1; index <= 5; index += 1) {
     await runFareDemoFlow(`run-${index}`);
   }
+});
+
+async function createFareDemoAuthorization(sessionId, env = {}) {
+  const authorization = await worker.fetch(
+    new Request(
+      `https://example.test/fare/api/demo-authorize?session=${sessionId}`,
+      { method: "POST" },
+    ),
+    env,
+  );
+  assert.equal(authorization.status, 200);
+  return authorization.json();
+}
+
+function encodeFarePayment(paymentPayload) {
+  return Buffer.from(JSON.stringify(paymentPayload)).toString("base64");
+}
+
+async function submitFarePayment(sessionId, paymentPayload) {
+  return worker.fetch(
+    new Request(`https://example.test/fare/api/brief?session=${sessionId}`, {
+      headers: { "payment-signature": encodeFarePayment(paymentPayload) },
+    }),
+  );
+}
+
+test("fare demo page exposes no public wallet signing path", async () => {
+  const response = await worker.fetch(new Request("https://example.test/fare"));
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.doesNotMatch(html, /Wallet authorize/);
+  assert.doesNotMatch(html, /wallet-authorize/);
+  assert.doesNotMatch(html, /window\.ethereum/);
+  assert.doesNotMatch(html, /eth_requestAccounts/);
+  assert.doesNotMatch(html, /eth_signTypedData_v4/);
+  assert.match(html, /never requests a real wallet signature/);
+});
+
+test("fare verifier requires exact x402 v2 payment envelope", async () => {
+  const body = await createFareDemoAuthorization("envelope-base");
+  const cases = [
+    {
+      name: "missing x402Version",
+      mutate: payment => {
+        delete payment.x402Version;
+      },
+      reason: "invalid_x402_payment_payload",
+    },
+    {
+      name: "wrong x402Version",
+      mutate: payment => {
+        payment.x402Version = 1;
+      },
+      reason: "invalid_x402_payment_payload",
+    },
+    {
+      name: "missing accepted",
+      mutate: payment => {
+        delete payment.accepted;
+      },
+      reason: "invalid_x402_payment_payload",
+    },
+    {
+      name: "missing nested payload wrapper",
+      mutate: payment => payment.payload,
+      reason: "invalid_x402_payment_payload",
+    },
+  ];
+  for (const currentCase of cases) {
+    const payment = structuredClone(body.payment_payload);
+    const mutated = currentCase.mutate(payment) ?? payment;
+    const response = await submitFarePayment(`envelope-${currentCase.name}`, mutated);
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).invalidReason, currentCase.reason);
+  }
+});
+
+test("fare verifier binds accepted to current requirement", async () => {
+  const cases = [
+    ["scheme", "upto"],
+    ["network", "eip155:1"],
+    ["asset", "0x0000000000000000000000000000000000000001"],
+    ["payTo", "0x0000000000000000000000000000000000000002"],
+    ["amount", "10001"],
+  ];
+  for (const [field, value] of cases) {
+    const body = await createFareDemoAuthorization(`accepted-${field}`);
+    const payment = structuredClone(body.payment_payload);
+    payment.accepted[field] = value;
+    const response = await submitFarePayment(`accepted-${field}`, payment);
+    assert.equal(response.status, 400);
+    assert.equal(
+      (await response.json()).invalidReason,
+      "invalid_x402_payment_requirement_mismatch",
+    );
+  }
+});
+
+test("fare verifier binds required accepted extra fields", async () => {
+  for (const [field, value] of [["name", undefined], ["name", "USDC"], ["version", undefined], ["version", "1"]]) {
+    const body = await createFareDemoAuthorization(`extra-${field}-${value}`);
+    const payment = structuredClone(body.payment_payload);
+    if (value === undefined) {
+      delete payment.accepted.extra[field];
+    } else {
+      payment.accepted.extra[field] = value;
+    }
+    const response = await submitFarePayment(`extra-${field}-${value}`, payment);
+    assert.equal(response.status, 400);
+    assert.equal(
+      (await response.json()).invalidReason,
+      "invalid_x402_payment_requirement_mismatch",
+    );
+  }
+});
+
+test("fare verifier enforces EIP-3009 time boundaries", async () => {
+  const originalNow = Date.now;
+  const fixedNow = 1_800_000_000;
+  Date.now = () => fixedNow * 1000;
+  try {
+    const valid = await createFareDemoAuthorization("time-valid");
+    assert.equal((await submitFarePayment("time-valid", valid.payment_payload)).status, 200);
+
+    const futureValidAfter = await createFareDemoAuthorization("time-future");
+    futureValidAfter.payment_payload.payload.authorization.validAfter = String(fixedNow + 1);
+    const futureResponse = await submitFarePayment(
+      "time-future",
+      futureValidAfter.payment_payload,
+    );
+    assert.equal(futureResponse.status, 400);
+    assert.equal(
+      (await futureResponse.json()).invalidReason,
+      "invalid_exact_evm_not_yet_valid",
+    );
+
+    const validAfterBoundary = await createFareDemoAuthorization("time-valid-after-boundary");
+    validAfterBoundary.payment_payload.payload.authorization.validAfter = String(fixedNow);
+    const validAfterBoundaryResponse = await submitFarePayment(
+      "time-valid-after-boundary",
+      validAfterBoundary.payment_payload,
+    );
+    assert.equal(validAfterBoundaryResponse.status, 400);
+    assert.equal(
+      (await validAfterBoundaryResponse.json()).invalidReason,
+      "invalid_exact_evm_not_yet_valid",
+    );
+
+    const expired = await createFareDemoAuthorization("time-expired");
+    expired.payment_payload.payload.authorization.validBefore = String(fixedNow - 1);
+    const expiredResponse = await submitFarePayment("time-expired", expired.payment_payload);
+    assert.equal(expiredResponse.status, 400);
+    assert.equal((await expiredResponse.json()).invalidReason, "invalid_exact_evm_expired");
+
+    const validBeforeBoundary = await createFareDemoAuthorization("time-valid-before-boundary");
+    validBeforeBoundary.payment_payload.payload.authorization.validBefore = String(fixedNow);
+    const validBeforeBoundaryResponse = await submitFarePayment(
+      "time-valid-before-boundary",
+      validBeforeBoundary.payment_payload,
+    );
+    assert.equal(validBeforeBoundaryResponse.status, 400);
+    assert.equal(
+      (await validBeforeBoundaryResponse.json()).invalidReason,
+      "invalid_exact_evm_expired",
+    );
+  } finally {
+    Date.now = originalNow;
+  }
+});
+
+test("fare verifier rejects same proof across sessions and reset", async () => {
+  const body = await createFareDemoAuthorization("replay-source");
+  assert.equal((await submitFarePayment("replay-source", body.payment_payload)).status, 200);
+
+  const sameSession = await submitFarePayment("replay-source", body.payment_payload);
+  assert.equal(sameSession.status, 409);
+  assert.equal((await sameSession.json()).invalidReason, "invalid_exact_evm_nonce_already_used");
+
+  const newSession = await submitFarePayment("replay-new-session", body.payment_payload);
+  assert.equal(newSession.status, 409);
+  assert.equal((await newSession.json()).invalidReason, "invalid_exact_evm_nonce_already_used");
+
+  const reset = await worker.fetch(
+    new Request("https://example.test/fare/api/reset?session=replay-source", {
+      method: "POST",
+    }),
+  );
+  assert.equal(reset.status, 200);
+  const afterReset = await submitFarePayment("replay-source", body.payment_payload);
+  assert.equal(afterReset.status, 409);
+  assert.equal((await afterReset.json()).invalidReason, "invalid_exact_evm_nonce_already_used");
+});
+
+test("fare verifier allows at most one concurrent unlock for one proof", async () => {
+  const body = await createFareDemoAuthorization("concurrent-source");
+  const responses = await Promise.all([
+    submitFarePayment("concurrent-a", body.payment_payload),
+    submitFarePayment("concurrent-b", body.payment_payload),
+  ]);
+  const statuses = responses.map(response => response.status).sort();
+  assert.deepEqual(statuses, [200, 409]);
+});
+
+test("fare demo signer ignores runtime private key override", async () => {
+  const overrideKey =
+    "0x59c6995e998f97a5a0044966f0945387d276fd1154fbbdc5e47bc84e00f6d9f2";
+  const overrideAddress = privateKeyToAccount(overrideKey).address;
+  const body = await createFareDemoAuthorization("env-override", {
+    FARE_DEMO_PRIVATE_KEY: overrideKey,
+  });
+  assert.notEqual(body.signer_address, overrideAddress);
+  assert.equal((await submitFarePayment("env-override", body.payment_payload)).status, 200);
 });
 
 test("agent buyer identity preflight maps five roles to purchase fit", () => {

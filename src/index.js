@@ -4,6 +4,7 @@ import {
   x402ResourceServer,
 } from "@x402/core/server";
 import { x402Client } from "@x402/core/client";
+import { parsePaymentPayload } from "@x402/core/schemas";
 import {
   ExactEvmScheme as ExactEvmClientScheme,
   authorizationTypes,
@@ -10789,13 +10790,8 @@ function fareDemoTypedDataForJson(typedData) {
   };
 }
 
-function fareDemoSignerPrivateKey(env = {}) {
-  const candidate = String(
-    env.FARE_DEMO_PRIVATE_KEY ?? FARE_DEMO_EPHEMERAL_PRIVATE_KEY,
-  ).trim();
-  return /^0x[a-fA-F0-9]{64}$/.test(candidate)
-    ? candidate
-    : FARE_DEMO_EPHEMERAL_PRIVATE_KEY;
+function fareDemoSignerPrivateKey() {
+  return FARE_DEMO_EPHEMERAL_PRIVATE_KEY;
 }
 
 function fareDemoSignerAddress(env = {}) {
@@ -10824,7 +10820,34 @@ async function verifyFareDemoPayload(origin, encodedPayload, sessionId) {
   const decoded = decodePaymentRequirement(encodedPayload);
   const requirement = fareDemoRequirement(origin);
   const accepted = requirement.accepts[0];
-  const payload = decoded?.payload ?? decoded;
+  const parsedPayment = parsePaymentPayload(decoded);
+  if (!parsedPayment.success || parsedPayment.data.x402Version !== 2) {
+    return {
+      ok: false,
+      status: 400,
+      error: "invalid_payment_signature",
+      invalidReason: "invalid_x402_payment_payload",
+    };
+  }
+  const currentAccepted = parsedPayment.data.accepted;
+  if (
+    currentAccepted.scheme !== accepted.scheme ||
+    currentAccepted.network !== accepted.network ||
+    getAddress(currentAccepted.asset) !== getAddress(accepted.asset) ||
+    currentAccepted.amount !== accepted.amount ||
+    getAddress(currentAccepted.payTo) !== getAddress(accepted.payTo) ||
+    currentAccepted.maxTimeoutSeconds !== accepted.maxTimeoutSeconds ||
+    currentAccepted.extra?.name !== accepted.extra.name ||
+    currentAccepted.extra?.version !== accepted.extra.version
+  ) {
+    return {
+      ok: false,
+      status: 400,
+      error: "invalid_payment_signature",
+      invalidReason: "invalid_x402_payment_requirement_mismatch",
+    };
+  }
+  const payload = parsedPayment.data.payload;
   const authorization = payload?.authorization ?? null;
   const signature = payload?.signature ?? null;
   if (!authorization || typeof signature !== "string") {
@@ -10872,6 +10895,43 @@ async function verifyFareDemoPayload(origin, encodedPayload, sessionId) {
       invalidReason: "invalid_exact_evm_amount_mismatch",
     };
   }
+  const now = Math.floor(Date.now() / 1000);
+  if (BigInt(authValidAfter) >= BigInt(now)) {
+    return {
+      ok: false,
+      status: 400,
+      error: "invalid_payment_signature",
+      invalidReason: "invalid_exact_evm_not_yet_valid",
+    };
+  }
+  if (BigInt(authValidBefore) <= BigInt(now)) {
+    return {
+      ok: false,
+      status: 400,
+      error: "invalid_payment_signature",
+      invalidReason: "invalid_exact_evm_expired",
+    };
+  }
+  const replayKey = `${getAddress(authFrom).toLowerCase()}:${authNonce.toLowerCase()}`;
+  if (fareDemoNonceState.has(replayKey)) {
+    return {
+      ok: false,
+      status: 409,
+      error: "invalid_payment_signature",
+      invalidReason: "invalid_exact_evm_nonce_already_used",
+      replay: true,
+      verification: {
+        recovered_signer: getAddress(authFrom),
+        signer_match: false,
+        pay_to_match: getAddress(authTo) === getAddress(FARE_DEMO_MERCHANT),
+        exact_amount: authValue === "10000",
+        time_window_result: "valid",
+        nonce_result: "reused",
+        replay_key_scope: "process_global_payer_nonce",
+      },
+    };
+  }
+  fareDemoNonceState.set(replayKey, "pending");
   const typedData = fareDemoTypedData(authorization, accepted);
   let recovered;
   try {
@@ -10883,6 +10943,7 @@ async function verifyFareDemoPayload(origin, encodedPayload, sessionId) {
       signature,
     });
   } catch {
+    fareDemoNonceState.delete(replayKey);
     return {
       ok: false,
       status: 400,
@@ -10891,6 +10952,7 @@ async function verifyFareDemoPayload(origin, encodedPayload, sessionId) {
     };
   }
   if (getAddress(recovered) !== getAddress(authFrom)) {
+    fareDemoNonceState.delete(replayKey);
     return {
       ok: false,
       status: 400,
@@ -10898,13 +10960,13 @@ async function verifyFareDemoPayload(origin, encodedPayload, sessionId) {
       invalidReason: "invalid_exact_evm_signer_mismatch",
     };
   }
-  const now = Math.floor(Date.now() / 1000);
-  if (BigInt(authValidBefore) <= BigInt(now)) {
+  if (getAddress(recovered) !== getAddress(fareDemoSignerAddress())) {
+    fareDemoNonceState.delete(replayKey);
     return {
       ok: false,
       status: 400,
       error: "invalid_payment_signature",
-      invalidReason: "invalid_exact_evm_expired",
+      invalidReason: "invalid_fare_demo_signer",
     };
   }
   const verification = {
@@ -10914,20 +10976,9 @@ async function verifyFareDemoPayload(origin, encodedPayload, sessionId) {
     exact_amount: authValue === "10000",
     time_window_result: BigInt(authValidBefore) > BigInt(now) ? "valid" : "expired",
     nonce_result: "accepted",
+    replay_key_scope: "process_global_payer_nonce",
   };
-  const state = fareDemoNonceState.get(sessionId) ?? new Set();
-  if (state.has(authNonce.toLowerCase())) {
-    return {
-      ok: false,
-      status: 409,
-      error: "invalid_payment_signature",
-      invalidReason: "invalid_exact_evm_nonce_already_used",
-      replay: true,
-      verification: { ...verification, nonce_result: "reused" },
-    };
-  }
-  state.add(authNonce.toLowerCase());
-  fareDemoNonceState.set(sessionId, state);
+  fareDemoNonceState.set(replayKey, "used");
   return {
     ok: true,
     status: 200,
@@ -10978,11 +11029,10 @@ pre{overflow:auto;background:#020617;border:1px solid #334155;border-radius:8px;
       <h1>FARE Base USDC x402 preview</h1>
       <p>Agents pay USDC over HTTP 402. One cent. Exact. Base.</p>
       <p class="muted">Primary path: no wallet needed. Request brief → HTTP 402 → Demo authorize → Retry with PAYMENT-SIGNATURE → Unlock brief.</p>
-      <p class="muted">Wallet authorize stays optional for extension testing.</p>
+      <p class="muted">Public demo authorization uses an ephemeral zero-value demo identity and never requests a real wallet signature.</p>
       <div class="buttons">
         <button id="request-brief">Request brief</button>
         <button id="demo-authorize" disabled>Demo authorize</button>
-        <button id="wallet-authorize" class="secondary" disabled>Wallet authorize</button>
         <button id="retry-request" disabled>Retry with PAYMENT-SIGNATURE</button>
         <button id="replay-authorization" class="secondary" disabled>Replay authorization</button>
         <button id="reset-demo" class="secondary">Reset Demo</button>
@@ -11019,7 +11069,7 @@ pre{overflow:auto;background:#020617;border:1px solid #334155;border-radius:8px;
       <pre id="payment-verification-view">null</pre>
       <p class="muted">LOCAL DEMO RESPONSE<br>NO ON-CHAIN SETTLEMENT</p>
       <pre id="payment-response-view">null</pre>
-      <p class="muted">Replay protection is demo/local unless chain state is independently queried.</p>
+      <p class="muted">Replay protection is process-local demo memory only; restart/global/on-chain protection is not proven here.</p>
     </aside>
   </div>
 </main>
@@ -11031,7 +11081,6 @@ const els = {
   resultCopy: document.getElementById("result-copy"),
   requestBrief: document.getElementById("request-brief"),
   demoAuthorize: document.getElementById("demo-authorize"),
-  walletAuthorize: document.getElementById("wallet-authorize"),
   retryRequest: document.getElementById("retry-request"),
   replayAuthorization: document.getElementById("replay-authorization"),
   resetDemo: document.getElementById("reset-demo"),
@@ -11090,7 +11139,6 @@ function render() {
   els.demoAuthorize.disabled = !state.paymentRequired;
   els.retryRequest.disabled = !state.paymentPayload;
   els.replayAuthorization.disabled = !state.paymentPayload;
-  els.walletAuthorize.disabled = !state.paymentRequired || !window.ethereum;
 }
 async function requestBrief() {
   const response = await fetch("${FARE_DEMO_API_BRIEF_PATH}?session=" + encodeURIComponent(state.sessionId), { headers: { accept: "application/json" } });
@@ -11120,16 +11168,6 @@ async function demoAuthorize() {
   els.resultCopy.textContent = response.ok ? "Valid EIP-3009 signature generated with demo-only signer material." : "";
   render();
 }
-async function walletAuthorize() {
-  const account = (await window.ethereum.request({ method: "eth_requestAccounts" }))[0];
-  const accepted = state.paymentRequired.accepts[0];
-  const typedData = { domain: state.paymentRequired.typedData.domain, types: { EIP712Domain: [{ name: "name", type: "string" }, { name: "version", type: "string" }, { name: "chainId", type: "uint256" }, { name: "verifyingContract", type: "address" }], ...state.paymentRequired.typedData.types }, primaryType: state.paymentRequired.typedData.primaryType, message: { ...state.paymentRequired.typedData.message, from: account } };
-  const signature = await window.ethereum.request({ method: "eth_signTypedData_v4", params: [account, JSON.stringify(typedData)] });
-  state.paymentPayload = { x402Version: 2, payload: { authorization: { ...typedData.message, value: String(typedData.message.value), validAfter: String(typedData.message.validAfter), validBefore: String(typedData.message.validBefore) }, signature }, resource: state.paymentRequired.resource, accepted };
-  els.status.innerHTML = '<span class="ok">Wallet authorization signed locally.</span>';
-  els.resultCopy.textContent = "Wallet path signs the same EIP-712 typed data and does not broadcast any transaction.";
-  render();
-}
 async function retryRequest() {
   const response = await fetch("${FARE_DEMO_API_BRIEF_PATH}?session=" + encodeURIComponent(state.sessionId), { headers: { accept: "application/json", "payment-signature": encodeHeader(state.paymentPayload) } });
   const body = await response.json();
@@ -11140,7 +11178,7 @@ async function retryRequest() {
     els.resultCopy.textContent = "You authorized a $0.01 USDC payment. The demo server verified the authorization locally and unlocked the brief. No on-chain transfer was performed.";
   } else {
     els.status.innerHTML = '<span class="bad">' + (body.invalidReason || body.error || "Request failed") + '</span>';
-    els.resultCopy.textContent = body.invalidReason === "invalid_exact_evm_nonce_already_used" ? "Replay authorization rejected: nonce already used. Demo/local replay protection only." : "";
+    els.resultCopy.textContent = body.invalidReason === "invalid_exact_evm_nonce_already_used" ? "Replay authorization rejected: payer+nonce already used in this process. Demo-local only; restart/global/on-chain protection is not proven." : "";
   }
   render();
 }
@@ -11155,7 +11193,6 @@ async function resetDemo() {
 }
 els.requestBrief.addEventListener("click", requestBrief);
 els.demoAuthorize.addEventListener("click", demoAuthorize);
-els.walletAuthorize.addEventListener("click", walletAuthorize);
 els.retryRequest.addEventListener("click", retryRequest);
 els.replayAuthorization.addEventListener("click", retryRequest);
 els.resetDemo.addEventListener("click", resetDemo);
