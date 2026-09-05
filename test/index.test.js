@@ -82,6 +82,50 @@ function decodeDemoHeader(value) {
   }
 }
 
+function assertFareBriefFaq(faq) {
+  assert.deepEqual(faq.headers, ["問題", "English", "Answer"]);
+  assert.ok(Array.isArray(faq.rows));
+  assert.ok(faq.rows.length >= 6);
+
+  const usdcMove = faq.rows.find(row => row.english === "Did USDC actually move?");
+  assert.equal(usdcMove.question, "USDC 真的轉出去了嗎？");
+  assert.equal(usdcMove.anchor, true);
+  assert.match(usdcMove.answer_zh, /真實 EIP-3009 授權與簽名/);
+  assert.match(usdcMove.answer_zh, /settlement 沒有廣播/);
+  assert.match(usdcMove.answer_zh, /沒有 Base USDC 鏈上轉帳/);
+  assert.match(usdcMove.answer_en, /EIP-3009 authorization and signature are real/);
+  assert.match(usdcMove.answer_en, /settlement is not broadcast/);
+  assert.match(usdcMove.answer_en, /no Base USDC moves on-chain/);
+
+  const erc20 = faq.rows.find(row => row.english === "Why not ERC-20 transfer?");
+  assert.match(erc20.answer_zh, /owner 自己送交易/);
+  assert.match(erc20.answer_zh, /relayer 代送的離線授權/);
+  assert.match(erc20.answer_en, /owner to send the transaction/);
+  assert.match(erc20.answer_en, /submitted by a relayer/);
+
+  const permit = faq.rows.find(row => row.english === "Why not EIP-2612 permit?");
+  assert.match(permit.answer_zh, /allowance/);
+  assert.match(permit.answer_zh, /transferFrom/);
+  assert.match(permit.answer_en, /writes an allowance/);
+  assert.match(permit.answer_en, /authorizes the specific transfer/);
+
+  const permit2 = faq.rows.find(row => row.english === "Why not Permit2?");
+  assert.match(permit2.answer_zh, /Base USDC/);
+  assert.match(permit2.answer_zh, /Permit2 contract\/domain/);
+  assert.match(permit2.answer_en, /native EIP-3009 is sufficient/);
+  assert.match(permit2.answer_en, /broader ERC-20 compatibility/);
+
+  const replay = faq.rows.find(row => row.english === "Can I replay?");
+  assert.match(replay.answer_zh, /同一 proof \/ nonce/);
+  assert.match(replay.answer_zh, /409/);
+  assert.match(replay.answer_en, /same proof\/nonce is rejected locally/);
+  assert.doesNotMatch(JSON.stringify(faq), /same nonce.*402|同 nonce.*402/i);
+
+  const flow = faq.rows.find(row => row.english === "What about paymentFlow / upfront?");
+  assert.match(flow.answer_zh, /2\.16 FARE demo 沒有使用/);
+  assert.match(flow.answer_en, /Not used in this 2\.16 FARE demo/);
+}
+
 test("buildAddressPreflight flags an unverified contract", () => {
   const result = buildAddressPreflight({
     address: "0x1111111111111111111111111111111111111111",
@@ -595,6 +639,10 @@ test("fare demo page shows demo mode and accurate copy", async () => {
   assert.match(html, /process-local demo memory only/);
   assert.match(html, /0x70997970C51812dc3A010C7d01b50e0d17dc79C8/);
   assert.match(html, /Anvil\/demo only · not production payTo/);
+  assert.doesNotMatch(html, /USDC 真的轉出去了嗎/);
+  assert.doesNotMatch(html, /Did USDC actually move/);
+  assert.match(html, /@media\(max-width:700px\).*faq-table.*display:block/);
+  assert.match(html, /td::before\{content:attr\(data-label\)/);
 });
 
 async function runFareDemoFlow(sessionId) {
@@ -674,6 +722,7 @@ async function runFareDemoFlow(sessionId) {
   assert.equal(paid.status, 200);
   const paidBody = await paid.json();
   assert.equal(paidBody.brief_unlocked, true);
+  assertFareBriefFaq(paidBody.faq);
   assert.match(
     paidBody.summary,
     /You authorized a \$0\.01 USDC payment\./,
@@ -856,21 +905,10 @@ test("fare demo page exposes no public wallet signing path", async () => {
   assert.doesNotMatch(html, /eth_requestAccounts/);
   assert.doesNotMatch(html, /eth_signTypedData_v4/);
   assert.match(html, /never requests a real wallet signature/);
-  assert.match(html, /FARE targets Base USDC, so native EIP-3009 is enough/);
-  assert.match(html, /Permit2 helps broader ERC-20 support and uses the Permit2 domain/);
-  assert.match(html, /Same proof \/ nonce → local replay rejection \(409\)/);
-  assert.match(html, /Later x402 flow concept · not used in this 2\.16 demo/);
+  assert.doesNotMatch(html, /FARE targets Base USDC only/);
+  assert.doesNotMatch(html, /Did USDC actually move/);
   assert.doesNotMatch(html, /同 nonce → 402/);
   assert.doesNotMatch(html, /同一張 payload/);
-  assert.doesNotMatch(html, /paymentFlow/);
-  assert.match(
-    html,
-    /Bare transfer requires the owner to send the transaction; x402 needs an off-chain authorization a relayer can submit/,
-  );
-  assert.match(
-    html,
-    /EIP-2612 writes allowance and still needs transferFrom; EIP-3009 authorizes the specific transfer/,
-  );
 });
 
 test("fare verifier requires exact x402 v2 payment envelope", async () => {

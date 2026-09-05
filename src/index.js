@@ -10801,6 +10801,62 @@ function fareDemoSignerAddress(env = {}) {
   return privateKeyToAccount(fareDemoSignerPrivateKey(env)).address;
 }
 
+function fareDemoBriefFaq() {
+  return {
+    headers: ["問題", "English", "Answer"],
+    rows: [
+      {
+        question: "USDC 真的轉出去了嗎？",
+        english: "Did USDC actually move?",
+        answer_zh:
+          "沒有。這個 Demo 驗證的是真實 EIP-3009 授權與簽名，但 settlement 沒有廣播，因此沒有 Base USDC 鏈上轉帳。",
+        answer_en:
+          "No. The EIP-3009 authorization and signature are real, but settlement is not broadcast, so no Base USDC moves on-chain.",
+        anchor: true,
+      },
+      {
+        question: "為什麼不用 ERC-20 transfer？",
+        english: "Why not ERC-20 transfer?",
+        answer_zh:
+          "裸 ERC-20 transfer 需要 owner 自己送交易；x402 需要可由 relayer 代送的離線授權。",
+        answer_en:
+          "A bare ERC-20 transfer requires the owner to send the transaction. x402 uses an off-chain authorization that can be submitted by a relayer.",
+      },
+      {
+        question: "為什麼不用 EIP-2612 permit？",
+        english: "Why not EIP-2612 permit?",
+        answer_zh:
+          "EIP-2612 寫的是 allowance，之後仍需要 transferFrom；EIP-3009 授權的是特定單筆 transfer。",
+        answer_en:
+          "EIP-2612 writes an allowance and still requires transferFrom. EIP-3009 authorizes the specific transfer.",
+      },
+      {
+        question: "為什麼不用 Permit2？",
+        english: "Why not Permit2?",
+        answer_zh:
+          "FARE 只做 Base USDC，所以原生 EIP-3009 已足夠。Permit2 主要適合更廣泛 ERC-20，且使用自己的 Permit2 contract/domain。",
+        answer_en:
+          "FARE targets Base USDC only, so native EIP-3009 is sufficient. Permit2 is mainly useful for broader ERC-20 compatibility and uses the Permit2 contract/domain.",
+      },
+      {
+        question: "可以 replay 嗎？",
+        english: "Can I replay?",
+        answer_zh:
+          "不行。同一 proof / nonce 會被本地 replay protection 拒絕；本地 Demo 狀態是 409。",
+        answer_en: "No. The same proof/nonce is rejected locally with status 409.",
+      },
+      {
+        question: "paymentFlow / upfront 呢？",
+        english: "What about paymentFlow / upfront?",
+        answer_zh:
+          "這是 later/version-dependent x402 flow concept；目前 2.16 FARE demo 沒有使用。",
+        answer_en:
+          "Later/version-dependent x402 flow concept. Not used in this 2.16 FARE demo.",
+      },
+    ],
+  };
+}
+
 async function createFareDemoPayload(origin, env = {}) {
   const account = privateKeyToAccount(fareDemoSignerPrivateKey(env));
   const client = new x402Client().register(
@@ -11019,9 +11075,17 @@ button{border:1px solid #60a5fa;background:#1d4ed8;color:#fff;border-radius:8px;
 button.secondary{background:transparent;color:#dbeafe}
 button:disabled{opacity:.6;cursor:not-allowed}
 pre{overflow:auto;background:#020617;border:1px solid #334155;border-radius:8px;padding:12px;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}
+.brief-panel{margin-top:16px}
+.faq-table{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:12px}
+.faq-table th,.faq-table td{border-top:1px solid #334155;padding:12px;text-align:left;vertical-align:top;overflow-wrap:anywhere;word-break:break-word}
+.faq-table th{color:#dbeafe;font-size:13px}
+.faq-table td p{margin:0 0 8px}
+.faq-table td p:last-child{margin-bottom:0}
+.faq-anchor td{background:rgba(96,165,250,.08)}
 .muted{color:#94a3b8}
 .ok{color:#86efac}.bad{color:#fca5a5}.warn{color:#fde68a}
 @media(max-width:900px){.grid{grid-template-columns:1fr}}
+@media(max-width:700px){.faq-table,.faq-table tbody,.faq-table tr,.faq-table td{display:block;width:100%;box-sizing:border-box}.faq-table thead{display:none}.faq-table tr{border-top:1px solid #334155;padding:10px 0}.faq-table td{border:0;padding:8px 0}.faq-table td::before{content:attr(data-label);display:block;color:#dbeafe;font-weight:700;font-size:12px;margin-bottom:3px}.faq-anchor td{background:transparent}}
 </style>
 </head>
 <body>
@@ -11054,14 +11118,9 @@ pre{overflow:auto;background:#020617;border:1px solid #334155;border-radius:8px;
         <h2>Demo signer</h2>
         <p class="muted">Demo-only signer address: <code>${escapeHtml(fareDemoSignerAddress())}</code>. No automatic transaction broadcast. No on-chain settlement.</p>
       </div>
-      <div class="panel" style="margin-top:16px">
-        <h2>FAQ</h2>
-        <p><strong>Why not Permit2?</strong><br><span class="muted">FARE targets Base USDC, so native EIP-3009 is enough. Permit2 helps broader ERC-20 support and uses the Permit2 domain.</span></p>
-        <p><strong>Can I replay?</strong><br><span class="muted">Same proof / nonce → local replay rejection (409).</span></p>
-        <p><strong>Authorization vs upfront?</strong><br><span class="muted">Later x402 flow concept · not used in this 2.16 demo.</span></p>
-        <p><strong>Why not ERC-20 transfer?</strong><br><span class="muted">Bare transfer requires the owner to send the transaction; x402 needs an off-chain authorization a relayer can submit.</span></p>
-        <p><strong>Why not permit?</strong><br><span class="muted">EIP-2612 writes allowance and still needs transferFrom; EIP-3009 authorizes the specific transfer.</span></p>
-      </div>
+      <section id="unlocked-brief-panel" class="panel brief-panel" hidden>
+        <div id="unlocked-brief-view"></div>
+      </section>
     </section>
     <aside class="card">
       <h2>Inspector</h2>
@@ -11085,7 +11144,7 @@ pre{overflow:auto;background:#020617;border:1px solid #334155;border-radius:8px;
   </div>
 </main>
 <script>
-const state = { sessionId: sessionStorage.getItem("fare-demo-session") || crypto.randomUUID(), paymentRequired: null, paymentPayload: null, paymentResponse: null };
+const state = { sessionId: sessionStorage.getItem("fare-demo-session") || crypto.randomUUID(), paymentRequired: null, paymentPayload: null, paymentResponse: null, unlockedBrief: null };
 sessionStorage.setItem("fare-demo-session", state.sessionId);
 const els = {
   status: document.getElementById("status"),
@@ -11101,6 +11160,8 @@ const els = {
   authorizationView: document.getElementById("payment-authorization-view"),
   verificationView: document.getElementById("payment-verification-view"),
   responseView: document.getElementById("payment-response-view"),
+  briefPanel: document.getElementById("unlocked-brief-panel"),
+  briefView: document.getElementById("unlocked-brief-view"),
 };
 function inspectorState() {
   if (state.paymentResponse) {
@@ -11140,6 +11201,49 @@ function inspectorRequired(value) {
 function inspectorDomain(value) { return value?.typedData?.domain ?? null; }
 function inspectorAuthorization(value) { return value?.payload?.authorization ?? null; }
 function inspectorVerification(value) { return value?.verification ?? null; }
+function appendTextElement(parent, tagName, textValue, className) {
+  const element = document.createElement(tagName);
+  if (className) element.className = className;
+  element.textContent = textValue ?? "";
+  parent.appendChild(element);
+  return element;
+}
+function renderBrief() {
+  els.briefView.replaceChildren();
+  els.briefPanel.hidden = !state.unlockedBrief;
+  if (!state.unlockedBrief) return;
+  appendTextElement(els.briefView, "h2", state.unlockedBrief.title);
+  appendTextElement(els.briefView, "p", state.unlockedBrief.summary, "muted");
+  const faq = state.unlockedBrief.faq;
+  if (!faq?.rows?.length) return;
+  appendTextElement(els.briefView, "h3", "FAQ");
+  const table = document.createElement("table");
+  table.className = "faq-table";
+  const thead = document.createElement("thead");
+  const headRow = document.createElement("tr");
+  for (const header of faq.headers || []) appendTextElement(headRow, "th", header);
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+  const tbody = document.createElement("tbody");
+  for (const row of faq.rows) {
+    const tr = document.createElement("tr");
+    if (row.anchor) tr.className = "faq-anchor";
+    for (const [index, value] of [row.question, row.english, row].entries()) {
+      const td = document.createElement("td");
+      td.setAttribute("data-label", faq.headers?.[index] ?? "");
+      if (index === 2) {
+        appendTextElement(td, "p", value.answer_zh);
+        appendTextElement(td, "p", value.answer_en, "muted");
+      } else {
+        td.textContent = value ?? "";
+      }
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  els.briefView.appendChild(table);
+}
 function render() {
   els.stateView.textContent = JSON.stringify(inspectorState(), null, 2);
   els.requiredView.textContent = JSON.stringify(inspectorRequired(state.paymentRequired), null, 2);
@@ -11150,6 +11254,7 @@ function render() {
   els.demoAuthorize.disabled = !state.paymentRequired;
   els.retryRequest.disabled = !state.paymentPayload;
   els.replayAuthorization.disabled = !state.paymentPayload;
+  renderBrief();
 }
 async function requestBrief() {
   const response = await fetch("${FARE_DEMO_API_BRIEF_PATH}?session=" + encodeURIComponent(state.sessionId), { headers: { accept: "application/json" } });
@@ -11166,6 +11271,7 @@ async function requestBrief() {
   }
   state.paymentPayload = null;
   state.paymentResponse = null;
+  state.unlockedBrief = null;
   els.status.innerHTML = response.status === 402 ? '<span class="ok">HTTP 402 PAYMENT-REQUIRED received.</span>' : '<span class="bad">Unexpected response.</span>';
   els.resultCopy.textContent = "";
   render();
@@ -11175,6 +11281,7 @@ async function demoAuthorize() {
   const body = await response.json();
   state.paymentPayload = body.payment_payload;
   state.paymentResponse = null;
+  state.unlockedBrief = null;
   els.status.innerHTML = response.ok ? '<span class="ok">Demo authorization created.</span>' : '<span class="bad">Demo authorization failed.</span>';
   els.resultCopy.textContent = response.ok ? "Valid EIP-3009 signature generated with demo-only signer material." : "";
   render();
@@ -11185,9 +11292,11 @@ async function retryRequest() {
   const paymentResponseHeader = response.headers.get("payment-response");
   state.paymentResponse = decodeHeader(paymentResponseHeader) || body.local_demo_response || { verification: body.verification ?? null, ...body };
   if (response.ok) {
+    state.unlockedBrief = body;
     els.status.innerHTML = '<span class="ok">Brief unlocked.</span>';
     els.resultCopy.textContent = "You authorized a $0.01 USDC payment. The demo server verified the authorization locally and unlocked the brief. No on-chain transfer was performed.";
   } else {
+    state.unlockedBrief = null;
     els.status.innerHTML = '<span class="bad">' + (body.invalidReason || body.error || "Request failed") + '</span>';
     els.resultCopy.textContent = body.invalidReason === "invalid_exact_evm_nonce_already_used" ? "Replay authorization rejected: payer+nonce already used in this process. Demo-local only; restart/global/on-chain protection is not proven." : "";
   }
@@ -11198,6 +11307,7 @@ async function resetDemo() {
   state.paymentRequired = null;
   state.paymentPayload = null;
   state.paymentResponse = null;
+  state.unlockedBrief = null;
   els.status.innerHTML = '<span class="warn">Demo state reset.</span>';
   els.resultCopy.textContent = "";
   render();
@@ -21278,6 +21388,7 @@ export default {
           title: "FARE technical brief",
           summary:
             "You authorized a $0.01 USDC payment. The demo server verified the authorization locally and unlocked the brief. No on-chain transfer was performed.",
+          faq: fareDemoBriefFaq(),
           local_demo_response: verified.paymentResponse,
         },
         200,
