@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { privateKeyToAccount } from "viem/accounts";
 
 import worker, {
@@ -759,6 +760,91 @@ async function submitFarePayment(sessionId, paymentPayload) {
     }),
   );
 }
+
+function runFreshNodeModuleCheck(script) {
+  const result = spawnSync(
+    process.execPath,
+    ["--input-type=module", "--eval", script],
+    { cwd: process.cwd(), encoding: "utf8" },
+  );
+  assert.equal(
+    result.status,
+    0,
+    `${result.stdout}\n${result.stderr}`,
+  );
+}
+
+test("fare module import does not initialize random demo signer", () => {
+  runFreshNodeModuleCheck(`
+const originalGetRandomValues = globalThis.crypto.getRandomValues.bind(globalThis.crypto);
+let getRandomValuesCalls = 0;
+Object.defineProperty(globalThis.crypto, "getRandomValues", {
+  configurable: true,
+  value(bytes) {
+    getRandomValuesCalls += 1;
+    return originalGetRandomValues(bytes);
+  },
+});
+await import("./src/index.js");
+if (getRandomValuesCalls !== 0) {
+  throw new Error("crypto.getRandomValues ran during module initialization");
+}
+`);
+});
+
+test("fare demo signer lazy initializes once per runtime", () => {
+  runFreshNodeModuleCheck(`
+import { privateKeyToAccount } from "viem/accounts";
+
+const originalGetRandomValues = globalThis.crypto.getRandomValues.bind(globalThis.crypto);
+let getRandomValuesCalls = 0;
+Object.defineProperty(globalThis.crypto, "getRandomValues", {
+  configurable: true,
+  value(bytes) {
+    getRandomValuesCalls += 1;
+    return originalGetRandomValues(bytes);
+  },
+});
+
+const { default: worker } = await import("./src/index.js");
+if (getRandomValuesCalls !== 0) {
+  throw new Error("random signer initialized before first request");
+}
+
+async function authorize(sessionId, env = {}) {
+  const response = await worker.fetch(
+    new Request("https://example.test/fare/api/demo-authorize?session=" + sessionId, {
+      method: "POST",
+    }),
+    env,
+  );
+  if (response.status !== 200) {
+    throw new Error("authorization failed with status " + response.status);
+  }
+  return response.json();
+}
+
+const first = await authorize("lazy-one");
+if (getRandomValuesCalls < 1) {
+  throw new Error("first request did not lazy initialize signer");
+}
+const second = await authorize("lazy-two");
+const third = await authorize("lazy-three");
+if (first.signer_address !== second.signer_address || second.signer_address !== third.signer_address) {
+  throw new Error("demo signer rotated within one runtime");
+}
+
+const overrideKey = "0x59c6995e998f97a5a0044966f0945387d276fd1154fbbdc5e47bc84e00f6d9f2";
+const overrideAddress = privateKeyToAccount(overrideKey).address;
+const override = await authorize("lazy-override", { FARE_DEMO_PRIVATE_KEY: overrideKey });
+if (override.signer_address === overrideAddress) {
+  throw new Error("FARE_DEMO_PRIVATE_KEY selected the demo signer");
+}
+if (override.signer_address !== first.signer_address) {
+  throw new Error("env override changed the cached demo signer");
+}
+`);
+});
 
 test("fare demo page exposes no public wallet signing path", async () => {
   const response = await worker.fetch(new Request("https://example.test/fare"));

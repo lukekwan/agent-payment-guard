@@ -57,9 +57,7 @@ const FARE_DEMO_API_BRIEF_PATH = "/fare/api/brief";
 const FARE_DEMO_API_AUTHORIZE_PATH = "/fare/api/demo-authorize";
 const FARE_DEMO_API_RESET_PATH = "/fare/api/reset";
 const FARE_DEMO_MERCHANT = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
-const FARE_DEMO_EPHEMERAL_PRIVATE_KEY = `0x${[...crypto.getRandomValues(new Uint8Array(32))]
-  .map(byte => byte.toString(16).padStart(2, "0"))
-  .join("")}`;
+let fareDemoEphemeralPrivateKey = null;
 const fareDemoNonceState = new Map();
 const STABLECOINS = [
   { symbol: "USDC", address: USDC, decimals: 6 },
@@ -10791,7 +10789,12 @@ function fareDemoTypedDataForJson(typedData) {
 }
 
 function fareDemoSignerPrivateKey() {
-  return FARE_DEMO_EPHEMERAL_PRIVATE_KEY;
+  if (!fareDemoEphemeralPrivateKey) {
+    fareDemoEphemeralPrivateKey = `0x${[...crypto.getRandomValues(new Uint8Array(32))]
+      .map(byte => byte.toString(16).padStart(2, "0"))
+      .join("")}`;
+  }
+  return fareDemoEphemeralPrivateKey;
 }
 
 function fareDemoSignerAddress(env = {}) {
