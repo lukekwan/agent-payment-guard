@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { privateKeyToAccount } from "viem/accounts";
 
 import worker, {
   buildApprovalRisk,
@@ -70,6 +72,59 @@ import worker, {
   validatePublicUrl,
   verifyPaymentGuardDecision,
 } from "../src/index.js";
+
+function decodeDemoHeader(value) {
+  if (!value) return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return JSON.parse(Buffer.from(value, "base64").toString("utf8"));
+  }
+}
+
+function assertFareBriefFaq(faq) {
+  assert.deepEqual(faq.headers, ["問題", "English", "Answer"]);
+  assert.ok(Array.isArray(faq.rows));
+  assert.ok(faq.rows.length >= 6);
+
+  const usdcMove = faq.rows.find(row => row.english === "Did USDC actually move?");
+  assert.equal(usdcMove.question, "USDC 真的轉出去了嗎？");
+  assert.equal(usdcMove.anchor, true);
+  assert.match(usdcMove.answer_zh, /真實 EIP-3009 授權與簽名/);
+  assert.match(usdcMove.answer_zh, /settlement 沒有廣播/);
+  assert.match(usdcMove.answer_zh, /沒有 Base USDC 鏈上轉帳/);
+  assert.match(usdcMove.answer_en, /EIP-3009 authorization and signature are real/);
+  assert.match(usdcMove.answer_en, /settlement is not broadcast/);
+  assert.match(usdcMove.answer_en, /no Base USDC moves on-chain/);
+
+  const erc20 = faq.rows.find(row => row.english === "Why not ERC-20 transfer?");
+  assert.match(erc20.answer_zh, /owner 自己送交易/);
+  assert.match(erc20.answer_zh, /relayer 代送的離線授權/);
+  assert.match(erc20.answer_en, /owner to send the transaction/);
+  assert.match(erc20.answer_en, /submitted by a relayer/);
+
+  const permit = faq.rows.find(row => row.english === "Why not EIP-2612 permit?");
+  assert.match(permit.answer_zh, /allowance/);
+  assert.match(permit.answer_zh, /transferFrom/);
+  assert.match(permit.answer_en, /writes an allowance/);
+  assert.match(permit.answer_en, /authorizes the specific transfer/);
+
+  const permit2 = faq.rows.find(row => row.english === "Why not Permit2?");
+  assert.match(permit2.answer_zh, /Base USDC/);
+  assert.match(permit2.answer_zh, /Permit2 contract\/domain/);
+  assert.match(permit2.answer_en, /native EIP-3009 is sufficient/);
+  assert.match(permit2.answer_en, /broader ERC-20 compatibility/);
+
+  const replay = faq.rows.find(row => row.english === "Can I replay?");
+  assert.match(replay.answer_zh, /同一 proof \/ nonce/);
+  assert.match(replay.answer_zh, /409/);
+  assert.match(replay.answer_en, /same proof\/nonce is rejected locally/);
+  assert.doesNotMatch(JSON.stringify(faq), /same nonce.*402|同 nonce.*402/i);
+
+  const flow = faq.rows.find(row => row.english === "What about paymentFlow / upfront?");
+  assert.match(flow.answer_zh, /2\.16 FARE demo 沒有使用/);
+  assert.match(flow.answer_en, /Not used in this 2\.16 FARE demo/);
+}
 
 test("buildAddressPreflight flags an unverified contract", () => {
   const result = buildAddressPreflight({
@@ -560,6 +615,506 @@ test("worker exposes discovery documents", async () => {
   assert.equal(mcpDecision.response_kind, "decision_response");
   assert.equal(mcpDecision.decision, "REQUIRE_APPROVAL");
   assert.equal(mcpDecision.signer_directive.agent_may_directly_sign, false);
+});
+
+test("fare demo page shows demo mode and accurate copy", async () => {
+  const response = await worker.fetch(new Request("https://example.test/fare"));
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Agents pay USDC over HTTP 402\. One cent\. Exact\. Base\./);
+  assert.match(html, /DEMO MODE/);
+  assert.match(
+    html,
+    /Real EIP-3009 authorization · Local verification only · No on-chain USDC transfer/,
+  );
+  assert.match(html, /Primary path: no wallet needed\./);
+  assert.match(html, /never requests a real wallet signature/);
+  assert.match(html, /"phase": "awaiting_request"/);
+  assert.doesNotMatch(html, /You just paid \\$0\\.01/);
+  assert.match(html, /LOCAL DEMO RESPONSE/);
+  assert.match(html, /NO ON-CHAIN SETTLEMENT/);
+  assert.match(html, /Reset Demo/);
+  assert.match(html, /Replay authorization/);
+  assert.doesNotMatch(html, /Coinbase|MetaMask|Wallet authorize/);
+  assert.match(html, /process-local demo memory only/);
+  assert.match(html, /0x70997970C51812dc3A010C7d01b50e0d17dc79C8/);
+  assert.match(html, /Anvil\/demo only · not production payTo/);
+  assert.doesNotMatch(html, /USDC 真的轉出去了嗎/);
+  assert.doesNotMatch(html, /Did USDC actually move/);
+  assert.match(html, /@media\(max-width:700px\).*faq-table.*display:block/);
+  assert.match(html, /td::before\{content:attr\(data-label\)/);
+});
+
+async function runFareDemoFlow(sessionId) {
+  const page = await worker.fetch(new Request("https://example.test/fare"));
+  const html = await page.text();
+  assert.match(html, /Agents pay USDC over HTTP 402\. One cent\. Exact\. Base\./);
+  assert.match(html, /Primary path: no wallet needed\./);
+  assert.match(html, /ephemeral zero-value demo identity/);
+  assert.match(html, /"http_status": null/);
+  assert.match(html, /"phase": "awaiting_request"/);
+
+  const unpaid = await worker.fetch(
+    new Request(`https://example.test/fare/api/brief?session=${sessionId}`),
+  );
+  assert.equal(unpaid.status, 402);
+  const requirement = decodeDemoHeader(unpaid.headers.get("payment-required"));
+  assert.equal(requirement.x402Version, 2);
+  assert.equal(requirement.accepts[0].scheme, "exact");
+  assert.equal(requirement.accepts[0].network, "eip155:8453");
+  assert.equal(
+    requirement.accepts[0].asset,
+    "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  );
+  assert.equal(requirement.accepts[0].amount, "10000");
+  assert.equal(
+    requirement.accepts[0].payTo,
+    "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+  );
+  assert.equal(requirement.accepts[0].extra.name, "USD Coin");
+  assert.equal(requirement.accepts[0].extra.version, "2");
+  const inspector402State = {
+    http_status: 402,
+    phase: "PAYMENT-REQUIRED",
+    accepts_0: {
+      x402Version: requirement.x402Version,
+      scheme: requirement.accepts[0].scheme,
+      network: requirement.accepts[0].network,
+      asset: "Base USDC",
+      amount: requirement.accepts[0].amount,
+      payTo: requirement.accepts[0].payTo,
+      extra: requirement.accepts[0].extra,
+    },
+  };
+  assert.equal(inspector402State.phase, "PAYMENT-REQUIRED");
+  assert.equal(inspector402State.http_status, 402);
+  assert.equal(inspector402State.accepts_0.scheme, "exact");
+  assert.equal(inspector402State.accepts_0.network, "eip155:8453");
+  assert.equal(inspector402State.accepts_0.amount, "10000");
+
+  const authorization = await worker.fetch(
+    new Request(
+      `https://example.test/fare/api/demo-authorize?session=${sessionId}`,
+      { method: "POST" },
+    ),
+  );
+  assert.equal(authorization.status, 200);
+  const authorizationBody = await authorization.json();
+  assert.equal(authorizationBody.ok, true);
+  assert.equal(authorizationBody.no_onchain_transfer, true);
+  assert.match(authorizationBody.payment_payload.payload.signature, /^0x[a-f0-9]+$/i);
+  assert.equal(authorizationBody.typed_data.domain.name, "USD Coin");
+  assert.equal(authorizationBody.typed_data.domain.version, "2");
+  assert.equal(authorizationBody.typed_data.domain.chainId, 8453);
+  assert.equal(
+    authorizationBody.typed_data.domain.verifyingContract,
+    "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  );
+
+  const encodedPayment = Buffer.from(
+    JSON.stringify(authorizationBody.payment_payload),
+  ).toString("base64");
+  const paid = await worker.fetch(
+    new Request(`https://example.test/fare/api/brief?session=${sessionId}`, {
+      headers: { "payment-signature": encodedPayment },
+    }),
+  );
+  assert.equal(paid.status, 200);
+  const paidBody = await paid.json();
+  assert.equal(paidBody.brief_unlocked, true);
+  assertFareBriefFaq(paidBody.faq);
+  assert.match(
+    paidBody.summary,
+    /You authorized a \$0\.01 USDC payment\./,
+  );
+  assert.match(
+    paidBody.summary,
+    /No on-chain transfer was performed\./,
+  );
+  const paymentResponse = decodeDemoHeader(paid.headers.get("payment-response"));
+  assert.equal(paymentResponse.demo_mode, true);
+  assert.equal(paymentResponse.settlement, "local_verification_only");
+  assert.equal(paymentResponse.onchain_transfer_performed, false);
+  assert.equal(paymentResponse.verification.signer_match, true);
+  assert.equal(paymentResponse.verification.pay_to_match, true);
+  assert.equal(paymentResponse.verification.exact_amount, true);
+  assert.equal(paymentResponse.verification.time_window_result, "valid");
+  assert.equal(paymentResponse.verification.nonce_result, "accepted");
+  const inspector200State = {
+    http_status: 200,
+    phase: "PAYMENT-RESPONSE",
+    mode: "local_verification_only",
+  };
+  assert.equal(inspector200State.http_status, 200);
+  assert.equal(inspector200State.phase, "PAYMENT-RESPONSE");
+  assert.equal(inspector200State.mode, "local_verification_only");
+
+  const replay = await worker.fetch(
+    new Request(`https://example.test/fare/api/brief?session=${sessionId}`, {
+      headers: { "payment-signature": encodedPayment },
+    }),
+  );
+  assert.equal(replay.status, 409);
+  const replayBody = await replay.json();
+  assert.equal(
+    replayBody.invalidReason,
+    "invalid_exact_evm_nonce_already_used",
+  );
+  assert.equal(replayBody.local_verification_only, true);
+
+  const reset = await worker.fetch(
+    new Request(`https://example.test/fare/api/reset?session=${sessionId}`, {
+      method: "POST",
+    }),
+  );
+  assert.equal(reset.status, 200);
+  assert.equal((await reset.json()).reset, true);
+  const unpaidAgain = await worker.fetch(
+    new Request(`https://example.test/fare/api/brief?session=${sessionId}`),
+  );
+  assert.equal(unpaidAgain.status, 402);
+}
+
+test("fare demo flow is repeatable for five consecutive runs", async () => {
+  for (let index = 1; index <= 5; index += 1) {
+    await runFareDemoFlow(`run-${index}`);
+  }
+});
+
+async function createFareDemoAuthorization(sessionId, env = {}) {
+  const authorization = await worker.fetch(
+    new Request(
+      `https://example.test/fare/api/demo-authorize?session=${sessionId}`,
+      { method: "POST" },
+    ),
+    env,
+  );
+  assert.equal(authorization.status, 200);
+  return authorization.json();
+}
+
+function encodeFarePayment(paymentPayload) {
+  return Buffer.from(JSON.stringify(paymentPayload)).toString("base64");
+}
+
+function fareReplayKey(paymentPayload) {
+  const authorization = paymentPayload.payload.authorization;
+  return `${authorization.from.toLowerCase()}:${authorization.nonce.toLowerCase()}`;
+}
+
+async function submitFarePayment(sessionId, paymentPayload) {
+  return worker.fetch(
+    new Request(`https://example.test/fare/api/brief?session=${sessionId}`, {
+      headers: { "payment-signature": encodeFarePayment(paymentPayload) },
+    }),
+  );
+}
+
+function runFreshNodeModuleCheck(script) {
+  const result = spawnSync(
+    process.execPath,
+    ["--input-type=module", "--eval", script],
+    { cwd: process.cwd(), encoding: "utf8" },
+  );
+  assert.equal(
+    result.status,
+    0,
+    `${result.stdout}\n${result.stderr}`,
+  );
+}
+
+test("fare module import does not initialize random demo signer", () => {
+  runFreshNodeModuleCheck(`
+const originalGetRandomValues = globalThis.crypto.getRandomValues.bind(globalThis.crypto);
+let getRandomValuesCalls = 0;
+Object.defineProperty(globalThis.crypto, "getRandomValues", {
+  configurable: true,
+  value(bytes) {
+    getRandomValuesCalls += 1;
+    return originalGetRandomValues(bytes);
+  },
+});
+await import("./src/index.js");
+if (getRandomValuesCalls !== 0) {
+  throw new Error("crypto.getRandomValues ran during module initialization");
+}
+`);
+});
+
+test("fare demo signer lazy initializes once per runtime", () => {
+  runFreshNodeModuleCheck(`
+import { privateKeyToAccount } from "viem/accounts";
+
+const originalGetRandomValues = globalThis.crypto.getRandomValues.bind(globalThis.crypto);
+let getRandomValuesCalls = 0;
+Object.defineProperty(globalThis.crypto, "getRandomValues", {
+  configurable: true,
+  value(bytes) {
+    getRandomValuesCalls += 1;
+    return originalGetRandomValues(bytes);
+  },
+});
+
+const { default: worker } = await import("./src/index.js");
+if (getRandomValuesCalls !== 0) {
+  throw new Error("random signer initialized before first request");
+}
+
+async function authorize(sessionId, env = {}) {
+  const response = await worker.fetch(
+    new Request("https://example.test/fare/api/demo-authorize?session=" + sessionId, {
+      method: "POST",
+    }),
+    env,
+  );
+  if (response.status !== 200) {
+    throw new Error("authorization failed with status " + response.status);
+  }
+  return response.json();
+}
+
+const first = await authorize("lazy-one");
+if (getRandomValuesCalls < 1) {
+  throw new Error("first request did not lazy initialize signer");
+}
+const second = await authorize("lazy-two");
+const third = await authorize("lazy-three");
+if (first.signer_address !== second.signer_address || second.signer_address !== third.signer_address) {
+  throw new Error("demo signer rotated within one runtime");
+}
+
+const overrideKey = "0x59c6995e998f97a5a0044966f0945387d276fd1154fbbdc5e47bc84e00f6d9f2";
+const overrideAddress = privateKeyToAccount(overrideKey).address;
+const override = await authorize("lazy-override", { FARE_DEMO_PRIVATE_KEY: overrideKey });
+if (override.signer_address === overrideAddress) {
+  throw new Error("FARE_DEMO_PRIVATE_KEY selected the demo signer");
+}
+if (override.signer_address !== first.signer_address) {
+  throw new Error("env override changed the cached demo signer");
+}
+`);
+});
+
+test("fare demo page exposes no public wallet signing path", async () => {
+  const response = await worker.fetch(new Request("https://example.test/fare"));
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.doesNotMatch(html, /Wallet authorize/);
+  assert.doesNotMatch(html, /wallet-authorize/);
+  assert.doesNotMatch(html, /window\.ethereum/);
+  assert.doesNotMatch(html, /eth_requestAccounts/);
+  assert.doesNotMatch(html, /eth_signTypedData_v4/);
+  assert.match(html, /never requests a real wallet signature/);
+  assert.doesNotMatch(html, /FARE targets Base USDC only/);
+  assert.doesNotMatch(html, /Did USDC actually move/);
+  assert.doesNotMatch(html, /同 nonce → 402/);
+  assert.doesNotMatch(html, /同一張 payload/);
+});
+
+test("fare verifier requires exact x402 v2 payment envelope", async () => {
+  const body = await createFareDemoAuthorization("envelope-base");
+  const cases = [
+    {
+      name: "missing x402Version",
+      mutate: payment => {
+        delete payment.x402Version;
+      },
+      reason: "invalid_x402_payment_payload",
+    },
+    {
+      name: "wrong x402Version",
+      mutate: payment => {
+        payment.x402Version = 1;
+      },
+      reason: "invalid_x402_payment_payload",
+    },
+    {
+      name: "missing accepted",
+      mutate: payment => {
+        delete payment.accepted;
+      },
+      reason: "invalid_x402_payment_payload",
+    },
+    {
+      name: "missing nested payload wrapper",
+      mutate: payment => payment.payload,
+      reason: "invalid_x402_payment_payload",
+    },
+  ];
+  for (const currentCase of cases) {
+    const payment = structuredClone(body.payment_payload);
+    const mutated = currentCase.mutate(payment) ?? payment;
+    const response = await submitFarePayment(`envelope-${currentCase.name}`, mutated);
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).invalidReason, currentCase.reason);
+  }
+});
+
+test("fare verifier binds accepted to current requirement", async () => {
+  const cases = [
+    ["scheme", "upto"],
+    ["network", "eip155:1"],
+    ["asset", "0x0000000000000000000000000000000000000001"],
+    ["payTo", "0x0000000000000000000000000000000000000002"],
+    ["amount", "10001"],
+  ];
+  for (const [field, value] of cases) {
+    const body = await createFareDemoAuthorization(`accepted-${field}`);
+    const payment = structuredClone(body.payment_payload);
+    payment.accepted[field] = value;
+    const response = await submitFarePayment(`accepted-${field}`, payment);
+    assert.equal(response.status, 400);
+    assert.equal(
+      (await response.json()).invalidReason,
+      "invalid_x402_payment_requirement_mismatch",
+    );
+  }
+});
+
+test("fare verifier binds required accepted extra fields", async () => {
+  for (const [field, value] of [["name", undefined], ["name", "USDC"], ["version", undefined], ["version", "1"]]) {
+    const body = await createFareDemoAuthorization(`extra-${field}-${value}`);
+    const payment = structuredClone(body.payment_payload);
+    if (value === undefined) {
+      delete payment.accepted.extra[field];
+    } else {
+      payment.accepted.extra[field] = value;
+    }
+    const response = await submitFarePayment(`extra-${field}-${value}`, payment);
+    assert.equal(response.status, 400);
+    assert.equal(
+      (await response.json()).invalidReason,
+      "invalid_x402_payment_requirement_mismatch",
+    );
+  }
+});
+
+test("fare verifier enforces EIP-3009 time boundaries", async () => {
+  const originalNow = Date.now;
+  const fixedNow = 1_800_000_000;
+  Date.now = () => fixedNow * 1000;
+  try {
+    const valid = await createFareDemoAuthorization("time-valid");
+    assert.equal((await submitFarePayment("time-valid", valid.payment_payload)).status, 200);
+
+    const futureValidAfter = await createFareDemoAuthorization("time-future");
+    futureValidAfter.payment_payload.payload.authorization.validAfter = String(fixedNow + 1);
+    const futureResponse = await submitFarePayment(
+      "time-future",
+      futureValidAfter.payment_payload,
+    );
+    assert.equal(futureResponse.status, 400);
+    assert.equal(
+      (await futureResponse.json()).invalidReason,
+      "invalid_exact_evm_not_yet_valid",
+    );
+
+    const validAfterBoundary = await createFareDemoAuthorization("time-valid-after-boundary");
+    validAfterBoundary.payment_payload.payload.authorization.validAfter = String(fixedNow);
+    const validAfterBoundaryResponse = await submitFarePayment(
+      "time-valid-after-boundary",
+      validAfterBoundary.payment_payload,
+    );
+    assert.equal(validAfterBoundaryResponse.status, 400);
+    assert.equal(
+      (await validAfterBoundaryResponse.json()).invalidReason,
+      "invalid_exact_evm_not_yet_valid",
+    );
+
+    const expired = await createFareDemoAuthorization("time-expired");
+    expired.payment_payload.payload.authorization.validBefore = String(fixedNow - 1);
+    const expiredResponse = await submitFarePayment("time-expired", expired.payment_payload);
+    assert.equal(expiredResponse.status, 400);
+    assert.equal((await expiredResponse.json()).invalidReason, "invalid_exact_evm_expired");
+
+    const validBeforeBoundary = await createFareDemoAuthorization("time-valid-before-boundary");
+    validBeforeBoundary.payment_payload.payload.authorization.validBefore = String(fixedNow);
+    const validBeforeBoundaryResponse = await submitFarePayment(
+      "time-valid-before-boundary",
+      validBeforeBoundary.payment_payload,
+    );
+    assert.equal(validBeforeBoundaryResponse.status, 400);
+    assert.equal(
+      (await validBeforeBoundaryResponse.json()).invalidReason,
+      "invalid_exact_evm_expired",
+    );
+  } finally {
+    Date.now = originalNow;
+  }
+});
+
+test("fare verifier rejects same proof across sessions and reset", async () => {
+  const body = await createFareDemoAuthorization("replay-source");
+  assert.equal((await submitFarePayment("replay-source", body.payment_payload)).status, 200);
+
+  const sameSession = await submitFarePayment("replay-source", body.payment_payload);
+  assert.equal(sameSession.status, 409);
+  assert.equal((await sameSession.json()).invalidReason, "invalid_exact_evm_nonce_already_used");
+
+  const newSession = await submitFarePayment("replay-new-session", body.payment_payload);
+  assert.equal(newSession.status, 409);
+  assert.equal((await newSession.json()).invalidReason, "invalid_exact_evm_nonce_already_used");
+
+  const reset = await worker.fetch(
+    new Request("https://example.test/fare/api/reset?session=replay-source", {
+      method: "POST",
+    }),
+  );
+  assert.equal(reset.status, 200);
+  assert.equal((await reset.json()).replay_memory_preserved, true);
+  const afterReset = await submitFarePayment("replay-source", body.payment_payload);
+  assert.equal(afterReset.status, 409);
+  assert.equal((await afterReset.json()).invalidReason, "invalid_exact_evm_nonce_already_used");
+});
+
+test("fare reset cannot delete replay memory with a payer nonce shaped session", async () => {
+  const body = await createFareDemoAuthorization("crafted-reset-source");
+  assert.equal(
+    (await submitFarePayment("crafted-reset-source", body.payment_payload)).status,
+    200,
+  );
+
+  const reset = await worker.fetch(
+    new Request(
+      `https://example.test/fare/api/reset?session=${encodeURIComponent(fareReplayKey(body.payment_payload))}`,
+      { method: "POST" },
+    ),
+  );
+  assert.equal(reset.status, 200);
+  assert.equal((await reset.json()).replay_memory_preserved, true);
+
+  const afterCraftedReset = await submitFarePayment(
+    "crafted-reset-source",
+    body.payment_payload,
+  );
+  assert.equal(afterCraftedReset.status, 409);
+  assert.equal(
+    (await afterCraftedReset.json()).invalidReason,
+    "invalid_exact_evm_nonce_already_used",
+  );
+});
+
+test("fare verifier allows at most one concurrent unlock for one proof", async () => {
+  const body = await createFareDemoAuthorization("concurrent-source");
+  const responses = await Promise.all([
+    submitFarePayment("concurrent-a", body.payment_payload),
+    submitFarePayment("concurrent-b", body.payment_payload),
+    submitFarePayment("concurrent-c", body.payment_payload),
+    submitFarePayment("concurrent-d", body.payment_payload),
+  ]);
+  const statuses = responses.map(response => response.status).sort();
+  assert.deepEqual(statuses, [200, 409, 409, 409]);
+});
+
+test("fare demo signer ignores runtime private key override", async () => {
+  const overrideKey =
+    "0x59c6995e998f97a5a0044966f0945387d276fd1154fbbdc5e47bc84e00f6d9f2";
+  const overrideAddress = privateKeyToAccount(overrideKey).address;
+  const body = await createFareDemoAuthorization("env-override", {
+    FARE_DEMO_PRIVATE_KEY: overrideKey,
+  });
+  assert.notEqual(body.signer_address, overrideAddress);
+  assert.equal((await submitFarePayment("env-override", body.payment_payload)).status, 200);
 });
 
 test("agent buyer identity preflight maps five roles to purchase fit", () => {
