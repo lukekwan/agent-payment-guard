@@ -11051,6 +11051,14 @@ pre{overflow:auto;background:#020617;border:1px solid #334155;border-radius:8px;
         <h2>Demo signer</h2>
         <p class="muted">Demo-only signer address: <code>${escapeHtml(fareDemoSignerAddress())}</code>. No automatic transaction broadcast. No on-chain settlement.</p>
       </div>
+      <div class="panel" style="margin-top:16px">
+        <h2>FAQ</h2>
+        <p><strong>Why not Permit2?</strong><br><span class="muted">FARE targets Base USDC, so native EIP-3009 is enough. Permit2 helps broader ERC-20 support and uses the Permit2 domain.</span></p>
+        <p><strong>Can I replay?</strong><br><span class="muted">Same proof / nonce → local replay rejection (409).</span></p>
+        <p><strong>Authorization vs upfront?</strong><br><span class="muted">Later x402 flow concept · not used in this 2.16 demo.</span></p>
+        <p><strong>Why not ERC-20 transfer?</strong><br><span class="muted">Bare transfer requires the owner to send the transaction; x402 needs an off-chain authorization a relayer can submit.</span></p>
+        <p><strong>Why not permit?</strong><br><span class="muted">EIP-2612 writes allowance and still needs transferFrom; EIP-3009 authorizes the specific transfer.</span></p>
+      </div>
     </section>
     <aside class="card">
       <h2>Inspector</h2>
@@ -21175,12 +21183,12 @@ export default {
         : page;
     }
     if (url.pathname === FARE_DEMO_API_RESET_PATH && request.method === "POST") {
-      fareDemoNonceState.delete(fareDemoSessionId(request.url));
       return json(
         {
           ok: true,
           demo_mode: true,
           reset: true,
+          replay_memory_preserved: true,
           session_id: fareDemoSessionId(request.url),
         },
         200,

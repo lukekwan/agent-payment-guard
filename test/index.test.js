@@ -747,6 +747,11 @@ function encodeFarePayment(paymentPayload) {
   return Buffer.from(JSON.stringify(paymentPayload)).toString("base64");
 }
 
+function fareReplayKey(paymentPayload) {
+  const authorization = paymentPayload.payload.authorization;
+  return `${authorization.from.toLowerCase()}:${authorization.nonce.toLowerCase()}`;
+}
+
 async function submitFarePayment(sessionId, paymentPayload) {
   return worker.fetch(
     new Request(`https://example.test/fare/api/brief?session=${sessionId}`, {
@@ -765,6 +770,21 @@ test("fare demo page exposes no public wallet signing path", async () => {
   assert.doesNotMatch(html, /eth_requestAccounts/);
   assert.doesNotMatch(html, /eth_signTypedData_v4/);
   assert.match(html, /never requests a real wallet signature/);
+  assert.match(html, /FARE targets Base USDC, so native EIP-3009 is enough/);
+  assert.match(html, /Permit2 helps broader ERC-20 support and uses the Permit2 domain/);
+  assert.match(html, /Same proof \/ nonce → local replay rejection \(409\)/);
+  assert.match(html, /Later x402 flow concept · not used in this 2\.16 demo/);
+  assert.doesNotMatch(html, /同 nonce → 402/);
+  assert.doesNotMatch(html, /同一張 payload/);
+  assert.doesNotMatch(html, /paymentFlow/);
+  assert.match(
+    html,
+    /Bare transfer requires the owner to send the transaction; x402 needs an off-chain authorization a relayer can submit/,
+  );
+  assert.match(
+    html,
+    /EIP-2612 writes allowance and still needs transferFrom; EIP-3009 authorizes the specific transfer/,
+  );
 });
 
 test("fare verifier requires exact x402 v2 payment envelope", async () => {
@@ -917,9 +937,37 @@ test("fare verifier rejects same proof across sessions and reset", async () => {
     }),
   );
   assert.equal(reset.status, 200);
+  assert.equal((await reset.json()).replay_memory_preserved, true);
   const afterReset = await submitFarePayment("replay-source", body.payment_payload);
   assert.equal(afterReset.status, 409);
   assert.equal((await afterReset.json()).invalidReason, "invalid_exact_evm_nonce_already_used");
+});
+
+test("fare reset cannot delete replay memory with a payer nonce shaped session", async () => {
+  const body = await createFareDemoAuthorization("crafted-reset-source");
+  assert.equal(
+    (await submitFarePayment("crafted-reset-source", body.payment_payload)).status,
+    200,
+  );
+
+  const reset = await worker.fetch(
+    new Request(
+      `https://example.test/fare/api/reset?session=${encodeURIComponent(fareReplayKey(body.payment_payload))}`,
+      { method: "POST" },
+    ),
+  );
+  assert.equal(reset.status, 200);
+  assert.equal((await reset.json()).replay_memory_preserved, true);
+
+  const afterCraftedReset = await submitFarePayment(
+    "crafted-reset-source",
+    body.payment_payload,
+  );
+  assert.equal(afterCraftedReset.status, 409);
+  assert.equal(
+    (await afterCraftedReset.json()).invalidReason,
+    "invalid_exact_evm_nonce_already_used",
+  );
 });
 
 test("fare verifier allows at most one concurrent unlock for one proof", async () => {
@@ -927,9 +975,11 @@ test("fare verifier allows at most one concurrent unlock for one proof", async (
   const responses = await Promise.all([
     submitFarePayment("concurrent-a", body.payment_payload),
     submitFarePayment("concurrent-b", body.payment_payload),
+    submitFarePayment("concurrent-c", body.payment_payload),
+    submitFarePayment("concurrent-d", body.payment_payload),
   ]);
   const statuses = responses.map(response => response.status).sort();
-  assert.deepEqual(statuses, [200, 409]);
+  assert.deepEqual(statuses, [200, 409, 409, 409]);
 });
 
 test("fare demo signer ignores runtime private key override", async () => {
